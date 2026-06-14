@@ -54,6 +54,7 @@ sourceSets {
 
 dependencies {
     implementation 'com.formdev:flatlaf:3.6'
+    implementation 'info.picocli:picocli:4.7.6'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
     testImplementation 'org.mockito:mockito-core:5.14.2'

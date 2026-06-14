@@ -13,7 +13,6 @@ import com.openstego.desktop.plugin.template.image.WMImagePluginTemplate;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
 import com.openstego.desktop.util.dct.DCT;
 
 import java.io.IOException;
@@ -185,19 +184,5 @@ public class DctLSBPlugin extends WMImagePluginTemplate {
     @Override
     protected DCTConfig createConfig() {
         return new DCTConfig();
-    }
-
-    /**
-     * Method to create configuration data (specific to this plugin) based on the command-line options
-     *
-     * @param options Command-line options
-     * @return Configuration data
-     * @throws OpenStegoException Processing issues
-     */
-    @Override
-    protected DCTConfig createConfig(CmdLineOptions options) throws OpenStegoException {
-        DCTConfig config = new DCTConfig();
-        config.initialize(options);
-        return config;
     }
 }

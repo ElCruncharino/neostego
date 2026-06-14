@@ -9,22 +9,50 @@ package com.openstego.desktop;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.PluginManager;
-import com.openstego.desktop.util.cmd.CmdLineOption;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
-import com.openstego.desktop.util.cmd.CmdLineParser;
 import com.openstego.desktop.util.cmd.PasswordInput;
+import picocli.CommandLine;
+import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Model.OptionSpec;
+import picocli.CommandLine.ParameterException;
+import picocli.CommandLine.ParseResult;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * This is the main class for OpenStego command line
+ * This is the main class for OpenStego command line. Command-line parsing is handled by picocli; the
+ * plugin SPI stays free of any command-line library (plugins declare their options via neutral
+ * {@link PluginCmdLineOption} descriptors).
  */
 public class OpenStegoCmd {
+    /**
+     * Logger instance
+     */
+    private static final Logger logger = Logger.getLogger(OpenStegoCmd.class.getName());
+
     /**
      * LabelUtil instance to retrieve labels
      */
     private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);
+
+    /**
+     * Supported commands (the first command-line argument, optionally prefixed with "--")
+     */
+    private static final Set<String> COMMANDS = new HashSet<>(Arrays.asList(
+            "embed", "extract", "gensig", "embedmark", "checkmark", "diff",
+            "readformats", "writeformats", "algorithms", "help"));
+
+    /**
+     * Value-bearing standard options that the command handlers read
+     */
+    private static final String[] VALUE_OPTIONS = {"-a", "-mf", "-cf", "-sf", "-xf", "-xd", "-gf", "-p", "-A"};
 
     /**
      * Main method for processing command line
@@ -32,133 +60,81 @@ public class OpenStegoCmd {
      * @param args Command line arguments
      */
     public static void execute(String[] args) {
-        String command = null;
-        String pluginName;
-        OpenStego stego = null;
-        CmdLineParser parser;
-        CmdLineOptions options;
-        CmdLineOption option;
-        List<CmdLineOption> optionList;
-        OpenStegoPlugin<?> plugin = null;
-
         try {
-            // First parse of the command-line (without plugin specific options)
-            parser = new CmdLineParser(getStdCmdLineOptions(null), args);
-            if (!parser.isValid()) {
+            if (args.length == 0) {
                 displayUsage();
                 return;
             }
 
-            pluginName = parser.getParsedOptions().getStringValue("-a");
-
-            // Get the plugin object
-            if (pluginName != null && !pluginName.equals("")) {
-                plugin = PluginManager.getPluginByName(pluginName);
-                if (plugin == null) {
-                    throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_NOT_FOUND, pluginName);
-                }
+            // The first argument is the command (an optional "--" prefix is accepted)
+            String command = args[0];
+            if (command.startsWith("--")) {
+                command = command.substring(2);
             }
-            // Try to auto-select plugin
-            else {
-                List<OpenStegoPlugin<?>> plugins = PluginManager.getPlugins();
-                if (plugins.size() == 1) {
-                    plugin = plugins.get(0);
-                } else if (plugins.size() > 1) {
-                    optionList = parser.getParsedOptionsAsList();
-                    if (optionList.size() > 0) {
-                        command = (optionList.get(0)).getName();
-                        if (command.equals("embed") || command.equals("extract")) {
-                            plugins = PluginManager.getDataHidingPlugins();
-                            if (plugins.size() == 1) {
-                                plugin = plugins.get(0);
-                            }
-                        } else if (command.equals("gensig") || command.equals("embedmark") || command.equals("checkmark")) {
-                            plugins = PluginManager.getWatermarkingPlugins();
-                            if (plugins.size() == 1) {
-                                plugin = plugins.get(0);
-                            }
-                        }
-                    }
-                }
+            if (!COMMANDS.contains(command)) {
+                displayUsage();
+                return;
             }
+            String[] optionArgs = Arrays.copyOfRange(args, 1, args.length);
 
-            // Second parse of the command-line (with plugin specific options)
-            if (plugin != null) {
-                parser = new CmdLineParser(getStdCmdLineOptions(plugin), args);
-            }
+            // Determine the plugin (explicit via -a, else auto-selected)
+            OpenStegoPlugin<?> plugin = selectPlugin(findAlgorithm(optionArgs), command);
 
-            optionList = parser.getParsedOptionsAsList();
-            options = parser.getParsedOptions();
-
-            for (int i = 0; i < optionList.size(); i++) {
-                option = optionList.get(i);
-                if (((i == 0) && (option.getType() != CmdLineOption.TYPE_COMMAND)) || ((i > 0) && (option.getType() == CmdLineOption.TYPE_COMMAND))) {
-                    displayUsage();
-                    return;
-                }
-
-                if (i == 0) {
-                    command = option.getName();
-                }
-            }
-
-            // Non-standard options are not allowed
-            if (parser.getNonStdOptions().size() > 0) {
+            // Parse the options using picocli
+            ParseResult parseResult;
+            try {
+                parseResult = new CommandLine(buildSpec(plugin)).parseArgs(optionArgs);
+            } catch (ParameterException pe) {
+                System.err.println(pe.getMessage());
                 displayUsage();
                 return;
             }
 
-            // Check that algorithm is selected
-            assert command != null;
+            Map<String, String> opt = collectStringOptions(parseResult);
+
+            OpenStego stego = null;
             if (!command.equals("help") && !command.equals("algorithms")) {
                 if (plugin == null) {
                     throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.NO_PLUGIN_SPECIFIED);
-                } else {
-                    // Create main stego object
-                    plugin.resetConfig(parser.getParsedOptions());
-                    stego = new OpenStego(plugin, plugin.getConfig());
                 }
+                plugin.resetConfig();
+                plugin.getConfig().initialize(buildConfigMap(parseResult, plugin));
+                stego = new OpenStego(plugin, plugin.getConfig());
             }
 
             switch (command) {
                 case "embed":
-                    executeEmbed(options, stego);
+                    executeEmbed(opt, stego);
                     break;
                 case "embedmark":
-                    executeEmbedMark(options, stego);
+                    executeEmbedMark(opt, stego);
                     break;
                 case "extract":
-                    executeExtract(options, stego);
+                    executeExtract(opt, stego);
                     break;
                 case "checkmark":
-                    executeCheckMark(options, stego);
+                    executeCheckMark(opt, stego);
                     break;
                 case "gensig":
-                    executeGenSig(options, stego);
+                    executeGenSig(opt, stego);
                     break;
                 case "diff":
-                    executeDiff(options, stego);
+                    executeDiff(opt, stego);
                     break;
-                case "readformats": {
-                    List<String> formats = plugin.getReadableFileExtensions();
-                    formats.forEach(System.out::println);
+                case "readformats":
+                    plugin.getReadableFileExtensions().forEach(System.out::println);
                     break;
-                }
-                case "writeformats": {
-                    List<String> formats = plugin.getWritableFileExtensions();
-                    formats.forEach(System.out::println);
+                case "writeformats":
+                    plugin.getWritableFileExtensions().forEach(System.out::println);
                     break;
-                }
                 case "algorithms":
-                    List<OpenStegoPlugin<?>> plugins = PluginManager.getPlugins();
-                    for (OpenStegoPlugin<?> osp : plugins) {
+                    for (OpenStegoPlugin<?> osp : PluginManager.getPlugins()) {
                         System.out.println(osp.getName() + " " + osp.getPurposesLabel() + " - " + osp.getDescription());
                     }
                     break;
                 case "help":
                     if (plugin == null) {
                         displayUsage();
-                        return;
                     } else { // Show plugin-specific help
                         System.err.println(plugin.getUsage());
                     }
@@ -168,7 +144,7 @@ public class OpenStegoCmd {
             }
         } catch (OpenStegoException osEx) {
             if (osEx.getErrorCode() == OpenStegoException.UNHANDLED_EXCEPTION) {
-                osEx.printStackTrace();
+                logger.log(Level.SEVERE, osEx.getMessage(), osEx);
             } else {
                 System.err.println(osEx.getMessage());
             }
@@ -182,23 +158,169 @@ public class OpenStegoCmd {
             System.err.println(labelUtil.getString("cmd.label.bulkerror.header"));
             System.err.println(sb);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Determines the plugin to use, given the (possibly null) algorithm name and the command.
+     */
+    private static OpenStegoPlugin<?> selectPlugin(String pluginName, String command) throws OpenStegoException {
+        if (pluginName != null && !pluginName.isEmpty()) {
+            OpenStegoPlugin<?> plugin = PluginManager.getPluginByName(pluginName);
+            if (plugin == null) {
+                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_NOT_FOUND, pluginName);
+            }
+            return plugin;
+        }
+
+        // Try to auto-select the plugin
+        List<OpenStegoPlugin<?>> plugins = PluginManager.getPlugins();
+        if (plugins.size() == 1) {
+            return plugins.get(0);
+        } else if (plugins.size() > 1) {
+            if (command.equals("embed") || command.equals("extract")) {
+                List<OpenStegoPlugin<?>> dhPlugins = PluginManager.getDataHidingPlugins();
+                if (dhPlugins.size() == 1) {
+                    return dhPlugins.get(0);
+                }
+            } else if (command.equals("gensig") || command.equals("embedmark") || command.equals("checkmark")) {
+                List<OpenStegoPlugin<?>> wmPlugins = PluginManager.getWatermarkingPlugins();
+                if (wmPlugins.size() == 1) {
+                    return wmPlugins.get(0);
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Scans the option arguments for the algorithm name (-a / --algorithm).
+     */
+    private static String findAlgorithm(String[] args) {
+        for (int i = 0; i < args.length; i++) {
+            String arg = args[i];
+            if ((arg.equals("-a") || arg.equals("--algorithm")) && i + 1 < args.length) {
+                return args[i + 1];
+            }
+            if (arg.startsWith("-a=")) {
+                return arg.substring("-a=".length());
+            }
+            if (arg.startsWith("--algorithm=")) {
+                return arg.substring("--algorithm=".length());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Builds the picocli command specification, including any plugin-specific options.
+     */
+    private static CommandSpec buildSpec(OpenStegoPlugin<?> plugin) {
+        CommandSpec spec = CommandSpec.create();
+
+        // Plugin / file options (value-bearing)
+        addOption(spec, true, "-a", "--algorithm");
+        addOption(spec, true, "-mf", "--messagefile");
+        addOption(spec, true, "-cf", "--coverfile");
+        addOption(spec, true, "-sf", "--stegofile");
+        addOption(spec, true, "-xf", "--extractfile");
+        addOption(spec, true, "-xd", "--extractdir");
+        addOption(spec, true, "-gf", "--sigfile");
+        addOption(spec, true, "-p", "--password");
+        addOption(spec, true, "-A", "--cryptalgo");
+
+        // Command flags
+        addOption(spec, false, "-c", "--compress");
+        addOption(spec, false, "-C", "--nocompress");
+        addOption(spec, false, "-e", "--encrypt");
+        addOption(spec, false, "-E", "--noencrypt");
+
+        // Plugin-specific options
+        if (plugin != null) {
+            for (PluginCmdLineOption pluginOption : plugin.getPluginCmdLineOptions()) {
+                addOption(spec, pluginOption.isTakesArg(), pluginOption.getName(), pluginOption.getAltName());
+            }
+        }
+
+        return spec;
+    }
+
+    private static void addOption(CommandSpec spec, boolean takesArg, String name, String altName) {
+        String[] names = (altName == null) ? new String[]{name} : new String[]{name, altName};
+        OptionSpec.Builder builder = OptionSpec.builder(names);
+        if (takesArg) {
+            builder.arity("1").type(String.class).paramLabel("<value>");
+        }
+        spec.addOption(builder.build());
+    }
+
+    /**
+     * Collects the value-bearing standard options into a simple name-&gt;value map for the handlers.
+     */
+    private static Map<String, String> collectStringOptions(ParseResult parseResult) {
+        Map<String, String> opt = new HashMap<>();
+        for (String name : VALUE_OPTIONS) {
+            if (parseResult.hasMatchedOption(name)) {
+                String value = parseResult.matchedOptionValue(name, (String) null);
+                if (value != null) {
+                    opt.put(name, value.trim());
+                }
+            }
+        }
+        return opt;
+    }
+
+    /**
+     * Builds the configuration map from the parsed options (standard items plus any plugin-specific ones).
+     */
+    private static Map<String, Object> buildConfigMap(ParseResult parseResult, OpenStegoPlugin<?> plugin) throws OpenStegoException {
+        Map<String, Object> map = new HashMap<>();
+
+        if (parseResult.hasMatchedOption("-c")) {
+            map.put(OpenStegoConfig.USE_COMPRESSION, true);
+        }
+        if (parseResult.hasMatchedOption("-C")) {
+            map.put(OpenStegoConfig.USE_COMPRESSION, false);
+        }
+        if (parseResult.hasMatchedOption("-e")) {
+            map.put(OpenStegoConfig.USE_ENCRYPTION, true);
+        }
+        if (parseResult.hasMatchedOption("-E")) {
+            map.put(OpenStegoConfig.USE_ENCRYPTION, false);
+        }
+        if (parseResult.hasMatchedOption("-p")) {
+            map.put(OpenStegoConfig.PASSWORD, parseResult.matchedOptionValue("-p", (String) null));
+        }
+        if (parseResult.hasMatchedOption("-A")) {
+            map.put(OpenStegoConfig.ENCRYPTION_ALGORITHM, parseResult.matchedOptionValue("-A", (String) null));
+        }
+
+        // Plugin-specific options
+        Map<String, String> pluginValues = new HashMap<>();
+        for (PluginCmdLineOption pluginOption : plugin.getPluginCmdLineOptions()) {
+            if (parseResult.hasMatchedOption(pluginOption.getName())) {
+                pluginValues.put(pluginOption.getName(), parseResult.matchedOptionValue(pluginOption.getName(), (String) null));
+            }
+        }
+        plugin.addPluginConfigValues(map, pluginValues);
+
+        return map;
     }
 
     /**
      * Method to execute "embed" command
      *
-     * @param options Command-line options
-     * @param stego   {@link OpenStego} object
+     * @param opt   Parsed command-line option values
+     * @param stego {@link OpenStego} object
      * @throws OpenStegoException     Processing issues
      * @throws OpenStegoBulkException Errors for multiple files
      */
-    private static void executeEmbed(CmdLineOptions options, OpenStego stego)
+    private static void executeEmbed(Map<String, String> opt, OpenStego stego)
             throws OpenStegoException, OpenStegoBulkException {
-        String msgFileName = options.getStringValue("-mf");
-        String coverFileName = options.getStringValue("-cf");
-        String stegoFileName = options.getStringValue("-sf");
+        String msgFileName = opt.get("-mf");
+        String coverFileName = opt.get("-cf");
+        String stegoFileName = opt.get("-sf");
         List<File> coverFileList;
 
         // Check if we need to prompt for password
@@ -245,16 +367,16 @@ public class OpenStegoCmd {
     /**
      * Method to execute "embedmark" command
      *
-     * @param options Command-line options
-     * @param stego   {@link OpenStego} object
+     * @param opt   Parsed command-line option values
+     * @param stego {@link OpenStego} object
      * @throws OpenStegoException     Processing issues
      * @throws OpenStegoBulkException Errors for multiple files
      */
-    private static void executeEmbedMark(CmdLineOptions options, OpenStego stego)
+    private static void executeEmbedMark(Map<String, String> opt, OpenStego stego)
             throws OpenStegoException, OpenStegoBulkException {
-        String sigFileName = options.getStringValue("-gf");
-        String coverFileName = options.getStringValue("-cf");
-        String stegoFileName = options.getStringValue("-sf");
+        String sigFileName = opt.get("-gf");
+        String coverFileName = opt.get("-cf");
+        String stegoFileName = opt.get("-sf");
 
         File sigFile = (sigFileName == null || sigFileName.equals("-")) ? null : new File(sigFileName);
         List<File> coverFileList = CommonUtil.parseFileList(coverFileName, ";");
@@ -295,13 +417,13 @@ public class OpenStegoCmd {
     /**
      * Method to execute "extract" command
      *
-     * @param options Command-line options
-     * @param stego   {@link OpenStego} object
+     * @param opt   Parsed command-line option values
+     * @param stego {@link OpenStego} object
      * @throws OpenStegoException Processing issues
      */
-    private static void executeExtract(CmdLineOptions options, OpenStego stego) throws OpenStegoException {
-        String stegoFileName = options.getStringValue("-sf");
-        String extractDir = options.getStringValue("-xd");
+    private static void executeExtract(Map<String, String> opt, OpenStego stego) throws OpenStegoException {
+        String stegoFileName = opt.get("-sf");
+        String extractDir = opt.get("-xd");
         String extractFileName;
         List<?> msgData;
 
@@ -336,7 +458,7 @@ public class OpenStegoCmd {
             }
         }
 
-        extractFileName = options.getStringValue("-xf");
+        extractFileName = opt.get("-xf");
         if (extractFileName == null) {
             extractFileName = (String) msgData.get(0);
             if (extractFileName == null || extractFileName.equals("")) {
@@ -355,13 +477,13 @@ public class OpenStegoCmd {
     /**
      * Method to execute "checkmark" command
      *
-     * @param options Command-line options
-     * @param stego   {@link OpenStego} object
+     * @param opt   Parsed command-line option values
+     * @param stego {@link OpenStego} object
      * @throws OpenStegoException Processing issues
      */
-    private static void executeCheckMark(CmdLineOptions options, OpenStego stego) throws OpenStegoException {
-        String stegoFileName = options.getStringValue("-sf");
-        String sigFileName = options.getStringValue("-gf");
+    private static void executeCheckMark(Map<String, String> opt, OpenStego stego) throws OpenStegoException {
+        String stegoFileName = opt.get("-sf");
+        String sigFileName = opt.get("-gf");
         List<File> stegoFileList;
 
         if (stegoFileName == null || sigFileName == null) {
@@ -386,32 +508,32 @@ public class OpenStegoCmd {
     /**
      * Method to execute "gensig" command
      *
-     * @param options Command-line options
-     * @param stego   {@link OpenStego} object
+     * @param opt   Parsed command-line option values
+     * @param stego {@link OpenStego} object
      * @throws OpenStegoException Processing issues
      */
-    private static void executeGenSig(CmdLineOptions options, OpenStego stego) throws OpenStegoException {
+    private static void executeGenSig(Map<String, String> opt, OpenStego stego) throws OpenStegoException {
         // Check if we need to prompt for password
         if (stego.getConfig().getPassword() == null) {
             stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
         }
 
-        String signatureFileName = options.getStringValue("-gf");
+        String signatureFileName = opt.get("-gf");
         CommonUtil.writeFile(stego.generateSignature(), (signatureFileName == null || signatureFileName.equals("-")) ? null : signatureFileName);
     }
 
     /**
      * Method to execute "diff" command
      *
-     * @param options Command-line options
-     * @param stego   {@link OpenStego} object
+     * @param opt   Parsed command-line option values
+     * @param stego {@link OpenStego} object
      * @throws OpenStegoException Processing issues
      */
-    private static void executeDiff(CmdLineOptions options, OpenStego stego) throws OpenStegoException {
-        String coverFileName = options.getStringValue("-cf");
-        String stegoFileName = options.getStringValue("-sf");
-        String extractDir = options.getStringValue("-xd");
-        String extractFileName = options.getStringValue("-xf");
+    private static void executeDiff(Map<String, String> opt, OpenStego stego) throws OpenStegoException {
+        String coverFileName = opt.get("-cf");
+        String stegoFileName = opt.get("-sf");
+        String extractDir = opt.get("-xd");
+        String extractFileName = opt.get("-xf");
 
         if (extractDir != null) {
             extractFileName = extractDir + File.separator + extractFileName;
@@ -431,54 +553,5 @@ public class OpenStegoCmd {
         System.err.print(labelUtil.getString("appName") + " " + labelUtil.getString("appVersion") + ". ");
         System.err.println(labelUtil.getString("copyright") + "\n");
         System.err.println(labelUtil.getString("cmd.usage", File.separator));
-    }
-
-    /**
-     * Method to generate the standard list of command-line options
-     *
-     * @param plugin Stego plugin for plugin-specific command-line options
-     * @return Standard list of command-line options
-     * @throws OpenStegoException Processing issues
-     */
-    private static CmdLineOptions getStdCmdLineOptions(OpenStegoPlugin<?> plugin) throws OpenStegoException {
-        CmdLineOptions options = new CmdLineOptions();
-
-        // Commands
-        options.add("embed", "--embed", CmdLineOption.TYPE_COMMAND, false);
-        options.add("extract", "--extract", CmdLineOption.TYPE_COMMAND, false);
-        options.add("gensig", "--gensig", CmdLineOption.TYPE_COMMAND, false);
-        options.add("embedmark", "--embedmark", CmdLineOption.TYPE_COMMAND, false);
-        options.add("checkmark", "--checkmark", CmdLineOption.TYPE_COMMAND, false);
-        options.add("diff", "--diff", CmdLineOption.TYPE_COMMAND, false);
-        options.add("readformats", "--readformats", CmdLineOption.TYPE_COMMAND, false);
-        options.add("writeformats", "--writeformats", CmdLineOption.TYPE_COMMAND, false);
-        options.add("algorithms", "--algorithms", CmdLineOption.TYPE_COMMAND, false);
-        options.add("help", "--help", CmdLineOption.TYPE_COMMAND, false);
-
-        // Plugin options
-        options.add("-a", "--algorithm", CmdLineOption.TYPE_OPTION, true);
-
-        // File options
-        options.add("-mf", "--messagefile", CmdLineOption.TYPE_OPTION, true);
-        options.add("-cf", "--coverfile", CmdLineOption.TYPE_OPTION, true);
-        options.add("-sf", "--stegofile", CmdLineOption.TYPE_OPTION, true);
-        options.add("-xf", "--extractfile", CmdLineOption.TYPE_OPTION, true);
-        options.add("-xd", "--extractdir", CmdLineOption.TYPE_OPTION, true);
-        options.add("-gf", "--sigfile", CmdLineOption.TYPE_OPTION, true);
-
-        // Command options
-        options.add("-c", "--compress", CmdLineOption.TYPE_OPTION, false);
-        options.add("-C", "--nocompress", CmdLineOption.TYPE_OPTION, false);
-        options.add("-e", "--encrypt", CmdLineOption.TYPE_OPTION, false);
-        options.add("-E", "--noencrypt", CmdLineOption.TYPE_OPTION, false);
-        options.add("-p", "--password", CmdLineOption.TYPE_OPTION, true);
-        options.add("-A", "--cryptalgo", CmdLineOption.TYPE_OPTION, true);
-
-        // Plugin-specific options
-        if (plugin != null) {
-            plugin.populateStdCmdLineOptions(options);
-        }
-
-        return options;
     }
 }

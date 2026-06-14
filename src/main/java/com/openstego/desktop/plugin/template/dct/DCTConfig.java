@@ -8,9 +8,6 @@ package com.openstego.desktop.plugin.template.dct;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
-
-import java.util.Map;
 
 /**
  * Class to store configuration data for DCT plugin template
@@ -27,24 +24,6 @@ public class DCTConfig extends OpenStegoConfig {
      * Image file extension to use for writing
      */
     private String imageFileExtension = "png";
-
-    /**
-     * Converts command line options to Map form
-     *
-     * @param options Command-line options
-     * @return Options in Map form
-     * @throws OpenStegoException Processing issues
-     */
-    @Override
-    protected Map<String, Object> convertCmdLineOptionsToMap(CmdLineOptions options) throws OpenStegoException {
-        Map<String, Object> map = super.convertCmdLineOptionsToMap(options);
-
-        if (options.getOption("-i") != null) { // imageFileExtension
-            map.put(IMAGE_FILE_EXTENSION, options.getStringValue("-i"));
-        }
-
-        return map;
-    }
 
     /**
      * Processes a configuration item.

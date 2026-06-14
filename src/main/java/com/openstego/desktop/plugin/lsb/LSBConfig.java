@@ -8,9 +8,6 @@ package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
-
-import java.util.Map;
 
 /**
  * Class to store configuration data for LSB plugin
@@ -29,25 +26,6 @@ public class LSBConfig extends OpenStegoConfig {
      * of the image in case the data size is big.
      */
     private int maxBitsUsedPerChannel = 3;
-
-    /**
-     * Converts command line options to Map form
-     *
-     * @param options Command-line options
-     * @return Options in Map form
-     * @throws OpenStegoException Processing issues
-     */
-    @Override
-    protected Map<String, Object> convertCmdLineOptionsToMap(CmdLineOptions options) throws OpenStegoException {
-        Map<String, Object> map = super.convertCmdLineOptionsToMap(options);
-
-        if (options.getOption("-b") != null) { // maxBitsUsedPerChannel
-            map.put(MAX_BITS_USED_PER_CHANNEL,
-                    options.getIntegerValue("-b", LSBPlugin.NAMESPACE, LSBErrors.MAX_BITS_NOT_NUMBER));
-        }
-
-        return map;
-    }
 
     /**
      * Processes a configuration item.

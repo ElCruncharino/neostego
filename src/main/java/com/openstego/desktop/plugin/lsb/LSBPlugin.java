@@ -7,19 +7,20 @@
 package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.PluginCmdLineOption;
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
-import com.openstego.desktop.util.cmd.CmdLineOption;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Plugin for OpenStego which implements the Least-significant bit algorithm of steganography
@@ -203,13 +204,33 @@ public class LSBPlugin extends DHImagePluginTemplate<LSBConfig> {
     }
 
     /**
-     * Method to populate the standard command-line options used by this plugin
+     * Method to declare the plugin-specific command-line options used by this plugin
      *
-     * @param options Existing command-line options. Plugin-specific options will get added to this list
+     * @return List of plugin-specific command-line option descriptors
      */
     @Override
-    public void populateStdCmdLineOptions(CmdLineOptions options) {
-        options.add("-b", "--maxBitsUsedPerChannel", CmdLineOption.TYPE_OPTION, true);
+    public List<PluginCmdLineOption> getPluginCmdLineOptions() {
+        return Collections.singletonList(
+                new PluginCmdLineOption("-b", "--maxBitsUsedPerChannel", "Maximum bits used per color channel", true));
+    }
+
+    /**
+     * Method to translate parsed plugin-specific command-line values into configuration items
+     *
+     * @param configMap    Configuration map to populate
+     * @param parsedValues Parsed command-line values keyed by option name
+     * @throws OpenStegoException Processing issues
+     */
+    @Override
+    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues) throws OpenStegoException {
+        String maxBits = parsedValues.get("-b");
+        if (maxBits != null) {
+            try {
+                configMap.put(LSBConfig.MAX_BITS_USED_PER_CHANNEL, Integer.parseInt(maxBits.trim()));
+            } catch (NumberFormatException nfEx) {
+                throw new OpenStegoException(nfEx, NAMESPACE, LSBErrors.MAX_BITS_NOT_NUMBER, maxBits);
+            }
+        }
     }
 
     /**
@@ -220,20 +241,6 @@ public class LSBPlugin extends DHImagePluginTemplate<LSBConfig> {
     @Override
     protected LSBConfig createConfig() {
         return new LSBConfig();
-    }
-
-    /**
-     * Method to create configuration data (specific to this plugin) based on the command-line options
-     *
-     * @param options Command-line options
-     * @return Configuration data
-     * @throws OpenStegoException Processing issues
-     */
-    @Override
-    protected LSBConfig createConfig(CmdLineOptions options) throws OpenStegoException {
-        LSBConfig config = new LSBConfig();
-        config.initialize(options);
-        return config;
     }
 
     /**
