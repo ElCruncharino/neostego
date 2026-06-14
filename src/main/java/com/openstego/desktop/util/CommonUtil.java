@@ -8,8 +8,6 @@ package com.openstego.desktop.util;
 
 import com.openstego.desktop.OpenStegoException;
 
-import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,22 +93,6 @@ public class CommonUtil {
             os.write(fileData);
         } catch (IOException ioEx) {
             throw new OpenStegoException(ioEx);
-        }
-    }
-
-    /**
-     * Method to enable/disable a Swing JTextField object
-     *
-     * @param textField Swing JTextField object
-     * @param enabled   Flag to indicate whether to enable or disable the object
-     */
-    public static void setEnabled(JTextField textField, boolean enabled) {
-        if (enabled) {
-            textField.setEnabled(true);
-            textField.setBackground(Color.WHITE);
-        } else {
-            textField.setEnabled(false);
-            textField.setBackground(UIManager.getColor("Panel.background"));
         }
     }
 

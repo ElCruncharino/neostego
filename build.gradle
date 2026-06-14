@@ -81,7 +81,7 @@ jar {
     manifest {
         attributes([
                 'Name'                  : projectName,
-                'Main-Class'            : 'com.openstego.desktop.OpenStego',
+                'Main-Class'            : 'com.openstego.desktop.OpenStegoLauncher',
                 'Implementation-Version': project.version,
                 'Built-By'              : project.author,
                 // Runtime dependencies are bundled alongside openstego.jar in lib/, so the

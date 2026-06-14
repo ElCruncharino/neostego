@@ -9,7 +9,6 @@ package com.openstego.desktop.plugin.lsb;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
-import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
 
 import javax.swing.*;
@@ -106,14 +105,25 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
         JButton coverFileButton = this.stegoUI.getEmbedPanel().getCoverFileButton();
 
         if (this.randomImgCheckBox.isSelected()) {
-            CommonUtil.setEnabled(coverFileTextField, false);
+            setEnabled(coverFileTextField, false);
             coverFileTextField.setText("");
             coverFileButton.setEnabled(false);
         } else {
-            CommonUtil.setEnabled(coverFileTextField, true);
+            setEnabled(coverFileTextField, true);
             coverFileButton.setEnabled(true);
             coverFileTextField.requestFocus();
         }
+    }
+
+    /**
+     * Method to enable/disable a Swing JTextField object
+     *
+     * @param textField Swing JTextField object
+     * @param enabled   Flag to indicate whether to enable or disable the object
+     */
+    private static void setEnabled(JTextField textField, boolean enabled) {
+        textField.setEnabled(enabled);
+        textField.setBackground(enabled ? java.awt.Color.WHITE : javax.swing.UIManager.getColor("Panel.background"));
     }
 
     /**

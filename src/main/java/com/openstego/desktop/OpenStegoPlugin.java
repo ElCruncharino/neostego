@@ -6,8 +6,6 @@
 
 package com.openstego.desktop;
 
-import com.openstego.desktop.ui.OpenStegoFrame;
-import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
 
 import java.util.Collections;
@@ -239,19 +237,6 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      * @throws OpenStegoException Processing issues
      */
     public abstract String getUsage() throws OpenStegoException;
-
-    // ------------- GUI Related Methods -------------
-
-    /**
-     * Method to get the UI object for "Embed" action specific to this plugin. This UI object will be embedded inside
-     * the main OpenStego GUI
-     *
-     * @param stegoFrame Reference to the parent OpenStegoFrame object
-     * @return UI object specific to this plugin for "Embed" action
-     */
-    public PluginEmbedOptionsUI getEmbedOptionsUI(@SuppressWarnings("unused") OpenStegoFrame stegoFrame) {
-        return null;
-    }
 
     // ------------- Config Related Methods -------------
 
