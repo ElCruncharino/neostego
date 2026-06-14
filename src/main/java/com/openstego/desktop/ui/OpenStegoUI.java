@@ -105,6 +105,8 @@ public class OpenStegoUI extends OpenStegoFrame {
         getVerifyWmPanel().getRunVerifyWmButton().addActionListener(listener);
 
         pack();
+        // Make the embed action the default button so Enter triggers it on the initial panel
+        getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation(screenSize.width / 2 - (getWidth() / 2), screenSize.height / 2 - (getHeight() / 2));
     }
@@ -1001,22 +1003,27 @@ public class OpenStegoUI extends OpenStegoFrame {
                         case ActionCommands.SWITCH_DH_EMBED:
                             getMainPanel().add(getEmbedPanel());
                             getHeader().setText(labelUtil.getString("gui.label.panelHeader.dhEmbed"));
+                            getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());
                             break;
                         case ActionCommands.SWITCH_DH_EXTRACT:
                             getMainPanel().add(getExtractPanel());
                             getHeader().setText(labelUtil.getString("gui.label.panelHeader.dhExtract"));
+                            getRootPane().setDefaultButton(getExtractPanel().getRunExtractButton());
                             break;
                         case ActionCommands.SWITCH_WM_GENSIG:
                             getMainPanel().add(getGenSigPanel());
                             getHeader().setText(labelUtil.getString("gui.label.panelHeader.wmGenSig"));
+                            getRootPane().setDefaultButton(getGenSigPanel().getRunGenSigButton());
                             break;
                         case ActionCommands.SWITCH_WM_EMBED:
                             getMainPanel().add(getEmbedWmPanel());
                             getHeader().setText(labelUtil.getString("gui.label.panelHeader.wmEmbed"));
+                            getRootPane().setDefaultButton(getEmbedWmPanel().getRunEmbedWmButton());
                             break;
                         case ActionCommands.SWITCH_WM_VERIFY:
                             getMainPanel().add(getVerifyWmPanel());
                             getHeader().setText(labelUtil.getString("gui.label.panelHeader.wmVerify"));
+                            getRootPane().setDefaultButton(getVerifyWmPanel().getRunVerifyWmButton());
                             break;
                     }
                     getMainPanel().revalidate();

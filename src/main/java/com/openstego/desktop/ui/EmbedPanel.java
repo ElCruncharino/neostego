@@ -241,6 +241,7 @@ public class EmbedPanel extends JPanel {
         if (this.passwordTextField == null) {
             this.passwordTextField = new JPasswordField();
             this.passwordTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);
+            this.passwordTextField.setToolTipText(labelUtil.getString("gui.tooltip.password"));
         }
         return this.passwordTextField;
     }
@@ -254,6 +255,7 @@ public class EmbedPanel extends JPanel {
         if (this.confPasswordTextField == null) {
             this.confPasswordTextField = new JPasswordField();
             this.confPasswordTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);
+            this.confPasswordTextField.setToolTipText(labelUtil.getString("gui.tooltip.confPassword"));
         }
         return this.confPasswordTextField;
     }
