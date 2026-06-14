@@ -104,11 +104,34 @@ public class OpenStegoUI extends OpenStegoFrame {
         getVerifyWmPanel().getSignatureFileButton().addActionListener(listener);
         getVerifyWmPanel().getRunVerifyWmButton().addActionListener(listener);
 
+        // Enable drag-and-drop of files onto the file/folder fields
+        installFileDrop(getEmbedPanel().getMsgFileTextField(), false);
+        installFileDrop(getEmbedPanel().getCoverFileTextField(), true);
+        installFileDrop(getEmbedPanel().getStegoFileTextField(), false);
+        installFileDrop(getExtractPanel().getInputStegoFileTextField(), false);
+        installFileDrop(getExtractPanel().getOutputFolderTextField(), false);
+        installFileDrop(getGenSigPanel().getSignatureFileTextField(), false);
+        installFileDrop(getEmbedWmPanel().getFileForWmTextField(), true);
+        installFileDrop(getEmbedWmPanel().getSignatureFileTextField(), false);
+        installFileDrop(getEmbedWmPanel().getOutputWmFileTextField(), false);
+        installFileDrop(getVerifyWmPanel().getInputFileTextField(), true);
+        installFileDrop(getVerifyWmPanel().getSignatureFileTextField(), false);
+
         pack();
         // Make the embed action the default button so Enter triggers it on the initial panel
         getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
         setLocation(screenSize.width / 2 - (getWidth() / 2), screenSize.height / 2 - (getHeight() / 2));
+    }
+
+    /**
+     * Installs a file drag-and-drop handler on the given text field.
+     *
+     * @param field       Target text field
+     * @param multiSelect Whether multiple dropped files should be accepted (joined with ';')
+     */
+    private void installFileDrop(JTextField field, boolean multiSelect) {
+        field.setTransferHandler(new FileDropTransferHandler(field, multiSelect));
     }
 
     /**
@@ -813,6 +836,13 @@ public class OpenStegoUI extends OpenStegoFrame {
             if ((action.equals(OpenStegoFrame.ActionCommands.BROWSE_DH_EMB_STGFILE) && (coverFileListSize <= 1))
                     || (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_EMB_OUTFILE) && (wmInputFileListSize <= 1))) {
                 if (!plugin.getWritableFileExtensions().contains(fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase())) {
+                    // Replace an existing (unsupported) extension instead of appending a second one,
+                    // so that e.g. "photo.txt" becomes "photo.png" rather than "photo.txt.png"
+                    int dotPos = fileName.lastIndexOf('.');
+                    int sepPos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
+                    if (dotPos > sepPos) {
+                        fileName = fileName.substring(0, dotPos);
+                    }
                     fileName = fileName + "." + plugin.getWritableFileExtensions().get(0);
                 }
             }
