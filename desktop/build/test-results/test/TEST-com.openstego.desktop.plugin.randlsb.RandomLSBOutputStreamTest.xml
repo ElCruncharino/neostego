@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-06-14T21:19:42" hostname="NICK-WINDOWS-PC" time="0.007">
+<testsuite name="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-06-14T23:48:44" hostname="NICK-WINDOWS-PC" time="0.008">
   <properties/>
-  <testcase name="testBestCase()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" time="0.002"/>
-  <testcase name="testImageCapacity()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" time="0.001"/>
+  <testcase name="testBestCase()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" time="0.003"/>
+  <testcase name="testImageCapacity()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" time="0.0"/>
   <testcase name="testEmbedIntoNonRgbBackedImage()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" time="0.002"/>
   <testcase name="testNullImage()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBOutputStreamTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
