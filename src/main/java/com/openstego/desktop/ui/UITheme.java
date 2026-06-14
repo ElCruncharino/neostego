@@ -66,6 +66,8 @@ public class UITheme {
             } else {
                 FlatLightLaf.setup();
             }
+            // Show an integrated reveal (eye) button inside all password fields
+            UIManager.put("PasswordField.showRevealButton", true);
         } catch (Exception ex) {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

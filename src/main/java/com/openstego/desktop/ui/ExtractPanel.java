@@ -99,6 +99,7 @@ public class ExtractPanel extends JPanel {
         if (this.extractPwdTextField == null) {
             this.extractPwdTextField = new JPasswordField();
             this.extractPwdTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);
+            this.extractPwdTextField.setToolTipText(labelUtil.getString("gui.tooltip.extractPassword"));
         }
         return this.extractPwdTextField;
     }
