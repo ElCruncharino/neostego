@@ -99,11 +99,9 @@ public class LSBOutputStream extends OutputStream {
         this.config = config;
         BufferedImage newImg = new BufferedImage(this.imgWidth, this.imgHeight, BufferedImage.TYPE_INT_RGB);
         this.image = new ImageHolder(newImg, image.getMetadata());
-        for (int x = 0; x < this.imgWidth; x++) {
-            for (int y = 0; y < this.imgHeight; y++) {
-                newImg.setRGB(x, y, image.getImage().getRGB(x, y));
-            }
-        }
+        // Bulk-copy all pixels in a single operation (much faster than per-pixel getRGB/setRGB)
+        int[] pixels = image.getImage().getRGB(0, 0, this.imgWidth, this.imgHeight, null, 0, this.imgWidth);
+        newImg.setRGB(0, 0, this.imgWidth, this.imgHeight, pixels, 0, this.imgWidth);
 
         this.channelBitsUsed = 1;
         this.fileName = fileName;
@@ -235,7 +233,7 @@ public class LSBOutputStream extends OutputStream {
             throw new IOException(labelUtil.getString("err.image.insufficientSize"));
         }
 
-        maskPerByte = (int) (Math.pow(2, this.channelBitsUsed) - 1);
+        maskPerByte = (1 << this.channelBitsUsed) - 1;
         mask = (maskPerByte << 16) + (maskPerByte << 8) + maskPerByte;
         pixel = this.image.getImage().getRGB(this.x, this.y) & (0xFFFFFFFF - mask);
 

@@ -16,9 +16,9 @@ import javax.imageio.*;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -53,28 +53,24 @@ public class ImageUtil {
         int height;
         byte[] rgbValue = new byte[3];
         BufferedImage image;
-        SecureRandom random;
+        // Use the platform default SecureRandom; the deprecated "SHA1PRNG" algorithm is not
+        // guaranteed to be available on all JREs.
+        SecureRandom random = new SecureRandom();
 
-        try {
-            random = SecureRandom.getInstance("SHA1PRNG");
+        width = (int) Math.ceil(Math.sqrt(numOfPixels * ASPECT_RATIO));
+        height = (int) Math.ceil(numOfPixels / (double) width);
 
-            width = (int) Math.ceil(Math.sqrt(numOfPixels * ASPECT_RATIO));
-            height = (int) Math.ceil(numOfPixels / (double) width);
-
-            image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-            for (int x = 0; x < width; x++) {
-                for (int y = 0; y < height; y++) {
-                    random.nextBytes(rgbValue);
-                    image.setRGB(x, y, CommonUtil.byteToInt(rgbValue[0]) +
-                            (CommonUtil.byteToInt(rgbValue[1]) << 8) +
-                            (CommonUtil.byteToInt(rgbValue[2]) << 16));
-                }
+        image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                random.nextBytes(rgbValue);
+                image.setRGB(x, y, CommonUtil.byteToInt(rgbValue[0]) +
+                        (CommonUtil.byteToInt(rgbValue[1]) << 8) +
+                        (CommonUtil.byteToInt(rgbValue[2]) << 16));
             }
-
-            return new ImageHolder(image, null);
-        } catch (NoSuchAlgorithmException nsaEx) {
-            throw new OpenStegoException(nsaEx);
         }
+
+        return new ImageHolder(image, null);
     }
 
     /**
@@ -87,7 +83,7 @@ public class ImageUtil {
      * @throws OpenStegoException Processing issues
      */
     public static byte[] imageToByteArray(ImageHolder image, String imageFileName, OpenStegoPlugin<?> plugin) throws OpenStegoException {
-        ByteArrayOutputStream barrOS = new ByteArrayOutputStream();
+        ByteArrayOutputStream barrOS = new ByteArrayOutputStream(32 * 1024);
         String imageType;
 
         if (imageFileName != null) {
@@ -338,14 +334,13 @@ public class ImageUtil {
 
         retImg = new BufferedImage(cropWidth, cropHeight, BufferedImage.TYPE_INT_RGB);
 
-        for (int i = 0; i < cropWidth; i++) {
-            for (int j = 0; j < cropHeight; j++) {
-                if (i < width && j < height) {
-                    retImg.setRGB(i, j, image.getImage().getRGB(i, j));
-                } else {
-                    retImg.setRGB(i, j, 0);
-                }
-            }
+        // Bulk-copy the overlapping region in a single operation; the remaining area stays black
+        // (the default value for a TYPE_INT_RGB image), matching the original padding behavior.
+        int copyWidth = Math.min(width, cropWidth);
+        int copyHeight = Math.min(height, cropHeight);
+        if (copyWidth > 0 && copyHeight > 0) {
+            int[] pixels = image.getImage().getRGB(0, 0, copyWidth, copyHeight, null, 0, copyWidth);
+            retImg.setRGB(0, 0, copyWidth, copyHeight, pixels, 0, copyWidth);
         }
 
         image.setImage(retImg);
@@ -409,12 +404,14 @@ public class ImageUtil {
         if ("jpeg".equals(imageType) || "jpg".equals(imageType)) {
             writeJpegImage(image, os);
         } else {
-            try {
-                ImageWriter writer = ImageIO.getImageWritersByFormatName(imageType).next();
-                writer.setOutput(ImageIO.createImageOutputStream(os));
+            ImageWriter writer = ImageIO.getImageWritersByFormatName(imageType).next();
+            try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {
+                writer.setOutput(imgOS);
                 writer.write(null, new IIOImage(image.getImage(), null, image.getMetadata()), null);
             } catch (IOException e) {
                 throw new OpenStegoException(e);
+            } finally {
+                writer.dispose();
             }
         }
     }
@@ -431,57 +428,65 @@ public class ImageUtil {
             jpegParams.setCompressionQuality(qual);
 
             ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
-            writer.setOutput(ImageIO.createImageOutputStream(os));
+            try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {
+                writer.setOutput(imgOS);
 
-            // We only copy over EXIF data from original file
-            IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(image.getImage()), jpegParams);
-            String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();
-            Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);
-            Node mdNode = mdRoot.getFirstChild();
-            while (mdNode != null) {
-                if ("markerSequence".equals(mdNode.getNodeName())) {
-                    Node marker = mdNode.getFirstChild();
-                    while (marker != null) {
-                        Node next = marker.getNextSibling();
-                        // Remove all markers other than EXIF (225)
-                        if (marker.getAttributes().getNamedItem("MarkerTag") == null
-                                || !"225".equals(marker.getAttributes().getNamedItem("MarkerTag").getNodeValue())) {
-                            mdNode.removeChild(marker);
+                // We only copy over EXIF data from original file
+                IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(image.getImage()), jpegParams);
+                String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();
+                Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);
+                Node mdNode = mdRoot.getFirstChild();
+                while (mdNode != null) {
+                    if ("markerSequence".equals(mdNode.getNodeName())) {
+                        Node marker = mdNode.getFirstChild();
+                        while (marker != null) {
+                            Node next = marker.getNextSibling();
+                            // Remove all markers other than EXIF (225)
+                            if (marker.getAttributes().getNamedItem("MarkerTag") == null
+                                    || !"225".equals(marker.getAttributes().getNamedItem("MarkerTag").getNodeValue())) {
+                                mdNode.removeChild(marker);
+                            }
+                            marker = next;
                         }
-                        marker = next;
+                        break;
                     }
-                    break;
+                    mdNode = mdNode.getNextSibling();
                 }
-                mdNode = mdNode.getNextSibling();
-            }
-            metadata.mergeTree(metadataFormatName, mdRoot);
+                metadata.mergeTree(metadataFormatName, mdRoot);
 
-            writer.write(null, new IIOImage(image.getImage(), null, metadata), jpegParams);
+                writer.write(null, new IIOImage(image.getImage(), null, metadata), jpegParams);
+            } finally {
+                writer.dispose();
+            }
         } catch (IOException e) {
             throw new OpenStegoException(e);
         }
     }
 
     private static ImageHolder readImage(InputStream is) throws OpenStegoException {
-        try {
-            ImageInputStream imageIS = ImageIO.createImageInputStream(is);
+        try (ImageInputStream imageIS = ImageIO.createImageInputStream(is)) {
             Iterator<ImageReader> readers = ImageIO.getImageReaders(imageIS);
             if (!readers.hasNext()) {
                 return null;
             }
 
             ImageReader reader = readers.next();
-            reader.setInput(imageIS);
-            BufferedImage image = reader.read(0);
-            IIOMetadata metadata;
             try {
-                metadata = reader.getImageMetadata(0);
-            } catch (IOException e) {
-                ImageWriter writer = ImageIO.getImageWriter(reader);
-                ImageWriteParam param = writer.getDefaultWriteParam();
-                metadata = writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(image), param);
+                reader.setInput(imageIS);
+                BufferedImage image = reader.read(0);
+                IIOMetadata metadata;
+                try {
+                    metadata = reader.getImageMetadata(0);
+                } catch (IOException e) {
+                    ImageWriter writer = ImageIO.getImageWriter(reader);
+                    ImageWriteParam param = writer.getDefaultWriteParam();
+                    metadata = writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(image), param);
+                    writer.dispose();
+                }
+                return new ImageHolder(image, metadata);
+            } finally {
+                reader.dispose();
             }
-            return new ImageHolder(image, metadata);
         } catch (IOException e) {
             throw new OpenStegoException(e);
         }

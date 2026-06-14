@@ -12,6 +12,7 @@ import com.openstego.desktop.util.CommonUtil;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * This class holds the header data for the data that needs to be embedded in the image.
@@ -106,12 +107,12 @@ public class LSBDataHeader {
 
         try {
             n = dataInStream.read(stamp, 0, stampLen);
-            if (n == -1 || !(new String(stamp)).equals(new String(DATA_STAMP))) {
+            if (n == -1 || !Arrays.equals(stamp, DATA_STAMP)) {
                 throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_STEGO_HEADER);
             }
 
             n = dataInStream.read(version, 0, versionLen);
-            if (n == -1 || !(new String(version)).equals(new String(HEADER_VERSION))) {
+            if (n == -1 || !Arrays.equals(version, HEADER_VERSION)) {
                 throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_HEADER_VERSION);
             }
 
@@ -122,7 +123,8 @@ public class LSBDataHeader {
             this.dataLength = (CommonUtil.byteToInt(header[0]) + (CommonUtil.byteToInt(header[1]) << 8) + (CommonUtil.byteToInt(header[2]) << 16)
                     + (CommonUtil.byteToInt(header[3]) << 24));
             channelBits = header[4];
-            fileNameLen = header[5];
+            // Read filename length as an unsigned byte so that names of 128-255 bytes are handled correctly
+            fileNameLen = header[5] & 0xFF;
             config.setUseCompression(header[6] == 1);
             config.setUseEncryption(header[7] == 1);
 
@@ -130,7 +132,7 @@ public class LSBDataHeader {
             if (n < CRYPT_ALGO_LENGTH) {
                 throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_STEGO_HEADER);
             }
-            config.setEncryptionAlgorithm(new String(cryptAlgo).trim());
+            config.setEncryptionAlgorithm(new String(cryptAlgo, StandardCharsets.UTF_8).trim());
 
             if (fileNameLen == 0) {
                 this.fileName = new byte[0];
