@@ -20,10 +20,30 @@ Changes in this fork:
   iteration count, combined with AES-GCM authenticated encryption. Data encrypted by older versions
   is still decrypted automatically. New encrypted output is therefore not readable by stock upstream
   OpenStego; pass `--legacyencrypt` (CLI) to write the original format when interoperability is needed.
+- A more detection-resistant data-hiding algorithm: `RandomLSBMatch` uses LSB matching (&plusmn;1)
+  instead of LSB replacement, which defeats the structural artifacts that RS / Sample-Pair /
+  Chi-square steganalysis (e.g. StegExpose) rely on, while staying readable by the normal extractor.
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
   deprecation warnings.
+- Restructured into Gradle modules so the steganography/crypto logic can be reused beyond the desktop:
+  - `core` &mdash; platform-independent algorithms, crypto and plugin SPI (no AWT/Swing).
+  - `desktop` &mdash; the Swing GUI and command-line interface.
+  - `android` &mdash; a Kotlin/Jetpack&nbsp;Compose Android app (hide/reveal + encryption) built on `core`.
+
+## Building
+
+Desktop application and CLI distribution:
+```
+./gradlew clean :desktop:dist        (Linux / macOS)
+gradlew clean :desktop:dist          (Windows)
+```
+
+Android debug APK (requires an Android SDK; set its path in `local.properties` as `sdk.dir=...`):
+```
+./gradlew :android:assembleDebug
+```
 
 ## Usage
 
