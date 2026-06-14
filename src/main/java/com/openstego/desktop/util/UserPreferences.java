@@ -12,6 +12,7 @@ import com.openstego.desktop.OpenStegoException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -26,6 +27,7 @@ public class UserPreferences {
     private static final String PREF_FILENAME = "openstego.cfg";
     private static final String DEFAULT_PREF_FILENAME = "openstego.default.cfg";
     private static Properties prefs = null;
+    private static Path prefFilePath = null;
 
     /**
      * Protected constructor. Expose only static methods
@@ -62,6 +64,7 @@ public class UserPreferences {
 
             // Create preference file if it does not exist
             Path prefFile = configPath.resolve(PREF_FILENAME);
+            prefFilePath = prefFile;
             if (Files.notExists(prefFile)) {
                 // First check if old style "openstego.ini" file is present in user home
                 Path oldPrefFile = Paths.get(userHome, "openstego.ini");
@@ -97,6 +100,35 @@ public class UserPreferences {
             return null;
         }
         return val.trim();
+    }
+
+    /**
+     * Sets a user preference value in memory. Call {@link #save()} to persist it to disk.
+     *
+     * @param key   Preference key
+     * @param value Preference value
+     */
+    public static void put(String key, String value) {
+        if (prefs == null) {
+            return;
+        }
+        prefs.setProperty(key, value);
+    }
+
+    /**
+     * Persists the current preferences to the user's preference file.
+     *
+     * @throws OpenStegoException Processing issues
+     */
+    public static void save() throws OpenStegoException {
+        if (prefs == null || prefFilePath == null) {
+            return;
+        }
+        try (OutputStream prefFileOS = Files.newOutputStream(prefFilePath)) {
+            prefs.store(prefFileOS, "OpenStego user preferences");
+        } catch (IOException e) {
+            throw new OpenStegoException(e);
+        }
     }
 
     /**

@@ -12,8 +12,6 @@ import com.openstego.desktop.util.LabelUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.metal.MetalLookAndFeel;
-import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Enumeration;
@@ -26,7 +24,6 @@ import java.util.Objects;
  */
 public class OpenStegoFrame extends JFrame {
     private static final long serialVersionUID = -880718904125121559L;
-    private static final boolean toggleUiHack = false;
 
     /**
      * LabelUtil instance to retrieve labels
@@ -45,6 +42,9 @@ public class OpenStegoFrame extends JFrame {
     private JMenuBar topMenuBar;
     private JMenu fileMenu;
     private JMenuItem fileExitMenuItem;
+    private JMenu viewMenu;
+    private JRadioButtonMenuItem themeLightMenuItem;
+    private JRadioButtonMenuItem themeDarkMenuItem;
     private JMenu helpMenu;
     private JMenuItem helpAboutMenuItem;
 
@@ -92,6 +92,7 @@ public class OpenStegoFrame extends JFrame {
         if (this.topMenuBar == null) {
             this.topMenuBar = new JMenuBar();
             this.topMenuBar.add(getFileMenu());
+            this.topMenuBar.add(getViewMenu());
             this.topMenuBar.add(getHelpMenu());
         }
         return this.topMenuBar;
@@ -122,6 +123,56 @@ public class OpenStegoFrame extends JFrame {
             this.fileExitMenuItem.setMnemonic(KeyEvent.VK_X);
         }
         return this.fileExitMenuItem;
+    }
+
+    /**
+     * Getter method for viewMenu
+     *
+     * @return viewMenu
+     */
+    public JMenu getViewMenu() {
+        if (this.viewMenu == null) {
+            this.viewMenu = new JMenu(labelUtil.getString("gui.menu.view"));
+            this.viewMenu.setMnemonic(KeyEvent.VK_V);
+
+            JMenu themeMenu = new JMenu(labelUtil.getString("gui.menu.view.theme"));
+            ButtonGroup themeGroup = new ButtonGroup();
+            themeGroup.add(getThemeLightMenuItem());
+            themeGroup.add(getThemeDarkMenuItem());
+            themeMenu.add(getThemeLightMenuItem());
+            themeMenu.add(getThemeDarkMenuItem());
+
+            this.viewMenu.add(themeMenu);
+        }
+        return this.viewMenu;
+    }
+
+    /**
+     * Getter method for themeLightMenuItem
+     *
+     * @return themeLightMenuItem
+     */
+    public JRadioButtonMenuItem getThemeLightMenuItem() {
+        if (this.themeLightMenuItem == null) {
+            this.themeLightMenuItem = new JRadioButtonMenuItem(labelUtil.getString("gui.menu.view.theme.light"));
+            this.themeLightMenuItem.setSelected(UITheme.LIGHT.equals(UITheme.current()));
+            this.themeLightMenuItem.addActionListener(e -> UITheme.switchTo(UITheme.LIGHT));
+        }
+        return this.themeLightMenuItem;
+    }
+
+    /**
+     * Getter method for themeDarkMenuItem
+     *
+     * @return themeDarkMenuItem
+     */
+    public JRadioButtonMenuItem getThemeDarkMenuItem() {
+        if (this.themeDarkMenuItem == null) {
+            this.themeDarkMenuItem = new JRadioButtonMenuItem(labelUtil.getString("gui.menu.view.theme.dark"));
+            this.themeDarkMenuItem.setSelected(UITheme.DARK.equals(UITheme.current()));
+            this.themeDarkMenuItem.addActionListener(e -> UITheme.switchTo(UITheme.DARK));
+        }
+        return this.themeDarkMenuItem;
     }
 
     /**
@@ -262,9 +313,6 @@ public class OpenStegoFrame extends JFrame {
         if (this.embedButton == null) {
             this.embedButton = new JToggleButton(labelUtil.getString("gui.label.tab.dhEmbed"),
                     new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/EmbedIcon.png"))), true);
-            if (toggleUiHack) {
-                this.embedButton.setUI(new MetalToggleButtonUI());
-            }
             this.embedButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.embedButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.embedButton.setFocusable(false);
@@ -282,9 +330,6 @@ public class OpenStegoFrame extends JFrame {
         if (this.extractButton == null) {
             this.extractButton = new JToggleButton(labelUtil.getString("gui.label.tab.dhExtract"),
                     new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/ExtractIcon.png"))));
-            if (toggleUiHack) {
-                this.extractButton.setUI(new MetalToggleButtonUI());
-            }
             this.extractButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.extractButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.extractButton.setFocusable(false);
@@ -302,9 +347,6 @@ public class OpenStegoFrame extends JFrame {
         if (this.genSigButton == null) {
             this.genSigButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmGenSig"),
                     new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/EmbedIcon.png")))); // TODO
-            if (toggleUiHack) {
-                this.genSigButton.setUI(new MetalToggleButtonUI());
-            }
             this.genSigButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.genSigButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.genSigButton.setFocusable(false);
@@ -322,9 +364,6 @@ public class OpenStegoFrame extends JFrame {
         if (this.signWmButton == null) {
             this.signWmButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmEmbed"),
                     new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/EmbedIcon.png")))); // TODO
-            if (toggleUiHack) {
-                this.signWmButton.setUI(new MetalToggleButtonUI());
-            }
             this.signWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.signWmButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.signWmButton.setFocusable(false);
@@ -342,9 +381,6 @@ public class OpenStegoFrame extends JFrame {
         if (this.verifyWmButton == null) {
             this.verifyWmButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmVerify"),
                     new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/ExtractIcon.png")))); // TODO
-            if (toggleUiHack) {
-                this.verifyWmButton.setUI(new MetalToggleButtonUI());
-            }
             this.verifyWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.verifyWmButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.verifyWmButton.setFocusable(false);
@@ -483,9 +519,6 @@ public class OpenStegoFrame extends JFrame {
      * initialize the form.
      */
     private void initialize() {
-        if (toggleUiHack) {
-            UIManager.put("ToggleButton.select", new MetalLookAndFeel().getDefaults().getColor("ToggleButton.select").darker());
-        }
         this.setContentPane(getMainContentPane());
         this.setTitle(labelUtil.getString("gui.window.title"));
         this.setJMenuBar(getTopMenuBar());

@@ -7,12 +7,12 @@
 package com.openstego.desktop;
 
 import com.openstego.desktop.ui.OpenStegoUI;
+import com.openstego.desktop.ui.UITheme;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.PluginManager;
 import com.openstego.desktop.util.UserPreferences;
 
-import javax.swing.*;
 import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -343,11 +343,8 @@ public class OpenStego {
             UserPreferences.init();
 
             if (args.length == 0) { // Start GUI
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (Exception e) {
-                    // Ignore
-                }
+                // Apply the modern FlatLaf look-and-feel using the saved theme preference
+                UITheme.install(UITheme.current());
                 // Determine default DH and WM plugins
                 OpenStegoPlugin<?> dhPlugin = PluginManager.getPluginByName("RandomLSB");
                 OpenStegoPlugin<?> wmPlugin = PluginManager.getPluginByName("DWTDugad");
