@@ -8,10 +8,9 @@ package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.util.ImageHolder;
+import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.LabelUtil;
 
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -27,7 +26,7 @@ public class LSBOutputStream extends OutputStream {
     /**
      * Output Image data
      */
-    private final ImageHolder image;
+    private final PixelImage image;
 
     /**
      * Number of bits used per color channel
@@ -88,20 +87,17 @@ public class LSBOutputStream extends OutputStream {
      * @param config     Configuration data to use while writing
      * @throws OpenStegoException Processing issues
      */
-    public LSBOutputStream(ImageHolder image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
-        if (image == null || image.getImage() == null) {
+    public LSBOutputStream(PixelImage image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
+        if (image == null) {
             throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.NULL_IMAGE_ARGUMENT);
         }
 
         this.dataLength = dataLength;
-        this.imgWidth = image.getImage().getWidth();
-        this.imgHeight = image.getImage().getHeight();
+        this.imgWidth = image.getWidth();
+        this.imgHeight = image.getHeight();
         this.config = config;
-        BufferedImage newImg = new BufferedImage(this.imgWidth, this.imgHeight, BufferedImage.TYPE_INT_RGB);
-        this.image = new ImageHolder(newImg, image.getMetadata());
-        // Bulk-copy all pixels in a single operation (much faster than per-pixel getRGB/setRGB)
-        int[] pixels = image.getImage().getRGB(0, 0, this.imgWidth, this.imgHeight, null, 0, this.imgWidth);
-        newImg.setRGB(0, 0, this.imgWidth, this.imgHeight, pixels, 0, this.imgWidth);
+        // The codec provides a mutable RGB image; embed directly into it
+        this.image = image;
 
         this.channelBitsUsed = 1;
         this.fileName = fileName;
@@ -208,7 +204,7 @@ public class LSBOutputStream extends OutputStream {
      * @return Image data
      * @throws OpenStegoException Processing issues
      */
-    public ImageHolder getImage() throws OpenStegoException {
+    public PixelImage getImage() throws OpenStegoException {
         try {
             flush();
         } catch (IOException ioEx) {
@@ -235,7 +231,7 @@ public class LSBOutputStream extends OutputStream {
 
         maskPerByte = (1 << this.channelBitsUsed) - 1;
         mask = (maskPerByte << 16) + (maskPerByte << 8) + maskPerByte;
-        pixel = this.image.getImage().getRGB(this.x, this.y) & (0xFFFFFFFF - mask);
+        pixel = this.image.getRGB(this.x, this.y) & (0xFFFFFFFF - mask);
 
         for (int bit = 0; bit < 3; bit++) {
             bitOffset = 0;
@@ -244,7 +240,7 @@ public class LSBOutputStream extends OutputStream {
             }
             offset = (offset << 8) + bitOffset;
         }
-        this.image.getImage().setRGB(this.x, this.y, pixel + offset);
+        this.image.setRGB(this.x, this.y, pixel + offset);
     }
 
     /**

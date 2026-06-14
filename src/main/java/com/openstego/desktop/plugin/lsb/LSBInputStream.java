@@ -8,7 +8,7 @@ package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.util.ImageHolder;
+import com.openstego.desktop.image.PixelImage;
 
 import java.io.InputStream;
 
@@ -19,7 +19,7 @@ public class LSBInputStream extends InputStream {
     /**
      * Image data
      */
-    private final ImageHolder image;
+    private final PixelImage image;
 
     /**
      * Data header
@@ -68,8 +68,8 @@ public class LSBInputStream extends InputStream {
      * @param config Configuration data to use while reading
      * @throws OpenStegoException Processing issues
      */
-    public LSBInputStream(ImageHolder image, OpenStegoConfig config) throws OpenStegoException {
-        if (image == null || image.getImage() == null) {
+    public LSBInputStream(PixelImage image, OpenStegoConfig config) throws OpenStegoException {
+        if (image == null) {
             throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.NULL_IMAGE_ARGUMENT);
         }
 
@@ -77,8 +77,8 @@ public class LSBInputStream extends InputStream {
         this.channelBitsUsed = 1;
         this.config = config;
 
-        this.imgWidth = image.getImage().getWidth();
-        this.imgHeight = image.getImage().getHeight();
+        this.imgWidth = image.getWidth();
+        this.imgHeight = image.getHeight();
         readHeader();
     }
 
@@ -116,7 +116,7 @@ public class LSBInputStream extends InputStream {
         }
 
         for (int i = 0; i < bitSet.length; i++) {
-            pixel = this.image.getImage().getRGB(this.x, this.y);
+            pixel = this.image.getRGB(this.x, this.y);
             bitSet[i] = getCurrBitFromPixel(pixel);
 
             this.currBit++;

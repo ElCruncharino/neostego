@@ -83,12 +83,25 @@ public class ImageUtil {
      * @throws OpenStegoException Processing issues
      */
     public static byte[] imageToByteArray(ImageHolder image, String imageFileName, OpenStegoPlugin<?> plugin) throws OpenStegoException {
+        return imageToByteArray(image, imageFileName, plugin.getWritableFileExtensions());
+    }
+
+    /**
+     * Method to convert BufferedImage to byte array
+     *
+     * @param image          Image data
+     * @param imageFileName  Name of the image file
+     * @param writableFormats List of writable file extensions to validate against
+     * @return Image data as byte array
+     * @throws OpenStegoException Processing issues
+     */
+    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, List<String> writableFormats) throws OpenStegoException {
         ByteArrayOutputStream barrOS = new ByteArrayOutputStream(32 * 1024);
         String imageType;
 
         if (imageFileName != null) {
             imageType = imageFileName.substring(imageFileName.lastIndexOf('.') + 1).toLowerCase();
-            if (!plugin.getWritableFileExtensions().contains(imageType)) {
+            if (!writableFormats.contains(imageType)) {
                 throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_TYPE_INVALID, imageType);
             }
             if (imageType.equals("jp2")) {
