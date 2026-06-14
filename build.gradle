@@ -13,8 +13,7 @@ import java.text.SimpleDateFormat
 plugins {
     id 'java'
     id 'jacoco'
-    id 'nebula.deb' version '8.4.1'
-    id 'nebula.rpm' version '8.4.1'
+    id 'com.netflix.nebula.ospackage' version '11.10.0'
 }
 
 String projectName = 'OpenStego'
@@ -54,16 +53,19 @@ sourceSets {
 }
 
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.9.0'
-    testImplementation 'org.mockito:mockito-core:4.8.0'
-    testImplementation 'org.mockito:mockito-junit-jupiter:4.8.0'
+    implementation 'com.formdev:flatlaf:3.6'
 
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
 }
 
-compileJava {
-    sourceCompatibility = '8'
-    targetCompatibility = '8'
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 processResources {
@@ -79,7 +81,10 @@ jar {
                 'Name'                  : projectName,
                 'Main-Class'            : 'com.openstego.desktop.OpenStego',
                 'Implementation-Version': project.version,
-                'Built-By'              : project.author
+                'Built-By'              : project.author,
+                // Runtime dependencies are bundled alongside openstego.jar in lib/, so the
+                // Class-Path is resolved relative to the jar's own directory (lib/).
+                'Class-Path'            : configurations.runtimeClasspath.collect { it.name }.join(' ')
         ])
     }
 }
@@ -119,7 +124,8 @@ javadoc {
 
 tasks.register("run", JavaExec) {
     dependsOn jar
-    classpath = files(tasks.jar)
+    classpath = files(tasks.jar) + configurations.runtimeClasspath
+    mainClass = 'com.openstego.desktop.OpenStego'
 }
 
 tasks.register("distBase", Copy) {
@@ -141,6 +147,11 @@ tasks.register("distBase", Copy) {
         fileMode 0755
     }
     from(tasks.jar) {
+        into 'lib'
+    }
+    // Bundle runtime dependencies (e.g. FlatLaf) next to openstego.jar so the manifest
+    // Class-Path resolves them when launched via "java -jar lib/openstego.jar".
+    from(configurations.runtimeClasspath) {
         into 'lib'
     }
 }
