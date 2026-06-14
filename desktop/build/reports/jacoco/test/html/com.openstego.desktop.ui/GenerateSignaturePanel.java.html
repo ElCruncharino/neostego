@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenerateSignaturePanel.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.ui</a> &gt; <span class="el_source">GenerateSignaturePanel.java</span></div><h1>GenerateSignaturePanel.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+package com.openstego.desktop.ui;
+
+import com.openstego.desktop.OpenStego;
+import com.openstego.desktop.util.LabelUtil;
+
+import javax.swing.*;
+import java.awt.*;
+
+/**
+ * Panel for &quot;Generate Signature&quot;
+ */
+public class GenerateSignaturePanel extends JPanel {
+    private static final long serialVersionUID = -2146138875457797980L;
+
+    /**
+     * LabelUtil instance to retrieve labels
+     */
+<span class="nc" id="L23">    private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);</span>
+
+    private JTextField inputKeyTextField;
+    private JTextField signatureFileTextField;
+    private JButton signatureFileButton;
+    private JButton runGenSigButton;
+
+    /**
+     * Default constructor
+     */
+    public GenerateSignaturePanel() {
+<span class="nc" id="L34">        super();</span>
+<span class="nc" id="L35">        initialize();</span>
+<span class="nc" id="L36">    }</span>
+
+    /**
+     * Get method for &quot;Input Key&quot; text field
+     *
+     * @return inputKeyTextField
+     */
+    public JTextField getInputKeyTextField() {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">        if (this.inputKeyTextField == null) {</span>
+<span class="nc" id="L45">            this.inputKeyTextField = new JTextField();</span>
+        }
+<span class="nc" id="L47">        return this.inputKeyTextField;</span>
+    }
+
+    /**
+     * Getter method for signatureFileTextField
+     *
+     * @return signatureFileTextField
+     */
+    public JTextField getSignatureFileTextField() {
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        if (this.signatureFileTextField == null) {</span>
+<span class="nc" id="L57">            this.signatureFileTextField = new JTextField();</span>
+<span class="nc" id="L58">            this.signatureFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
+        }
+<span class="nc" id="L60">        return this.signatureFileTextField;</span>
+    }
+
+    /**
+     * Getter method for signatureFileButton
+     *
+     * @return signatureFileButton
+     */
+    public JButton getSignatureFileButton() {
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (this.signatureFileButton == null) {</span>
+<span class="nc" id="L70">            this.signatureFileButton = new JButton();</span>
+<span class="nc" id="L71">            this.signatureFileButton.setText(&quot;...&quot;);</span>
+        }
+<span class="nc" id="L73">        return this.signatureFileButton;</span>
+    }
+
+    /**
+     * Get method for GenSig &quot;OK&quot; button
+     *
+     * @return runGenSigButton
+     */
+    public JButton getRunGenSigButton() {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (this.runGenSigButton == null) {</span>
+<span class="nc" id="L83">            this.runGenSigButton = new JButton();</span>
+<span class="nc" id="L84">            this.runGenSigButton.setText(labelUtil.getString(&quot;gui.button.wmGenSig.run&quot;));</span>
+        }
+<span class="nc" id="L86">        return this.runGenSigButton;</span>
+    }
+
+    private void initialize() {
+        JLabel label;
+<span class="nc" id="L91">        setLayout(new GridBagLayout());</span>
+
+<span class="nc" id="L93">        GridBagConstraints gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L94">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L95">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L96">        gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L97">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L98">        gridBagConstraints.gridy = 1;</span>
+<span class="nc" id="L99">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
+<span class="nc" id="L100">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L101">        label = new JLabel(labelUtil.getString(&quot;gui.label.wmGenSig.inputKey&quot;));</span>
+<span class="nc" id="L102">        label.setLabelFor(getInputKeyTextField());</span>
+<span class="nc" id="L103">        add(label, gridBagConstraints);</span>
+
+<span class="nc" id="L105">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L106">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L107">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L108">        gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L109">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L110">        gridBagConstraints.gridy = 2;</span>
+<span class="nc" id="L111">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
+<span class="nc" id="L112">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L113">        add(getInputKeyTextField(), gridBagConstraints);</span>
+
+<span class="nc" id="L115">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L116">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L117">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L118">        gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L119">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L120">        gridBagConstraints.gridy = 3;</span>
+<span class="nc" id="L121">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
+<span class="nc" id="L122">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L123">        label = new JLabel(labelUtil.getString(&quot;gui.label.wmGenSig.sigFile&quot;));</span>
+<span class="nc" id="L124">        label.setLabelFor(getSignatureFileTextField());</span>
+<span class="nc" id="L125">        add(label, gridBagConstraints);</span>
+
+<span class="nc" id="L127">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L128">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L129">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L130">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L131">        gridBagConstraints.gridy = 4;</span>
+<span class="nc" id="L132">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
+<span class="nc" id="L133">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L134">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L135">        add(getSignatureFileTextField(), gridBagConstraints);</span>
+
+<span class="nc" id="L137">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L138">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L139">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
+<span class="nc" id="L140">        gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L141">        gridBagConstraints.gridy = 4;</span>
+<span class="nc" id="L142">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L143">        gridBagConstraints.weightx = 0.0;</span>
+<span class="nc" id="L144">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L145">        add(getSignatureFileButton(), gridBagConstraints);</span>
+
+<span class="nc" id="L147">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L148">        gridBagConstraints.anchor = GridBagConstraints.EAST;</span>
+<span class="nc" id="L149">        gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L150">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L151">        gridBagConstraints.gridy = 5;</span>
+<span class="nc" id="L152">        gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L153">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L154">        add(getRunGenSigButton(), gridBagConstraints);</span>
+
+        // Dummy padding
+<span class="nc" id="L157">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L158">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L159">        gridBagConstraints.gridy = 6;</span>
+<span class="nc" id="L160">        gridBagConstraints.weighty = 1.0;</span>
+<span class="nc" id="L161">        add(new JLabel(&quot; &quot;), gridBagConstraints);</span>
+<span class="nc" id="L162">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

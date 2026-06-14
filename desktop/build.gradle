@@ -1,0 +1,265 @@
+/*
+ * Steganography utility to hide messages into cover files
+ * Copyright (c) Samir Vaidya (mailto:syvaidya@gmail.com)
+ *
+ * Desktop application: Swing GUI + command-line interface, built on the platform-independent :core.
+ */
+
+import org.apache.tools.ant.filters.FixCrLfFilter
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.apache.tools.ant.taskdefs.condition.Os
+
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.netflix.nebula.ospackage' version '11.10.0'
+}
+
+String projectName = 'OpenStego'
+File distBaseDir = layout.buildDirectory.dir('distributions/package').get().asFile
+String currYear = new SimpleDateFormat('yyyy').format(new Date())
+def filterTokens = [
+        'app.name'    : projectName,
+        'app.version' : project.version.toString(),
+        'author.name' : project.author,
+        'author.mail' : project.authorMail,
+        'homepage.url': project.homepageUrl,
+        'time.year'   : currYear
+]
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            exclude 'com/openstego/desktop/plugin/dctlsb/**'
+            exclude 'com/openstego/desktop/plugin/dwtkim/**'
+            exclude 'com/openstego/desktop/plugin/dwtxie/**'
+            exclude 'com/openstego/desktop/plugin/template/dct/**'
+            exclude 'com/openstego/desktop/util/dct/**'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    implementation 'com.formdev:flatlaf:3.6'
+    implementation 'info.picocli:picocli:4.7.6'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.3'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+processResources {
+    filesMatching('**/*.properties') {
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+}
+
+jar {
+    archiveFileName = 'openstego.jar'
+    manifest {
+        attributes([
+                'Name'                  : projectName,
+                'Main-Class'            : 'com.openstego.desktop.OpenStegoLauncher',
+                'Implementation-Version': project.version,
+                'Built-By'              : project.author,
+                // Runtime dependencies (core + FlatLaf + picocli) are bundled alongside openstego.jar
+                // in lib/, so the Class-Path is resolved relative to the jar's own directory (lib/).
+                'Class-Path'            : configurations.runtimeClasspath.collect { it.name }.join(' ')
+        ])
+    }
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+    }
+}
+
+tasks.register("run", JavaExec) {
+    dependsOn jar
+    classpath = files(tasks.jar) + configurations.runtimeClasspath
+    mainClass = 'com.openstego.desktop.OpenStegoLauncher'
+}
+
+tasks.register("distBase", Copy) {
+    dependsOn jar
+    destinationDir = distBaseDir
+
+    from(rootDir) {
+        include 'LICENSE'
+    }
+    from('src/main/dist') {
+        exclude '**/*.sh'
+        filesNotMatching('**/*.ico') {
+            filter(ReplaceTokens, tokens: filterTokens)
+        }
+    }
+    from('src/main/dist') {
+        include '**/*.sh'
+        filter(ReplaceTokens, tokens: filterTokens)
+        filePermissions { unix(0755) }
+    }
+    from(tasks.jar) {
+        into 'lib'
+    }
+    // Bundle runtime dependencies (core, FlatLaf, picocli) next to openstego.jar so the manifest
+    // Class-Path resolves them when launched via "java -jar lib/openstego.jar".
+    from(configurations.runtimeClasspath) {
+        into 'lib'
+    }
+}
+
+tasks.register("distBin", Zip) {
+    dependsOn distBase
+    from distBaseDir
+    into projectName + '-' + project.version
+}
+
+tasks.register("distWin", Exec) {
+    dependsOn distBase
+
+    onlyIf {
+        Os.isFamily(Os.FAMILY_WINDOWS)
+    }
+
+    doFirst {
+        copy {
+            from 'artifacts/installer.iss'
+            into layout.buildDirectory.dir('generated')
+            filter(ReplaceTokens, tokens: [
+                    'AppName'    : projectName,
+                    'AppVersion' : project.version,
+                    'AuthorName' : project.author,
+                    'HomepageUrl': project.homepageUrl,
+                    'AppDir'     : distBaseDir.path,
+                    'DistDir'    : layout.buildDirectory.dir('distributions').get().asFile.path
+            ])
+        }
+    }
+
+    workingDir layout.buildDirectory.get().asFile
+    commandLine 'cmd', '/c', 'iscc', 'generated\\installer.iss', '/Q'
+}
+
+tasks.register("distDeb", Deb) {
+    dependsOn distBase
+    packageName = projectName
+    summary = projectName
+    release = 1
+    packageGroup = 'utils'
+    maintainer = "${author} (${authorMail})"
+    url = project.homepageUrl
+    requires('default-jre').or('java8-runtime')
+
+    into '/usr/share'
+    from(distBaseDir) {
+        into projectName
+        include 'lib/**'
+    }
+    from(distBaseDir) {
+        into projectName
+        include 'openstego.sh'
+        rename('openstego.sh', 'openstego')
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filePermissions { unix(0755) }
+    }
+    from('artifacts') {
+        into 'applications'
+        include 'openstego.desktop'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+    from('artifacts') {
+        into 'icons/hicolor/scalable/apps'
+        include 'openstego.svg'
+    }
+    from(distBaseDir) {
+        into 'doc/' + projectName
+        include 'README'
+    }
+    from('artifacts') {
+        into 'doc/' + projectName
+        include 'copyright'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+
+    link('/usr/bin/openstego', '/usr/share/openstego/openstego')
+}
+
+tasks.register("distRpm", Rpm) {
+    dependsOn distBase
+    packageName = projectName
+    summary = projectName
+    release = 1
+    packageGroup = 'utils'
+    packager = "${author} (${authorMail})"
+    url = project.homepageUrl
+    user = 'root'
+    license = 'GPLv2'
+    buildHost = ''
+    os = LINUX
+    requires('java', '1.8', GREATER | EQUAL)
+
+    into '/usr/share'
+    from(distBaseDir) {
+        into projectName
+        include 'lib/**'
+    }
+    from(distBaseDir) {
+        into projectName
+        include 'openstego.sh'
+        rename('openstego.sh', 'openstego')
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filePermissions { unix(0755) }
+    }
+    from('artifacts') {
+        into 'applications'
+        addParentDirs false
+        include 'openstego.desktop'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+    from('artifacts') {
+        into 'icons/hicolor/scalable/apps'
+        addParentDirs false
+        include 'openstego.svg'
+    }
+    from(distBaseDir) {
+        into 'doc/' + projectName
+        addParentDirs false
+        include 'LICENSE'
+        include 'README'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+    }
+
+    link('/usr/bin/openstego', '/usr/share/openstego/openstego')
+}
+
+tasks.register("dist") {
+    dependsOn distBin, distWin, distDeb, distRpm
+}

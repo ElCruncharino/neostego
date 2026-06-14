@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FileDropTransferHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.ui</a> &gt; <span class="el_source">FileDropTransferHandler.java</span></div><h1>FileDropTransferHandler.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.ui;
+
+import javax.swing.JTextField;
+import javax.swing.TransferHandler;
+import java.awt.datatransfer.DataFlavor;
+import java.io.File;
+import java.util.List;
+
+/**
+ * Transfer handler that lets the user drag-and-drop files onto a text field. Dropped file paths are
+ * placed into the field; when multiple selection is enabled, paths are joined with a semicolon (the
+ * separator used elsewhere for multi-file inputs). Plain text paste is still supported.
+ */
+class FileDropTransferHandler extends TransferHandler {
+    private static final long serialVersionUID = 1L;
+
+    private final JTextField target;
+    private final boolean multiSelect;
+
+<span class="nc" id="L26">    FileDropTransferHandler(JTextField target, boolean multiSelect) {</span>
+<span class="nc" id="L27">        this.target = target;</span>
+<span class="nc" id="L28">        this.multiSelect = multiSelect;</span>
+<span class="nc" id="L29">    }</span>
+
+    @Override
+    public boolean canImport(TransferSupport support) {
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        return support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">                || support.isDataFlavorSupported(DataFlavor.stringFlavor);</span>
+    }
+
+    @Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public boolean importData(TransferSupport support) {
+<span class="nc bnc" id="L40" title="All 2 branches missed.">        if (!canImport(support)) {</span>
+<span class="nc" id="L41">            return false;</span>
+        }
+        try {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">            if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {</span>
+<span class="nc" id="L45">                List&lt;File&gt; files = (List&lt;File&gt;) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);</span>
+<span class="nc bnc" id="L46" title="All 4 branches missed.">                if (files == null || files.isEmpty()) {</span>
+<span class="nc" id="L47">                    return false;</span>
+                }
+<span class="nc bnc" id="L49" title="All 2 branches missed.">                if (this.multiSelect) {</span>
+<span class="nc" id="L50">                    StringBuilder fileList = new StringBuilder();</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">                    for (File file : files) {</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">                        if (fileList.length() &gt; 0) {</span>
+<span class="nc" id="L53">                            fileList.append(&quot;;&quot;);</span>
+                        }
+<span class="nc" id="L55">                        fileList.append(file.getPath());</span>
+<span class="nc" id="L56">                    }</span>
+<span class="nc" id="L57">                    this.target.setText(fileList.toString());</span>
+<span class="nc" id="L58">                } else {</span>
+<span class="nc" id="L59">                    this.target.setText(files.get(0).getPath());</span>
+                }
+<span class="nc" id="L61">                return true;</span>
+            }
+
+            // Fall back to plain text paste/drop
+<span class="nc" id="L65">            String text = (String) support.getTransferable().getTransferData(DataFlavor.stringFlavor);</span>
+<span class="nc" id="L66">            this.target.replaceSelection(text);</span>
+<span class="nc" id="L67">            return true;</span>
+<span class="nc" id="L68">        } catch (Exception ex) {</span>
+<span class="nc" id="L69">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

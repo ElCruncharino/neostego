@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Name: OpenStego
+Main-Class: com.openstego.desktop.OpenStegoLauncher
+Implementation-Version: 0.8.6
+Built-By: Samir Vaidya
+Class-Path: openstego-core.jar flatlaf-3.6.jar picocli-4.7.6.jar
+

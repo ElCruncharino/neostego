@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UITheme.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.ui</a> &gt; <span class="el_source">UITheme.java</span></div><h1>UITheme.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.ui;
+
+import com.formdev.flatlaf.FlatDarkLaf;
+import com.formdev.flatlaf.FlatLaf;
+import com.formdev.flatlaf.FlatLightLaf;
+import com.openstego.desktop.util.UserPreferences;
+
+import javax.swing.UIManager;
+
+/**
+ * Manages the application look-and-feel using FlatLaf, providing a light and a dark theme. The
+ * selected theme is persisted via {@link UserPreferences} so that it is remembered across runs.
+ */
+public class UITheme {
+    /**
+     * Preference key under which the selected theme is stored
+     */
+    public static final String PREF_KEY = &quot;gui.theme&quot;;
+
+    /**
+     * Identifier for the light theme
+     */
+    public static final String LIGHT = &quot;light&quot;;
+
+    /**
+     * Identifier for the dark theme
+     */
+    public static final String DARK = &quot;dark&quot;;
+
+    /**
+     * Protected constructor. Expose only static methods
+     */
+<span class="nc" id="L39">    protected UITheme() {</span>
+        // Do nothing
+<span class="nc" id="L41">    }</span>
+
+    /**
+     * Returns the currently configured theme, defaulting to {@link #LIGHT} when unset or unknown.
+     *
+     * @return Theme identifier ({@link #LIGHT} or {@link #DARK})
+     */
+    public static String current() {
+<span class="nc" id="L49">        String theme = UserPreferences.getString(PREF_KEY);</span>
+<span class="nc bnc" id="L50" title="All 4 branches missed.">        if (theme == null || theme.trim().isEmpty()) {</span>
+<span class="nc" id="L51">            return LIGHT;</span>
+        }
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        return DARK.equalsIgnoreCase(theme.trim()) ? DARK : LIGHT;</span>
+    }
+
+    /**
+     * Installs the given FlatLaf theme as the active look-and-feel. If FlatLaf cannot be installed
+     * for any reason, this falls back to the platform system look-and-feel.
+     *
+     * @param theme Theme identifier ({@link #LIGHT} or {@link #DARK})
+     */
+    public static void install(String theme) {
+        try {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">            if (DARK.equals(theme)) {</span>
+<span class="nc" id="L65">                FlatDarkLaf.setup();</span>
+            } else {
+<span class="nc" id="L67">                FlatLightLaf.setup();</span>
+            }
+            // Show an integrated reveal (eye) button inside all password fields
+<span class="nc" id="L70">            UIManager.put(&quot;PasswordField.showRevealButton&quot;, true);</span>
+<span class="nc" id="L71">        } catch (Exception ex) {</span>
+            try {
+<span class="nc" id="L73">                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());</span>
+<span class="nc" id="L74">            } catch (Exception ignore) {</span>
+                // Give up and let Swing use its default look-and-feel
+<span class="nc" id="L76">            }</span>
+<span class="nc" id="L77">        }</span>
+<span class="nc" id="L78">    }</span>
+
+    /**
+     * Switches the active theme at runtime, repaints all open windows, and persists the choice.
+     *
+     * @param theme Theme identifier ({@link #LIGHT} or {@link #DARK})
+     */
+    public static void switchTo(String theme) {
+<span class="nc" id="L86">        install(theme);</span>
+<span class="nc" id="L87">        FlatLaf.updateUI();</span>
+        try {
+<span class="nc" id="L89">            UserPreferences.put(PREF_KEY, theme);</span>
+<span class="nc" id="L90">            UserPreferences.save();</span>
+<span class="nc" id="L91">        } catch (Exception ex) {</span>
+            // Non-fatal: the theme is applied for this session even if it cannot be saved
+<span class="nc" id="L93">        }</span>
+<span class="nc" id="L94">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

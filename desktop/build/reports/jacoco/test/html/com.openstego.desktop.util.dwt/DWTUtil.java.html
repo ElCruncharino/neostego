@@ -1,0 +1,616 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DWTUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.util.dwt</a> &gt; <span class="el_source">DWTUtil.java</span></div><h1>DWTUtil.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.util.dwt;
+
+import com.openstego.desktop.util.CommonUtil;
+
+/**
+ * Class to handle Wavelet filters and other DWT utilities.
+ * &lt;p&gt;
+ * This class is conversion of C to Java for the file &quot;wavelet.c&quot; file provided by Peter Meerwald at:&lt;a
+ * href=&quot;http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/&quot;&gt;http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/&lt;/a&gt;
+ * &lt;p&gt;
+ * Refer to his thesis on watermarking: Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain,
+ * Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
+ */
+public class DWTUtil {
+    /**
+     * Constructor is private so that this class is not instantiated
+     */
+    private DWTUtil() {
+    }
+
+    /**
+     * Method to perform the wavelet transform
+     *
+     * @param origImg      Original image
+     * @param level        Decomposition level
+     * @param filterGHList List of filters
+     * @param method       Wavelet filtering method
+     * @return Data after performing wavelet transform
+     */
+    public static ImageTree waveletTransform(Image origImg, int level, FilterGH[] filterGHList, int method) {
+        int width;
+        int height;
+        int min;
+        int maxLevel;
+<span class="nc" id="L41">        Image coarseImg = null;</span>
+        Image horizontalImg;
+        Image verticalImg;
+        Image diagonalImg;
+        Image tempImg;
+        ImageTree returnTree;
+        ImageTree tempTree;
+
+<span class="nc" id="L49">        width = origImg.getWidth();</span>
+<span class="nc" id="L50">        height = origImg.getHeight();</span>
+
+<span class="nc" id="L52">        tempImg = new Image(width, height);</span>
+<span class="nc" id="L53">        copyIntoImage(tempImg, origImg, 0, 0);</span>
+
+<span class="nc" id="L55">        returnTree = new ImageTree();</span>
+<span class="nc" id="L56">        tempTree = returnTree;</span>
+<span class="nc" id="L57">        returnTree.setLevel(0);</span>
+
+<span class="nc" id="L59">        min = origImg.getWidth();</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        if (origImg.getHeight() &lt; min) {</span>
+<span class="nc" id="L61">            min = origImg.getHeight();</span>
+        }
+
+<span class="nc" id="L64">        maxLevel = ((int) (Math.log(min) / Math.log(2))) - 2;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        if (maxLevel &lt; level) {</span>
+<span class="nc" id="L66">            level = maxLevel;</span>
+        }
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (level &lt; 1) /* do not transform */ {</span>
+<span class="nc" id="L70">            returnTree.setImage(tempImg);</span>
+<span class="nc" id="L71">            return returnTree;</span>
+        }
+
+        // Decomposition
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        for (int i = 0; i &lt; level; i++) {</span>
+<span class="nc" id="L76">            width = (width + 1) / 2;</span>
+<span class="nc" id="L77">            height = (height + 1) / 2;</span>
+
+<span class="nc" id="L79">            coarseImg = new Image(width, height);</span>
+<span class="nc" id="L80">            horizontalImg = new Image(width, height);</span>
+<span class="nc" id="L81">            verticalImg = new Image(width, height);</span>
+<span class="nc" id="L82">            diagonalImg = new Image(width, height);</span>
+
+<span class="nc" id="L84">            decomposition(tempImg, coarseImg, horizontalImg, verticalImg, diagonalImg, filterGHList[i].getG(), filterGHList[i].getH(), method);</span>
+
+<span class="nc" id="L86">            tempTree.setCoarse(new ImageTree());</span>
+<span class="nc" id="L87">            tempTree.setHorizontal(new ImageTree());</span>
+<span class="nc" id="L88">            tempTree.setVertical(new ImageTree());</span>
+<span class="nc" id="L89">            tempTree.setDiagonal(new ImageTree());</span>
+
+<span class="nc" id="L91">            tempTree.getCoarse().setLevel(i + 1);</span>
+<span class="nc" id="L92">            tempTree.getHorizontal().setLevel(i + 1);</span>
+<span class="nc" id="L93">            tempTree.getVertical().setLevel(i + 1);</span>
+<span class="nc" id="L94">            tempTree.getDiagonal().setLevel(i + 1);</span>
+
+<span class="nc" id="L96">            tempTree.getHorizontal().setImage(horizontalImg);</span>
+<span class="nc" id="L97">            tempTree.getVertical().setImage(verticalImg);</span>
+<span class="nc" id="L98">            tempTree.getDiagonal().setImage(diagonalImg);</span>
+
+<span class="nc bnc" id="L100" title="All 2 branches missed.">            if (i != (level - 1)) {</span>
+<span class="nc" id="L101">                tempImg = new Image(width, height);</span>
+<span class="nc" id="L102">                copyIntoImage(tempImg, coarseImg, 0, 0);</span>
+<span class="nc" id="L103">                coarseImg = null;</span>
+            }
+
+<span class="nc" id="L106">            tempTree = tempTree.getCoarse();</span>
+        }
+
+<span class="nc" id="L109">        tempTree.setImage(coarseImg);</span>
+<span class="nc" id="L110">        return returnTree;</span>
+    }
+
+    /**
+     * Method to decompose the image
+     *
+     * @param inputImg      Input image
+     * @param coarseImg     Coarse image
+     * @param horizontalImg Horizontal image
+     * @param verticalImg   Vertical image
+     * @param diagonalImg   Diagonal image
+     * @param filterG       G filter
+     * @param filterH       H filter
+     * @param method        Wavelet filtering method
+     */
+    public static void decomposition(Image inputImg, Image coarseImg, Image horizontalImg, Image verticalImg, Image diagonalImg, Filter filterG,
+                                     Filter filterH, int method) {
+        Image tempImg;
+
+        // Coarse
+<span class="nc" id="L130">        tempImg = new Image(coarseImg.getWidth(), inputImg.getHeight());</span>
+<span class="nc" id="L131">        convoluteLines(tempImg, inputImg, filterH, method);</span>
+<span class="nc" id="L132">        convoluteRows(coarseImg, tempImg, filterH, method);</span>
+
+        // Horizontal
+<span class="nc" id="L135">        convoluteRows(horizontalImg, tempImg, filterG, method);</span>
+
+        // Vertical
+<span class="nc" id="L138">        tempImg = new Image(verticalImg.getWidth(), inputImg.getHeight());</span>
+<span class="nc" id="L139">        convoluteLines(tempImg, inputImg, filterG, method);</span>
+<span class="nc" id="L140">        convoluteRows(verticalImg, tempImg, filterH, method);</span>
+
+        // Diagonal
+<span class="nc" id="L143">        convoluteRows(diagonalImg, tempImg, filterG, method);</span>
+<span class="nc" id="L144">    }</span>
+
+    /**
+     * Method to convolute lines
+     *
+     * @param outputImg Output image
+     * @param inputImg  Input image
+     * @param filter    Filter to use
+     * @param method    Wavelet filtering method
+     */
+    public static void convoluteLines(Image outputImg, Image inputImg, Filter filter, int method) {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        for (int i = 0; i &lt; inputImg.getHeight(); i++) {</span>
+<span class="nc bnc" id="L156" title="All 7 branches missed.">            switch (method) {</span>
+                case Filter.METHOD_CUTOFF:
+<span class="nc" id="L158">                    filterCutOff(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i, outputImg.getWidth(),</span>
+                            1, filter);
+<span class="nc" id="L160">                    break;</span>
+
+                case Filter.METHOD_INVCUTOFF:
+<span class="nc" id="L163">                    filterInvCutOff(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,</span>
+<span class="nc" id="L164">                            outputImg.getWidth(), 1, filter);</span>
+<span class="nc" id="L165">                    break;</span>
+
+                case Filter.METHOD_PERIODICAL:
+<span class="nc" id="L168">                    filterPeriodical(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,</span>
+<span class="nc" id="L169">                            outputImg.getWidth(), 1, filter);</span>
+<span class="nc" id="L170">                    break;</span>
+
+                case Filter.METHOD_INVPERIODICAL:
+<span class="nc" id="L173">                    filterInvPeriodical(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,</span>
+<span class="nc" id="L174">                            outputImg.getWidth(), 1, filter);</span>
+<span class="nc" id="L175">                    break;</span>
+
+                case Filter.METHOD_MIRROR:
+<span class="nc" id="L178">                    filterMirror(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i, outputImg.getWidth(),</span>
+                            1, filter);
+<span class="nc" id="L180">                    break;</span>
+
+                case Filter.METHOD_INVMIRROR:
+<span class="nc" id="L183">                    filterInvMirror(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,</span>
+<span class="nc" id="L184">                            outputImg.getWidth(), 1, filter);</span>
+                    break;
+            }
+        }
+<span class="nc" id="L188">    }</span>
+
+    /**
+     * Method to convolute rows
+     *
+     * @param outputImg Output image
+     * @param inputImg  Input image
+     * @param filter    Filter to use
+     * @param method    Wavelet filtering method
+     */
+    public static void convoluteRows(Image outputImg, Image inputImg, Filter filter, int method) {
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        for (int i = 0; i &lt; inputImg.getWidth(); i++) {</span>
+<span class="nc bnc" id="L200" title="All 7 branches missed.">            switch (method) {</span>
+                case Filter.METHOD_CUTOFF:
+<span class="nc" id="L202">                    filterCutOff(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),</span>
+                            filter);
+<span class="nc" id="L204">                    break;</span>
+
+                case Filter.METHOD_INVCUTOFF:
+<span class="nc" id="L207">                    filterInvCutOff(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),</span>
+                            filter);
+<span class="nc" id="L209">                    break;</span>
+
+                case Filter.METHOD_PERIODICAL:
+<span class="nc" id="L212">                    filterPeriodical(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(),</span>
+<span class="nc" id="L213">                            outputImg.getWidth(), filter);</span>
+<span class="nc" id="L214">                    break;</span>
+
+                case Filter.METHOD_INVPERIODICAL:
+<span class="nc" id="L217">                    filterInvPeriodical(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(),</span>
+<span class="nc" id="L218">                            outputImg.getWidth(), filter);</span>
+<span class="nc" id="L219">                    break;</span>
+
+                case Filter.METHOD_MIRROR:
+<span class="nc" id="L222">                    filterMirror(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),</span>
+                            filter);
+<span class="nc" id="L224">                    break;</span>
+
+                case Filter.METHOD_INVMIRROR:
+<span class="nc" id="L227">                    filterInvMirror(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),</span>
+                            filter);
+                    break;
+            }
+        }
+<span class="nc" id="L232">    }</span>
+
+    /**
+     * Method to apply cut-off filter
+     *
+     * @param inputImg  Input image
+     * @param inStart   Start point for input image
+     * @param inLen     Length of data for input image
+     * @param inStep    Step for loop for input image
+     * @param outputImg Output image
+     * @param outStart  Start point for output image
+     * @param outLen    Length of data for output image
+     * @param outStep   Step for loop for output image
+     * @param filter    Filter
+     */
+    public static void filterCutOff(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
+                                    Filter filter) {
+        int fStart;
+        int fEnd;
+
+<span class="nc bnc" id="L252" title="All 2 branches missed.">        for (int i = 0; i &lt; outLen; i++) {</span>
+<span class="nc" id="L253">            fStart = Math.max((2 * i) - (inLen - 1), filter.getStart());</span>
+<span class="nc" id="L254">            fEnd = Math.min((2 * i), filter.getEnd());</span>
+
+<span class="nc bnc" id="L256" title="All 2 branches missed.">            for (int j = fStart; j &lt;= fEnd; j++) {</span>
+<span class="nc" id="L257">                outputImg.getData()[outStart + i * outStep] += filter.getData()[j - filter.getStart()]</span>
+<span class="nc" id="L258">                        * inputImg.getData()[inStart + ((2 * i) - j) * inStep];</span>
+            }
+        }
+<span class="nc" id="L261">    }</span>
+
+    /**
+     * Method to apply inverse cut-off filter
+     *
+     * @param inputImg  Input image
+     * @param inStart   Start point for input image
+     * @param inLen     Length of data for input image
+     * @param inStep    Step for loop for input image
+     * @param outputImg Output image
+     * @param outStart  Start point for output image
+     * @param outLen    Length of data for output image
+     * @param outStep   Step for loop for output image
+     * @param filter    Filter
+     */
+    public static void filterInvCutOff(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
+                                       Filter filter) {
+        int fStart;
+        int fEnd;
+
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        for (int i = 0; i &lt; outLen; i++) {</span>
+<span class="nc" id="L282">            fStart = Math.max(CommonUtil.ceilingHalf(filter.getStart() + i), 0);</span>
+<span class="nc" id="L283">            fEnd = Math.min(CommonUtil.floorHalf(filter.getEnd() + i), inLen - 1);</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">            for (int j = fStart; j &lt;= fEnd; j++) {</span>
+<span class="nc" id="L286">                outputImg.getData()[outStart + i * outStep] += filter.getData()[(2 * j) - i - filter.getStart()]</span>
+<span class="nc" id="L287">                        * inputImg.getData()[inStart + j * inStep];</span>
+            }
+        }
+<span class="nc" id="L290">    }</span>
+
+    /**
+     * Method to apply periodical filter
+     *
+     * @param inputImg  Input image
+     * @param inStart   Start point for input image
+     * @param inLen     Length of data for input image
+     * @param inStep    Step for loop for input image
+     * @param outputImg Output image
+     * @param outStart  Start point for output image
+     * @param outLen    Length of data for output image
+     * @param outStep   Step for loop for output image
+     * @param filter    Filter
+     */
+    public static void filterPeriodical(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
+                                        Filter filter) {
+        int fStart;
+        int fEnd;
+        int iStart;
+
+<span class="nc bnc" id="L311" title="All 2 branches missed.">        for (int i = 0; i &lt; outLen; i++) {</span>
+<span class="nc" id="L312">            fStart = filter.getStart();</span>
+<span class="nc" id="L313">            fEnd = filter.getEnd();</span>
+<span class="nc" id="L314">            iStart = CommonUtil.mod(((2 * i) - fStart), inLen);</span>
+
+<span class="nc bnc" id="L316" title="All 2 branches missed.">            for (int j = fStart; j &lt;= fEnd; j++) {</span>
+<span class="nc" id="L317">                outputImg.getData()[outStart + i * outStep] += filter.getData()[j - fStart] * inputImg.getData()[inStart + iStart * inStep];</span>
+<span class="nc" id="L318">                iStart--;</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">                if (iStart &lt; 0) {</span>
+<span class="nc" id="L320">                    iStart += inLen;</span>
+                }
+            }
+        }
+<span class="nc" id="L324">    }</span>
+
+    /**
+     * Method to apply inverse periodical filter
+     *
+     * @param inputImg  Input image
+     * @param inStart   Start point for input image
+     * @param inLen     Length of data for input image
+     * @param inStep    Step for loop for input image
+     * @param outputImg Output image
+     * @param outStart  Start point for output image
+     * @param outLen    Length of data for output image
+     * @param outStep   Step for loop for output image
+     * @param filter    Filter
+     */
+    public static void filterInvPeriodical(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
+                                           Filter filter) {
+        int fStart;
+        int fEnd;
+        int iStart;
+
+<span class="nc bnc" id="L345" title="All 2 branches missed.">        for (int i = 0; i &lt; outLen; i++) {</span>
+<span class="nc" id="L346">            fStart = CommonUtil.ceilingHalf(filter.getStart() + i);</span>
+<span class="nc" id="L347">            fEnd = CommonUtil.floorHalf(filter.getEnd() + i);</span>
+<span class="nc" id="L348">            iStart = CommonUtil.mod(fStart, inLen);</span>
+
+<span class="nc bnc" id="L350" title="All 2 branches missed.">            for (int j = fStart; j &lt;= fEnd; j++) {</span>
+<span class="nc" id="L351">                outputImg.getData()[outStart + i * outStep] += filter.getData()[(2 * j) - i - filter.getStart()]</span>
+<span class="nc" id="L352">                        * inputImg.getData()[inStart + iStart * inStep];</span>
+<span class="nc" id="L353">                iStart++;</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">                if (iStart &gt;= inLen) {</span>
+<span class="nc" id="L355">                    iStart -= inLen;</span>
+                }
+            }
+        }
+<span class="nc" id="L359">    }</span>
+
+    /**
+     * Method to apply mirror filter
+     *
+     * @param inputImg  Input image
+     * @param inStart   Start point for input image
+     * @param inLen     Length of data for input image
+     * @param inStep    Step for loop for input image
+     * @param outputImg Output image
+     * @param outStart  Start point for output image
+     * @param outLen    Length of data for output image
+     * @param outStep   Step for loop for output image
+     * @param filter    Filter
+     */
+    public static void filterMirror(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
+                                    Filter filter) {
+        int fStart;
+        int fEnd;
+        int inPos;
+
+<span class="nc bnc" id="L380" title="All 2 branches missed.">        for (int i = 0; i &lt; outLen; i++) {</span>
+<span class="nc" id="L381">            fStart = filter.getStart();</span>
+<span class="nc" id="L382">            fEnd = filter.getEnd();</span>
+
+<span class="nc bnc" id="L384" title="All 2 branches missed.">            for (int j = fStart; j &lt;= fEnd; j++) {</span>
+<span class="nc" id="L385">                inPos = ((2 * i) - j);</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">                if (inPos &lt; 0) {</span>
+<span class="nc" id="L387">                    inPos = -inPos;</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">                    if (inPos &gt;= inLen) {</span>
+<span class="nc" id="L389">                        continue;</span>
+                    }
+                }
+<span class="nc bnc" id="L392" title="All 2 branches missed.">                if (inPos &gt;= inLen) {</span>
+<span class="nc" id="L393">                    inPos = 2 * inLen - 2 - inPos;</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">                    if (inPos &lt; 0) {</span>
+<span class="nc" id="L395">                        continue;</span>
+                    }
+                }
+<span class="nc" id="L398">                outputImg.getData()[outStart + i * outStep] += filter.getData()[j - fStart] * inputImg.getData()[inStart + inPos * inStep];</span>
+            }
+        }
+<span class="nc" id="L401">    }</span>
+
+    /**
+     * Method to apply inverse mirror filter
+     *
+     * @param inputImg  Input image
+     * @param inStart   Start point for input image
+     * @param inLen     Length of data for input image
+     * @param inStep    Step for loop for input image
+     * @param outputImg Output image
+     * @param outStart  Start point for output image
+     * @param outLen    Length of data for output image
+     * @param outStep   Step for loop for output image
+     * @param filter    Filter
+     */
+    public static void filterInvMirror(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
+                                       Filter filter) {
+        int fStart;
+        int fEnd;
+        int inPos;
+
+<span class="nc bnc" id="L422" title="All 2 branches missed.">        for (int i = 0; i &lt; outLen; i++) {</span>
+<span class="nc" id="L423">            fStart = CommonUtil.ceilingHalf(filter.getStart() + i);</span>
+<span class="nc" id="L424">            fEnd = CommonUtil.floorHalf(filter.getEnd() + i);</span>
+
+<span class="nc bnc" id="L426" title="All 2 branches missed.">            for (int j = fStart; j &lt;= fEnd; j++) {</span>
+<span class="nc" id="L427">                inPos = j;</span>
+<span class="nc bnc" id="L428" title="All 2 branches missed.">                if (inPos &lt; 0) {</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">                    if (filter.isHiPass()) {</span>
+<span class="nc" id="L430">                        inPos = -inPos - 1;</span>
+                    } else {
+<span class="nc" id="L432">                        inPos = -inPos;</span>
+                    }
+<span class="nc bnc" id="L434" title="All 2 branches missed.">                    if (inPos &gt;= inLen) {</span>
+<span class="nc" id="L435">                        continue;</span>
+                    }
+                }
+<span class="nc bnc" id="L438" title="All 2 branches missed.">                if (inPos &gt;= inLen) {</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">                    if (filter.isHiPass()) {</span>
+<span class="nc" id="L440">                        inPos = 2 * inLen - 2 - inPos;</span>
+                    } else {
+<span class="nc" id="L442">                        inPos = 2 * inLen - 1 - inPos;</span>
+                    }
+<span class="nc bnc" id="L444" title="All 2 branches missed.">                    if (inPos &lt; 0) {</span>
+<span class="nc" id="L445">                        continue;</span>
+                    }
+                }
+<span class="nc" id="L448">                outputImg.getData()[outStart + i * outStep] += filter.getData()[2 * j - i - filter.getStart()]</span>
+<span class="nc" id="L449">                        * inputImg.getData()[inStart + inPos * inStep];</span>
+            }
+        }
+<span class="nc" id="L452">    }</span>
+
+    /**
+     * Method to perform inverse wavelet transform
+     *
+     * @param tree         Forward transformed DWT data
+     * @param filterGHList List of filters
+     * @param method       Wavelet filter method
+     * @return Inverse transformed image data
+     */
+    public static Image inverseTransform(ImageTree tree, FilterGH[] filterGHList, int method) {
+        int width;
+        int height;
+        Image retImg;
+        Image coarseImg;
+        Image verticalImg;
+        Image horizontalImg;
+        Image diagonalImg;
+
+<span class="nc bnc" id="L471" title="All 2 branches missed.">        if (tree.getImage() == null) {</span>
+<span class="nc" id="L472">            coarseImg = inverseTransform(tree.getCoarse(), filterGHList, method);</span>
+<span class="nc" id="L473">            horizontalImg = inverseTransform(tree.getHorizontal(), filterGHList, method);</span>
+<span class="nc" id="L474">            verticalImg = inverseTransform(tree.getVertical(), filterGHList, method);</span>
+<span class="nc" id="L475">            diagonalImg = inverseTransform(tree.getDiagonal(), filterGHList, method);</span>
+
+<span class="nc" id="L477">            width = coarseImg.getWidth() + horizontalImg.getWidth();</span>
+<span class="nc" id="L478">            height = coarseImg.getHeight() + verticalImg.getHeight();</span>
+
+<span class="nc" id="L480">            retImg = new Image(width, height);</span>
+
+<span class="nc bnc" id="L482" title="All 2 branches missed.">            if (tree.getFlag() == 0) // If flag is set it is a doubletree tiling</span>
+            {
+<span class="nc" id="L484">                invDecomposition(retImg, coarseImg, horizontalImg, verticalImg, diagonalImg, filterGHList[tree.getLevel()], method);</span>
+            } else {
+<span class="nc" id="L486">                copyIntoImage(retImg, coarseImg, 0, 0);</span>
+<span class="nc" id="L487">                copyIntoImage(retImg, horizontalImg, coarseImg.getWidth(), 0);</span>
+<span class="nc" id="L488">                copyIntoImage(retImg, verticalImg, 0, coarseImg.getHeight());</span>
+<span class="nc" id="L489">                copyIntoImage(retImg, diagonalImg, coarseImg.getWidth(), coarseImg.getHeight());</span>
+            }
+
+<span class="nc" id="L492">            return retImg;</span>
+        }
+<span class="nc" id="L494">        return tree.getImage();</span>
+    }
+
+    /**
+     * Method to perform inverse decomposition
+     *
+     * @param sumImg        Sum image
+     * @param coarseImg     Coarse image
+     * @param horizontalImg Horizontal image
+     * @param verticalImg   Vertical image
+     * @param diagonalImg   Diagonal image
+     * @param filterGH      Filter
+     * @param method        Wavelet filter method
+     */
+    public static void invDecomposition(Image sumImg, Image coarseImg, Image horizontalImg, Image verticalImg, Image diagonalImg, FilterGH filterGH,
+                                        int method) {
+        Image tempImg;
+        Filter filterG;
+        Filter filterH;
+
+<span class="nc bnc" id="L514" title="All 2 branches missed.">        if (filterGH.getType() == FilterGH.TYPE_ORTHOGONAL) {</span>
+<span class="nc" id="L515">            filterG = filterGH.getG();</span>
+<span class="nc" id="L516">            filterH = filterGH.getH();</span>
+        } else {
+<span class="nc" id="L518">            filterG = filterGH.getGi();</span>
+<span class="nc" id="L519">            filterH = filterGH.getHi();</span>
+        }
+
+        // Coarse
+<span class="nc" id="L523">        tempImg = new Image(coarseImg.getWidth(), sumImg.getHeight());</span>
+<span class="nc" id="L524">        convoluteRows(tempImg, coarseImg, filterH, method);</span>
+
+        // Horizontal
+<span class="nc" id="L527">        convoluteRows(tempImg, horizontalImg, filterG, method);</span>
+<span class="nc" id="L528">        convoluteLines(sumImg, tempImg, filterH, method);</span>
+
+        // Vertical
+<span class="nc" id="L531">        tempImg = new Image(verticalImg.getWidth(), sumImg.getHeight());</span>
+<span class="nc" id="L532">        convoluteRows(tempImg, verticalImg, filterH, method);</span>
+
+        // Diagonal
+<span class="nc" id="L535">        convoluteRows(tempImg, diagonalImg, filterG, method);</span>
+<span class="nc" id="L536">        convoluteLines(sumImg, tempImg, filterG, method);</span>
+<span class="nc" id="L537">    }</span>
+
+    /**
+     * Method to get the deepest level possible for given image width and height
+     *
+     * @param width  Image width
+     * @param height Image height
+     * @return Deepest possible level
+     */
+    public static int findDeepestLevel(int width, int height) {
+<span class="nc" id="L547">        int level = 0;</span>
+<span class="nc" id="L548">        int w = width;</span>
+<span class="nc" id="L549">        int h = height;</span>
+
+<span class="nc bnc" id="L551" title="All 4 branches missed.">        while ((w % 2 == 0) &amp;&amp; (h % 2 == 0)) {</span>
+<span class="nc" id="L552">            w = w / 2;</span>
+<span class="nc" id="L553">            h = h / 2;</span>
+<span class="nc" id="L554">            level++;</span>
+        }
+
+<span class="nc" id="L557">        return level - 1;</span>
+    }
+
+    /**
+     * Set pixel value in the image
+     *
+     * @param image Image
+     * @param x     X position of pixel
+     * @param y     Y position of pixel
+     * @param val   Pixel value
+     */
+    public static void setPixel(Image image, int x, int y, double val) {
+<span class="nc bnc" id="L569" title="All 10 branches missed.">        if (!(image == null || x &lt; 0 || x &gt;= image.getWidth() || y &lt; 0 || y &gt;= image.getHeight())) {</span>
+<span class="nc" id="L570">            image.getData()[x + (y * image.getWidth())] = val;</span>
+        }
+<span class="nc" id="L572">    }</span>
+
+    /**
+     * Get pixel value from the image
+     *
+     * @param image Image
+     * @param x     X position of pixel
+     * @param y     Y position of pixel
+     * @return Pixel value
+     */
+    public static double getPixel(Image image, int x, int y) {
+<span class="nc bnc" id="L583" title="All 10 branches missed.">        if (image == null || x &lt; 0 || x &gt;= image.getWidth() || y &lt; 0 || y &gt;= image.getHeight()) {</span>
+<span class="nc" id="L584">            return 0.0;</span>
+        } else {
+<span class="nc" id="L586">            return image.getData()[x + y * image.getWidth()];</span>
+        }
+    }
+
+    /**
+     * Utility method to copy image data to another image portion
+     *
+     * @param img1 Output image
+     * @param img2 Input image
+     * @param x    X position in output image
+     * @param y    Y position in output image
+     */
+    private static void copyIntoImage(Image img1, Image img2, int x, int y) {
+<span class="nc" id="L599">        int count = 0;</span>
+        int start;
+        int aim;
+        double[] temp;
+
+<span class="nc" id="L604">        temp = img2.getData();</span>
+<span class="nc" id="L605">        start = img1.getWidth() * y + x;</span>
+
+<span class="nc bnc" id="L607" title="All 2 branches missed.">        for (int i = 0; i &lt; img2.getHeight(); i++) {</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">            for (int j = 0; j &lt; img2.getWidth(); j++) {</span>
+<span class="nc" id="L609">                aim = start + j + img1.getWidth() * i;</span>
+<span class="nc" id="L610">                img1.getData()[aim] = temp[count];</span>
+<span class="nc" id="L611">                count++;</span>
+            }
+        }
+<span class="nc" id="L614">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.openstego.desktop.compat.CompatibilityTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-06-14T21:08:18" hostname="NICK-WINDOWS-PC" time="0.045">
+  <properties/>
+  <testcase name="testExtract_v2_plain()" classname="com.openstego.desktop.compat.CompatibilityTest" time="0.03"/>
+  <testcase name="testExtract_v2_aes128()" classname="com.openstego.desktop.compat.CompatibilityTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WMImagePluginTemplate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.plugin.template.image</a> &gt; <span class="el_source">WMImagePluginTemplate.java</span></div><h1>WMImagePluginTemplate.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.plugin.template.image;
+
+import com.openstego.desktop.OpenStegoConfig;
+import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.WatermarkingPlugin;
+import com.openstego.desktop.ui.OpenStegoFrame;
+import com.openstego.desktop.ui.PluginEmbedOptionsUI;
+import com.openstego.desktop.util.ImageHolder;
+import com.openstego.desktop.util.ImageUtil;
+import javax.imageio.ImageIO;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Template plugin for OpenStego which implements image based steganography for watermarking
+ */
+<span class="fc" id="L24">public abstract class WMImagePluginTemplate extends WatermarkingPlugin&lt;OpenStegoConfig&gt; {</span>
+    /**
+     * Static list of supported read formats
+     */
+<span class="fc" id="L28">    protected static List&lt;String&gt; readFormats = null;</span>
+
+    /**
+     * Static list of supported write formats
+     */
+<span class="fc" id="L33">    protected static List&lt;String&gt; writeFormats = null;</span>
+
+    /**
+     * Method to get difference between original cover file and the stegged file
+     *
+     * @param stegoData     Stego data containing the embedded data
+     * @param stegoFileName Name of the stego file
+     * @param coverData     Original cover data
+     * @param coverFileName Name of the cover file
+     * @param diffFileName  Name of the output difference file
+     * @return Difference data
+     * @throws OpenStegoException Processing issues
+     */
+    @Override
+    public final byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
+            throws OpenStegoException {
+        ImageHolder stegoImage;
+        ImageHolder coverImage;
+        ImageHolder diffImage;
+
+<span class="nc" id="L53">        stegoImage = ImageUtil.byteArrayToImage(stegoData, stegoFileName);</span>
+<span class="nc" id="L54">        coverImage = ImageUtil.byteArrayToImage(coverData, coverFileName);</span>
+<span class="nc" id="L55">        diffImage = ImageUtil.getDiffImage(stegoImage, coverImage);</span>
+
+<span class="nc" id="L57">        return ImageUtil.imageToByteArray(diffImage, diffFileName, this);</span>
+    }
+
+    /**
+     * Method to get the list of supported file extensions for reading
+     *
+     * @return List of supported file extensions for reading
+     */
+    @Override
+    public List&lt;String&gt; getReadableFileExtensions() {
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (readFormats != null) {</span>
+<span class="nc" id="L68">            return readFormats;</span>
+        }
+
+        String format;
+        String[] formats;
+<span class="nc" id="L73">        readFormats = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L75">        formats = ImageIO.getReaderFormatNames();</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        for (String s : formats) {</span>
+<span class="nc" id="L77">            format = s.toLowerCase();</span>
+<span class="nc bnc" id="L78" title="All 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
+<span class="nc" id="L79">                format = &quot;jp2&quot;;</span>
+            }
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            if (!readFormats.contains(format)) {</span>
+<span class="nc" id="L82">                readFormats.add(format);</span>
+            }
+        }
+
+<span class="nc" id="L86">        Collections.sort(readFormats);</span>
+<span class="nc" id="L87">        return readFormats;</span>
+    }
+
+    /**
+     * Method to get the list of supported file extensions for writing
+     *
+     * @return List of supported file extensions for writing
+     * @throws OpenStegoException Processing issues
+     */
+    @Override
+    public List&lt;String&gt; getWritableFileExtensions() throws OpenStegoException {
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (writeFormats != null) {</span>
+<span class="nc" id="L99">            return writeFormats;</span>
+        }
+
+        String format;
+        String[] formats;
+<span class="nc" id="L104">        writeFormats = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L106">        formats = ImageIO.getWriterFormatNames();</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        for (String s : formats) {</span>
+<span class="nc" id="L108">            format = s.toLowerCase();</span>
+<span class="nc bnc" id="L109" title="All 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
+<span class="nc" id="L110">                format = &quot;jp2&quot;;</span>
+            }
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (!writeFormats.contains(format)) {</span>
+<span class="nc" id="L113">                writeFormats.add(format);</span>
+            }
+        }
+
+<span class="nc" id="L117">        Collections.sort(writeFormats);</span>
+<span class="nc" id="L118">        return writeFormats;</span>
+    }
+
+    /**
+     * Method to create default configuration data (specific to this plugin)
+     *
+     * @return Configuration data
+     */
+    @Override
+    protected OpenStegoConfig createConfig() {
+<span class="nc" id="L128">        return new OpenStegoConfig();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

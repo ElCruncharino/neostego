@@ -1,0 +1,49 @@
+/*
+ * Steganography utility to hide messages into cover files
+ * Copyright (c) Samir Vaidya (mailto:syvaidya@gmail.com)
+ *
+ * Platform-independent core: steganography algorithms, crypto and plugin SPI. Has no dependency on
+ * AWT/Swing or any desktop-only library, so it can be reused on Android (or any JVM).
+ */
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+// Emit Java 17 bytecode so the core can be consumed by the Android build (AGP supports up to 17)
+tasks.withType(JavaCompile).configureEach {
+    options.release = 17
+}
+
+def filterTokens = [
+        'app.name'    : 'OpenStego',
+        'app.version' : project.version.toString(),
+        'author.name' : project.author,
+        'author.mail' : project.authorMail,
+        'homepage.url': project.homepageUrl,
+        'time.year'   : new SimpleDateFormat('yyyy').format(new Date())
+]
+
+processResources {
+    filesMatching('**/*.properties') {
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+}
+
+jar {
+    archiveFileName = 'openstego-core.jar'
+}

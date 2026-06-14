@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.openstego.desktop.OpenStegoCryptoTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-06-14T21:08:17" hostname="NICK-WINDOWS-PC" time="0.3">
+  <properties/>
+  <testcase name="testDecryptAutoDetectsV2WhenStrongEnabled()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.004"/>
+  <testcase name="testV3WrongPasswordFails()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.071"/>
+  <testcase name="testV3IsRandomized()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.072"/>
+  <testcase name="testLegacyV2RoundTrip()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.002"/>
+  <testcase name="testDesUsesLegacyFormat()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.008"/>
+  <testcase name="testV3RoundTrip_aes128()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.071"/>
+  <testcase name="testV3RoundTrip_aes256()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.069"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Jun 14, 2026 5:08:17 PM com.openstego.desktop.OpenStegoCrypto <init>
+WARNING: Using insecure algorithm: DES
+]]></system-err>
+</testsuite>
