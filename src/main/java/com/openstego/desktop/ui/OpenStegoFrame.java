@@ -440,7 +440,8 @@ public class OpenStegoFrame extends JFrame {
      */
     public EmbedPanel getEmbedPanel() {
         if (this.embedPanel == null) {
-            this.embedPanel = new EmbedPanel(this.dhPlugin.getEmbedOptionsUI(this));
+            // Plugin-specific embed options UI is not currently used (kept null)
+            this.embedPanel = new EmbedPanel(null);
             this.embedPanel.initialize();
         }
         return this.embedPanel;

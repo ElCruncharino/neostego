@@ -6,33 +6,22 @@
 
 package com.openstego.desktop;
 
-import com.openstego.desktop.ui.OpenStegoUI;
-import com.openstego.desktop.ui.UITheme;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
-import com.openstego.desktop.util.PluginManager;
-import com.openstego.desktop.util.UserPreferences;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * This is the main class for OpenStego. It includes the {@link #main(String[])} method which provides the
- * command line interface for the tool. It also has API methods which can be used by external programs
- * when using OpenStego as a library.
+ * This is the main API class for OpenStego. It exposes the data-hiding and watermarking operations
+ * that can be used by external programs when using OpenStego as a library. The desktop/CLI entry
+ * point lives in {@link OpenStegoLauncher}.
  */
 public class OpenStego {
-
-    /**
-     * Logger instance
-     */
-    private static final Logger logger = Logger.getLogger(OpenStego.class.getName());
 
     /**
      * Constant for the namespace for labels
@@ -336,39 +325,6 @@ public class OpenStego {
      */
     public OpenStegoConfig getConfig() {
         return this.config;
-    }
-
-    /**
-     * Main method for calling openstego from command line.
-     *
-     * @param args Command line arguments
-     */
-    public static void main(String[] args) {
-        try {
-            // Load the stego plugins
-            PluginManager.loadPlugins();
-            // Initialize preferences
-            UserPreferences.init();
-
-            if (args.length == 0) { // Start GUI
-                // Apply the modern FlatLaf look-and-feel using the saved theme preference
-                UITheme.install(UITheme.current());
-                // Determine default DH and WM plugins
-                OpenStegoPlugin<?> dhPlugin = PluginManager.getPluginByName("RandomLSB");
-                OpenStegoPlugin<?> wmPlugin = PluginManager.getPluginByName("DWTDugad");
-                new OpenStegoUI(dhPlugin, wmPlugin).setVisible(true);
-            } else {
-                OpenStegoCmd.execute(args);
-            }
-        } catch (OpenStegoException osEx) {
-            if (osEx.getErrorCode() == OpenStegoException.UNHANDLED_EXCEPTION) {
-                logger.log(Level.SEVERE, osEx.getMessage(), osEx);
-            } else {
-                System.err.println(osEx.getMessage());
-            }
-        } catch (Exception ex) {
-            logger.log(Level.SEVERE, ex.getMessage(), ex);
-        }
     }
 
 }
