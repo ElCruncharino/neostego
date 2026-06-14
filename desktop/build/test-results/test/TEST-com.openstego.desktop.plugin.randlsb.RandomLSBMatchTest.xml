@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-14T21:08:18" hostname="NICK-WINDOWS-PC" time="0.118">
+<testsuite name="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-14T21:19:41" hostname="NICK-WINDOWS-PC" time="0.117">
   <properties/>
-  <testcase name="testPlainRandomLsbCanExtractMatchedData()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" time="0.034"/>
-  <testcase name="testMatchRoundTrip()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" time="0.024"/>
-  <testcase name="testEmbeddingChangesChannelsByAtMostOne()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" time="0.06"/>
+  <testcase name="testPlainRandomLsbCanExtractMatchedData()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" time="0.036"/>
+  <testcase name="testMatchRoundTrip()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" time="0.023"/>
+  <testcase name="testEmbeddingChangesChannelsByAtMostOne()" classname="com.openstego.desktop.plugin.randlsb.RandomLSBMatchTest" time="0.057"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

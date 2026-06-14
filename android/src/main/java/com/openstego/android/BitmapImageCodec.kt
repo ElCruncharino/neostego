@@ -7,6 +7,7 @@ package com.openstego.android
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.ColorSpace
 import com.openstego.desktop.OpenStego
 import com.openstego.desktop.OpenStegoErrors
 import com.openstego.desktop.OpenStegoException
@@ -22,14 +23,25 @@ import java.security.SecureRandom
 class BitmapImageCodec : ImageCodec {
 
     override fun decode(data: ByteArray, fileName: String?): PixelImage {
-        val decoded = BitmapFactory.decodeByteArray(data, 0, data.size)
-            ?: throw OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID, fileName)
-        // Ensure a mutable ARGB_8888 bitmap so per-pixel writes are well defined
-        val mutable = decoded.copy(Bitmap.Config.ARGB_8888, true)
-        if (mutable !== decoded) {
-            decoded.recycle()
+        // Decode bit-exactly: no density scaling, no dithering, no alpha premultiplication and no
+        // colour-space conversion. Any of these would alter the least-significant bits and make
+        // previously embedded data unreadable.
+        val options = BitmapFactory.Options().apply {
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+            inScaled = false
+            inDither = false
+            inMutable = true
+            inPremultiplied = false
+            inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB)
         }
-        return BitmapPixelImage(mutable)
+        var bitmap = BitmapFactory.decodeByteArray(data, 0, data.size, options)
+            ?: throw OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID, fileName)
+        if (bitmap.config != Bitmap.Config.ARGB_8888 || !bitmap.isMutable) {
+            val converted = bitmap.copy(Bitmap.Config.ARGB_8888, true)
+            bitmap.recycle()
+            bitmap = converted
+        }
+        return BitmapPixelImage(bitmap)
     }
 
     override fun encode(image: PixelImage, fileName: String?): ByteArray {
