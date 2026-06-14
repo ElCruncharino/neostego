@@ -9,9 +9,10 @@ package com.openstego.desktop;
 import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract class for stego plugins for OpenStego. Abstract methods need to be implemented to add support for more
@@ -208,12 +209,28 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
     // ------------- Command-line Related Methods -------------
 
     /**
-     * Method to populate the standard command-line options used by this plugin
+     * Method to declare the plugin-specific command-line options. The command-line layer uses these
+     * neutral descriptors to build its parser, keeping any specific parsing library out of the plugin SPI.
+     * Plugins with no extra options need not override this.
      *
-     * @param options Existing command-line options. Plugin-specific options will get added to this list
+     * @return List of plugin-specific command-line option descriptors (empty by default)
+     */
+    public List<PluginCmdLineOption> getPluginCmdLineOptions() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Method to translate parsed values of the plugin-specific command-line options into configuration
+     * items. Implementations should add typed entries to {@code configMap} for the values they recognize.
+     * Plugins with no extra options need not override this.
+     *
+     * @param configMap    Configuration map to populate (consumed by {@link OpenStegoConfig#initialize(Map)})
+     * @param parsedValues Parsed command-line values keyed by option name (e.g. "-b")
      * @throws OpenStegoException Processing issues
      */
-    public abstract void populateStdCmdLineOptions(CmdLineOptions options) throws OpenStegoException;
+    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues) throws OpenStegoException {
+        // No plugin-specific options by default
+    }
 
     /**
      * Method to get the usage details of the plugin
@@ -257,29 +274,10 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
     }
 
     /**
-     * Method to reset configuration data to default
-     *
-     * @param options Command-line options
-     * @throws OpenStegoException Processing issues
-     */
-    public void resetConfig(CmdLineOptions options) throws OpenStegoException {
-        this.config = createConfig(options);
-    }
-
-    /**
      * Method to create default configuration data (specific to this plugin)
      *
      * @return Configuration data
      * @throws OpenStegoException Processing issues
      */
     protected abstract C createConfig() throws OpenStegoException;
-
-    /**
-     * Method to create configuration data (specific to this plugin) based on the command-line options
-     *
-     * @param options Command-line options
-     * @return Configuration data
-     * @throws OpenStegoException Processing issues
-     */
-    protected abstract C createConfig(CmdLineOptions options) throws OpenStegoException;
 }

@@ -13,8 +13,6 @@ import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
-
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,15 +119,6 @@ public abstract class WMImagePluginTemplate extends WatermarkingPlugin<OpenStego
     }
 
     /**
-     * Method to populate the standard command-line options used by this plugin
-     *
-     * @param options Existing command-line options. Plugin-specific options will get added to this list
-     */
-    @Override
-    public void populateStdCmdLineOptions(CmdLineOptions options) {
-    }
-
-    /**
      * Method to create default configuration data (specific to this plugin)
      *
      * @return Configuration data
@@ -137,19 +126,5 @@ public abstract class WMImagePluginTemplate extends WatermarkingPlugin<OpenStego
     @Override
     protected OpenStegoConfig createConfig() {
         return new OpenStegoConfig();
-    }
-
-    /**
-     * Method to create configuration data (specific to this plugin) based on the command-line options
-     *
-     * @param options Command-line options
-     * @return Configuration data
-     * @throws OpenStegoException Processing issues
-     */
-    @Override
-    protected OpenStegoConfig createConfig(CmdLineOptions options) throws OpenStegoException {
-        OpenStegoConfig config = new OpenStegoConfig();
-        config.initialize(options);
-        return config;
     }
 }

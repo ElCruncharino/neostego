@@ -13,8 +13,6 @@ import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
-
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,12 +118,4 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
         return writeFormats;
     }
 
-    /**
-     * Method to populate the standard command-line options used by this plugin
-     *
-     * @param options Existing command-line options. Plugin-specific options will get added to this list
-     */
-    @Override
-    public void populateStdCmdLineOptions(CmdLineOptions options) {
-    }
 }

@@ -6,9 +6,6 @@
 
 package com.openstego.desktop;
 
-import com.openstego.desktop.util.cmd.CmdLineOptions;
-
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -72,53 +69,6 @@ public class OpenStegoConfig {
      */
     public final void initialize(Map<String, Object> propMap) throws OpenStegoException {
         addProperties(propMap);
-    }
-
-    /**
-     * Initialize the configuration from command-line options.
-     *
-     * @param options Command-line options
-     * @throws OpenStegoException Processing issues
-     */
-    public final void initialize(CmdLineOptions options) throws OpenStegoException {
-        addProperties(convertCmdLineOptionsToMap(options));
-    }
-
-    /**
-     * Converts command line options to Map form
-     *
-     * @param options Command-line options
-     * @return Options in Map form
-     * @throws OpenStegoException Processing issues
-     */
-    protected Map<String, Object> convertCmdLineOptionsToMap(CmdLineOptions options) throws OpenStegoException {
-        Map<String, Object> map = new HashMap<>();
-
-        if (options.getOption("-c") != null) { // compress
-            map.put(USE_COMPRESSION, true);
-        }
-
-        if (options.getOption("-C") != null) { // nocompress
-            map.put(USE_COMPRESSION, false);
-        }
-
-        if (options.getOption("-e") != null) { // encrypt
-            map.put(USE_ENCRYPTION, true);
-        }
-
-        if (options.getOption("-E") != null) { // noencrypt
-            map.put(USE_ENCRYPTION, false);
-        }
-
-        if (options.getOption("-p") != null) { // password
-            map.put(PASSWORD, options.getStringValue("-p"));
-        }
-
-        if (options.getOption("-A") != null) { // cryptalgo
-            map.put(ENCRYPTION_ALGORITHM, options.getStringValue("-A"));
-        }
-
-        return map;
     }
 
     /**

@@ -11,7 +11,6 @@ import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
-import com.openstego.desktop.util.cmd.CmdLineOptions;
 
 import javax.imageio.ImageIO;
 import java.util.ArrayList;
@@ -105,15 +104,6 @@ public abstract class DCTPluginTemplate extends OpenStegoPlugin<DCTConfig> {
     }
 
     /**
-     * Method to populate the standard command-line options used by this plugin
-     *
-     * @param options Existing command-line options. Plugin-specific options will get added to this list
-     */
-    @Override
-    public void populateStdCmdLineOptions(CmdLineOptions options) {
-    }
-
-    /**
      * Method to create default configuration data (specific to this plugin)
      *
      * @return Configuration data
@@ -121,19 +111,5 @@ public abstract class DCTPluginTemplate extends OpenStegoPlugin<DCTConfig> {
     @Override
     protected DCTConfig createConfig() {
         return new DCTConfig();
-    }
-
-    /**
-     * Method to create configuration data (specific to this plugin) based on the command-line options
-     *
-     * @param options Command-line options
-     * @return Configuration data
-     * @throws OpenStegoException Processing issues
-     */
-    @Override
-    protected DCTConfig createConfig(CmdLineOptions options) throws OpenStegoException {
-        DCTConfig config = new DCTConfig();
-        config.initialize(options);
-        return config;
     }
 }
