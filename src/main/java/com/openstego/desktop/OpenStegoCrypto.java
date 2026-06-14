@@ -15,11 +15,17 @@ import javax.crypto.spec.PBEParameterSpec;
 import java.security.AlgorithmParameters;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.KeySpec;
+import java.util.logging.Logger;
 
 /**
  * This is the class for providing cryptography support to OpenStego.
  */
 public class OpenStegoCrypto {
+    /**
+     * Logger instance
+     */
+    private static final Logger logger = Logger.getLogger(OpenStegoCrypto.class.getName());
+
     /**
      * Constant for algorithm - DES
      */
@@ -64,7 +70,7 @@ public class OpenStegoCrypto {
             } else if (ALGO_AES256.equalsIgnoreCase(algorithm)) {
                 algorithm = "PBEWithHmacSHA256AndAES_256";
             } else if (ALGO_DES.equalsIgnoreCase(algorithm)) {
-                System.out.println("Warning: Using insecure algorithm: " + algorithm);
+                logger.warning("Using insecure algorithm: " + algorithm);
                 algorithm = "PBEWithMD5AndDES";
             } else {
                 throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, algorithm);
