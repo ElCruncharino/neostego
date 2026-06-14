@@ -795,7 +795,10 @@ public class OpenStegoUI extends OpenStegoFrame {
                 throw new OpenStegoException(new RuntimeException("Unknown action: " + action));
         }
 
-        fileName = browser.getFileName(title, filterDesc, allowedExts, allowFileDir, multiSelect);
+        boolean saveDialog = action.equals(ActionCommands.BROWSE_DH_EMB_STGFILE)
+                || action.equals(ActionCommands.BROWSE_WM_EMB_OUTFILE)
+                || action.equals(ActionCommands.BROWSE_WM_GSG_SIGFILE);
+        fileName = browser.getFileName(this, title, filterDesc, allowedExts, allowFileDir, multiSelect, saveDialog);
         if (fileName != null) {
             // Check for valid extension for output file
             if ((action.equals(OpenStegoFrame.ActionCommands.BROWSE_DH_EMB_STGFILE) && (coverFileListSize <= 1))
@@ -1079,17 +1082,93 @@ public class OpenStegoUI extends OpenStegoFrame {
         public static final int ALLOW_FILE_AND_DIR = 3;
 
         /**
-         * Method to get the display file chooser and return the selected file name
+         * Method to display a file chooser and return the selected file name.
+         * <p>
+         * For plain file open/save this uses the native OS file dialog ({@link FileDialog}) so that the
+         * application uses Windows Explorer / the native desktop file picker. Directory selection is not
+         * supported by the native dialog (especially on Windows), so {@link JFileChooser} is used for
+         * those cases.
          *
+         * @param parent       Parent frame to own the dialog
          * @param dialogTitle  Title for the file chooser dialog box
          * @param filterDesc   Description to be displayed for the filter in file chooser
          * @param allowedExts  Allowed file extensions for the filter
          * @param allowFileDir Type of objects allowed to be selected (FileBrowser.ALLOW_FILE,
          *                     FileBrowser.ALLOW_DIRECTORY or FileBrowser.ALLOW_FILE_AND_DIR)
          * @param multiSelect  Flag to indicate whether multiple file selection is allowed or not
+         * @param saveDialog   Flag to indicate whether the dialog is for saving (output) a file
          * @return Name of the selected file (null if no file was selected)
          */
-        public String getFileName(String dialogTitle, String filterDesc, List<String> allowedExts, int allowFileDir, boolean multiSelect) {
+        public String getFileName(Frame parent, String dialogTitle, String filterDesc, List<String> allowedExts, int allowFileDir,
+                                  boolean multiSelect, boolean saveDialog) {
+            // The native AWT file dialog can only select files, so fall back to the Swing chooser when a
+            // directory may be selected.
+            if (allowFileDir != ALLOW_FILE) {
+                return getFileNameUsingChooser(dialogTitle, filterDesc, allowedExts, allowFileDir, multiSelect);
+            }
+            return getFileNameUsingNativeDialog(parent, dialogTitle, allowedExts, multiSelect, saveDialog);
+        }
+
+        /**
+         * Shows the native OS file dialog for selecting (or saving) one or more files.
+         */
+        private String getFileNameUsingNativeDialog(Frame parent, String dialogTitle, List<String> allowedExts, boolean multiSelect,
+                                                    boolean saveDialog) {
+            FileDialog dialog = new FileDialog(parent, dialogTitle, saveDialog ? FileDialog.SAVE : FileDialog.LOAD);
+            if (lastFolder != null) {
+                dialog.setDirectory(lastFolder);
+            }
+            dialog.setMultipleMode(multiSelect);
+
+            if (allowedExts != null && !allowedExts.isEmpty()) {
+                // Linux/macOS honor the FilenameFilter; Windows honors a wildcard pattern set via setFile().
+                dialog.setFilenameFilter((dir, name) -> {
+                    String lower = name.toLowerCase();
+                    for (String ext : allowedExts) {
+                        if (lower.endsWith(ext.toLowerCase())) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                if (!saveDialog) {
+                    StringBuilder pattern = new StringBuilder();
+                    for (String ext : allowedExts) {
+                        if (pattern.length() > 0) {
+                            pattern.append(";");
+                        }
+                        pattern.append("*").append(ext.startsWith(".") ? ext : "." + ext);
+                    }
+                    dialog.setFile(pattern.toString());
+                }
+            }
+
+            dialog.setVisible(true);
+
+            File[] files = dialog.getFiles();
+            if (files == null || files.length == 0) {
+                return null;
+            }
+            lastFolder = dialog.getDirectory();
+
+            if (multiSelect) {
+                StringBuilder fileList = new StringBuilder();
+                for (int i = 0; i < files.length; i++) {
+                    if (i != 0) {
+                        fileList.append(";");
+                    }
+                    fileList.append(files[i].getPath());
+                }
+                return fileList.toString();
+            }
+            return files[0].getPath();
+        }
+
+        /**
+         * Shows the Swing file chooser, used when a directory may be selected.
+         */
+        private String getFileNameUsingChooser(String dialogTitle, String filterDesc, List<String> allowedExts, int allowFileDir,
+                                               boolean multiSelect) {
             int retVal;
             String fileName = null;
             File[] files;
