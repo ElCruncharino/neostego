@@ -1,0 +1,509 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ImageUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.util</a> &gt; <span class="el_source">ImageUtil.java</span></div><h1>ImageUtil.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.util;
+
+import com.openstego.desktop.OpenStego;
+import com.openstego.desktop.OpenStegoErrors;
+import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.OpenStegoPlugin;
+import org.w3c.dom.Node;
+
+import javax.imageio.*;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+/**
+ * Image utilities
+ */
+public class ImageUtil {
+
+    /**
+     * Constructor is private so that this class is not instantiated
+     */
+    private ImageUtil() {
+    }
+
+    /**
+     * Default image type in case not provided
+     */
+    public static final String DEFAULT_IMAGE_TYPE = &quot;png&quot;;
+
+    /**
+     * Method to generate a random image filled with noise.
+     *
+     * @param numOfPixels Number of pixels required in the image
+     * @return Random image filled with noise
+     * @throws OpenStegoException Processing issues
+     */
+    public static ImageHolder generateRandomImage(int numOfPixels) throws OpenStegoException {
+<span class="nc" id="L51">        final double ASPECT_RATIO = 4.0 / 3.0;</span>
+        int width;
+        int height;
+<span class="nc" id="L54">        byte[] rgbValue = new byte[3];</span>
+        BufferedImage image;
+        // Use the platform default SecureRandom; the deprecated &quot;SHA1PRNG&quot; algorithm is not
+        // guaranteed to be available on all JREs.
+<span class="nc" id="L58">        SecureRandom random = new SecureRandom();</span>
+
+<span class="nc" id="L60">        width = (int) Math.ceil(Math.sqrt(numOfPixels * ASPECT_RATIO));</span>
+<span class="nc" id="L61">        height = (int) Math.ceil(numOfPixels / (double) width);</span>
+
+<span class="nc" id="L63">        image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        for (int x = 0; x &lt; width; x++) {</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">            for (int y = 0; y &lt; height; y++) {</span>
+<span class="nc" id="L66">                random.nextBytes(rgbValue);</span>
+<span class="nc" id="L67">                image.setRGB(x, y, CommonUtil.byteToInt(rgbValue[0]) +</span>
+<span class="nc" id="L68">                        (CommonUtil.byteToInt(rgbValue[1]) &lt;&lt; 8) +</span>
+<span class="nc" id="L69">                        (CommonUtil.byteToInt(rgbValue[2]) &lt;&lt; 16));</span>
+            }
+        }
+
+<span class="nc" id="L73">        return new ImageHolder(image, null);</span>
+    }
+
+    /**
+     * Method to convert BufferedImage to byte array
+     *
+     * @param image         Image data
+     * @param imageFileName Name of the image file
+     * @param plugin        Reference to the plugin
+     * @return Image data as byte array
+     * @throws OpenStegoException Processing issues
+     */
+    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, OpenStegoPlugin&lt;?&gt; plugin) throws OpenStegoException {
+<span class="nc" id="L86">        return imageToByteArray(image, imageFileName, plugin.getWritableFileExtensions());</span>
+    }
+
+    /**
+     * Method to convert BufferedImage to byte array
+     *
+     * @param image          Image data
+     * @param imageFileName  Name of the image file
+     * @param writableFormats List of writable file extensions to validate against
+     * @return Image data as byte array
+     * @throws OpenStegoException Processing issues
+     */
+    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, List&lt;String&gt; writableFormats) throws OpenStegoException {
+<span class="fc" id="L99">        ByteArrayOutputStream barrOS = new ByteArrayOutputStream(32 * 1024);</span>
+        String imageType;
+
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (imageFileName != null) {</span>
+<span class="fc" id="L103">            imageType = imageFileName.substring(imageFileName.lastIndexOf('.') + 1).toLowerCase();</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">            if (!writableFormats.contains(imageType)) {</span>
+<span class="nc" id="L105">                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_TYPE_INVALID, imageType);</span>
+            }
+<span class="pc bpc" id="L107" title="1 of 2 branches missed.">            if (imageType.equals(&quot;jp2&quot;)) {</span>
+<span class="nc" id="L108">                imageType = &quot;jpeg 2000&quot;;</span>
+            }
+<span class="fc" id="L110">            writeImage(image, imageType, barrOS);</span>
+        } else {
+<span class="nc" id="L112">            writeImage(image, DEFAULT_IMAGE_TYPE, barrOS);</span>
+        }
+<span class="fc" id="L114">        return barrOS.toByteArray();</span>
+    }
+
+    /**
+     * Method to convert byte array to image
+     *
+     * @param imageData   Image data as byte array
+     * @param imgFileName Name of the image file
+     * @return Buffered image
+     * @throws OpenStegoException Processing issues
+     */
+    public static ImageHolder byteArrayToImage(byte[] imageData, String imgFileName) throws OpenStegoException {
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">        if (imageData == null) {</span>
+<span class="nc" id="L127">            return null;</span>
+        }
+
+<span class="fc" id="L130">        ImageHolder image = readImage(new ByteArrayInputStream(imageData));</span>
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">        if (image == null) {</span>
+<span class="nc" id="L132">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID, imgFileName);</span>
+        }
+<span class="fc" id="L134">        return image;</span>
+    }
+
+    /**
+     * Get RGB data array from given image
+     *
+     * @param image Image
+     * @return List with three elements of two-dimensional int's - R, G and B
+     */
+    @SuppressWarnings(&quot;unused&quot;)
+    public static List&lt;int[][]&gt; getRgbFromImage(BufferedImage image) {
+<span class="nc" id="L145">        List&lt;int[][]&gt; rgb = new ArrayList&lt;&gt;();</span>
+        int[][] r;
+        int[][] g;
+        int[][] b;
+        int width;
+        int height;
+
+<span class="nc" id="L152">        width = image.getWidth();</span>
+<span class="nc" id="L153">        height = image.getHeight();</span>
+
+<span class="nc" id="L155">        r = new int[height][width];</span>
+<span class="nc" id="L156">        g = new int[height][width];</span>
+<span class="nc" id="L157">        b = new int[height][width];</span>
+
+<span class="nc bnc" id="L159" title="All 2 branches missed.">        for (int i = 0; i &lt; height; i++) {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">            for (int j = 0; j &lt; width; j++) {</span>
+<span class="nc" id="L161">                r[i][j] = (image.getRGB(j, i) &gt;&gt; 16) &amp; 0xFF;</span>
+<span class="nc" id="L162">                g[i][j] = (image.getRGB(j, i) &gt;&gt; 8) &amp; 0xFF;</span>
+<span class="nc" id="L163">                b[i][j] = (image.getRGB(j, i)) &amp; 0xFF;</span>
+            }
+        }
+
+<span class="nc" id="L167">        rgb.add(r);</span>
+<span class="nc" id="L168">        rgb.add(g);</span>
+<span class="nc" id="L169">        rgb.add(b);</span>
+
+<span class="nc" id="L171">        return rgb;</span>
+    }
+
+    /**
+     * Get YUV data from given image's RGB data
+     *
+     * @param image Image
+     * @return List with three elements of two-dimensional int's - Y, U and V
+     */
+    public static List&lt;int[][]&gt; getYuvFromImage(BufferedImage image) {
+<span class="nc" id="L181">        List&lt;int[][]&gt; yuv = new ArrayList&lt;&gt;();</span>
+        int[][] y;
+        int[][] u;
+        int[][] v;
+        int[][] aa;
+        int a;
+        int r;
+        int g;
+        int b;
+        int width;
+        int height;
+
+<span class="nc" id="L193">        width = image.getWidth();</span>
+<span class="nc" id="L194">        height = image.getHeight();</span>
+
+<span class="nc" id="L196">        y = new int[height][width];</span>
+<span class="nc" id="L197">        u = new int[height][width];</span>
+<span class="nc" id="L198">        v = new int[height][width];</span>
+<span class="nc" id="L199">        aa = new int[height][width];</span>
+
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        for (int i = 0; i &lt; height; i++) {</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">            for (int j = 0; j &lt; width; j++) {</span>
+<span class="nc" id="L203">                a = (image.getRGB(j, i) &gt;&gt; 24) &amp; 0xFF;</span>
+<span class="nc" id="L204">                r = (image.getRGB(j, i) &gt;&gt; 16) &amp; 0xFF;</span>
+<span class="nc" id="L205">                g = (image.getRGB(j, i) &gt;&gt; 8) &amp; 0xFF;</span>
+<span class="nc" id="L206">                b = (image.getRGB(j, i)) &amp; 0xFF;</span>
+
+                // Convert RGB to YUV colorspace
+<span class="nc" id="L209">                y[i][j] = (int) ((0.299 * r) + (0.587 * g) + (0.114 * b));</span>
+<span class="nc" id="L210">                u[i][j] = (int) ((-0.147 * r) - (0.289 * g) + (0.436 * b));</span>
+<span class="nc" id="L211">                v[i][j] = (int) ((0.615 * r) - (0.515 * g) - (0.100 * b));</span>
+<span class="nc" id="L212">                aa[i][j] = a;</span>
+            }
+        }
+
+<span class="nc" id="L216">        yuv.add(y);</span>
+<span class="nc" id="L217">        yuv.add(u);</span>
+<span class="nc" id="L218">        yuv.add(v);</span>
+<span class="nc" id="L219">        yuv.add(aa);</span>
+
+<span class="nc" id="L221">        return yuv;</span>
+    }
+
+    /**
+     * Get image from given RGB data
+     *
+     * @param rgb List with three elements of two-dimensional int's - R, G and B
+     * @return Image
+     */
+    @SuppressWarnings(&quot;unused&quot;)
+    public static BufferedImage getImageFromRgb(List&lt;int[][]&gt; rgb) {
+        BufferedImage image;
+        int width;
+        int height;
+        int[][] r;
+        int[][] g;
+        int[][] b;
+
+<span class="nc" id="L239">        r = rgb.get(0);</span>
+<span class="nc" id="L240">        g = rgb.get(1);</span>
+<span class="nc" id="L241">        b = rgb.get(2);</span>
+
+<span class="nc" id="L243">        height = r.length;</span>
+<span class="nc" id="L244">        width = r[0].length;</span>
+<span class="nc" id="L245">        image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);</span>
+
+<span class="nc bnc" id="L247" title="All 2 branches missed.">        for (int i = 0; i &lt; height; i++) {</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">            for (int j = 0; j &lt; width; j++) {</span>
+<span class="nc" id="L249">                image.setRGB(j, i, (r[i][j] &lt;&lt; 16) + (g[i][j] &lt;&lt; 8) + b[i][j]);</span>
+            }
+        }
+
+<span class="nc" id="L253">        return image;</span>
+    }
+
+    /**
+     * Get image (with RGB data) from given YUV data
+     *
+     * @param yuv     List with three elements of two-dimensional int's - Y, U and V
+     * @param imgType Type of image (e.g. BufferedImage.TYPE_INT_RGB)
+     * @return Image
+     */
+    public static BufferedImage getImageFromYuv(List&lt;int[][]&gt; yuv, int imgType) {
+        BufferedImage image;
+        int width;
+        int height;
+        int a;
+        int r;
+        int g;
+        int b;
+        int[][] y;
+        int[][] u;
+        int[][] v;
+        int[][] aa;
+
+<span class="nc" id="L276">        y = yuv.get(0);</span>
+<span class="nc" id="L277">        u = yuv.get(1);</span>
+<span class="nc" id="L278">        v = yuv.get(2);</span>
+<span class="nc" id="L279">        aa = yuv.get(3);</span>
+
+<span class="nc" id="L281">        height = y.length;</span>
+<span class="nc" id="L282">        width = y[0].length;</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">        image = new BufferedImage(width, height, (imgType == 0 ? BufferedImage.TYPE_INT_RGB : imgType));</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        for (int i = 0; i &lt; height; i++) {</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">            for (int j = 0; j &lt; width; j++) {</span>
+                // Convert YUV back to RGB
+<span class="nc" id="L288">                r = pixelRange(y[i][j] + 1.140 * v[i][j]);</span>
+<span class="nc" id="L289">                g = pixelRange(y[i][j] - 0.395 * u[i][j] - 0.581 * v[i][j]);</span>
+<span class="nc" id="L290">                b = pixelRange(y[i][j] + 2.032 * u[i][j]);</span>
+<span class="nc" id="L291">                a = aa[i][j];</span>
+
+<span class="nc" id="L293">                image.setRGB(j, i, (a &lt;&lt; 24) + (r &lt;&lt; 16) + (g &lt;&lt; 8) + b);</span>
+            }
+        }
+
+<span class="nc" id="L297">        return image;</span>
+    }
+
+    /**
+     * Utility method to limit the value within [0,255] range
+     *
+     * @param p Input value
+     * @return Limited value
+     */
+    public static int pixelRange(int p) {
+<span class="nc bnc" id="L307" title="All 2 branches missed.">        return ((p &gt; 255) ? 255 : Math.max(p, 0));</span>
+    }
+
+    /**
+     * Utility method to limit the value within [0,255] range
+     *
+     * @param p Input value
+     * @return Limited value
+     */
+    public static int pixelRange(double p) {
+<span class="nc bnc" id="L317" title="All 4 branches missed.">        return ((p &gt; 255) ? 255 : (p &lt; 0) ? 0 : (int) p);</span>
+    }
+
+    /**
+     * Method to pad an image such that it becomes perfect square. The padding uses black color
+     *
+     * @param image Input image
+     */
+    public static void makeImageSquare(ImageHolder image) {
+        int max;
+
+<span class="nc" id="L328">        max = Math.max(image.getImage().getWidth(), image.getImage().getHeight());</span>
+<span class="nc" id="L329">        cropImage(image, max, max);</span>
+<span class="nc" id="L330">    }</span>
+
+    /**
+     * Method crop an image to the given dimensions. If dimensions are more than the input image size, then the image
+     * gets padded with black color
+     *
+     * @param image      Input image
+     * @param cropWidth  Width required for cropped image
+     * @param cropHeight Height required for cropped image
+     */
+    public static void cropImage(ImageHolder image, int cropWidth, int cropHeight) {
+        BufferedImage retImg;
+        int width;
+        int height;
+
+<span class="nc" id="L345">        width = image.getImage().getWidth();</span>
+<span class="nc" id="L346">        height = image.getImage().getHeight();</span>
+
+<span class="nc" id="L348">        retImg = new BufferedImage(cropWidth, cropHeight, BufferedImage.TYPE_INT_RGB);</span>
+
+        // Bulk-copy the overlapping region in a single operation; the remaining area stays black
+        // (the default value for a TYPE_INT_RGB image), matching the original padding behavior.
+<span class="nc" id="L352">        int copyWidth = Math.min(width, cropWidth);</span>
+<span class="nc" id="L353">        int copyHeight = Math.min(height, cropHeight);</span>
+<span class="nc bnc" id="L354" title="All 4 branches missed.">        if (copyWidth &gt; 0 &amp;&amp; copyHeight &gt; 0) {</span>
+<span class="nc" id="L355">            int[] pixels = image.getImage().getRGB(0, 0, copyWidth, copyHeight, null, 0, copyWidth);</span>
+<span class="nc" id="L356">            retImg.setRGB(0, 0, copyWidth, copyHeight, pixels, 0, copyWidth);</span>
+        }
+
+<span class="nc" id="L359">        image.setImage(retImg);</span>
+<span class="nc" id="L360">    }</span>
+
+    /**
+     * Method generate difference image between two given images
+     *
+     * @param leftImage  Left input image
+     * @param rightImage Right input image
+     * @return Difference image
+     * @throws OpenStegoException Processing issues
+     */
+    public static ImageHolder getDiffImage(ImageHolder leftImage, ImageHolder rightImage) throws OpenStegoException {
+        int leftW;
+        int leftH;
+        int rightW;
+        int rightH;
+        int min;
+        int max;
+        int diff;
+        BufferedImage diffImage;
+
+<span class="nc" id="L380">        leftW = leftImage.getImage().getWidth();</span>
+<span class="nc" id="L381">        leftH = leftImage.getImage().getHeight();</span>
+<span class="nc" id="L382">        rightW = rightImage.getImage().getWidth();</span>
+<span class="nc" id="L383">        rightH = rightImage.getImage().getHeight();</span>
+<span class="nc bnc" id="L384" title="All 4 branches missed.">        if (leftW != rightW || leftH != rightH) {</span>
+<span class="nc" id="L385">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID);</span>
+        }
+<span class="nc" id="L387">        diffImage = new BufferedImage(leftW, leftH, BufferedImage.TYPE_INT_RGB);</span>
+
+<span class="nc" id="L389">        min = Math.abs(leftImage.getImage().getRGB(0, 0) - rightImage.getImage().getRGB(0, 0));</span>
+<span class="nc" id="L390">        max = min;</span>
+
+<span class="nc bnc" id="L392" title="All 2 branches missed.">        for (int i = 0; i &lt; leftW; i++) {</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">            for (int j = 0; j &lt; leftH; j++) {</span>
+<span class="nc" id="L394">                diff = Math.abs(leftImage.getImage().getRGB(i, j) - rightImage.getImage().getRGB(i, j));</span>
+                // error += diff * diff;
+<span class="nc bnc" id="L396" title="All 2 branches missed.">                if (diff &lt; min) {</span>
+<span class="nc" id="L397">                    min = diff;</span>
+                }
+<span class="nc bnc" id="L399" title="All 2 branches missed.">                if (diff &gt; max) {</span>
+<span class="nc" id="L400">                    max = diff;</span>
+                }
+            }
+        }
+
+<span class="nc bnc" id="L405" title="All 2 branches missed.">        for (int i = 0; i &lt; leftW; i++) {</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">            for (int j = 0; j &lt; leftH; j++) {</span>
+<span class="nc" id="L407">                diff = Math.abs(leftImage.getImage().getRGB(i, j) - rightImage.getImage().getRGB(i, j));</span>
+<span class="nc" id="L408">                diffImage.setRGB(i, j, pixelRange((double) (diff - min) / (double) (max - min) * Math.pow(2, 32)));</span>
+                // TODO
+            }
+        }
+
+<span class="nc" id="L413">        return new ImageHolder(diffImage, null);</span>
+    }
+
+    private static void writeImage(ImageHolder image, String imageType, OutputStream os) throws OpenStegoException {
+<span class="pc bpc" id="L417" title="2 of 4 branches missed.">        if (&quot;jpeg&quot;.equals(imageType) || &quot;jpg&quot;.equals(imageType)) {</span>
+<span class="nc" id="L418">            writeJpegImage(image, os);</span>
+        } else {
+<span class="fc" id="L420">            ImageWriter writer = ImageIO.getImageWritersByFormatName(imageType).next();</span>
+<span class="fc" id="L421">            try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {</span>
+<span class="fc" id="L422">                writer.setOutput(imgOS);</span>
+<span class="fc" id="L423">                writer.write(null, new IIOImage(image.getImage(), null, image.getMetadata()), null);</span>
+<span class="nc" id="L424">            } catch (IOException e) {</span>
+<span class="nc" id="L425">                throw new OpenStegoException(e);</span>
+            } finally {
+<span class="fc" id="L427">                writer.dispose();</span>
+            }
+        }
+<span class="fc" id="L430">    }</span>
+
+    private static void writeJpegImage(ImageHolder image, OutputStream os) throws OpenStegoException {
+        try {
+<span class="nc" id="L434">            JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);</span>
+<span class="nc" id="L435">            jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);</span>
+<span class="nc" id="L436">            jpegParams.setOptimizeHuffmanTables(true);</span>
+<span class="nc" id="L437">            Float qual = UserPreferences.getFloat(&quot;image.writer.jpeg.quality&quot;);</span>
+<span class="nc bnc" id="L438" title="All 2 branches missed.">            if (qual == null) {</span>
+<span class="nc" id="L439">                qual = 0.75f;</span>
+            }
+<span class="nc" id="L441">            jpegParams.setCompressionQuality(qual);</span>
+
+<span class="nc" id="L443">            ImageWriter writer = ImageIO.getImageWritersByFormatName(&quot;jpg&quot;).next();</span>
+<span class="nc" id="L444">            try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {</span>
+<span class="nc" id="L445">                writer.setOutput(imgOS);</span>
+
+                // We only copy over EXIF data from original file
+<span class="nc" id="L448">                IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(image.getImage()), jpegParams);</span>
+<span class="nc" id="L449">                String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();</span>
+<span class="nc" id="L450">                Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);</span>
+<span class="nc" id="L451">                Node mdNode = mdRoot.getFirstChild();</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">                while (mdNode != null) {</span>
+<span class="nc bnc" id="L453" title="All 2 branches missed.">                    if (&quot;markerSequence&quot;.equals(mdNode.getNodeName())) {</span>
+<span class="nc" id="L454">                        Node marker = mdNode.getFirstChild();</span>
+<span class="nc bnc" id="L455" title="All 2 branches missed.">                        while (marker != null) {</span>
+<span class="nc" id="L456">                            Node next = marker.getNextSibling();</span>
+                            // Remove all markers other than EXIF (225)
+<span class="nc bnc" id="L458" title="All 2 branches missed.">                            if (marker.getAttributes().getNamedItem(&quot;MarkerTag&quot;) == null</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">                                    || !&quot;225&quot;.equals(marker.getAttributes().getNamedItem(&quot;MarkerTag&quot;).getNodeValue())) {</span>
+<span class="nc" id="L460">                                mdNode.removeChild(marker);</span>
+                            }
+<span class="nc" id="L462">                            marker = next;</span>
+<span class="nc" id="L463">                        }</span>
+                        break;
+                    }
+<span class="nc" id="L466">                    mdNode = mdNode.getNextSibling();</span>
+                }
+<span class="nc" id="L468">                metadata.mergeTree(metadataFormatName, mdRoot);</span>
+
+<span class="nc" id="L470">                writer.write(null, new IIOImage(image.getImage(), null, metadata), jpegParams);</span>
+            } finally {
+<span class="nc" id="L472">                writer.dispose();</span>
+            }
+<span class="nc" id="L474">        } catch (IOException e) {</span>
+<span class="nc" id="L475">            throw new OpenStegoException(e);</span>
+<span class="nc" id="L476">        }</span>
+<span class="nc" id="L477">    }</span>
+
+    private static ImageHolder readImage(InputStream is) throws OpenStegoException {
+<span class="fc" id="L480">        try (ImageInputStream imageIS = ImageIO.createImageInputStream(is)) {</span>
+<span class="fc" id="L481">            Iterator&lt;ImageReader&gt; readers = ImageIO.getImageReaders(imageIS);</span>
+<span class="pc bpc" id="L482" title="1 of 2 branches missed.">            if (!readers.hasNext()) {</span>
+<span class="nc" id="L483">                return null;</span>
+            }
+
+<span class="fc" id="L486">            ImageReader reader = readers.next();</span>
+            try {
+<span class="fc" id="L488">                reader.setInput(imageIS);</span>
+<span class="fc" id="L489">                BufferedImage image = reader.read(0);</span>
+                IIOMetadata metadata;
+                try {
+<span class="fc" id="L492">                    metadata = reader.getImageMetadata(0);</span>
+<span class="nc" id="L493">                } catch (IOException e) {</span>
+<span class="nc" id="L494">                    ImageWriter writer = ImageIO.getImageWriter(reader);</span>
+<span class="nc" id="L495">                    ImageWriteParam param = writer.getDefaultWriteParam();</span>
+<span class="nc" id="L496">                    metadata = writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(image), param);</span>
+<span class="nc" id="L497">                    writer.dispose();</span>
+<span class="fc" id="L498">                }</span>
+<span class="fc" id="L499">                return new ImageHolder(image, metadata);</span>
+            } finally {
+<span class="fc" id="L501">                reader.dispose();</span>
+            }
+<span class="nc bnc" id="L503" title="All 2 branches missed.">        } catch (IOException e) {</span>
+<span class="nc" id="L504">            throw new OpenStegoException(e);</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

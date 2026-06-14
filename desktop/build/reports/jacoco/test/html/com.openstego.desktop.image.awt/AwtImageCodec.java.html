@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AwtImageCodec.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.image.awt</a> &gt; <span class="el_source">AwtImageCodec.java</span></div><h1>AwtImageCodec.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.image.awt;
+
+import com.openstego.desktop.OpenStego;
+import com.openstego.desktop.OpenStegoErrors;
+import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.ImageCodec;
+import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.util.ImageHolder;
+import com.openstego.desktop.util.ImageUtil;
+
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+
+/**
+ * Desktop {@link ImageCodec} implementation backed by AWT / ImageIO. Discovered via
+ * {@link java.util.ServiceLoader}.
+ */
+<span class="fc" id="L30">public class AwtImageCodec implements ImageCodec {</span>
+<span class="fc" id="L31">    private static List&lt;String&gt; readFormats = null;</span>
+<span class="fc" id="L32">    private static List&lt;String&gt; writeFormats = null;</span>
+
+    @Override
+    public PixelImage decode(byte[] data, String fileName) throws OpenStegoException {
+<span class="fc" id="L36">        ImageHolder holder = ImageUtil.byteArrayToImage(data, fileName);</span>
+<span class="fc" id="L37">        BufferedImage image = holder.getImage();</span>
+        // Normalize to TYPE_INT_RGB so that per-pixel get/set behaves consistently across source types
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if (image.getType() != BufferedImage.TYPE_INT_RGB) {</span>
+<span class="fc" id="L40">            BufferedImage rgb = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);</span>
+<span class="fc" id="L41">            int[] pixels = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());</span>
+<span class="fc" id="L42">            rgb.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());</span>
+<span class="fc" id="L43">            image = rgb;</span>
+        }
+<span class="fc" id="L45">        return new BufferedImagePixelImage(image);</span>
+    }
+
+    @Override
+    public byte[] encode(PixelImage image, String fileName) throws OpenStegoException {
+<span class="fc" id="L50">        BufferedImage bufferedImage = ((BufferedImagePixelImage) image).getBufferedImage();</span>
+<span class="fc" id="L51">        return ImageUtil.imageToByteArray(new ImageHolder(bufferedImage, null), fileName, getWritableFormats());</span>
+    }
+
+    @Override
+    public PixelImage createRandomImage(int numOfPixels) throws OpenStegoException {
+<span class="nc" id="L56">        ImageHolder holder = ImageUtil.generateRandomImage(numOfPixels);</span>
+<span class="nc" id="L57">        return new BufferedImagePixelImage(holder.getImage());</span>
+    }
+
+    @Override
+    public List&lt;String&gt; getReadableFormats() {
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (readFormats == null) {</span>
+<span class="nc" id="L63">            readFormats = collectFormats(ImageIO.getReaderFormatNames());</span>
+        }
+<span class="nc" id="L65">        return readFormats;</span>
+    }
+
+    @Override
+    public List&lt;String&gt; getWritableFormats() {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (writeFormats != null) {</span>
+<span class="fc" id="L71">            return writeFormats;</span>
+        }
+
+        // Steganography requires lossless output, so keep only losslessly-writable formats
+<span class="fc" id="L75">        List&lt;String&gt; formats = collectFormats(ImageIO.getWriterFormatNames());</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        for (int i = formats.size() - 1; i &gt;= 0; i--) {</span>
+<span class="fc" id="L77">            Iterator&lt;ImageWriter&gt; iter = ImageIO.getImageWritersBySuffix(formats.get(i));</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            while (iter.hasNext()) {</span>
+<span class="fc" id="L79">                ImageWriteParam writeParam = iter.next().getDefaultWriteParam();</span>
+                try {
+<span class="fc" id="L81">                    writeParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);</span>
+<span class="fc" id="L82">                    String[] compTypes = writeParam.getCompressionTypes();</span>
+<span class="pc bpc" id="L83" title="2 of 4 branches missed.">                    if (compTypes != null &amp;&amp; compTypes.length &gt; 0) {</span>
+<span class="fc" id="L84">                        writeParam.setCompressionType(compTypes[0]);</span>
+                    }
+<span class="fc" id="L86">                } catch (UnsupportedOperationException uoEx) {</span>
+<span class="fc" id="L87">                    break; // Compression not supported</span>
+<span class="fc" id="L88">                }</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">                if (writeParam.isCompressionLossless()) {</span>
+<span class="fc" id="L90">                    break;</span>
+                }
+<span class="fc" id="L92">                formats.remove(i);</span>
+<span class="fc" id="L93">            }</span>
+        }
+
+        // Explicitly remove formats with unsupported color models or known issues
+<span class="fc" id="L97">        formats.remove(&quot;gif&quot;);</span>
+<span class="fc" id="L98">        formats.remove(&quot;wbmp&quot;);</span>
+<span class="fc" id="L99">        formats.remove(&quot;tif&quot;);</span>
+<span class="fc" id="L100">        formats.remove(&quot;tiff&quot;);</span>
+
+<span class="fc" id="L102">        writeFormats = formats;</span>
+<span class="fc" id="L103">        return writeFormats;</span>
+    }
+
+    private static List&lt;String&gt; collectFormats(String[] formats) {
+<span class="fc" id="L107">        List&lt;String&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        for (String s : formats) {</span>
+<span class="fc" id="L109">            String format = s.toLowerCase();</span>
+<span class="pc bpc" id="L110" title="1 of 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
+<span class="nc" id="L111">                format = &quot;jp2&quot;;</span>
+            }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">            if (!result.contains(format)) {</span>
+<span class="fc" id="L114">                result.add(format);</span>
+            }
+        }
+<span class="fc" id="L117">        Collections.sort(result);</span>
+<span class="fc" id="L118">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DWT.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">desktop</a> &gt; <a href="index.source.html" class="el_package">com.openstego.desktop.util.dwt</a> &gt; <span class="el_source">DWT.java</span></div><h1>DWT.java</h1><pre class="source lang-java linenums">/*
+ * Steganography utility to hide messages into cover files
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ */
+
+package com.openstego.desktop.util.dwt;
+
+import com.openstego.desktop.util.ImageUtil;
+
+import java.util.Map;
+
+/**
+ * Class to handle Discrete Wavelet Transforms (DWT).
+ * &lt;p&gt;
+ * This class is conversion of C to Java for the file &quot;dwt.c&quot; file provided by Peter Meerwald at:&lt;a
+ * href=&quot;http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/&quot;&gt;http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/&lt;/a&gt;
+ * &lt;p&gt;
+ * Refer to his thesis on watermarking: Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain,
+ * Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
+ */
+public class DWT {
+    /**
+     * Master map of filters
+     */
+<span class="nc" id="L26">    private static Map&lt;Integer, FilterGH&gt; filterGHMap = null;</span>
+
+    /**
+     * URI for the filter file
+     */
+    private static final String FILTER_FILE = &quot;/dwt/filters.xml&quot;;
+
+    /**
+     * List of loaded filters
+     */
+    private final FilterGH[] filters;
+
+    /**
+     * Wavelet filtering method
+     */
+    private final int method;
+
+    /**
+     * No. of columns in the image
+     */
+    private final int cols;
+
+    /**
+     * No. of rows in the image
+     */
+    private final int rows;
+
+    /**
+     * Wavelet decomposition level
+     */
+    private final int level;
+
+    /**
+     * Default constructor
+     *
+     * @param cols     Image width
+     * @param rows     Image height
+     * @param filterID Filter ID to use
+     * @param level    Decomposition level
+     * @param method   Wavelet filtering method
+     */
+<span class="nc" id="L67">    public DWT(int cols, int rows, int filterID, int level, int method) {</span>
+        // Read the master filter file if it is not already loaded
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (filterGHMap == null) {</span>
+<span class="nc" id="L70">            filterGHMap = FilterXMLReader.parse(FILTER_FILE);</span>
+        }
+
+<span class="nc" id="L73">        this.filters = new FilterGH[level + 1];</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        for (int i = 0; i &lt;= level; i++) {</span>
+<span class="nc" id="L75">            this.filters[i] = filterGHMap.get(filterID);</span>
+        }
+
+<span class="nc" id="L78">        this.level = level;</span>
+<span class="nc" id="L79">        this.method = method;</span>
+<span class="nc" id="L80">        this.cols = cols;</span>
+<span class="nc" id="L81">        this.rows = rows;</span>
+<span class="nc" id="L82">    }</span>
+
+    /**
+     * Method to perform forward DWT on the pixel data
+     *
+     * @param pixels Image pixel data
+     * @return Image tree data after DWT
+     */
+    public ImageTree forwardDWT(int[][] pixels) {
+        Image image;
+        ImageTree tree;
+
+<span class="nc" id="L94">        image = new Image(this.cols, this.rows);</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">        for (int i = 0; i &lt; this.rows; i++) {</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            for (int j = 0; j &lt; this.cols; j++) {</span>
+<span class="nc" id="L98">                DWTUtil.setPixel(image, j, i, pixels[i][j]);</span>
+            }
+        }
+
+<span class="nc" id="L102">        tree = DWTUtil.waveletTransform(image, this.level, this.filters, this.method);</span>
+<span class="nc" id="L103">        return tree;</span>
+    }
+
+    /**
+     * Method to perform inverse DWT to get back the pixel data
+     *
+     * @param dwts   DWT data as image tree
+     * @param pixels Image pixel data
+     */
+    public void inverseDWT(ImageTree dwts, int[][] pixels) {
+        Image image;
+
+<span class="nc" id="L115">        image = DWTUtil.inverseTransform(dwts, this.filters, this.method + 1);</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        for (int i = 0; i &lt; this.rows; i++) {</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">            for (int j = 0; j &lt; this.cols; j++) {</span>
+<span class="nc" id="L119">                pixels[i][j] = ImageUtil.pixelRange((int) (DWTUtil.getPixel(image, j, i) + 0.5));</span>
+            }
+        }
+<span class="nc" id="L122">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

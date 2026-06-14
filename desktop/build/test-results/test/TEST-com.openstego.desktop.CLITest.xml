@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.openstego.desktop.CLITest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-14T21:08:16" hostname="NICK-WINDOWS-PC" time="0.395">
+  <properties/>
+  <testcase name="testAlgorithmsListsPlugins()" classname="com.openstego.desktop.CLITest" time="0.073"/>
+  <testcase name="testEmbedExtractRoundTrip(Path)" classname="com.openstego.desktop.CLITest" time="0.097"/>
+  <testcase name="testEmbedExtractWithPluginOptionAndEncryption(Path)" classname="com.openstego.desktop.CLITest" time="0.221"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[Extracted file: /tmp/junit-3368208253181555003/out/msg.txt
+Extracted file: /tmp/junit-1940437945202789852/out/msg.txt
+]]></system-err>
+</testsuite>
