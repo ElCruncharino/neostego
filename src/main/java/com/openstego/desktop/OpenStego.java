@@ -101,7 +101,8 @@ public class OpenStego {
 
             // Encrypt data, if requested
             if (this.config.isUseEncryption()) {
-                OpenStegoCrypto crypto = new OpenStegoCrypto(this.config.getPassword(), this.config.getEncryptionAlgorithm());
+                OpenStegoCrypto crypto = new OpenStegoCrypto(this.config.getPassword(), this.config.getEncryptionAlgorithm(),
+                        this.config.isUseStrongEncryption());
                 msg = crypto.encrypt(msg);
             }
 

@@ -235,6 +235,7 @@ public class OpenStegoCmd {
         addOption(spec, false, "-C", "--nocompress");
         addOption(spec, false, "-e", "--encrypt");
         addOption(spec, false, "-E", "--noencrypt");
+        addOption(spec, false, "-L", "--legacyencrypt");
 
         // Plugin-specific options
         if (plugin != null) {
@@ -294,6 +295,9 @@ public class OpenStegoCmd {
         }
         if (parseResult.hasMatchedOption("-A")) {
             map.put(OpenStegoConfig.ENCRYPTION_ALGORITHM, parseResult.matchedOptionValue("-A", (String) null));
+        }
+        if (parseResult.hasMatchedOption("-L")) { // legacy (v2) encryption for upstream compatibility
+            map.put(OpenStegoConfig.USE_STRONG_ENCRYPTION, false);
         }
 
         // Plugin-specific options

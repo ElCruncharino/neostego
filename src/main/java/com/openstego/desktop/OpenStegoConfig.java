@@ -41,6 +41,14 @@ public class OpenStegoConfig {
     public static final String ENCRYPTION_ALGORITHM = "encryptionAlgorithm";
 
     /**
+     * Key string for configuration item - useStrongEncryption
+     * <p>
+     * Flag to indicate whether the modern (v3) key-derivation should be used for new encrypted data.
+     * Reading older data is unaffected; this only controls how new data is written.
+     */
+    public static final String USE_STRONG_ENCRYPTION = "useStrongEncryption";
+
+    /**
      * Flag to indicate whether compression should be used or not
      */
     private boolean useCompression = true;
@@ -59,6 +67,11 @@ public class OpenStegoConfig {
      * Algorithm to be used for encryption in case "useEncryption" is set to true
      */
     private String encryptionAlgorithm = OpenStegoCrypto.ALGO_AES128;
+
+    /**
+     * Flag to indicate whether the modern (v3) key-derivation should be used for new encrypted data
+     */
+    private boolean useStrongEncryption = true;
 
     /**
      * Initialize the configuration with map data. Please make sure that only valid keys for configuration items are
@@ -99,6 +112,12 @@ public class OpenStegoConfig {
             case ENCRYPTION_ALGORITHM:
                 assert value instanceof String;
                 this.encryptionAlgorithm = (String) value;
+                break;
+            case USE_STRONG_ENCRYPTION:
+                if (value != null) {
+                    assert value instanceof Boolean;
+                    this.useStrongEncryption = (boolean) value;
+                }
                 break;
         }
     }
@@ -185,5 +204,23 @@ public class OpenStegoConfig {
      */
     public void setEncryptionAlgorithm(String encryptionAlgorithm) {
         this.encryptionAlgorithm = encryptionAlgorithm;
+    }
+
+    /**
+     * Get Method for useStrongEncryption
+     *
+     * @return useStrongEncryption
+     */
+    public boolean isUseStrongEncryption() {
+        return this.useStrongEncryption;
+    }
+
+    /**
+     * Set Method for useStrongEncryption
+     *
+     * @param useStrongEncryption Value to be set
+     */
+    public void setUseStrongEncryption(boolean useStrongEncryption) {
+        this.useStrongEncryption = useStrongEncryption;
     }
 }
