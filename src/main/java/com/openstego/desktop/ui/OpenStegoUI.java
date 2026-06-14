@@ -8,6 +8,7 @@ package com.openstego.desktop.ui;
 import com.openstego.desktop.*;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
+import com.openstego.desktop.util.UserPreferences;
 import com.openstego.desktop.util.ui.WorkerTask;
 
 import javax.swing.*;
@@ -117,11 +118,74 @@ public class OpenStegoUI extends OpenStegoFrame {
         installFileDrop(getVerifyWmPanel().getInputFileTextField(), true);
         installFileDrop(getVerifyWmPanel().getSignatureFileTextField(), false);
 
+        loadSettings();
+
         pack();
         // Make the embed action the default button so Enter triggers it on the initial panel
         getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setLocation(screenSize.width / 2 - (getWidth() / 2), screenSize.height / 2 - (getHeight() / 2));
+        restoreWindowBounds();
+    }
+
+    /**
+     * Loads persisted settings (last folder and encryption algorithm) from user preferences.
+     */
+    private void loadSettings() {
+        String folder = UserPreferences.getString("gui.lastFolder");
+        if (folder != null && !folder.isEmpty()) {
+            lastFolder = folder;
+        }
+        String algo = UserPreferences.getString("gui.encryptionAlgorithm");
+        if (algo != null && !algo.isEmpty()) {
+            getEmbedPanel().getEncryptionAlgoComboBox().setSelectedItem(algo);
+        }
+    }
+
+    /**
+     * Restores the saved window size and position (if any), keeping the window on-screen and not
+     * smaller than its packed size. Falls back to centering on screen.
+     */
+    private void restoreWindowBounds() {
+        Dimension packed = getSize();
+        setMinimumSize(packed);
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        try {
+            Integer w = UserPreferences.getInteger("gui.window.width");
+            Integer h = UserPreferences.getInteger("gui.window.height");
+            Integer x = UserPreferences.getInteger("gui.window.x");
+            Integer y = UserPreferences.getInteger("gui.window.y");
+            if (w != null && h != null) {
+                setSize(Math.max(w, packed.width), Math.max(h, packed.height));
+            }
+            if (x != null && y != null && x > -50 && y > -50 && x < screen.width - 50 && y < screen.height - 50) {
+                setLocation(x, y);
+                return;
+            }
+        } catch (OpenStegoException e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+        }
+        setLocation(screen.width / 2 - (getWidth() / 2), screen.height / 2 - (getHeight() / 2));
+    }
+
+    /**
+     * Persists settings (last folder, encryption algorithm and window geometry) to user preferences.
+     */
+    private void saveSettings() {
+        try {
+            if (lastFolder != null) {
+                UserPreferences.put("gui.lastFolder", lastFolder);
+            }
+            Object algo = getEmbedPanel().getEncryptionAlgoComboBox().getSelectedItem();
+            if (algo != null) {
+                UserPreferences.put("gui.encryptionAlgorithm", algo.toString());
+            }
+            UserPreferences.put("gui.window.width", Integer.toString(getWidth()));
+            UserPreferences.put("gui.window.height", Integer.toString(getHeight()));
+            UserPreferences.put("gui.window.x", Integer.toString(getX()));
+            UserPreferences.put("gui.window.y", Integer.toString(getY()));
+            UserPreferences.save();
+        } catch (OpenStegoException e) {
+            logger.log(Level.WARNING, e.getMessage(), e);
+        }
     }
 
     /**
@@ -860,6 +924,7 @@ public class OpenStegoUI extends OpenStegoFrame {
      * This method exits the application.
      */
     private void close() {
+        saveSettings();
         System.exit(0);
     }
 
