@@ -6,16 +6,24 @@ OpenStego is a steganography application that provides two functionalities:
 2. Watermarking: Watermarking image files with an invisible signature. It can be used to detect unauthorized file copying.
 
 ## About this fork
-This is a downstream fork of OpenStego with a modernized desktop experience. The steganography
-and cryptography core is intentionally unchanged, so files created by previous versions of
-OpenStego remain fully readable and writable (a regression test enforces this).
+This is a downstream fork of OpenStego with a modernized desktop experience. The on-disk
+steganography format is unchanged, so files created by previous versions of OpenStego remain fully
+readable, and unencrypted output stays compatible with upstream OpenStego (regression tests enforce
+this).
 
 Changes in this fork:
 - Modern, cross-platform UI via the [FlatLaf](https://www.formdev.com/flatlaf/) look-and-feel,
   with selectable Light and Dark themes (remembered between runs).
 - Native operating-system file dialogs (Windows Explorer / native desktop picker) for opening
-  and saving files.
-- Build and runtime updated to Java 21 (Gradle wrapper, dependencies and CI refreshed).
+  and saving files, plus drag-and-drop of files onto fields and a reveal button on password fields.
+- Stronger encryption for newly encrypted data: PBKDF2-HMAC-SHA256 with a random salt and a high
+  iteration count, combined with AES-GCM authenticated encryption. Data encrypted by older versions
+  is still decrypted automatically. New encrypted output is therefore not readable by stock upstream
+  OpenStego; pass `--legacyencrypt` (CLI) to write the original format when interoperability is needed.
+- Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
+  on any command-line types.
+- Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
+  deprecation warnings.
 
 ## Usage
 
