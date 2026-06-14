@@ -17,7 +17,7 @@ plugins {
 }
 
 String projectName = 'OpenStego'
-File distBaseDir = file("${buildDir}/${distsDirName}/package")
+File distBaseDir = layout.buildDirectory.dir('distributions/package').get().asFile
 String currYear = new SimpleDateFormat('yyyy').format(new Date())
 def filterTokens = [
         'app.name'    : projectName,
@@ -61,6 +61,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
 
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.3'
 }
 
 java {
@@ -145,7 +146,7 @@ tasks.register("distBase", Copy) {
     from('src/main/dist') {
         include '**/*.sh'
         filter(ReplaceTokens, tokens: filterTokens)
-        fileMode 0755
+        filePermissions { unix(0755) }
     }
     from(tasks.jar) {
         into 'lib'
@@ -173,19 +174,19 @@ tasks.register("distWin", Exec) {
     doFirst {
         copy {
             from 'artifacts/installer.iss'
-            into "${buildDir}/generated"
+            into layout.buildDirectory.dir('generated')
             filter(ReplaceTokens, tokens: [
                     'AppName'    : projectName,
                     'AppVersion' : project.version,
                     'AuthorName' : project.author,
                     'HomepageUrl': project.homepageUrl,
                     'AppDir'     : distBaseDir.path,
-                    'DistDir'    : project.buildDir.path + '\\distributions'
+                    'DistDir'    : layout.buildDirectory.dir('distributions').get().asFile.path
             ])
         }
     }
 
-    workingDir project.buildDir
+    workingDir layout.buildDirectory.get().asFile
     commandLine 'cmd', '/c', 'iscc', 'generated\\installer.iss', '/Q'
 }
 
@@ -209,7 +210,7 @@ tasks.register("distDeb", Deb) {
         include 'openstego.sh'
         rename('openstego.sh', 'openstego')
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        fileMode 0755
+        filePermissions { unix(0755) }
     }
     from('artifacts') {
         into 'applications'
@@ -259,7 +260,7 @@ tasks.register("distRpm", Rpm) {
         include 'openstego.sh'
         rename('openstego.sh', 'openstego')
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        fileMode 0755
+        filePermissions { unix(0755) }
     }
     from('artifacts') {
         into 'applications'
