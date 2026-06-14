@@ -17,11 +17,18 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class to read the Filters XML and generate corresponding Java Objects
  */
 public class FilterXMLReader {
+    /**
+     * Logger instance
+     */
+    private static final Logger logger = Logger.getLogger(FilterXMLReader.class.getName());
+
     /**
      * Constructor is private so that this class is not instantiated
      */
@@ -65,7 +72,7 @@ public class FilterXMLReader {
 
             return filterGHMap;
         } catch (ParserConfigurationException | SAXException | IOException pcEx) {
-            pcEx.printStackTrace();
+            logger.log(Level.SEVERE, pcEx.getMessage(), pcEx);
             throw new IllegalArgumentException("Invalid Filter XML file");
         }
     }

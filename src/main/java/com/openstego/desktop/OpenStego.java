@@ -17,6 +17,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -26,6 +28,11 @@ import java.util.zip.GZIPOutputStream;
  * when using OpenStego as a library.
  */
 public class OpenStego {
+
+    /**
+     * Logger instance
+     */
+    private static final Logger logger = Logger.getLogger(OpenStego.class.getName());
 
     /**
      * Constant for the namespace for labels
@@ -354,12 +361,12 @@ public class OpenStego {
             }
         } catch (OpenStegoException osEx) {
             if (osEx.getErrorCode() == OpenStegoException.UNHANDLED_EXCEPTION) {
-                osEx.printStackTrace(System.err);
+                logger.log(Level.SEVERE, osEx.getMessage(), osEx);
             } else {
                 System.err.println(osEx.getMessage());
             }
         } catch (Exception ex) {
-            ex.printStackTrace(System.err);
+            logger.log(Level.SEVERE, ex.getMessage(), ex);
         }
     }
 
