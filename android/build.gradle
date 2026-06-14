@@ -61,4 +61,7 @@ dependencies {
     implementation 'androidx.core:core-ktx:1.13.1'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.6'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+    // Full BouncyCastle provides the legacy PBE algorithm needed to decrypt older OpenStego files
+    // (Android's default provider does not implement PBEWithHmacSHA256AndAES_*)
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
 }

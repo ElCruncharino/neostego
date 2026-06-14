@@ -67,9 +67,14 @@ public class OpenStegoCrypto {
     private final int ITER_COUNT = 7;
 
     /**
-     * Secret key for legacy (v2) encryption
+     * JCE algorithm name for the legacy (v2) PBE scheme
      */
-    private final SecretKey secretKey;
+    private final String pbeAlgorithm;
+
+    /**
+     * Derived key length in bits for the legacy (v2) scheme (0 = let the provider decide)
+     */
+    private final int v2KeyBits;
 
     // ------------- v3 (strong) parameters -------------
 
@@ -135,7 +140,6 @@ public class OpenStegoCrypto {
      * @throws OpenStegoException Processing issues
      */
     public OpenStegoCrypto(String password, String algorithm, boolean strongEncryption) throws OpenStegoException {
-        KeySpec keySpec;
         this.password = (password == null) ? "" : password;
         this.strongEncryption = strongEncryption;
 
@@ -144,34 +148,33 @@ public class OpenStegoCrypto {
         if (origAlgo.equals("") || ALGO_AES128.equals(origAlgo)) {
             this.v3KeyBytes = 16;
             this.v3Capable = true;
+            this.pbeAlgorithm = "PBEWithHmacSHA256AndAES_128";
+            this.v2KeyBits = 128;
         } else if (ALGO_AES256.equals(origAlgo)) {
             this.v3KeyBytes = 32;
             this.v3Capable = true;
-        } else {
+            this.pbeAlgorithm = "PBEWithHmacSHA256AndAES_256";
+            this.v2KeyBits = 256;
+        } else if (ALGO_DES.equals(origAlgo)) {
+            logger.warning("Using insecure algorithm: " + ALGO_DES);
             this.v3KeyBytes = 0;
             this.v3Capable = false;
+            this.pbeAlgorithm = "PBEWithMD5AndDES";
+            this.v2KeyBits = 0; // let the provider derive the DES key length
+        } else {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, algorithm);
         }
+    }
 
-        try {
-            if (algorithm == null || algorithm.trim().equals("") || ALGO_AES128.equalsIgnoreCase(algorithm)) {
-                algorithm = "PBEWithHmacSHA256AndAES_128";
-            } else if (ALGO_AES256.equalsIgnoreCase(algorithm)) {
-                algorithm = "PBEWithHmacSHA256AndAES_256";
-            } else if (ALGO_DES.equalsIgnoreCase(algorithm)) {
-                logger.warning("Using insecure algorithm: " + algorithm);
-                algorithm = "PBEWithMD5AndDES";
-            } else {
-                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, algorithm);
-            }
-
-            // Create the legacy key
-            keySpec = new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT);
-            this.secretKey = SecretKeyFactory.getInstance(algorithm).generateSecret(keySpec);
-        } catch (OpenStegoException osEx) {
-            throw osEx;
-        } catch (Exception ex) {
-            throw new OpenStegoException(ex);
-        }
+    /**
+     * Lazily derives the legacy (v2) secret key. Done on demand (rather than in the constructor) so
+     * that the v3 path never needs the legacy PBE algorithm, which is not available on all platforms.
+     */
+    private SecretKey getV2SecretKey() throws Exception {
+        KeySpec keySpec = (this.v2KeyBits > 0)
+                ? new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT, this.v2KeyBits)
+                : new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT);
+        return SecretKeyFactory.getInstance(this.pbeAlgorithm).generateSecret(keySpec);
     }
 
     /**
@@ -211,9 +214,10 @@ public class OpenStegoCrypto {
 
     private byte[] encryptV2(byte[] input) throws OpenStegoException {
         try {
-            Cipher encryptCipher = Cipher.getInstance(this.secretKey.getAlgorithm());
+            SecretKey secretKey = getV2SecretKey();
+            Cipher encryptCipher = Cipher.getInstance(this.pbeAlgorithm);
             AlgorithmParameterSpec algoParamSpec = new PBEParameterSpec(this.SALT, this.ITER_COUNT);
-            encryptCipher.init(Cipher.ENCRYPT_MODE, this.secretKey, algoParamSpec);
+            encryptCipher.init(Cipher.ENCRYPT_MODE, secretKey, algoParamSpec);
 
             byte[] algoParams = encryptCipher.getParameters().getEncoded();
             byte[] msg = encryptCipher.doFinal(input);
@@ -244,10 +248,11 @@ public class OpenStegoCrypto {
             byte[] msg = new byte[input.length - paramLen - 1];
             System.arraycopy(input, paramLen + 1, msg, 0, msg.length);
 
-            AlgorithmParameters algoParams = AlgorithmParameters.getInstance(this.secretKey.getAlgorithm());
+            SecretKey secretKey = getV2SecretKey();
+            AlgorithmParameters algoParams = AlgorithmParameters.getInstance(this.pbeAlgorithm);
             algoParams.init(algoParamData);
-            Cipher decryptCipher = Cipher.getInstance(this.secretKey.getAlgorithm());
-            decryptCipher.init(Cipher.DECRYPT_MODE, this.secretKey, algoParams);
+            Cipher decryptCipher = Cipher.getInstance(this.pbeAlgorithm);
+            decryptCipher.init(Cipher.DECRYPT_MODE, secretKey, algoParams);
             return decryptCipher.doFinal(msg);
         } catch (BadPaddingException bpEx) {
             throw new OpenStegoException(bpEx, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_PASSWORD);
