@@ -7,33 +7,23 @@
 package com.openstego.desktop.plugin.template.image;
 
 import com.openstego.desktop.DataHidingPlugin;
+import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoConfig;
+import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.ui.OpenStegoFrame;
-import com.openstego.desktop.ui.PluginEmbedOptionsUI;
-import com.openstego.desktop.util.ImageHolder;
-import com.openstego.desktop.util.ImageUtil;
-import javax.imageio.ImageIO;
-import java.util.ArrayList;
-import java.util.Collections;
+import com.openstego.desktop.image.ImageCodecRegistry;
+import com.openstego.desktop.image.PixelImage;
+
 import java.util.List;
 
 /**
  * Template plugin for OpenStego which implements image based steganography for data hiding
  */
 public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends DataHidingPlugin<C> {
-    /**
-     * Static list of supported read formats
-     */
-    protected static List<String> readFormats = null;
 
     /**
-     * Static list of supported write formats
-     */
-    protected static List<String> writeFormats = null;
-
-    /**
-     * Method to get difference between original cover file and the stegged file
+     * Method to get difference between original cover file and the stegged file. The difference image
+     * highlights, per color channel, where the stego file differs from the cover.
      *
      * @param stegoData     Stego data containing the embedded data
      * @param stegoFileName Name of the stego file
@@ -46,15 +36,28 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
     @Override
     public final byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
             throws OpenStegoException {
-        ImageHolder stegoImage;
-        ImageHolder coverImage;
-        ImageHolder diffImage;
+        PixelImage stegoImage = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
+        PixelImage coverImage = ImageCodecRegistry.get().decode(coverData, coverFileName);
 
-        stegoImage = ImageUtil.byteArrayToImage(stegoData, stegoFileName);
-        coverImage = ImageUtil.byteArrayToImage(coverData, coverFileName);
-        diffImage = ImageUtil.getDiffImage(stegoImage, coverImage);
+        int width = coverImage.getWidth();
+        int height = coverImage.getHeight();
+        if (stegoImage.getWidth() != width || stegoImage.getHeight() != height) {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID);
+        }
 
-        return ImageUtil.imageToByteArray(diffImage, diffFileName, this);
+        // Compute the per-channel absolute difference in place (reuse the cover image as the target)
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                int cp = coverImage.getRGB(x, y);
+                int sp = stegoImage.getRGB(x, y);
+                int dr = Math.abs(((cp >> 16) & 0xFF) - ((sp >> 16) & 0xFF));
+                int dg = Math.abs(((cp >> 8) & 0xFF) - ((sp >> 8) & 0xFF));
+                int db = Math.abs((cp & 0xFF) - (sp & 0xFF));
+                coverImage.setRGB(x, y, (dr << 16) | (dg << 8) | db);
+            }
+        }
+
+        return ImageCodecRegistry.get().encode(coverImage, diffFileName);
     }
 
     /**
@@ -64,27 +67,7 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
      */
     @Override
     public List<String> getReadableFileExtensions() {
-        if (readFormats != null) {
-            return readFormats;
-        }
-
-        String format;
-        String[] formats;
-        readFormats = new ArrayList<>();
-
-        formats = ImageIO.getReaderFormatNames();
-        for (String s : formats) {
-            format = s.toLowerCase();
-            if (format.contains("jpeg") && format.contains("2000")) {
-                format = "jp2";
-            }
-            if (!readFormats.contains(format)) {
-                readFormats.add(format);
-            }
-        }
-
-        Collections.sort(readFormats);
-        return readFormats;
+        return ImageCodecRegistry.get().getReadableFormats();
     }
 
     /**
@@ -95,27 +78,7 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
      */
     @Override
     public List<String> getWritableFileExtensions() throws OpenStegoException {
-        if (writeFormats != null) {
-            return writeFormats;
-        }
-
-        String format;
-        String[] formats;
-        writeFormats = new ArrayList<>();
-
-        formats = ImageIO.getWriterFormatNames();
-        for (String s : formats) {
-            format = s.toLowerCase();
-            if (format.contains("jpeg") && format.contains("2000")) {
-                format = "jp2";
-            }
-            if (!writeFormats.contains(format)) {
-                writeFormats.add(format);
-            }
-        }
-
-        Collections.sort(writeFormats);
-        return writeFormats;
+        return ImageCodecRegistry.get().getWritableFormats();
     }
 
 }

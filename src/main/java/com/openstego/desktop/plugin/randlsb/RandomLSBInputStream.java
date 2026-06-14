@@ -11,7 +11,7 @@ import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.lsb.LSBErrors;
 import com.openstego.desktop.plugin.lsb.LSBPlugin;
-import com.openstego.desktop.util.ImageHolder;
+import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.StringUtil;
 
 import java.io.InputStream;
@@ -26,7 +26,7 @@ public class RandomLSBInputStream extends InputStream {
     /**
      * Image data
      */
-    private final ImageHolder image;
+    private final PixelImage image;
 
     /**
      * Data header
@@ -70,8 +70,8 @@ public class RandomLSBInputStream extends InputStream {
      * @param config Configuration data to use while reading
      * @throws OpenStegoException Processing issues
      */
-    public RandomLSBInputStream(ImageHolder image, OpenStegoConfig config) throws OpenStegoException {
-        if (image == null || image.getImage() == null) {
+    public RandomLSBInputStream(PixelImage image, OpenStegoConfig config) throws OpenStegoException {
+        if (image == null) {
             throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.NULL_IMAGE_ARGUMENT);
         }
 
@@ -79,8 +79,8 @@ public class RandomLSBInputStream extends InputStream {
         this.channelBitsUsed = 1;
         this.config = config;
 
-        this.imgWidth = image.getImage().getWidth();
-        this.imgHeight = image.getImage().getHeight();
+        this.imgWidth = image.getWidth();
+        this.imgHeight = image.getHeight();
 
         // Initialize random number generator with seed generated using password
         this.rand = new Random(StringUtil.passwordHash(config.getPassword()));
@@ -147,6 +147,6 @@ public class RandomLSBInputStream extends InputStream {
      * @return The bit at the given position, as the LSB of an integer
      */
     private int getPixelBit(int x, int y, int channel, int bit) {
-        return ((this.image.getImage().getRGB(x, y) >> ((channel * 8) + bit)) & 0x1);
+        return ((this.image.getRGB(x, y) >> ((channel * 8) + bit)) & 0x1);
     }
 }

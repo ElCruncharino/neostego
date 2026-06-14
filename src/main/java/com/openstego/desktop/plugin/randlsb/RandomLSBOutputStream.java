@@ -12,10 +12,9 @@ import com.openstego.desktop.plugin.lsb.LSBConfig;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.lsb.LSBErrors;
 import com.openstego.desktop.plugin.lsb.LSBPlugin;
-import com.openstego.desktop.util.ImageHolder;
+import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.StringUtil;
 
-import java.awt.image.BufferedImage;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Random;
@@ -28,7 +27,7 @@ public class RandomLSBOutputStream extends OutputStream {
     /**
      * Output Image data
      */
-    private final ImageHolder image;
+    private final PixelImage image;
 
     /**
      * Number of bits used per color channel
@@ -79,27 +78,17 @@ public class RandomLSBOutputStream extends OutputStream {
      * @param config     Configuration data to use while writing
      * @throws OpenStegoException Processing issues
      */
-    public RandomLSBOutputStream(ImageHolder image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
-        if (image == null || image.getImage() == null) {
+    public RandomLSBOutputStream(PixelImage image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
+        if (image == null) {
             throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.NULL_IMAGE_ARGUMENT);
         }
 
         this.dataLength = dataLength;
-        this.imgWidth = image.getImage().getWidth();
-        this.imgHeight = image.getImage().getHeight();
+        this.imgWidth = image.getWidth();
+        this.imgHeight = image.getHeight();
         this.config = config;
-
-        if (image.getImage().getType() == BufferedImage.TYPE_INT_RGB) {
-            this.image = image;
-        } else {
-            BufferedImage newImg = new BufferedImage(this.imgWidth, this.imgHeight, BufferedImage.TYPE_INT_RGB);
-            this.image = new ImageHolder(newImg, image.getMetadata());
-            for (int x = 0; x < this.imgWidth; x++) {
-                for (int y = 0; y < this.imgHeight; y++) {
-                    newImg.setRGB(x, y, image.getImage().getRGB(x, y));
-                }
-            }
-        }
+        // The codec provides a mutable RGB image; embed directly into it
+        this.image = image;
 
         this.channelBitsUsed = 1;
         this.fileName = fileName;
@@ -183,7 +172,7 @@ public class RandomLSBOutputStream extends OutputStream {
      *
      * @return Image data
      */
-    public ImageHolder getImage() {
+    public PixelImage getImage() {
         return this.image;
     }
 
@@ -202,7 +191,7 @@ public class RandomLSBOutputStream extends OutputStream {
         int newPixel;
 
         // Get the pixel value
-        pixel = this.image.getImage().getRGB(x, y);
+        pixel = this.image.getRGB(x, y);
 
         // Set the bit value
         if (bitValue) {
@@ -216,6 +205,6 @@ public class RandomLSBOutputStream extends OutputStream {
         }
 
         // Set the pixel value back in image
-        this.image.getImage().setRGB(x, y, newPixel);
+        this.image.setRGB(x, y, newPixel);
     }
 }
