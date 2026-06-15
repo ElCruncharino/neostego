@@ -106,19 +106,23 @@ private fun imagePixelCount(context: Context, uri: Uri): Long {
 }
 
 /**
- * Returns a warning message if decoding [uri] into a mutable ARGB_8888 bitmap (plus the working
- * copies the embed/extract pipeline needs) would likely exhaust the heap, otherwise null. This
- * turns a hard OutOfMemoryError crash into a clear, recoverable message.
+ * Returns a warning only when an image genuinely cannot fit in the app's heap, otherwise null.
+ *
+ * The data-hiding algorithm spreads the payload across the whole image via a password-seeded
+ * permutation, so the full pixel buffer must be resident (it can't be streamed row-by-row). The
+ * real peak is the decoded ARGB_8888 bitmap (width*height*4) plus the compressed PNG produced on
+ * save — roughly 2.5x the raw pixels. We only refuse when even that won't fit, so a hard
+ * OutOfMemoryError becomes a clear, recoverable message instead. With largeHeap enabled this never
+ * triggers for ordinary phone photos.
  */
 private fun oversizeWarning(context: Context, uri: Uri): String? {
     val pixels = imagePixelCount(context, uri)
     if (pixels <= 0) return null // unknown dimensions; let the normal path attempt it
-    // ARGB_8888 bitmap + the int[] pixel buffer the core uses + the output image ≈ 4 copies, 4 bytes each.
-    val estBytes = pixels * 4 * 4
-    val budget = Runtime.getRuntime().maxMemory()
-    if (estBytes <= budget * 0.6) return null
+    val estPeakBytes = pixels * 4L * 5L / 2L // decoded bitmap + compressed output + working overhead
+    val heap = Runtime.getRuntime().maxMemory()
+    if (estPeakBytes <= heap * 0.8) return null
     val megapixels = pixels / 1_000_000.0
-    return "This image is very large (about %.0f megapixels) and may run out of memory. ".format(megapixels) +
+    return "This image is extremely large (about %.0f megapixels) and is bigger than the memory available to the app. ".format(megapixels) +
         "Try a smaller image."
 }
 
