@@ -12,10 +12,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,17 +48,22 @@ public class StringUtil {
      * @param password Password to hash
      * @return Long hash of the password
      */
-    public static long passwordHash(String password) throws OpenStegoException {
+    public static long passwordHash(char[] password) throws OpenStegoException {
         final long DEFAULT_HASH = 98234782; // Default to a random (but constant) seed
         byte[] byteHash;
         String hexString;
 
-        if (password == null || password.equals("")) {
+        if (password == null || password.length == 0) {
             return DEFAULT_HASH;
         }
 
         try {
-            byteHash = MessageDigest.getInstance("MD5").digest(password.getBytes(StandardCharsets.UTF_8));
+            // Encode the char[] to UTF-8 bytes without creating an intermediate String
+            ByteBuffer buffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(password));
+            byte[] bytes = new byte[buffer.remaining()];
+            buffer.get(bytes);
+            byteHash = MessageDigest.getInstance("MD5").digest(bytes);
+            Arrays.fill(bytes, (byte) 0); // wipe the transient password bytes
             hexString = getHexString(byteHash);
 
             // Hex string will be 32 bytes long whereas parsing to long can handle only 16 bytes, so trim it

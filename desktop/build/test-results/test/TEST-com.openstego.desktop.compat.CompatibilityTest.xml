@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.openstego.desktop.compat.CompatibilityTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-06-15T00:04:51" hostname="NICK-WINDOWS-PC" time="0.05">
+<testsuite name="com.openstego.desktop.compat.CompatibilityTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-06-15T00:20:04" hostname="NICK-WINDOWS-PC" time="0.061">
   <properties/>
-  <testcase name="testExtract_v2_plain()" classname="com.openstego.desktop.compat.CompatibilityTest" time="0.035"/>
-  <testcase name="testExtract_v2_aes128()" classname="com.openstego.desktop.compat.CompatibilityTest" time="0.015"/>
+  <testcase name="testExtract_v2_plain()" classname="com.openstego.desktop.compat.CompatibilityTest" time="0.046"/>
+  <testcase name="testExtract_v2_aes128()" classname="com.openstego.desktop.compat.CompatibilityTest" time="0.014"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>
