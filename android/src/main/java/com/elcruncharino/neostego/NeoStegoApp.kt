@@ -4,7 +4,7 @@
  * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
  */
 
-package com.openstego.android
+package com.elcruncharino.neostego
 
 import android.app.Application
 import com.openstego.desktop.OpenStego
@@ -15,7 +15,7 @@ import com.openstego.desktop.image.ImageCodecRegistry
  * initializes core label namespaces. Legacy-encrypted files are handled by the core using portable
  * primitives, so no extra security provider is required.
  */
-class OpenStegoApp : Application() {
+class NeoStegoApp : Application() {
     override fun onCreate() {
         super.onCreate()
         // Provide the platform image backend to the core (instead of ServiceLoader discovery)

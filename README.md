@@ -1,15 +1,15 @@
-# OpenStego
-OpenStego is a steganography application that provides two functionalities:
+# NeoStego
+NeoStego is a steganography application that provides two functionalities:
 
 1. Data Hiding: It can hide any data within an image file.
 
 2. Watermarking: Watermarking image files with an invisible signature. It can be used to detect unauthorized file copying.
 
 ## About this fork
-This is a downstream fork of OpenStego with a modernized desktop experience. The on-disk
-steganography format is unchanged, so files created by previous versions of OpenStego remain fully
-readable, and unencrypted output stays compatible with upstream OpenStego (regression tests enforce
-this).
+NeoStego is a downstream fork of [OpenStego](https://www.openstego.com) by Samir Vaidya, with a
+modernized desktop experience and a new Android app. The on-disk steganography format is unchanged,
+so files created by previous versions of OpenStego remain fully readable, and unencrypted output
+stays compatible with upstream OpenStego (regression tests enforce this).
 
 Changes in this fork:
 - Modern, cross-platform UI via the [FlatLaf](https://www.formdev.com/flatlaf/) look-and-feel,
@@ -50,10 +50,10 @@ Android debug APK (requires an Android SDK; set its path in `local.properties` a
 ### For GUI:
 Use menu shortcut for OpenStego if you used installer. For zip downloads, use the bundled batch file or shell script to launch the GUI.
 ```
-openstego.bat                (Windows)
+neostego.bat                 (Windows)
 ```
 ```
-./openstego.sh               (Linux / MacOS)
+./neostego.sh                (Linux / MacOS)
 ```
 
 ### For command line interface:

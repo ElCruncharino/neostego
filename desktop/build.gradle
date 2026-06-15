@@ -17,7 +17,7 @@ plugins {
     id 'com.netflix.nebula.ospackage' version '11.10.0'
 }
 
-String projectName = 'OpenStego'
+String projectName = 'NeoStego'
 File distBaseDir = layout.buildDirectory.dir('distributions/package').get().asFile
 String currYear = new SimpleDateFormat('yyyy').format(new Date())
 def filterTokens = [
@@ -71,14 +71,14 @@ processResources {
 }
 
 jar {
-    archiveFileName = 'openstego.jar'
+    archiveFileName = 'neostego.jar'
     manifest {
         attributes([
                 'Name'                  : projectName,
                 'Main-Class'            : 'com.openstego.desktop.OpenStegoLauncher',
                 'Implementation-Version': project.version,
                 'Built-By'              : project.author,
-                // Runtime dependencies (core + FlatLaf + picocli) are bundled alongside openstego.jar
+                // Runtime dependencies (core + FlatLaf + picocli) are bundled alongside neostego.jar
                 // in lib/, so the Class-Path is resolved relative to the jar's own directory (lib/).
                 'Class-Path'            : configurations.runtimeClasspath.collect { it.name }.join(' ')
         ])
@@ -126,8 +126,8 @@ tasks.register("distBase", Copy) {
     from(tasks.jar) {
         into 'lib'
     }
-    // Bundle runtime dependencies (core, FlatLaf, picocli) next to openstego.jar so the manifest
-    // Class-Path resolves them when launched via "java -jar lib/openstego.jar".
+    // Bundle runtime dependencies (core, FlatLaf, picocli) next to neostego.jar so the manifest
+    // Class-Path resolves them when launched via "java -jar lib/neostego.jar".
     from(configurations.runtimeClasspath) {
         into 'lib'
     }
@@ -135,6 +135,7 @@ tasks.register("distBase", Copy) {
 
 tasks.register("distBin", Zip) {
     dependsOn distBase
+    archiveBaseName = projectName
     from distBaseDir
     into projectName + '-' + project.version
 }
@@ -167,7 +168,7 @@ tasks.register("distWin", Exec) {
 
 tasks.register("distDeb", Deb) {
     dependsOn distBase
-    packageName = projectName
+    packageName = projectName.toLowerCase()
     summary = projectName
     release = 1
     packageGroup = 'utils'
@@ -182,20 +183,20 @@ tasks.register("distDeb", Deb) {
     }
     from(distBaseDir) {
         into projectName
-        include 'openstego.sh'
-        rename('openstego.sh', 'openstego')
+        include 'neostego.sh'
+        rename('neostego.sh', 'neostego')
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
         filePermissions { unix(0755) }
     }
     from('artifacts') {
         into 'applications'
-        include 'openstego.desktop'
+        include 'neostego.desktop'
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
         filter(ReplaceTokens, tokens: filterTokens)
     }
     from('artifacts') {
         into 'icons/hicolor/scalable/apps'
-        include 'openstego.svg'
+        include 'neostego.svg'
     }
     from(distBaseDir) {
         into 'doc/' + projectName
@@ -208,12 +209,12 @@ tasks.register("distDeb", Deb) {
         filter(ReplaceTokens, tokens: filterTokens)
     }
 
-    link('/usr/bin/openstego', '/usr/share/openstego/openstego')
+    link('/usr/bin/neostego', '/usr/share/' + projectName + '/neostego')
 }
 
 tasks.register("distRpm", Rpm) {
     dependsOn distBase
-    packageName = projectName
+    packageName = projectName.toLowerCase()
     summary = projectName
     release = 1
     packageGroup = 'utils'
@@ -232,22 +233,22 @@ tasks.register("distRpm", Rpm) {
     }
     from(distBaseDir) {
         into projectName
-        include 'openstego.sh'
-        rename('openstego.sh', 'openstego')
+        include 'neostego.sh'
+        rename('neostego.sh', 'neostego')
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
         filePermissions { unix(0755) }
     }
     from('artifacts') {
         into 'applications'
         addParentDirs false
-        include 'openstego.desktop'
+        include 'neostego.desktop'
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
         filter(ReplaceTokens, tokens: filterTokens)
     }
     from('artifacts') {
         into 'icons/hicolor/scalable/apps'
         addParentDirs false
-        include 'openstego.svg'
+        include 'neostego.svg'
     }
     from(distBaseDir) {
         into 'doc/' + projectName
@@ -257,7 +258,7 @@ tasks.register("distRpm", Rpm) {
         filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
     }
 
-    link('/usr/bin/openstego', '/usr/share/openstego/openstego')
+    link('/usr/bin/neostego', '/usr/share/' + projectName + '/neostego')
 }
 
 tasks.register("dist") {

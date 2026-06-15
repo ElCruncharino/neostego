@@ -45,5 +45,5 @@ processResources {
 }
 
 jar {
-    archiveFileName = 'openstego-core.jar'
+    archiveFileName = 'neostego-core.jar'
 }

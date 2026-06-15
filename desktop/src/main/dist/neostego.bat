@@ -28,11 +28,11 @@ goto fail
 
 :execute
 if "%1"=="" goto execWindowLess
-"%JAVA_EXE%" %JAVA_OPTS% -jar "%~dp0\lib\openstego.jar" %*
+"%JAVA_EXE%" %JAVA_OPTS% -jar "%~dp0\lib\neostego.jar" %*
 goto finish
 
 :execWindowLess
-start "@app.name@" "%JAVA_EXE%" %JAVA_OPTS% -jar "%~dp0\lib\openstego.jar"
+start "@app.name@" "%JAVA_EXE%" %JAVA_OPTS% -jar "%~dp0\lib\neostego.jar"
 
 :finish
 if "%OS%"=="Windows_NT" endlocal
