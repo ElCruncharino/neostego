@@ -2,6 +2,7 @@
  * Steganography utility to hide messages into cover files
  * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
  * Copyright (c) Samir Vaidya
+ * Modifications copyright (c) 2026 Nick Haghiri
  */
 
 package com.openstego.desktop.ui;
@@ -28,7 +29,7 @@ public class OpenStegoFrame extends JFrame {
     /**
      * LabelUtil instance to retrieve labels
      */
-<span class="nc" id="L31">    private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);</span>
+<span class="nc" id="L32">    private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);</span>
 
     /**
      * Number of columns for text fields
@@ -52,7 +53,7 @@ public class OpenStegoFrame extends JFrame {
 
     private JScrollPane accordionPane;
     private JPanel accordion;
-<span class="nc" id="L55">    private final ButtonGroup actionButtonGroup = new ButtonGroup();</span>
+<span class="nc" id="L56">    private final ButtonGroup actionButtonGroup = new ButtonGroup();</span>
     private JToggleButton embedButton;
     private JToggleButton extractButton;
     private JToggleButton genSigButton;
@@ -76,12 +77,12 @@ public class OpenStegoFrame extends JFrame {
      */
     @SuppressWarnings(&quot;unused&quot;)
     public OpenStegoFrame(OpenStegoPlugin&lt;?&gt; dhPlugin, OpenStegoPlugin&lt;?&gt; wmPlugin) {
-<span class="nc" id="L79">        super();</span>
-<span class="nc" id="L80">        this.dhPlugin = dhPlugin;</span>
-<span class="nc" id="L81">        initialize();</span>
-<span class="nc" id="L82">        setActionCommands();</span>
-<span class="nc" id="L83">        setupUI();</span>
-<span class="nc" id="L84">    }</span>
+<span class="nc" id="L80">        super();</span>
+<span class="nc" id="L81">        this.dhPlugin = dhPlugin;</span>
+<span class="nc" id="L82">        initialize();</span>
+<span class="nc" id="L83">        setActionCommands();</span>
+<span class="nc" id="L84">        setupUI();</span>
+<span class="nc" id="L85">    }</span>
 
     /**
      * Getter method for topMenuBar
@@ -89,13 +90,13 @@ public class OpenStegoFrame extends JFrame {
      * @return topMenuBar
      */
     public JMenuBar getTopMenuBar() {
-<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (this.topMenuBar == null) {</span>
-<span class="nc" id="L93">            this.topMenuBar = new JMenuBar();</span>
-<span class="nc" id="L94">            this.topMenuBar.add(getFileMenu());</span>
-<span class="nc" id="L95">            this.topMenuBar.add(getViewMenu());</span>
-<span class="nc" id="L96">            this.topMenuBar.add(getHelpMenu());</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">        if (this.topMenuBar == null) {</span>
+<span class="nc" id="L94">            this.topMenuBar = new JMenuBar();</span>
+<span class="nc" id="L95">            this.topMenuBar.add(getFileMenu());</span>
+<span class="nc" id="L96">            this.topMenuBar.add(getViewMenu());</span>
+<span class="nc" id="L97">            this.topMenuBar.add(getHelpMenu());</span>
         }
-<span class="nc" id="L98">        return this.topMenuBar;</span>
+<span class="nc" id="L99">        return this.topMenuBar;</span>
     }
 
     /**
@@ -104,12 +105,12 @@ public class OpenStegoFrame extends JFrame {
      * @return fileMenu
      */
     public JMenu getFileMenu() {
-<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (this.fileMenu == null) {</span>
-<span class="nc" id="L108">            this.fileMenu = new JMenu(labelUtil.getString(&quot;gui.menu.file&quot;));</span>
-<span class="nc" id="L109">            this.fileMenu.setMnemonic(KeyEvent.VK_F);</span>
-<span class="nc" id="L110">            this.fileMenu.add(getFileExitMenuItem());</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (this.fileMenu == null) {</span>
+<span class="nc" id="L109">            this.fileMenu = new JMenu(labelUtil.getString(&quot;gui.menu.file&quot;));</span>
+<span class="nc" id="L110">            this.fileMenu.setMnemonic(KeyEvent.VK_F);</span>
+<span class="nc" id="L111">            this.fileMenu.add(getFileExitMenuItem());</span>
         }
-<span class="nc" id="L112">        return this.fileMenu;</span>
+<span class="nc" id="L113">        return this.fileMenu;</span>
     }
 
     /**
@@ -118,11 +119,11 @@ public class OpenStegoFrame extends JFrame {
      * @return fileExitMenuItem
      */
     public JMenuItem getFileExitMenuItem() {
-<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (this.fileExitMenuItem == null) {</span>
-<span class="nc" id="L122">            this.fileExitMenuItem = new JMenuItem(labelUtil.getString(&quot;gui.menu.file.exit&quot;));</span>
-<span class="nc" id="L123">            this.fileExitMenuItem.setMnemonic(KeyEvent.VK_X);</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (this.fileExitMenuItem == null) {</span>
+<span class="nc" id="L123">            this.fileExitMenuItem = new JMenuItem(labelUtil.getString(&quot;gui.menu.file.exit&quot;));</span>
+<span class="nc" id="L124">            this.fileExitMenuItem.setMnemonic(KeyEvent.VK_X);</span>
         }
-<span class="nc" id="L125">        return this.fileExitMenuItem;</span>
+<span class="nc" id="L126">        return this.fileExitMenuItem;</span>
     }
 
     /**
@@ -131,20 +132,20 @@ public class OpenStegoFrame extends JFrame {
      * @return viewMenu
      */
     public JMenu getViewMenu() {
-<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (this.viewMenu == null) {</span>
-<span class="nc" id="L135">            this.viewMenu = new JMenu(labelUtil.getString(&quot;gui.menu.view&quot;));</span>
-<span class="nc" id="L136">            this.viewMenu.setMnemonic(KeyEvent.VK_V);</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if (this.viewMenu == null) {</span>
+<span class="nc" id="L136">            this.viewMenu = new JMenu(labelUtil.getString(&quot;gui.menu.view&quot;));</span>
+<span class="nc" id="L137">            this.viewMenu.setMnemonic(KeyEvent.VK_V);</span>
 
-<span class="nc" id="L138">            JMenu themeMenu = new JMenu(labelUtil.getString(&quot;gui.menu.view.theme&quot;));</span>
-<span class="nc" id="L139">            ButtonGroup themeGroup = new ButtonGroup();</span>
-<span class="nc" id="L140">            themeGroup.add(getThemeLightMenuItem());</span>
-<span class="nc" id="L141">            themeGroup.add(getThemeDarkMenuItem());</span>
-<span class="nc" id="L142">            themeMenu.add(getThemeLightMenuItem());</span>
-<span class="nc" id="L143">            themeMenu.add(getThemeDarkMenuItem());</span>
+<span class="nc" id="L139">            JMenu themeMenu = new JMenu(labelUtil.getString(&quot;gui.menu.view.theme&quot;));</span>
+<span class="nc" id="L140">            ButtonGroup themeGroup = new ButtonGroup();</span>
+<span class="nc" id="L141">            themeGroup.add(getThemeLightMenuItem());</span>
+<span class="nc" id="L142">            themeGroup.add(getThemeDarkMenuItem());</span>
+<span class="nc" id="L143">            themeMenu.add(getThemeLightMenuItem());</span>
+<span class="nc" id="L144">            themeMenu.add(getThemeDarkMenuItem());</span>
 
-<span class="nc" id="L145">            this.viewMenu.add(themeMenu);</span>
+<span class="nc" id="L146">            this.viewMenu.add(themeMenu);</span>
         }
-<span class="nc" id="L147">        return this.viewMenu;</span>
+<span class="nc" id="L148">        return this.viewMenu;</span>
     }
 
     /**
@@ -153,12 +154,12 @@ public class OpenStegoFrame extends JFrame {
      * @return themeLightMenuItem
      */
     public JRadioButtonMenuItem getThemeLightMenuItem() {
-<span class="nc bnc" id="L156" title="All 2 branches missed.">        if (this.themeLightMenuItem == null) {</span>
-<span class="nc" id="L157">            this.themeLightMenuItem = new JRadioButtonMenuItem(labelUtil.getString(&quot;gui.menu.view.theme.light&quot;));</span>
-<span class="nc" id="L158">            this.themeLightMenuItem.setSelected(UITheme.LIGHT.equals(UITheme.current()));</span>
-<span class="nc" id="L159">            this.themeLightMenuItem.addActionListener(e -&gt; UITheme.switchTo(UITheme.LIGHT));</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (this.themeLightMenuItem == null) {</span>
+<span class="nc" id="L158">            this.themeLightMenuItem = new JRadioButtonMenuItem(labelUtil.getString(&quot;gui.menu.view.theme.light&quot;));</span>
+<span class="nc" id="L159">            this.themeLightMenuItem.setSelected(UITheme.LIGHT.equals(UITheme.current()));</span>
+<span class="nc" id="L160">            this.themeLightMenuItem.addActionListener(e -&gt; UITheme.switchTo(UITheme.LIGHT));</span>
         }
-<span class="nc" id="L161">        return this.themeLightMenuItem;</span>
+<span class="nc" id="L162">        return this.themeLightMenuItem;</span>
     }
 
     /**
@@ -167,12 +168,12 @@ public class OpenStegoFrame extends JFrame {
      * @return themeDarkMenuItem
      */
     public JRadioButtonMenuItem getThemeDarkMenuItem() {
-<span class="nc bnc" id="L170" title="All 2 branches missed.">        if (this.themeDarkMenuItem == null) {</span>
-<span class="nc" id="L171">            this.themeDarkMenuItem = new JRadioButtonMenuItem(labelUtil.getString(&quot;gui.menu.view.theme.dark&quot;));</span>
-<span class="nc" id="L172">            this.themeDarkMenuItem.setSelected(UITheme.DARK.equals(UITheme.current()));</span>
-<span class="nc" id="L173">            this.themeDarkMenuItem.addActionListener(e -&gt; UITheme.switchTo(UITheme.DARK));</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        if (this.themeDarkMenuItem == null) {</span>
+<span class="nc" id="L172">            this.themeDarkMenuItem = new JRadioButtonMenuItem(labelUtil.getString(&quot;gui.menu.view.theme.dark&quot;));</span>
+<span class="nc" id="L173">            this.themeDarkMenuItem.setSelected(UITheme.DARK.equals(UITheme.current()));</span>
+<span class="nc" id="L174">            this.themeDarkMenuItem.addActionListener(e -&gt; UITheme.switchTo(UITheme.DARK));</span>
         }
-<span class="nc" id="L175">        return this.themeDarkMenuItem;</span>
+<span class="nc" id="L176">        return this.themeDarkMenuItem;</span>
     }
 
     /**
@@ -181,12 +182,12 @@ public class OpenStegoFrame extends JFrame {
      * @return helpMenu
      */
     public JMenu getHelpMenu() {
-<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (this.helpMenu == null) {</span>
-<span class="nc" id="L185">            this.helpMenu = new JMenu(labelUtil.getString(&quot;gui.menu.help&quot;));</span>
-<span class="nc" id="L186">            this.helpMenu.setMnemonic(KeyEvent.VK_H);</span>
-<span class="nc" id="L187">            this.helpMenu.add(getHelpAboutMenuItem());</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">        if (this.helpMenu == null) {</span>
+<span class="nc" id="L186">            this.helpMenu = new JMenu(labelUtil.getString(&quot;gui.menu.help&quot;));</span>
+<span class="nc" id="L187">            this.helpMenu.setMnemonic(KeyEvent.VK_H);</span>
+<span class="nc" id="L188">            this.helpMenu.add(getHelpAboutMenuItem());</span>
         }
-<span class="nc" id="L189">        return this.helpMenu;</span>
+<span class="nc" id="L190">        return this.helpMenu;</span>
     }
 
     /**
@@ -195,11 +196,11 @@ public class OpenStegoFrame extends JFrame {
      * @return helpAboutMenuItem
      */
     public JMenuItem getHelpAboutMenuItem() {
-<span class="nc bnc" id="L198" title="All 2 branches missed.">        if (this.helpAboutMenuItem == null) {</span>
-<span class="nc" id="L199">            this.helpAboutMenuItem = new JMenuItem(labelUtil.getString(&quot;gui.menu.help.about&quot;));</span>
-<span class="nc" id="L200">            this.helpAboutMenuItem.setMnemonic(KeyEvent.VK_A);</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">        if (this.helpAboutMenuItem == null) {</span>
+<span class="nc" id="L200">            this.helpAboutMenuItem = new JMenuItem(labelUtil.getString(&quot;gui.menu.help.about&quot;));</span>
+<span class="nc" id="L201">            this.helpAboutMenuItem.setMnemonic(KeyEvent.VK_A);</span>
         }
-<span class="nc" id="L202">        return this.helpAboutMenuItem;</span>
+<span class="nc" id="L203">        return this.helpAboutMenuItem;</span>
     }
 
     /**
@@ -208,21 +209,21 @@ public class OpenStegoFrame extends JFrame {
      * @return mainContentPane
      */
     public JPanel getMainContentPane() {
-<span class="nc bnc" id="L211" title="All 2 branches missed.">        if (this.mainContentPane == null) {</span>
-<span class="nc" id="L212">            this.mainContentPane = new JPanel();</span>
-<span class="nc" id="L213">            this.mainContentPane.setLayout(new BorderLayout());</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">        if (this.mainContentPane == null) {</span>
+<span class="nc" id="L213">            this.mainContentPane = new JPanel();</span>
+<span class="nc" id="L214">            this.mainContentPane.setLayout(new BorderLayout());</span>
 
-<span class="nc" id="L215">            this.mainContentPane.add(getAccordionPane(), BorderLayout.LINE_START);</span>
+<span class="nc" id="L216">            this.mainContentPane.add(getAccordionPane(), BorderLayout.LINE_START);</span>
 
-<span class="nc" id="L217">            JPanel rightPane = new JPanel();</span>
-<span class="nc" id="L218">            rightPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));</span>
-<span class="nc" id="L219">            rightPane.setLayout(new BorderLayout());</span>
-<span class="nc" id="L220">            this.mainContentPane.add(rightPane, BorderLayout.CENTER);</span>
+<span class="nc" id="L218">            JPanel rightPane = new JPanel();</span>
+<span class="nc" id="L219">            rightPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));</span>
+<span class="nc" id="L220">            rightPane.setLayout(new BorderLayout());</span>
+<span class="nc" id="L221">            this.mainContentPane.add(rightPane, BorderLayout.CENTER);</span>
 
-<span class="nc" id="L222">            rightPane.add(getHeaderPanel(), BorderLayout.PAGE_START);</span>
-<span class="nc" id="L223">            rightPane.add(getMainPanel(), BorderLayout.CENTER);</span>
+<span class="nc" id="L223">            rightPane.add(getHeaderPanel(), BorderLayout.PAGE_START);</span>
+<span class="nc" id="L224">            rightPane.add(getMainPanel(), BorderLayout.CENTER);</span>
         }
-<span class="nc" id="L225">        return this.mainContentPane;</span>
+<span class="nc" id="L226">        return this.mainContentPane;</span>
     }
 
     /**
@@ -231,12 +232,12 @@ public class OpenStegoFrame extends JFrame {
      * @return accordionPane
      */
     public JScrollPane getAccordionPane() {
-<span class="nc bnc" id="L234" title="All 2 branches missed.">        if (this.accordionPane == null) {</span>
-<span class="nc" id="L235">            this.accordionPane = new JScrollPane();</span>
-<span class="nc" id="L236">            this.accordionPane.setBorder(null);</span>
-<span class="nc" id="L237">            this.accordionPane.setViewportView(getAccordion());</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        if (this.accordionPane == null) {</span>
+<span class="nc" id="L236">            this.accordionPane = new JScrollPane();</span>
+<span class="nc" id="L237">            this.accordionPane.setBorder(null);</span>
+<span class="nc" id="L238">            this.accordionPane.setViewportView(getAccordion());</span>
         }
-<span class="nc" id="L239">        return this.accordionPane;</span>
+<span class="nc" id="L240">        return this.accordionPane;</span>
     }
 
     /**
@@ -245,63 +246,63 @@ public class OpenStegoFrame extends JFrame {
      * @return accordion
      */
     public JPanel getAccordion() {
-<span class="nc bnc" id="L248" title="All 2 branches missed.">        if (this.accordion == null) {</span>
-<span class="nc" id="L249">            this.accordion = new JPanel();</span>
-<span class="nc" id="L250">            this.accordion.setLayout(new GridBagLayout());</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">        if (this.accordion == null) {</span>
+<span class="nc" id="L250">            this.accordion = new JPanel();</span>
+<span class="nc" id="L251">            this.accordion.setLayout(new GridBagLayout());</span>
 
-<span class="nc" id="L252">            int pad = 20;</span>
-<span class="nc" id="L253">            int gridy = 0;</span>
-<span class="nc" id="L254">            GridBagConstraints c = new GridBagConstraints();</span>
-<span class="nc" id="L255">            c.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L253">            int pad = 20;</span>
+<span class="nc" id="L254">            int gridy = 0;</span>
+<span class="nc" id="L255">            GridBagConstraints c = new GridBagConstraints();</span>
+<span class="nc" id="L256">            c.fill = GridBagConstraints.HORIZONTAL;</span>
 
-<span class="nc" id="L257">            c.gridy = gridy++;</span>
-<span class="nc" id="L258">            this.accordion.add(createAccordionHeader(labelUtil.getString(&quot;gui.label.tabHeader.dataHiding&quot;)), c);</span>
+<span class="nc" id="L258">            c.gridy = gridy++;</span>
+<span class="nc" id="L259">            this.accordion.add(createAccordionHeader(labelUtil.getString(&quot;gui.label.tabHeader.dataHiding&quot;)), c);</span>
 
-<span class="nc" id="L260">            c.gridy = gridy++;</span>
-<span class="nc" id="L261">            c.insets = new Insets(0, pad, 0, pad);</span>
-<span class="nc" id="L262">            this.accordion.add(getEmbedButton(), c);</span>
+<span class="nc" id="L261">            c.gridy = gridy++;</span>
+<span class="nc" id="L262">            c.insets = new Insets(0, pad, 0, pad);</span>
+<span class="nc" id="L263">            this.accordion.add(getEmbedButton(), c);</span>
 
-<span class="nc" id="L264">            c.gridy = gridy++;</span>
-<span class="nc" id="L265">            this.accordion.add(getExtractButton(), c);</span>
+<span class="nc" id="L265">            c.gridy = gridy++;</span>
+<span class="nc" id="L266">            this.accordion.add(getExtractButton(), c);</span>
 
-<span class="nc" id="L267">            c.gridy = gridy++;</span>
-<span class="nc" id="L268">            this.accordion.add(Box.createVerticalStrut(20), c);</span>
+<span class="nc" id="L268">            c.gridy = gridy++;</span>
+<span class="nc" id="L269">            this.accordion.add(Box.createVerticalStrut(20), c);</span>
 
-<span class="nc" id="L270">            c.gridy = gridy++;</span>
-<span class="nc" id="L271">            c.insets = new Insets(0, 0, 0, 0);</span>
-<span class="nc" id="L272">            this.accordion.add(createAccordionHeader(labelUtil.getString(&quot;gui.label.tabHeader.watermarking&quot;)), c);</span>
+<span class="nc" id="L271">            c.gridy = gridy++;</span>
+<span class="nc" id="L272">            c.insets = new Insets(0, 0, 0, 0);</span>
+<span class="nc" id="L273">            this.accordion.add(createAccordionHeader(labelUtil.getString(&quot;gui.label.tabHeader.watermarking&quot;)), c);</span>
 
-<span class="nc" id="L274">            c.gridy = gridy++;</span>
-<span class="nc" id="L275">            c.insets = new Insets(0, pad, 0, pad);</span>
-<span class="nc" id="L276">            this.accordion.add(getGenSigButton(), c);</span>
+<span class="nc" id="L275">            c.gridy = gridy++;</span>
+<span class="nc" id="L276">            c.insets = new Insets(0, pad, 0, pad);</span>
+<span class="nc" id="L277">            this.accordion.add(getGenSigButton(), c);</span>
 
-<span class="nc" id="L278">            c.gridy = gridy++;</span>
-<span class="nc" id="L279">            this.accordion.add(getSignWmButton(), c);</span>
+<span class="nc" id="L279">            c.gridy = gridy++;</span>
+<span class="nc" id="L280">            this.accordion.add(getSignWmButton(), c);</span>
 
-<span class="nc" id="L281">            c.gridy = gridy++;</span>
-<span class="nc" id="L282">            this.accordion.add(getVerifyWmButton(), c);</span>
+<span class="nc" id="L282">            c.gridy = gridy++;</span>
+<span class="nc" id="L283">            this.accordion.add(getVerifyWmButton(), c);</span>
 
-<span class="nc" id="L284">            c.gridy = gridy;</span>
-<span class="nc" id="L285">            c.weighty = 1.0;</span>
-<span class="nc" id="L286">            this.accordion.add(new JPanel(), c);</span>
+<span class="nc" id="L285">            c.gridy = gridy;</span>
+<span class="nc" id="L286">            c.weighty = 1.0;</span>
+<span class="nc" id="L287">            this.accordion.add(new JPanel(), c);</span>
         }
-<span class="nc" id="L288">        return this.accordion;</span>
+<span class="nc" id="L289">        return this.accordion;</span>
     }
 
     private Component createAccordionHeader(String name) {
-<span class="nc" id="L292">        GradientPanel panel = new GradientPanel((new JPanel()).getBackground(), (new JPanel()).getBackground().darker());</span>
-<span class="nc" id="L293">        panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));</span>
-<span class="nc" id="L294">        panel.setLayout(new GridLayout(1, 1));</span>
+<span class="nc" id="L293">        GradientPanel panel = new GradientPanel((new JPanel()).getBackground(), (new JPanel()).getBackground().darker());</span>
+<span class="nc" id="L294">        panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));</span>
+<span class="nc" id="L295">        panel.setLayout(new GridLayout(1, 1));</span>
 
-<span class="nc" id="L296">        JButton button = new JButton(name);</span>
-<span class="nc" id="L297">        button.setContentAreaFilled(false);</span>
-<span class="nc" id="L298">        button.setOpaque(false);</span>
-<span class="nc" id="L299">        button.setMargin(new Insets(3, 3, 3, 3));</span>
-<span class="nc" id="L300">        button.setFont(button.getFont().deriveFont(Font.BOLD));</span>
-<span class="nc" id="L301">        button.setFocusable(false);</span>
-<span class="nc" id="L302">        panel.add(button);</span>
+<span class="nc" id="L297">        JButton button = new JButton(name);</span>
+<span class="nc" id="L298">        button.setContentAreaFilled(false);</span>
+<span class="nc" id="L299">        button.setOpaque(false);</span>
+<span class="nc" id="L300">        button.setMargin(new Insets(3, 3, 3, 3));</span>
+<span class="nc" id="L301">        button.setFont(button.getFont().deriveFont(Font.BOLD));</span>
+<span class="nc" id="L302">        button.setFocusable(false);</span>
+<span class="nc" id="L303">        panel.add(button);</span>
 
-<span class="nc" id="L304">        return panel;</span>
+<span class="nc" id="L305">        return panel;</span>
     }
 
     /**
@@ -310,15 +311,15 @@ public class OpenStegoFrame extends JFrame {
      * @return embedButton
      */
     public JToggleButton getEmbedButton() {
-<span class="nc bnc" id="L313" title="All 2 branches missed.">        if (this.embedButton == null) {</span>
-<span class="nc" id="L314">            this.embedButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.dhEmbed&quot;),</span>
-<span class="nc" id="L315">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/EmbedIcon.png&quot;))), true);</span>
-<span class="nc" id="L316">            this.embedButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
-<span class="nc" id="L317">            this.embedButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
-<span class="nc" id="L318">            this.embedButton.setFocusable(false);</span>
-<span class="nc" id="L319">            this.actionButtonGroup.add(this.embedButton);</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        if (this.embedButton == null) {</span>
+<span class="nc" id="L315">            this.embedButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.dhEmbed&quot;),</span>
+<span class="nc" id="L316">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/EmbedIcon.png&quot;))), true);</span>
+<span class="nc" id="L317">            this.embedButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
+<span class="nc" id="L318">            this.embedButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
+<span class="nc" id="L319">            this.embedButton.setFocusable(false);</span>
+<span class="nc" id="L320">            this.actionButtonGroup.add(this.embedButton);</span>
         }
-<span class="nc" id="L321">        return this.embedButton;</span>
+<span class="nc" id="L322">        return this.embedButton;</span>
     }
 
     /**
@@ -327,15 +328,15 @@ public class OpenStegoFrame extends JFrame {
      * @return extractButton
      */
     public JToggleButton getExtractButton() {
-<span class="nc bnc" id="L330" title="All 2 branches missed.">        if (this.extractButton == null) {</span>
-<span class="nc" id="L331">            this.extractButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.dhExtract&quot;),</span>
-<span class="nc" id="L332">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/ExtractIcon.png&quot;))));</span>
-<span class="nc" id="L333">            this.extractButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
-<span class="nc" id="L334">            this.extractButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
-<span class="nc" id="L335">            this.extractButton.setFocusable(false);</span>
-<span class="nc" id="L336">            this.actionButtonGroup.add(this.extractButton);</span>
+<span class="nc bnc" id="L331" title="All 2 branches missed.">        if (this.extractButton == null) {</span>
+<span class="nc" id="L332">            this.extractButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.dhExtract&quot;),</span>
+<span class="nc" id="L333">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/ExtractIcon.png&quot;))));</span>
+<span class="nc" id="L334">            this.extractButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
+<span class="nc" id="L335">            this.extractButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
+<span class="nc" id="L336">            this.extractButton.setFocusable(false);</span>
+<span class="nc" id="L337">            this.actionButtonGroup.add(this.extractButton);</span>
         }
-<span class="nc" id="L338">        return this.extractButton;</span>
+<span class="nc" id="L339">        return this.extractButton;</span>
     }
 
     /**
@@ -344,15 +345,15 @@ public class OpenStegoFrame extends JFrame {
      * @return genSigButton
      */
     public JToggleButton getGenSigButton() {
-<span class="nc bnc" id="L347" title="All 2 branches missed.">        if (this.genSigButton == null) {</span>
-<span class="nc" id="L348">            this.genSigButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.wmGenSig&quot;),</span>
-<span class="nc" id="L349">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/EmbedIcon.png&quot;)))); // TODO</span>
-<span class="nc" id="L350">            this.genSigButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
-<span class="nc" id="L351">            this.genSigButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
-<span class="nc" id="L352">            this.genSigButton.setFocusable(false);</span>
-<span class="nc" id="L353">            this.actionButtonGroup.add(this.genSigButton);</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">        if (this.genSigButton == null) {</span>
+<span class="nc" id="L349">            this.genSigButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.wmGenSig&quot;),</span>
+<span class="nc" id="L350">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/EmbedIcon.png&quot;)))); // TODO</span>
+<span class="nc" id="L351">            this.genSigButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
+<span class="nc" id="L352">            this.genSigButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
+<span class="nc" id="L353">            this.genSigButton.setFocusable(false);</span>
+<span class="nc" id="L354">            this.actionButtonGroup.add(this.genSigButton);</span>
         }
-<span class="nc" id="L355">        return this.genSigButton;</span>
+<span class="nc" id="L356">        return this.genSigButton;</span>
     }
 
     /**
@@ -361,15 +362,15 @@ public class OpenStegoFrame extends JFrame {
      * @return signWmButton
      */
     public JToggleButton getSignWmButton() {
-<span class="nc bnc" id="L364" title="All 2 branches missed.">        if (this.signWmButton == null) {</span>
-<span class="nc" id="L365">            this.signWmButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.wmEmbed&quot;),</span>
-<span class="nc" id="L366">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/EmbedIcon.png&quot;)))); // TODO</span>
-<span class="nc" id="L367">            this.signWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
-<span class="nc" id="L368">            this.signWmButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
-<span class="nc" id="L369">            this.signWmButton.setFocusable(false);</span>
-<span class="nc" id="L370">            this.actionButtonGroup.add(this.signWmButton);</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">        if (this.signWmButton == null) {</span>
+<span class="nc" id="L366">            this.signWmButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.wmEmbed&quot;),</span>
+<span class="nc" id="L367">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/EmbedIcon.png&quot;)))); // TODO</span>
+<span class="nc" id="L368">            this.signWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
+<span class="nc" id="L369">            this.signWmButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
+<span class="nc" id="L370">            this.signWmButton.setFocusable(false);</span>
+<span class="nc" id="L371">            this.actionButtonGroup.add(this.signWmButton);</span>
         }
-<span class="nc" id="L372">        return this.signWmButton;</span>
+<span class="nc" id="L373">        return this.signWmButton;</span>
     }
 
     /**
@@ -378,15 +379,15 @@ public class OpenStegoFrame extends JFrame {
      * @return verifyWmButton
      */
     public JToggleButton getVerifyWmButton() {
-<span class="nc bnc" id="L381" title="All 2 branches missed.">        if (this.verifyWmButton == null) {</span>
-<span class="nc" id="L382">            this.verifyWmButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.wmVerify&quot;),</span>
-<span class="nc" id="L383">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/ExtractIcon.png&quot;)))); // TODO</span>
-<span class="nc" id="L384">            this.verifyWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
-<span class="nc" id="L385">            this.verifyWmButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
-<span class="nc" id="L386">            this.verifyWmButton.setFocusable(false);</span>
-<span class="nc" id="L387">            this.actionButtonGroup.add(this.verifyWmButton);</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">        if (this.verifyWmButton == null) {</span>
+<span class="nc" id="L383">            this.verifyWmButton = new JToggleButton(labelUtil.getString(&quot;gui.label.tab.wmVerify&quot;),</span>
+<span class="nc" id="L384">                    new ImageIcon(Objects.requireNonNull(getClass().getResource(&quot;/images/ExtractIcon.png&quot;)))); // TODO</span>
+<span class="nc" id="L385">            this.verifyWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);</span>
+<span class="nc" id="L386">            this.verifyWmButton.setHorizontalTextPosition(SwingConstants.CENTER);</span>
+<span class="nc" id="L387">            this.verifyWmButton.setFocusable(false);</span>
+<span class="nc" id="L388">            this.actionButtonGroup.add(this.verifyWmButton);</span>
         }
-<span class="nc" id="L389">        return this.verifyWmButton;</span>
+<span class="nc" id="L390">        return this.verifyWmButton;</span>
     }
 
     /**
@@ -395,15 +396,15 @@ public class OpenStegoFrame extends JFrame {
      * @return headerPanel
      */
     public JPanel getHeaderPanel() {
-<span class="nc bnc" id="L398" title="All 2 branches missed.">        if (this.headerPanel == null) {</span>
-<span class="nc" id="L399">            this.headerPanel = new JPanel();</span>
-<span class="nc" id="L400">            this.headerPanel.setBorder(BorderFactory.createCompoundBorder(</span>
-<span class="nc" id="L401">                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY),</span>
-<span class="nc" id="L402">                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));</span>
-<span class="nc" id="L403">            this.headerPanel.setLayout(new GridLayout());</span>
-<span class="nc" id="L404">            this.headerPanel.add(getHeader());</span>
+<span class="nc bnc" id="L399" title="All 2 branches missed.">        if (this.headerPanel == null) {</span>
+<span class="nc" id="L400">            this.headerPanel = new JPanel();</span>
+<span class="nc" id="L401">            this.headerPanel.setBorder(BorderFactory.createCompoundBorder(</span>
+<span class="nc" id="L402">                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY),</span>
+<span class="nc" id="L403">                    BorderFactory.createEmptyBorder(5, 5, 5, 5)));</span>
+<span class="nc" id="L404">            this.headerPanel.setLayout(new GridLayout());</span>
+<span class="nc" id="L405">            this.headerPanel.add(getHeader());</span>
         }
-<span class="nc" id="L406">        return this.headerPanel;</span>
+<span class="nc" id="L407">        return this.headerPanel;</span>
     }
 
     /**
@@ -412,11 +413,11 @@ public class OpenStegoFrame extends JFrame {
      * @return header
      */
     public JLabel getHeader() {
-<span class="nc bnc" id="L415" title="All 2 branches missed.">        if (this.header == null) {</span>
-<span class="nc" id="L416">            this.header = new JLabel();</span>
-<span class="nc" id="L417">            this.header.setFont(this.header.getFont().deriveFont(Font.BOLD, this.header.getFont().getSize2D() + 3f));</span>
+<span class="nc bnc" id="L416" title="All 2 branches missed.">        if (this.header == null) {</span>
+<span class="nc" id="L417">            this.header = new JLabel();</span>
+<span class="nc" id="L418">            this.header.setFont(this.header.getFont().deriveFont(Font.BOLD, this.header.getFont().getSize2D() + 3f));</span>
         }
-<span class="nc" id="L419">        return this.header;</span>
+<span class="nc" id="L420">        return this.header;</span>
     }
 
     /**
@@ -425,12 +426,12 @@ public class OpenStegoFrame extends JFrame {
      * @return mainPanel
      */
     public JPanel getMainPanel() {
-<span class="nc bnc" id="L428" title="All 2 branches missed.">        if (this.mainPanel == null) {</span>
-<span class="nc" id="L429">            this.mainPanel = new JPanel();</span>
-<span class="nc" id="L430">            this.mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));</span>
-<span class="nc" id="L431">            this.mainPanel.setLayout(new GridLayout());</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">        if (this.mainPanel == null) {</span>
+<span class="nc" id="L430">            this.mainPanel = new JPanel();</span>
+<span class="nc" id="L431">            this.mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));</span>
+<span class="nc" id="L432">            this.mainPanel.setLayout(new GridLayout());</span>
         }
-<span class="nc" id="L433">        return this.mainPanel;</span>
+<span class="nc" id="L434">        return this.mainPanel;</span>
     }
 
     /**
@@ -439,12 +440,12 @@ public class OpenStegoFrame extends JFrame {
      * @return embedPanel
      */
     public EmbedPanel getEmbedPanel() {
-<span class="nc bnc" id="L442" title="All 2 branches missed.">        if (this.embedPanel == null) {</span>
+<span class="nc bnc" id="L443" title="All 2 branches missed.">        if (this.embedPanel == null) {</span>
             // Plugin-specific embed options UI is not currently used (kept null)
-<span class="nc" id="L444">            this.embedPanel = new EmbedPanel(null);</span>
-<span class="nc" id="L445">            this.embedPanel.initialize();</span>
+<span class="nc" id="L445">            this.embedPanel = new EmbedPanel(null);</span>
+<span class="nc" id="L446">            this.embedPanel.initialize();</span>
         }
-<span class="nc" id="L447">        return this.embedPanel;</span>
+<span class="nc" id="L448">        return this.embedPanel;</span>
     }
 
     /**
@@ -453,10 +454,10 @@ public class OpenStegoFrame extends JFrame {
      * @return extractPanel
      */
     public ExtractPanel getExtractPanel() {
-<span class="nc bnc" id="L456" title="All 2 branches missed.">        if (this.extractPanel == null) {</span>
-<span class="nc" id="L457">            this.extractPanel = new ExtractPanel();</span>
+<span class="nc bnc" id="L457" title="All 2 branches missed.">        if (this.extractPanel == null) {</span>
+<span class="nc" id="L458">            this.extractPanel = new ExtractPanel();</span>
         }
-<span class="nc" id="L459">        return this.extractPanel;</span>
+<span class="nc" id="L460">        return this.extractPanel;</span>
     }
 
     /**
@@ -465,10 +466,10 @@ public class OpenStegoFrame extends JFrame {
      * @return genSigPanel
      */
     public GenerateSignaturePanel getGenSigPanel() {
-<span class="nc bnc" id="L468" title="All 2 branches missed.">        if (this.genSigPanel == null) {</span>
-<span class="nc" id="L469">            this.genSigPanel = new GenerateSignaturePanel();</span>
+<span class="nc bnc" id="L469" title="All 2 branches missed.">        if (this.genSigPanel == null) {</span>
+<span class="nc" id="L470">            this.genSigPanel = new GenerateSignaturePanel();</span>
         }
-<span class="nc" id="L471">        return this.genSigPanel;</span>
+<span class="nc" id="L472">        return this.genSigPanel;</span>
     }
 
     /**
@@ -477,10 +478,10 @@ public class OpenStegoFrame extends JFrame {
      * @return embedWmPanel
      */
     public EmbedWatermarkPanel getEmbedWmPanel() {
-<span class="nc bnc" id="L480" title="All 2 branches missed.">        if (this.embedWmPanel == null) {</span>
-<span class="nc" id="L481">            this.embedWmPanel = new EmbedWatermarkPanel();</span>
+<span class="nc bnc" id="L481" title="All 2 branches missed.">        if (this.embedWmPanel == null) {</span>
+<span class="nc" id="L482">            this.embedWmPanel = new EmbedWatermarkPanel();</span>
         }
-<span class="nc" id="L483">        return this.embedWmPanel;</span>
+<span class="nc" id="L484">        return this.embedWmPanel;</span>
     }
 
     /**
@@ -489,10 +490,10 @@ public class OpenStegoFrame extends JFrame {
      * @return verifyWmPanel
      */
     public VerifyWatermarkPanel getVerifyWmPanel() {
-<span class="nc bnc" id="L492" title="All 2 branches missed.">        if (this.verifyWmPanel == null) {</span>
-<span class="nc" id="L493">            this.verifyWmPanel = new VerifyWatermarkPanel();</span>
+<span class="nc bnc" id="L493" title="All 2 branches missed.">        if (this.verifyWmPanel == null) {</span>
+<span class="nc" id="L494">            this.verifyWmPanel = new VerifyWatermarkPanel();</span>
         }
-<span class="nc" id="L495">        return this.verifyWmPanel;</span>
+<span class="nc" id="L496">        return this.verifyWmPanel;</span>
     }
 
     /**
@@ -500,68 +501,68 @@ public class OpenStegoFrame extends JFrame {
      */
     private void setupUI() {
         // Special handling to ensure that Japanese fonts are readable
-<span class="nc bnc" id="L503" title="All 2 branches missed.">        if (Locale.getDefault().getLanguage().equals(Locale.JAPANESE.getLanguage())) {</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">        if (Locale.getDefault().getLanguage().equals(Locale.JAPANESE.getLanguage())) {</span>
             Object key;
             Object value;
-<span class="nc" id="L506">            Enumeration&lt;?&gt; keys = UIManager.getDefaults().keys();</span>
-<span class="nc bnc" id="L507" title="All 2 branches missed.">            while (keys.hasMoreElements()) {</span>
-<span class="nc" id="L508">                key = keys.nextElement();</span>
-<span class="nc" id="L509">                value = UIManager.get(key);</span>
-<span class="nc bnc" id="L510" title="All 2 branches missed.">                if (value instanceof FontUIResource) {</span>
-<span class="nc" id="L511">                    UIManager.put(key, ((FontUIResource) value).deriveFont(12.0f));</span>
+<span class="nc" id="L507">            Enumeration&lt;?&gt; keys = UIManager.getDefaults().keys();</span>
+<span class="nc bnc" id="L508" title="All 2 branches missed.">            while (keys.hasMoreElements()) {</span>
+<span class="nc" id="L509">                key = keys.nextElement();</span>
+<span class="nc" id="L510">                value = UIManager.get(key);</span>
+<span class="nc bnc" id="L511" title="All 2 branches missed.">                if (value instanceof FontUIResource) {</span>
+<span class="nc" id="L512">                    UIManager.put(key, ((FontUIResource) value).deriveFont(12.0f));</span>
                 }
             }
-<span class="nc" id="L514">            getMainContentPane().setFont(new Font(&quot;Japanese&quot;, Font.PLAIN, 12));</span>
+<span class="nc" id="L515">            getMainContentPane().setFont(new Font(&quot;Japanese&quot;, Font.PLAIN, 12));</span>
         }
-<span class="nc" id="L516">    }</span>
+<span class="nc" id="L517">    }</span>
 
     /**
      * This method is called from within the constructor to
      * initialize the form.
      */
     private void initialize() {
-<span class="nc" id="L523">        this.setContentPane(getMainContentPane());</span>
-<span class="nc" id="L524">        this.setTitle(labelUtil.getString(&quot;gui.window.title&quot;));</span>
-<span class="nc" id="L525">        this.setJMenuBar(getTopMenuBar());</span>
+<span class="nc" id="L524">        this.setContentPane(getMainContentPane());</span>
+<span class="nc" id="L525">        this.setTitle(labelUtil.getString(&quot;gui.window.title&quot;));</span>
+<span class="nc" id="L526">        this.setJMenuBar(getTopMenuBar());</span>
 
-<span class="nc" id="L527">        getMainPanel().add(getEmbedPanel());</span>
-<span class="nc" id="L528">        getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.dhEmbed&quot;));</span>
-<span class="nc" id="L529">    }</span>
+<span class="nc" id="L528">        getMainPanel().add(getEmbedPanel());</span>
+<span class="nc" id="L529">        getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.dhEmbed&quot;));</span>
+<span class="nc" id="L530">    }</span>
 
     /**
      * Method to set the action commands for interactive UI items
      */
     private void setActionCommands() {
-<span class="nc" id="L535">        getFileExitMenuItem().setActionCommand(ActionCommands.MENU_FILE_EXIT);</span>
-<span class="nc" id="L536">        getHelpAboutMenuItem().setActionCommand(ActionCommands.MENU_HELP_ABOUT);</span>
+<span class="nc" id="L536">        getFileExitMenuItem().setActionCommand(ActionCommands.MENU_FILE_EXIT);</span>
+<span class="nc" id="L537">        getHelpAboutMenuItem().setActionCommand(ActionCommands.MENU_HELP_ABOUT);</span>
 
-<span class="nc" id="L538">        getEmbedButton().setActionCommand(ActionCommands.SWITCH_DH_EMBED);</span>
-<span class="nc" id="L539">        getExtractButton().setActionCommand(ActionCommands.SWITCH_DH_EXTRACT);</span>
-<span class="nc" id="L540">        getGenSigButton().setActionCommand(ActionCommands.SWITCH_WM_GENSIG);</span>
-<span class="nc" id="L541">        getSignWmButton().setActionCommand(ActionCommands.SWITCH_WM_EMBED);</span>
-<span class="nc" id="L542">        getVerifyWmButton().setActionCommand(ActionCommands.SWITCH_WM_VERIFY);</span>
+<span class="nc" id="L539">        getEmbedButton().setActionCommand(ActionCommands.SWITCH_DH_EMBED);</span>
+<span class="nc" id="L540">        getExtractButton().setActionCommand(ActionCommands.SWITCH_DH_EXTRACT);</span>
+<span class="nc" id="L541">        getGenSigButton().setActionCommand(ActionCommands.SWITCH_WM_GENSIG);</span>
+<span class="nc" id="L542">        getSignWmButton().setActionCommand(ActionCommands.SWITCH_WM_EMBED);</span>
+<span class="nc" id="L543">        getVerifyWmButton().setActionCommand(ActionCommands.SWITCH_WM_VERIFY);</span>
 
-<span class="nc" id="L544">        getEmbedPanel().getMsgFileButton().setActionCommand(ActionCommands.BROWSE_DH_EMB_MSGFILE);</span>
-<span class="nc" id="L545">        getEmbedPanel().getCoverFileButton().setActionCommand(ActionCommands.BROWSE_DH_EMB_CVRFILE);</span>
-<span class="nc" id="L546">        getEmbedPanel().getStegoFileButton().setActionCommand(ActionCommands.BROWSE_DH_EMB_STGFILE);</span>
-<span class="nc" id="L547">        getEmbedPanel().getRunEmbedButton().setActionCommand(ActionCommands.RUN_DH_EMBED);</span>
+<span class="nc" id="L545">        getEmbedPanel().getMsgFileButton().setActionCommand(ActionCommands.BROWSE_DH_EMB_MSGFILE);</span>
+<span class="nc" id="L546">        getEmbedPanel().getCoverFileButton().setActionCommand(ActionCommands.BROWSE_DH_EMB_CVRFILE);</span>
+<span class="nc" id="L547">        getEmbedPanel().getStegoFileButton().setActionCommand(ActionCommands.BROWSE_DH_EMB_STGFILE);</span>
+<span class="nc" id="L548">        getEmbedPanel().getRunEmbedButton().setActionCommand(ActionCommands.RUN_DH_EMBED);</span>
 
-<span class="nc" id="L549">        getExtractPanel().getInputStegoFileButton().setActionCommand(ActionCommands.BROWSE_DH_EXT_STGFILE);</span>
-<span class="nc" id="L550">        getExtractPanel().getOutputFolderButton().setActionCommand(ActionCommands.BROWSE_DH_EXT_OUTDIR);</span>
-<span class="nc" id="L551">        getExtractPanel().getRunExtractButton().setActionCommand(ActionCommands.RUN_DH_EXTRACT);</span>
+<span class="nc" id="L550">        getExtractPanel().getInputStegoFileButton().setActionCommand(ActionCommands.BROWSE_DH_EXT_STGFILE);</span>
+<span class="nc" id="L551">        getExtractPanel().getOutputFolderButton().setActionCommand(ActionCommands.BROWSE_DH_EXT_OUTDIR);</span>
+<span class="nc" id="L552">        getExtractPanel().getRunExtractButton().setActionCommand(ActionCommands.RUN_DH_EXTRACT);</span>
 
-<span class="nc" id="L553">        getGenSigPanel().getSignatureFileButton().setActionCommand(ActionCommands.BROWSE_WM_GSG_SIGFILE);</span>
-<span class="nc" id="L554">        getGenSigPanel().getRunGenSigButton().setActionCommand(ActionCommands.RUN_WM_GENSIG);</span>
+<span class="nc" id="L554">        getGenSigPanel().getSignatureFileButton().setActionCommand(ActionCommands.BROWSE_WM_GSG_SIGFILE);</span>
+<span class="nc" id="L555">        getGenSigPanel().getRunGenSigButton().setActionCommand(ActionCommands.RUN_WM_GENSIG);</span>
 
-<span class="nc" id="L556">        getEmbedWmPanel().getFileForWmButton().setActionCommand(ActionCommands.BROWSE_WM_EMB_INPFILE);</span>
-<span class="nc" id="L557">        getEmbedWmPanel().getSignatureFileButton().setActionCommand(ActionCommands.BROWSE_WM_EMB_SIGFILE);</span>
-<span class="nc" id="L558">        getEmbedWmPanel().getOutputWmFileButton().setActionCommand(ActionCommands.BROWSE_WM_EMB_OUTFILE);</span>
-<span class="nc" id="L559">        getEmbedWmPanel().getRunEmbedWmButton().setActionCommand(ActionCommands.RUN_WM_EMBED);</span>
+<span class="nc" id="L557">        getEmbedWmPanel().getFileForWmButton().setActionCommand(ActionCommands.BROWSE_WM_EMB_INPFILE);</span>
+<span class="nc" id="L558">        getEmbedWmPanel().getSignatureFileButton().setActionCommand(ActionCommands.BROWSE_WM_EMB_SIGFILE);</span>
+<span class="nc" id="L559">        getEmbedWmPanel().getOutputWmFileButton().setActionCommand(ActionCommands.BROWSE_WM_EMB_OUTFILE);</span>
+<span class="nc" id="L560">        getEmbedWmPanel().getRunEmbedWmButton().setActionCommand(ActionCommands.RUN_WM_EMBED);</span>
 
-<span class="nc" id="L561">        getVerifyWmPanel().getInputFileButton().setActionCommand(ActionCommands.BROWSE_WM_VER_INPFILE);</span>
-<span class="nc" id="L562">        getVerifyWmPanel().getSignatureFileButton().setActionCommand(ActionCommands.BROWSE_WM_VER_SIGFILE);</span>
-<span class="nc" id="L563">        getVerifyWmPanel().getRunVerifyWmButton().setActionCommand(ActionCommands.RUN_WM_VERIFY);</span>
-<span class="nc" id="L564">    }</span>
+<span class="nc" id="L562">        getVerifyWmPanel().getInputFileButton().setActionCommand(ActionCommands.BROWSE_WM_VER_INPFILE);</span>
+<span class="nc" id="L563">        getVerifyWmPanel().getSignatureFileButton().setActionCommand(ActionCommands.BROWSE_WM_VER_SIGFILE);</span>
+<span class="nc" id="L564">        getVerifyWmPanel().getRunVerifyWmButton().setActionCommand(ActionCommands.RUN_WM_VERIFY);</span>
+<span class="nc" id="L565">    }</span>
 
     /**
      * Enumeration for button actions
@@ -678,10 +679,10 @@ public class OpenStegoFrame extends JFrame {
          * @param startColor Start of gradient
          * @param endColor   End of gradient
          */
-<span class="nc" id="L681">        public GradientPanel(Color startColor, Color endColor) {</span>
-<span class="nc" id="L682">            this.startColor = startColor;</span>
-<span class="nc" id="L683">            this.endColor = endColor;</span>
-<span class="nc" id="L684">        }</span>
+<span class="nc" id="L682">        public GradientPanel(Color startColor, Color endColor) {</span>
+<span class="nc" id="L683">            this.startColor = startColor;</span>
+<span class="nc" id="L684">            this.endColor = endColor;</span>
+<span class="nc" id="L685">        }</span>
 
         /*
          * (non-Javadoc)
@@ -689,17 +690,17 @@ public class OpenStegoFrame extends JFrame {
          */
         @Override
         protected void paintComponent(Graphics g) {
-<span class="nc" id="L692">            super.paintComponent(g);</span>
-<span class="nc" id="L693">            int panelHeight = getHeight();</span>
-<span class="nc" id="L694">            int panelWidth = getWidth();</span>
+<span class="nc" id="L693">            super.paintComponent(g);</span>
+<span class="nc" id="L694">            int panelHeight = getHeight();</span>
+<span class="nc" id="L695">            int panelWidth = getWidth();</span>
 
-<span class="nc" id="L696">            GradientPaint gradientPaint = new GradientPaint(0, 0, this.startColor, 0, panelHeight, this.endColor);</span>
-<span class="nc bnc" id="L697" title="All 2 branches missed.">            if (g instanceof Graphics2D) {</span>
-<span class="nc" id="L698">                Graphics2D graphics2D = (Graphics2D) g;</span>
-<span class="nc" id="L699">                graphics2D.setPaint(gradientPaint);</span>
-<span class="nc" id="L700">                graphics2D.fillRect(0, 0, panelWidth, panelHeight);</span>
+<span class="nc" id="L697">            GradientPaint gradientPaint = new GradientPaint(0, 0, this.startColor, 0, panelHeight, this.endColor);</span>
+<span class="nc bnc" id="L698" title="All 2 branches missed.">            if (g instanceof Graphics2D) {</span>
+<span class="nc" id="L699">                Graphics2D graphics2D = (Graphics2D) g;</span>
+<span class="nc" id="L700">                graphics2D.setPaint(gradientPaint);</span>
+<span class="nc" id="L701">                graphics2D.fillRect(0, 0, panelWidth, panelHeight);</span>
             }
-<span class="nc" id="L702">        }</span>
+<span class="nc" id="L703">        }</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

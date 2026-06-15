@@ -2,6 +2,7 @@
  * Steganography utility to hide messages into cover files
  * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
  * Copyright (c) 2017 Samir Vaidya
+ * Modifications copyright (c) 2026 Nick Haghiri
  */
 package com.openstego.desktop.util;
 
@@ -26,15 +27,15 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 public class UserPreferences {
     private static final String PREF_FILENAME = &quot;openstego.cfg&quot;;
     private static final String DEFAULT_PREF_FILENAME = &quot;openstego.default.cfg&quot;;
-<span class="nc" id="L29">    private static Properties prefs = null;</span>
-<span class="nc" id="L30">    private static Path prefFilePath = null;</span>
+<span class="nc" id="L30">    private static Properties prefs = null;</span>
+<span class="nc" id="L31">    private static Path prefFilePath = null;</span>
 
     /**
      * Protected constructor. Expose only static methods
      */
-<span class="nc" id="L35">    protected UserPreferences() {</span>
+<span class="nc" id="L36">    protected UserPreferences() {</span>
         // Do nothing
-<span class="nc" id="L37">    }</span>
+<span class="nc" id="L38">    }</span>
 
     /**
      * Initialize the preferences
@@ -42,51 +43,51 @@ public class UserPreferences {
      * @throws OpenStegoException Processing issues
      */
     public static void init() throws OpenStegoException {
-<span class="nc bnc" id="L45" title="All 2 branches missed.">        if (prefs != null) {</span>
-<span class="nc" id="L46">            return;</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (prefs != null) {</span>
+<span class="nc" id="L47">            return;</span>
         }
 
-<span class="nc" id="L49">        prefs = new Properties();</span>
+<span class="nc" id="L50">        prefs = new Properties();</span>
 
         try {
             // Find the path where config file should be stored
-<span class="nc" id="L53">            String userHome = System.getProperty(&quot;user.home&quot;);</span>
-<span class="nc" id="L54">            String configHome = System.getenv(&quot;XDG_CONFIG_HOME&quot;);</span>
-<span class="nc bnc" id="L55" title="All 4 branches missed.">            if (configHome == null || configHome.trim().length() == 0) {</span>
-<span class="nc" id="L56">                configHome = userHome + File.separator + &quot;.config&quot;;</span>
+<span class="nc" id="L54">            String userHome = System.getProperty(&quot;user.home&quot;);</span>
+<span class="nc" id="L55">            String configHome = System.getenv(&quot;XDG_CONFIG_HOME&quot;);</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">            if (configHome == null || configHome.trim().length() == 0) {</span>
+<span class="nc" id="L57">                configHome = userHome + File.separator + &quot;.config&quot;;</span>
             }
 
             // Create config directory if it does not exist
-<span class="nc" id="L60">            Path configPath = Paths.get(configHome, &quot;openstego&quot;);</span>
-<span class="nc bnc" id="L61" title="All 2 branches missed.">            if (Files.notExists(configPath)) {</span>
-<span class="nc" id="L62">                Files.createDirectories(configPath);</span>
+<span class="nc" id="L61">            Path configPath = Paths.get(configHome, &quot;openstego&quot;);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            if (Files.notExists(configPath)) {</span>
+<span class="nc" id="L63">                Files.createDirectories(configPath);</span>
             }
 
             // Create preference file if it does not exist
-<span class="nc" id="L66">            Path prefFile = configPath.resolve(PREF_FILENAME);</span>
-<span class="nc" id="L67">            prefFilePath = prefFile;</span>
-<span class="nc bnc" id="L68" title="All 2 branches missed.">            if (Files.notExists(prefFile)) {</span>
+<span class="nc" id="L67">            Path prefFile = configPath.resolve(PREF_FILENAME);</span>
+<span class="nc" id="L68">            prefFilePath = prefFile;</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">            if (Files.notExists(prefFile)) {</span>
                 // First check if old style &quot;openstego.ini&quot; file is present in user home
-<span class="nc" id="L70">                Path oldPrefFile = Paths.get(userHome, &quot;openstego.ini&quot;);</span>
-<span class="nc bnc" id="L71" title="All 2 branches missed.">                if (Files.exists(oldPrefFile)) {</span>
-<span class="nc" id="L72">                    Files.copy(oldPrefFile, prefFile);</span>
-<span class="nc" id="L73">                    Files.delete(oldPrefFile);</span>
+<span class="nc" id="L71">                Path oldPrefFile = Paths.get(userHome, &quot;openstego.ini&quot;);</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                if (Files.exists(oldPrefFile)) {</span>
+<span class="nc" id="L73">                    Files.copy(oldPrefFile, prefFile);</span>
+<span class="nc" id="L74">                    Files.delete(oldPrefFile);</span>
                 } else {
                     // Otherwise use the default template from application bundle
-<span class="nc" id="L76">                    try (InputStream tmplIS = UserPreferences.class.getResourceAsStream(&quot;/&quot; + DEFAULT_PREF_FILENAME)) {</span>
-<span class="nc bnc" id="L77" title="All 2 branches missed.">                        assert tmplIS != null;</span>
-<span class="nc" id="L78">                        Files.copy(tmplIS, prefFile, REPLACE_EXISTING);</span>
+<span class="nc" id="L77">                    try (InputStream tmplIS = UserPreferences.class.getResourceAsStream(&quot;/&quot; + DEFAULT_PREF_FILENAME)) {</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">                        assert tmplIS != null;</span>
+<span class="nc" id="L79">                        Files.copy(tmplIS, prefFile, REPLACE_EXISTING);</span>
                     }
                 }
             }
 
-<span class="nc" id="L83">            try (InputStream prefFileIS = Files.newInputStream(prefFile)) {</span>
-<span class="nc" id="L84">                prefs.load(prefFileIS);</span>
+<span class="nc" id="L84">            try (InputStream prefFileIS = Files.newInputStream(prefFile)) {</span>
+<span class="nc" id="L85">                prefs.load(prefFileIS);</span>
             }
-<span class="nc" id="L86">        } catch (IOException e) {</span>
-<span class="nc" id="L87">            throw new OpenStegoException(e);</span>
-<span class="nc" id="L88">        }</span>
-<span class="nc" id="L89">    }</span>
+<span class="nc" id="L87">        } catch (IOException e) {</span>
+<span class="nc" id="L88">            throw new OpenStegoException(e);</span>
+<span class="nc" id="L89">        }</span>
+<span class="nc" id="L90">    }</span>
 
     /**
      * Returns the user preference in form of string
@@ -95,11 +96,11 @@ public class UserPreferences {
      * @return value
      */
     public static String getString(String key) {
-<span class="nc" id="L98">        String val = prefs.getProperty(key);</span>
-<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (val == null) {</span>
-<span class="nc" id="L100">            return null;</span>
+<span class="nc" id="L99">        String val = prefs.getProperty(key);</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">        if (val == null) {</span>
+<span class="nc" id="L101">            return null;</span>
         }
-<span class="nc" id="L102">        return val.trim();</span>
+<span class="nc" id="L103">        return val.trim();</span>
     }
 
     /**
@@ -109,11 +110,11 @@ public class UserPreferences {
      * @param value Preference value
      */
     public static void put(String key, String value) {
-<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (prefs == null) {</span>
-<span class="nc" id="L113">            return;</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (prefs == null) {</span>
+<span class="nc" id="L114">            return;</span>
         }
-<span class="nc" id="L115">        prefs.setProperty(key, value);</span>
-<span class="nc" id="L116">    }</span>
+<span class="nc" id="L116">        prefs.setProperty(key, value);</span>
+<span class="nc" id="L117">    }</span>
 
     /**
      * Persists the current preferences to the user's preference file.
@@ -121,15 +122,15 @@ public class UserPreferences {
      * @throws OpenStegoException Processing issues
      */
     public static void save() throws OpenStegoException {
-<span class="nc bnc" id="L124" title="All 4 branches missed.">        if (prefs == null || prefFilePath == null) {</span>
-<span class="nc" id="L125">            return;</span>
+<span class="nc bnc" id="L125" title="All 4 branches missed.">        if (prefs == null || prefFilePath == null) {</span>
+<span class="nc" id="L126">            return;</span>
         }
-<span class="nc" id="L127">        try (OutputStream prefFileOS = Files.newOutputStream(prefFilePath)) {</span>
-<span class="nc" id="L128">            prefs.store(prefFileOS, &quot;OpenStego user preferences&quot;);</span>
-<span class="nc" id="L129">        } catch (IOException e) {</span>
-<span class="nc" id="L130">            throw new OpenStegoException(e);</span>
-<span class="nc" id="L131">        }</span>
-<span class="nc" id="L132">    }</span>
+<span class="nc" id="L128">        try (OutputStream prefFileOS = Files.newOutputStream(prefFilePath)) {</span>
+<span class="nc" id="L129">            prefs.store(prefFileOS, &quot;OpenStego user preferences&quot;);</span>
+<span class="nc" id="L130">        } catch (IOException e) {</span>
+<span class="nc" id="L131">            throw new OpenStegoException(e);</span>
+<span class="nc" id="L132">        }</span>
+<span class="nc" id="L133">    }</span>
 
     /**
      * Returns the user preference in form of integer
@@ -140,14 +141,14 @@ public class UserPreferences {
      */
     @SuppressWarnings(&quot;unused&quot;)
     public static Integer getInteger(String key) throws OpenStegoException {
-<span class="nc" id="L143">        String val = getString(key);</span>
-<span class="nc bnc" id="L144" title="All 2 branches missed.">        if (val == null) {</span>
-<span class="nc" id="L145">            return null;</span>
+<span class="nc" id="L144">        String val = getString(key);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (val == null) {</span>
+<span class="nc" id="L146">            return null;</span>
         }
         try {
-<span class="nc" id="L148">            return Integer.parseInt(val);</span>
-<span class="nc" id="L149">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L150">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_INT, key);</span>
+<span class="nc" id="L149">            return Integer.parseInt(val);</span>
+<span class="nc" id="L150">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L151">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_INT, key);</span>
         }
     }
 
@@ -159,14 +160,14 @@ public class UserPreferences {
      * @throws OpenStegoException Processing issues
      */
     public static Float getFloat(String key) throws OpenStegoException {
-<span class="nc" id="L162">        String val = getString(key);</span>
-<span class="nc bnc" id="L163" title="All 2 branches missed.">        if (val == null) {</span>
-<span class="nc" id="L164">            return null;</span>
+<span class="nc" id="L163">        String val = getString(key);</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (val == null) {</span>
+<span class="nc" id="L165">            return null;</span>
         }
         try {
-<span class="nc" id="L167">            return Float.parseFloat(val);</span>
-<span class="nc" id="L168">        } catch (NumberFormatException e) {</span>
-<span class="nc" id="L169">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_FLOAT, key);</span>
+<span class="nc" id="L168">            return Float.parseFloat(val);</span>
+<span class="nc" id="L169">        } catch (NumberFormatException e) {</span>
+<span class="nc" id="L170">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_FLOAT, key);</span>
         }
     }
 
@@ -179,17 +180,17 @@ public class UserPreferences {
      */
     @SuppressWarnings(&quot;unused&quot;)
     public static Boolean getBoolean(String key) throws OpenStegoException {
-<span class="nc" id="L182">        String val = getString(key);</span>
-<span class="nc bnc" id="L183" title="All 2 branches missed.">        if (val == null) {</span>
-<span class="nc" id="L184">            return null;</span>
+<span class="nc" id="L183">        String val = getString(key);</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">        if (val == null) {</span>
+<span class="nc" id="L185">            return null;</span>
         }
-<span class="nc" id="L186">        val = val.toLowerCase();</span>
-<span class="nc bnc" id="L187" title="All 10 branches missed.">        if (&quot;t&quot;.equals(val) || &quot;true&quot;.equals(val) || &quot;y&quot;.equals(val) || &quot;yes&quot;.equals(val) || &quot;1&quot;.equals(val)) {</span>
-<span class="nc" id="L188">            return true;</span>
-<span class="nc bnc" id="L189" title="All 10 branches missed.">        } else if (&quot;f&quot;.equals(val) || &quot;false&quot;.equals(val) || &quot;n&quot;.equals(val) || &quot;no&quot;.equals(val) || &quot;0&quot;.equals(val)) {</span>
-<span class="nc" id="L190">            return false;</span>
+<span class="nc" id="L187">        val = val.toLowerCase();</span>
+<span class="nc bnc" id="L188" title="All 10 branches missed.">        if (&quot;t&quot;.equals(val) || &quot;true&quot;.equals(val) || &quot;y&quot;.equals(val) || &quot;yes&quot;.equals(val) || &quot;1&quot;.equals(val)) {</span>
+<span class="nc" id="L189">            return true;</span>
+<span class="nc bnc" id="L190" title="All 10 branches missed.">        } else if (&quot;f&quot;.equals(val) || &quot;false&quot;.equals(val) || &quot;n&quot;.equals(val) || &quot;no&quot;.equals(val) || &quot;0&quot;.equals(val)) {</span>
+<span class="nc" id="L191">            return false;</span>
         } else {
-<span class="nc" id="L192">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_BOOL, key);</span>
+<span class="nc" id="L193">            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_BOOL, key);</span>
         }
     }
 }

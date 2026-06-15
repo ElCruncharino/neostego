@@ -2,6 +2,7 @@
  * Steganography utility to hide messages into cover files
  * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
  * Copyright (c) Samir Vaidya
+ * Modifications copyright (c) 2026 Nick Haghiri
  */
 
 package com.openstego.desktop.plugin.lsb;
@@ -25,12 +26,12 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
     /**
      * LabelUtil instance to retrieve labels
      */
-<span class="nc" id="L28">    private static final LabelUtil labelUtil = LabelUtil.getInstance(LSBPlugin.NAMESPACE);</span>
+<span class="nc" id="L29">    private static final LabelUtil labelUtil = LabelUtil.getInstance(LSBPlugin.NAMESPACE);</span>
 
     /**
      * &quot;Random Image as Source&quot; checkbox
      */
-<span class="nc" id="L33">    private final JCheckBox randomImgCheckBox = new JCheckBox();</span>
+<span class="nc" id="L34">    private final JCheckBox randomImgCheckBox = new JCheckBox();</span>
 
     /**
      * Combobox for &quot;Max Bits Per Color Channel&quot;
@@ -47,73 +48,73 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
      *
      * @param stegoUI Reference to the parent UI object
      */
-<span class="nc" id="L50">    public LSBEmbedOptionsUI(OpenStegoFrame stegoUI) {</span>
-<span class="nc" id="L51">        this.stegoUI = stegoUI;</span>
+<span class="nc" id="L51">    public LSBEmbedOptionsUI(OpenStegoFrame stegoUI) {</span>
+<span class="nc" id="L52">        this.stegoUI = stegoUI;</span>
 
         GridBagConstraints gridBagConstraints;
         JLabel label;
-<span class="nc" id="L55">        Integer[] maxBitsList = new Integer[8];</span>
+<span class="nc" id="L56">        Integer[] maxBitsList = new Integer[8];</span>
 
-<span class="nc" id="L57">        setLayout(new GridBagLayout());</span>
+<span class="nc" id="L58">        setLayout(new GridBagLayout());</span>
 
-<span class="nc" id="L59">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L60">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L61">        gridBagConstraints.weightx = 0.5;</span>
-<span class="nc" id="L62">        gridBagConstraints.weighty = 1.0;</span>
-<span class="nc" id="L63">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L64">        gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L60">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L61">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L62">        gridBagConstraints.weightx = 0.5;</span>
+<span class="nc" id="L63">        gridBagConstraints.weighty = 1.0;</span>
+<span class="nc" id="L64">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L65">        gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
 
-<span class="nc" id="L66">        gridBagConstraints.gridy = 0;</span>
-<span class="nc" id="L67">        label = new JLabel(labelUtil.getString(&quot;gui.label.option.useRandomImage&quot;));</span>
-<span class="nc" id="L68">        add(label, gridBagConstraints);</span>
+<span class="nc" id="L67">        gridBagConstraints.gridy = 0;</span>
+<span class="nc" id="L68">        label = new JLabel(labelUtil.getString(&quot;gui.label.option.useRandomImage&quot;));</span>
+<span class="nc" id="L69">        add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L70">        gridBagConstraints.gridy = 1;</span>
-<span class="nc" id="L71">        label = new JLabel(labelUtil.getString(&quot;gui.label.option.maxBitsPerChannel&quot;));</span>
-<span class="nc" id="L72">        add(label, gridBagConstraints);</span>
+<span class="nc" id="L71">        gridBagConstraints.gridy = 1;</span>
+<span class="nc" id="L72">        label = new JLabel(labelUtil.getString(&quot;gui.label.option.maxBitsPerChannel&quot;));</span>
+<span class="nc" id="L73">        add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L74">        gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L75">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L75">        gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L76">        gridBagConstraints.weightx = 1.0;</span>
 
-<span class="nc" id="L77">        gridBagConstraints.gridy = 0;</span>
-<span class="nc" id="L78">        add(this.randomImgCheckBox, gridBagConstraints);</span>
+<span class="nc" id="L78">        gridBagConstraints.gridy = 0;</span>
+<span class="nc" id="L79">        add(this.randomImgCheckBox, gridBagConstraints);</span>
 
-<span class="nc" id="L80">        gridBagConstraints.gridy = 1;</span>
-<span class="nc bnc" id="L81" title="All 2 branches missed.">        for (int i = 0; i &lt; 8; i++) {</span>
-<span class="nc" id="L82">            maxBitsList[i] = i + 1;</span>
+<span class="nc" id="L81">        gridBagConstraints.gridy = 1;</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        for (int i = 0; i &lt; 8; i++) {</span>
+<span class="nc" id="L83">            maxBitsList[i] = i + 1;</span>
         }
-<span class="nc" id="L84">        this.maxBitsComboBox = new JComboBox&lt;&gt;(maxBitsList);</span>
-<span class="nc" id="L85">        this.maxBitsComboBox.setPreferredSize(new Dimension(40, 20));</span>
-<span class="nc" id="L86">        add(this.maxBitsComboBox, gridBagConstraints);</span>
+<span class="nc" id="L85">        this.maxBitsComboBox = new JComboBox&lt;&gt;(maxBitsList);</span>
+<span class="nc" id="L86">        this.maxBitsComboBox.setPreferredSize(new Dimension(40, 20));</span>
+<span class="nc" id="L87">        add(this.maxBitsComboBox, gridBagConstraints);</span>
 
-<span class="nc" id="L88">        ChangeListener changeListener = changeEvent -&gt; useRandomImgChanged();</span>
-<span class="nc" id="L89">        this.randomImgCheckBox.addChangeListener(changeListener);</span>
-<span class="nc" id="L90">    }</span>
+<span class="nc" id="L89">        ChangeListener changeListener = changeEvent -&gt; useRandomImgChanged();</span>
+<span class="nc" id="L90">        this.randomImgCheckBox.addChangeListener(changeListener);</span>
+<span class="nc" id="L91">    }</span>
 
     /**
      * Initialize the UI
      */
     @Override
     public void initialize() {
-<span class="nc" id="L97">        useRandomImgChanged();</span>
-<span class="nc" id="L98">    }</span>
+<span class="nc" id="L98">        useRandomImgChanged();</span>
+<span class="nc" id="L99">    }</span>
 
     /**
      * Method to handle change event for 'randomImage'
      */
     private void useRandomImgChanged() {
-<span class="nc" id="L104">        JTextField coverFileTextField = this.stegoUI.getEmbedPanel().getCoverFileTextField();</span>
-<span class="nc" id="L105">        JButton coverFileButton = this.stegoUI.getEmbedPanel().getCoverFileButton();</span>
+<span class="nc" id="L105">        JTextField coverFileTextField = this.stegoUI.getEmbedPanel().getCoverFileTextField();</span>
+<span class="nc" id="L106">        JButton coverFileButton = this.stegoUI.getEmbedPanel().getCoverFileButton();</span>
 
-<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (this.randomImgCheckBox.isSelected()) {</span>
-<span class="nc" id="L108">            setEnabled(coverFileTextField, false);</span>
-<span class="nc" id="L109">            coverFileTextField.setText(&quot;&quot;);</span>
-<span class="nc" id="L110">            coverFileButton.setEnabled(false);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (this.randomImgCheckBox.isSelected()) {</span>
+<span class="nc" id="L109">            setEnabled(coverFileTextField, false);</span>
+<span class="nc" id="L110">            coverFileTextField.setText(&quot;&quot;);</span>
+<span class="nc" id="L111">            coverFileButton.setEnabled(false);</span>
         } else {
-<span class="nc" id="L112">            setEnabled(coverFileTextField, true);</span>
-<span class="nc" id="L113">            coverFileButton.setEnabled(true);</span>
-<span class="nc" id="L114">            coverFileTextField.requestFocus();</span>
+<span class="nc" id="L113">            setEnabled(coverFileTextField, true);</span>
+<span class="nc" id="L114">            coverFileButton.setEnabled(true);</span>
+<span class="nc" id="L115">            coverFileTextField.requestFocus();</span>
         }
-<span class="nc" id="L116">    }</span>
+<span class="nc" id="L117">    }</span>
 
     /**
      * Method to enable/disable a Swing JTextField object
@@ -122,9 +123,9 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
      * @param enabled   Flag to indicate whether to enable or disable the object
      */
     private static void setEnabled(JTextField textField, boolean enabled) {
-<span class="nc" id="L125">        textField.setEnabled(enabled);</span>
-<span class="nc bnc" id="L126" title="All 2 branches missed.">        textField.setBackground(enabled ? java.awt.Color.WHITE : javax.swing.UIManager.getColor(&quot;Panel.background&quot;));</span>
-<span class="nc" id="L127">    }</span>
+<span class="nc" id="L126">        textField.setEnabled(enabled);</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        textField.setBackground(enabled ? java.awt.Color.WHITE : javax.swing.UIManager.getColor(&quot;Panel.background&quot;));</span>
+<span class="nc" id="L128">    }</span>
 
     /**
      * Method to validate plugin options for &quot;Embed&quot; action
@@ -133,7 +134,7 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
      */
     @Override
     public boolean validateEmbedAction() {
-<span class="nc" id="L136">        return true;</span>
+<span class="nc" id="L137">        return true;</span>
     }
 
     /**
@@ -143,8 +144,8 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
      */
     @Override
     public void setGUIFromConfig(OpenStegoConfig config) {
-<span class="nc" id="L146">        this.maxBitsComboBox.setSelectedItem(((LSBConfig) config).getMaxBitsUsedPerChannel());</span>
-<span class="nc" id="L147">    }</span>
+<span class="nc" id="L147">        this.maxBitsComboBox.setSelectedItem(((LSBConfig) config).getMaxBitsUsedPerChannel());</span>
+<span class="nc" id="L148">    }</span>
 
     /**
      * Method to populate the config object based on the GUI data
@@ -153,10 +154,10 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
      */
     @Override
     public void setConfigFromGUI(OpenStegoConfig config) {
-<span class="nc" id="L156">        Integer maxBits = (Integer) this.maxBitsComboBox.getSelectedItem();</span>
-<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (maxBits != null) {</span>
-<span class="nc" id="L158">            ((LSBConfig) config).setMaxBitsUsedPerChannel(maxBits);</span>
+<span class="nc" id="L157">        Integer maxBits = (Integer) this.maxBitsComboBox.getSelectedItem();</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">        if (maxBits != null) {</span>
+<span class="nc" id="L159">            ((LSBConfig) config).setMaxBitsUsedPerChannel(maxBits);</span>
         }
-<span class="nc" id="L160">    }</span>
+<span class="nc" id="L161">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
