@@ -441,8 +441,9 @@ public class OpenStegoFrame extends JFrame {
      */
     public EmbedPanel getEmbedPanel() {
         if (this.embedPanel == null) {
-            // Plugin-specific embed options UI is not currently used (kept null)
-            this.embedPanel = new EmbedPanel(null);
+            // The plugin-specific options panel is swapped in by the controller based on the
+            // selected algorithm (see OpenStegoUI)
+            this.embedPanel = new EmbedPanel();
             this.embedPanel.initialize();
         }
         return this.embedPanel;
