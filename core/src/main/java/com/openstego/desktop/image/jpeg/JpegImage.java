@@ -46,10 +46,12 @@ public final class JpegImage {
     private final int[][][] coeff;
     /** [component][blockIndex][64] rounding errors, or {@code null} after a plain decode. */
     private final double[][][] rounding;
+    /** [component] spatial sample plane (precover only), or {@code null} after a plain decode. */
+    private final double[][][] planes;
 
     JpegImage(int width, int height, Component[] components, int[][] quantTables,
             int maxH, int maxV, int mcuCols, int mcuRows,
-            int[][][] coeff, double[][][] rounding) {
+            int[][][] coeff, double[][][] rounding, double[][][] planes) {
         this.width = width;
         this.height = height;
         this.components = components;
@@ -60,6 +62,7 @@ public final class JpegImage {
         this.mcuRows = mcuRows;
         this.coeff = coeff;
         this.rounding = rounding;
+        this.planes = planes;
     }
 
     /** @return image width in pixels. */
@@ -119,6 +122,21 @@ public final class JpegImage {
     /** @return whether per-coefficient rounding-error side information is present. */
     public boolean hasSideInfo() {
         return this.rounding != null;
+    }
+
+    /**
+     * Returns the spatial sample plane for a component (precover only), as {@code [row][col]} doubles
+     * in the component's own resolution (luma full-size, chroma sub-sampled). Used by side-informed
+     * cost models that need the uncompressed cover. {@code null} after a plain decode.
+     *
+     * @param comp component index
+     * @return spatial plane, or {@code null} if no side information is available
+     */
+    public double[][] getPlane(int comp) {
+        if (this.planes == null) {
+            return null;
+        }
+        return this.planes[comp];
     }
 
     /**
