@@ -280,3 +280,21 @@ tasks.register("benchEmbed", JavaExec) {
             project.findProperty("pw") ?: ""
     ]
 }
+
+// Usage: ./gradlew :desktop:benchJpeg -Pmode=cover|stego -PcoverDir=... -PoutDir=... -Pquality=90 \
+//        [-Ppayload=8000] [-Palgo=JpegUniward] [-Ppw=secret]
+tasks.register("benchJpeg", JavaExec) {
+    group = "verification"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.openstego.desktop.bench.BenchJpeg"
+    args = [
+            project.findProperty("mode") ?: "cover",
+            project.findProperty("coverDir") ?: "",
+            project.findProperty("outDir") ?: "",
+            (project.findProperty("quality") ?: "90").toString(),
+            (project.findProperty("payload") ?: "0").toString(),
+            project.findProperty("algo") ?: "JpegUniward",
+            project.findProperty("pw") ?: ""
+    ]
+}
