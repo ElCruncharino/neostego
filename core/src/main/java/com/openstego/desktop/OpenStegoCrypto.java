@@ -12,6 +12,7 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,6 +20,7 @@ import java.security.AlgorithmParameters;
 import java.security.SecureRandom;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.logging.Logger;
 
 /**
@@ -171,10 +173,14 @@ public class OpenStegoCrypto {
      * that the v3 path never needs the legacy PBE algorithm, which is not available on all platforms.
      */
     private SecretKey getV2SecretKey() throws Exception {
-        KeySpec keySpec = (this.v2KeyBits > 0)
+        PBEKeySpec keySpec = (this.v2KeyBits > 0)
                 ? new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT, this.v2KeyBits)
                 : new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT);
-        return SecretKeyFactory.getInstance(this.pbeAlgorithm).generateSecret(keySpec);
+        try {
+            return SecretKeyFactory.getInstance(this.pbeAlgorithm).generateSecret(keySpec);
+        } finally {
+            keySpec.clearPassword();
+        }
     }
 
     /**
@@ -185,7 +191,11 @@ public class OpenStegoCrypto {
      * @throws OpenStegoException Processing issues
      */
     public byte[] encrypt(byte[] input) throws OpenStegoException {
-        if (this.strongEncryption && this.v3Capable) {
+        if (!this.v3Capable) {
+            // DES is cryptographically broken; it remains supported only for reading legacy files
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, ALGO_DES);
+        }
+        if (this.strongEncryption) {
             return encryptV3(input);
         }
         return encryptV2(input);
@@ -248,6 +258,20 @@ public class OpenStegoCrypto {
             byte[] msg = new byte[input.length - paramLen - 1];
             System.arraycopy(input, paramLen + 1, msg, 0, msg.length);
 
+            if (this.v3Capable) {
+                // AES (PBES2) legacy format. Decrypt using portable primitives (PBKDF2-HMAC-SHA256 +
+                // AES/CBC/PKCS5Padding) rather than the "PBEWithHmacSHA256AndAES_*" algorithm name,
+                // which is not available on all platforms (e.g. Android). The salt and iteration
+                // count are the fixed legacy values used by every v2 file; the 16-byte AES-CBC IV is
+                // the trailing octet string of the stored PBES2 parameters.
+                byte[] iv = Arrays.copyOfRange(algoParamData, algoParamData.length - 16, algoParamData.length);
+                SecretKey key = deriveAesKeyPbkdf2(this.SALT, this.ITER_COUNT, this.v2KeyBits);
+                Cipher decryptCipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                decryptCipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(iv));
+                return decryptCipher.doFinal(msg);
+            }
+
+            // Legacy DES (PBES1) - use the JCE algorithm name directly
             SecretKey secretKey = getV2SecretKey();
             AlgorithmParameters algoParams = AlgorithmParameters.getInstance(this.pbeAlgorithm);
             algoParams.init(algoParamData);
@@ -258,6 +282,25 @@ public class OpenStegoCrypto {
             throw new OpenStegoException(bpEx, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_PASSWORD);
         } catch (Exception ex) {
             throw new OpenStegoException(ex);
+        }
+    }
+
+    /**
+     * Derives an AES key from the password using PBKDF2-HMAC-SHA256 (portable across JVM and Android),
+     * wiping the transient key spec afterwards.
+     */
+    private SecretKey deriveAesKeyPbkdf2(byte[] salt, int iterations, int keyBits) throws Exception {
+        PBEKeySpec spec = new PBEKeySpec(this.password.toCharArray(), salt, iterations, keyBits);
+        byte[] keyBytes;
+        try {
+            keyBytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
+        } finally {
+            spec.clearPassword();
+        }
+        try {
+            return new SecretKeySpec(keyBytes, "AES");
+        } finally {
+            Arrays.fill(keyBytes, (byte) 0);
         }
     }
 
@@ -340,8 +383,17 @@ public class OpenStegoCrypto {
 
     private static SecretKey deriveV3Key(String password, byte[] salt, int iterations, int keyBytes) throws Exception {
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, keyBytes * 8);
-        byte[] keyData = factory.generateSecret(spec).getEncoded();
-        return new SecretKeySpec(keyData, "AES");
+        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, keyBytes * 8);
+        byte[] keyData;
+        try {
+            keyData = factory.generateSecret(spec).getEncoded();
+        } finally {
+            spec.clearPassword();
+        }
+        try {
+            return new SecretKeySpec(keyData, "AES");
+        } finally {
+            Arrays.fill(keyData, (byte) 0);
+        }
     }
 }

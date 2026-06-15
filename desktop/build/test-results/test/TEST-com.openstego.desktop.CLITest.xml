@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.openstego.desktop.CLITest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-14T23:48:42" hostname="NICK-WINDOWS-PC" time="0.442">
+<testsuite name="com.openstego.desktop.CLITest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-06-15T00:04:49" hostname="NICK-WINDOWS-PC" time="0.507">
   <properties/>
-  <testcase name="testAlgorithmsListsPlugins()" classname="com.openstego.desktop.CLITest" time="0.092"/>
-  <testcase name="testEmbedExtractRoundTrip(Path)" classname="com.openstego.desktop.CLITest" time="0.155"/>
-  <testcase name="testEmbedExtractWithPluginOptionAndEncryption(Path)" classname="com.openstego.desktop.CLITest" time="0.191"/>
+  <testcase name="testAlgorithmsListsPlugins()" classname="com.openstego.desktop.CLITest" time="0.06"/>
+  <testcase name="testEmbedExtractRoundTrip(Path)" classname="com.openstego.desktop.CLITest" time="0.095"/>
+  <testcase name="testEmbedExtractWithPluginOptionAndEncryption(Path)" classname="com.openstego.desktop.CLITest" time="0.349"/>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[Extracted file: /tmp/junit-5246134873003686357/out/msg.txt
-Extracted file: /tmp/junit-9583439865282298553/out/msg.txt
+  <system-err><![CDATA[Extracted file: /tmp/junit-11010926321671179041/out/msg.txt
+Extracted file: /tmp/junit-291703831753979786/out/msg.txt
 ]]></system-err>
 </testsuite>

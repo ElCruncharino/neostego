@@ -104,7 +104,9 @@ public class OpenStego {
                 msg = crypto.encrypt(msg);
             }
 
-            return this.plugin.embedData(msg, msgFileName, cover, coverFileName, stegoFileName);
+            // The file name is stored unencrypted in the stego data; omit it when configured to do so
+            String embeddedName = this.config.isEmbedFileName() ? msgFileName : null;
+            return this.plugin.embedData(msg, embeddedName, cover, coverFileName, stegoFileName);
         } catch (OpenStegoException osEx) {
             throw osEx;
         } catch (Exception ex) {

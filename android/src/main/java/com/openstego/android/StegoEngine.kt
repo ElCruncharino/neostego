@@ -29,6 +29,8 @@ object StegoEngine {
         plugin.resetConfig()
         val config = plugin.config
         config.isUseCompression = true
+        // The file name would be stored unencrypted, so do not embed it (privacy)
+        config.isEmbedFileName = false
         if (!password.isNullOrEmpty()) {
             config.isUseEncryption = true
             config.password = password

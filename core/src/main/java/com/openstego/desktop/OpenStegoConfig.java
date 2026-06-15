@@ -49,6 +49,14 @@ public class OpenStegoConfig {
     public static final String USE_STRONG_ENCRYPTION = "useStrongEncryption";
 
     /**
+     * Key string for configuration item - embedFileName
+     * <p>
+     * Flag to indicate whether the original file name should be embedded. The name is stored
+     * unencrypted, so omitting it avoids leaking it to anyone who extracts the file.
+     */
+    public static final String EMBED_FILE_NAME = "embedFileName";
+
+    /**
      * Flag to indicate whether compression should be used or not
      */
     private boolean useCompression = true;
@@ -72,6 +80,11 @@ public class OpenStegoConfig {
      * Flag to indicate whether the modern (v3) key-derivation should be used for new encrypted data
      */
     private boolean useStrongEncryption = true;
+
+    /**
+     * Flag to indicate whether the original file name should be embedded in the stego data
+     */
+    private boolean embedFileName = true;
 
     /**
      * Initialize the configuration with map data. Please make sure that only valid keys for configuration items are
@@ -117,6 +130,12 @@ public class OpenStegoConfig {
                 if (value != null) {
                     assert value instanceof Boolean;
                     this.useStrongEncryption = (boolean) value;
+                }
+                break;
+            case EMBED_FILE_NAME:
+                if (value != null) {
+                    assert value instanceof Boolean;
+                    this.embedFileName = (boolean) value;
                 }
                 break;
         }
@@ -222,5 +241,23 @@ public class OpenStegoConfig {
      */
     public void setUseStrongEncryption(boolean useStrongEncryption) {
         this.useStrongEncryption = useStrongEncryption;
+    }
+
+    /**
+     * Get Method for embedFileName
+     *
+     * @return embedFileName
+     */
+    public boolean isEmbedFileName() {
+        return this.embedFileName;
+    }
+
+    /**
+     * Set Method for embedFileName
+     *
+     * @param embedFileName Value to be set
+     */
+    public void setEmbedFileName(boolean embedFileName) {
+        this.embedFileName = embedFileName;
     }
 }
