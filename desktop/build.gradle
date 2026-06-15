@@ -264,3 +264,19 @@ tasks.register("distRpm", Rpm) {
 tasks.register("dist") {
     dependsOn distBin, distWin, distDeb, distRpm
 }
+
+// Benchmark helper: batch-embed a directory of covers with one algorithm in a single JVM.
+// Usage: ./gradlew :desktop:benchEmbed -PcoverDir=... -PoutDir=... -Palgo=Adaptive -Ppayload=9800 [-Ppw=secret]
+tasks.register("benchEmbed", JavaExec) {
+    group = "verification"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.openstego.desktop.bench.BenchEmbed"
+    args = [
+            project.findProperty("coverDir") ?: "",
+            project.findProperty("outDir") ?: "",
+            project.findProperty("algo") ?: "Adaptive",
+            (project.findProperty("payload") ?: "9800").toString(),
+            project.findProperty("pw") ?: ""
+    ]
+}
