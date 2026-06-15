@@ -34,6 +34,16 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
     private final JCheckBox randomImgCheckBox = new JCheckBox();
 
     /**
+     * Toggle that shows/hides the advanced options
+     */
+    private final JToggleButton advancedToggle;
+
+    /**
+     * Label for "Max Bits Per Color Channel" (hidden until Advanced is expanded)
+     */
+    private final JLabel maxBitsLabel;
+
+    /**
      * Combobox for "Max Bits Per Color Channel"
      */
     private final JComboBox<Integer> maxBitsComboBox;
@@ -68,9 +78,14 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
         label = new JLabel(labelUtil.getString("gui.label.option.useRandomImage"));
         add(label, gridBagConstraints);
 
+        // Advanced toggle on its own row; the bits/channel control below it stays hidden until expanded
         gridBagConstraints.gridy = 1;
-        label = new JLabel(labelUtil.getString("gui.label.option.maxBitsPerChannel"));
-        add(label, gridBagConstraints);
+        this.advancedToggle = new JToggleButton(labelUtil.getString("gui.label.option.advanced"));
+        add(this.advancedToggle, gridBagConstraints);
+
+        gridBagConstraints.gridy = 2;
+        this.maxBitsLabel = new JLabel(labelUtil.getString("gui.label.option.maxBitsPerChannel"));
+        add(this.maxBitsLabel, gridBagConstraints);
 
         gridBagConstraints.gridx = 1;
         gridBagConstraints.weightx = 1.0;
@@ -78,7 +93,7 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
         gridBagConstraints.gridy = 0;
         add(this.randomImgCheckBox, gridBagConstraints);
 
-        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridy = 2;
         for (int i = 0; i < 8; i++) {
             maxBitsList[i] = i + 1;
         }
@@ -88,6 +103,7 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
 
         ChangeListener changeListener = changeEvent -> useRandomImgChanged();
         this.randomImgCheckBox.addChangeListener(changeListener);
+        this.advancedToggle.addActionListener(e -> advancedChanged());
     }
 
     /**
@@ -96,6 +112,18 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
     @Override
     public void initialize() {
         useRandomImgChanged();
+        advancedChanged();
+    }
+
+    /**
+     * Shows or hides the advanced bits/channel control based on the toggle state.
+     */
+    private void advancedChanged() {
+        boolean shown = this.advancedToggle.isSelected();
+        this.maxBitsLabel.setVisible(shown);
+        this.maxBitsComboBox.setVisible(shown);
+        revalidate();
+        repaint();
     }
 
     /**

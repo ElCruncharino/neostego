@@ -29,6 +29,7 @@ public class EmbedPanel extends JPanel {
     private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);
 
     private JPanel optionPanel;
+    private JComboBox<String> algorithmComboBox;
     private JTextField msgFileTextField;
     private JButton msgFileButton;
     private JTextField coverFileTextField;
@@ -40,19 +41,22 @@ public class EmbedPanel extends JPanel {
     private JPasswordField confPasswordTextField;
     private JButton runEmbedButton;
 
-    private final PluginEmbedOptionsUI pluginOptionPanel;
+    /**
+     * Container holding the (swappable) plugin-specific options panel
+     */
+    private JPanel pluginOptionContainer;
+
+    /**
+     * The currently displayed plugin-specific options panel ({@code null} if the selected
+     * algorithm exposes no options)
+     */
+    private PluginEmbedOptionsUI pluginOptionPanel;
 
     /**
      * Default constructor
      */
-    public EmbedPanel(PluginEmbedOptionsUI pluginOptionPanel) {
+    public EmbedPanel() {
         super();
-        this.pluginOptionPanel = pluginOptionPanel;
-        if (pluginOptionPanel != null) {
-            this.pluginOptionPanel.setBorder(new TitledBorder(
-                    new CompoundBorder(new EmptyBorder(new Insets(5, 5, 5, 5)), new EtchedBorder()),
-                    " " + labelUtil.getString("gui.label.dhEmbed.pluginOption.title") + " "));
-        }
     }
 
     /**
@@ -75,8 +79,8 @@ public class EmbedPanel extends JPanel {
             gridBagConstraints.insets = new Insets(5, 5, 5, 5);
             gridBagConstraints.weightx = 1.0;
             gridBagConstraints.weighty = 0.0;
-            label = new JLabel(labelUtil.getString("gui.label.dhEmbed.option.cryptalgo"));
-            label.setLabelFor(getEncryptionAlgoComboBox());
+            label = new JLabel(labelUtil.getString("gui.label.dhEmbed.option.algorithm"));
+            label.setLabelFor(getAlgorithmComboBox());
             this.optionPanel.add(label, gridBagConstraints);
 
             gridBagConstraints = new GridBagConstraints();
@@ -86,12 +90,32 @@ public class EmbedPanel extends JPanel {
             gridBagConstraints.insets = new Insets(5, 5, 5, 30);
             gridBagConstraints.weightx = 1.0;
             gridBagConstraints.weighty = 0.0;
-            this.optionPanel.add(getEncryptionAlgoComboBox(), gridBagConstraints);
+            this.optionPanel.add(getAlgorithmComboBox(), gridBagConstraints);
 
             gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.fill = GridBagConstraints.BOTH;
             gridBagConstraints.gridx = 0;
             gridBagConstraints.gridy = 1;
+            gridBagConstraints.insets = new Insets(5, 5, 5, 5);
+            gridBagConstraints.weightx = 1.0;
+            gridBagConstraints.weighty = 0.0;
+            label = new JLabel(labelUtil.getString("gui.label.dhEmbed.option.cryptalgo"));
+            label.setLabelFor(getEncryptionAlgoComboBox());
+            this.optionPanel.add(label, gridBagConstraints);
+
+            gridBagConstraints = new GridBagConstraints();
+            gridBagConstraints.fill = GridBagConstraints.BOTH;
+            gridBagConstraints.gridx = 1;
+            gridBagConstraints.gridy = 1;
+            gridBagConstraints.insets = new Insets(5, 5, 5, 30);
+            gridBagConstraints.weightx = 1.0;
+            gridBagConstraints.weighty = 0.0;
+            this.optionPanel.add(getEncryptionAlgoComboBox(), gridBagConstraints);
+
+            gridBagConstraints = new GridBagConstraints();
+            gridBagConstraints.fill = GridBagConstraints.BOTH;
+            gridBagConstraints.gridx = 0;
+            gridBagConstraints.gridy = 2;
             gridBagConstraints.insets = new Insets(5, 5, 5, 5);
             gridBagConstraints.weightx = 1.0;
             gridBagConstraints.weighty = 0.0;
@@ -102,7 +126,7 @@ public class EmbedPanel extends JPanel {
             gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.fill = GridBagConstraints.BOTH;
             gridBagConstraints.gridx = 1;
-            gridBagConstraints.gridy = 1;
+            gridBagConstraints.gridy = 2;
             gridBagConstraints.insets = new Insets(5, 5, 5, 5);
             gridBagConstraints.weightx = 1.0;
             gridBagConstraints.weighty = 0.0;
@@ -111,7 +135,7 @@ public class EmbedPanel extends JPanel {
             gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.fill = GridBagConstraints.BOTH;
             gridBagConstraints.gridx = 0;
-            gridBagConstraints.gridy = 2;
+            gridBagConstraints.gridy = 3;
             gridBagConstraints.insets = new Insets(5, 5, 5, 5);
             gridBagConstraints.weightx = 1.0;
             gridBagConstraints.weighty = 0.0;
@@ -122,13 +146,58 @@ public class EmbedPanel extends JPanel {
             gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.fill = GridBagConstraints.BOTH;
             gridBagConstraints.gridx = 1;
-            gridBagConstraints.gridy = 2;
+            gridBagConstraints.gridy = 3;
             gridBagConstraints.insets = new Insets(5, 5, 5, 5);
             gridBagConstraints.weightx = 1.0;
             gridBagConstraints.weighty = 0.0;
             this.optionPanel.add(getConfPasswordTextField(), gridBagConstraints);
         }
         return this.optionPanel;
+    }
+
+    /**
+     * Get method for "Algorithm" combo box. The list of algorithms is populated by the controller
+     * ({@link OpenStegoUI}); this panel only owns the widget.
+     *
+     * @return algorithmComboBox
+     */
+    public JComboBox<String> getAlgorithmComboBox() {
+        if (this.algorithmComboBox == null) {
+            this.algorithmComboBox = new JComboBox<>();
+        }
+        return this.algorithmComboBox;
+    }
+
+    /**
+     * Get method for the container that holds the swappable plugin-specific options panel.
+     *
+     * @return pluginOptionContainer
+     */
+    public JPanel getPluginOptionContainer() {
+        if (this.pluginOptionContainer == null) {
+            this.pluginOptionContainer = new JPanel(new BorderLayout());
+        }
+        return this.pluginOptionContainer;
+    }
+
+    /**
+     * Swaps the plugin-specific options panel shown below the common options. Passing {@code null}
+     * clears the area (for algorithms that expose no options).
+     *
+     * @param panel The new options panel, or {@code null}
+     */
+    public void setPluginOptionPanel(PluginEmbedOptionsUI panel) {
+        this.pluginOptionPanel = panel;
+        getPluginOptionContainer().removeAll();
+        if (panel != null) {
+            panel.setBorder(new TitledBorder(
+                    new CompoundBorder(new EmptyBorder(new Insets(5, 5, 5, 5)), new EtchedBorder()),
+                    " " + labelUtil.getString("gui.label.dhEmbed.pluginOption.title") + " "));
+            getPluginOptionContainer().add(panel, BorderLayout.CENTER);
+            panel.initialize();
+        }
+        getPluginOptionContainer().revalidate();
+        getPluginOptionContainer().repaint();
     }
 
     /**
@@ -391,17 +460,16 @@ public class EmbedPanel extends JPanel {
         gridBagConstraints.weighty = 0.0;
         add(getOptionPanel(), gridBagConstraints);
 
-        if (getPluginOptionPanel() != null) {
-            gridBagConstraints = new GridBagConstraints();
-            gridBagConstraints.fill = GridBagConstraints.BOTH;
-            gridBagConstraints.gridwidth = 2;
-            gridBagConstraints.gridx = 0;
-            gridBagConstraints.gridy = 9;
-            gridBagConstraints.weightx = 1.0;
-            gridBagConstraints.weighty = 0.0;
-            add(getPluginOptionPanel(), gridBagConstraints);
-            getPluginOptionPanel().initialize();
-        }
+        // Swappable plugin-specific options live in a container that is always present; its contents
+        // are replaced when the algorithm selection changes (see setPluginOptionPanel)
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.fill = GridBagConstraints.BOTH;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 0.0;
+        add(getPluginOptionContainer(), gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.EAST;

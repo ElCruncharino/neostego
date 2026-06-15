@@ -9,6 +9,7 @@ package com.openstego.desktop.ui;
 import com.openstego.desktop.*;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
+import com.openstego.desktop.util.PluginManager;
 import com.openstego.desktop.util.UserPreferences;
 import com.openstego.desktop.util.ui.WorkerTask;
 
@@ -56,7 +57,15 @@ public class OpenStegoUI extends OpenStegoFrame {
      */
     private static String lastFolder = null;
 
-    private final OpenStegoPlugin<?> dhPlugin;
+    /**
+     * All available data-hiding plugins, populating the Algorithm dropdown
+     */
+    private final List<OpenStegoPlugin<?>> dhPlugins;
+
+    /**
+     * The currently selected data-hiding plugin (driven by the Algorithm dropdown)
+     */
+    private OpenStegoPlugin<?> dhPlugin;
     private final OpenStegoPlugin<?> wmPlugin;
 
     /**
@@ -66,6 +75,8 @@ public class OpenStegoUI extends OpenStegoFrame {
         super(dhPlugin, wmPlugin);
         this.dhPlugin = dhPlugin;
         this.wmPlugin = wmPlugin;
+        this.dhPlugins = PluginManager.getDataHidingPlugins();
+        populateAlgorithmComboBox();
         resetGUI();
 
         URL iconURL = getClass().getResource("/images/NeoStegoIcon.png");
@@ -125,6 +136,62 @@ public class OpenStegoUI extends OpenStegoFrame {
         // Make the embed action the default button so Enter triggers it on the initial panel
         getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());
         restoreWindowBounds();
+    }
+
+    /**
+     * Populates the Algorithm dropdown with the available data-hiding plugins (friendly names),
+     * selects the current default and wires the listener that swaps the per-plugin options panel
+     * when the selection changes.
+     */
+    private void populateAlgorithmComboBox() {
+        JComboBox<String> combo = getEmbedPanel().getAlgorithmComboBox();
+        combo.removeAllItems();
+        int selectedIndex = 0;
+        for (int i = 0; i < this.dhPlugins.size(); i++) {
+            OpenStegoPlugin<?> plugin = this.dhPlugins.get(i);
+            combo.addItem(getAlgorithmDisplayName(plugin));
+            if (plugin.getName().equals(this.dhPlugin.getName())) {
+                selectedIndex = i;
+            }
+        }
+        combo.setSelectedIndex(selectedIndex);
+        // Show the options panel for the initially selected plugin
+        getEmbedPanel().setPluginOptionPanel(EmbedOptionsUIFactory.create(this.dhPlugin.getName(), this));
+
+        combo.addActionListener(e -> {
+            int idx = combo.getSelectedIndex();
+            if (idx < 0 || idx >= this.dhPlugins.size()) {
+                return;
+            }
+            OpenStegoPlugin<?> selected = this.dhPlugins.get(idx);
+            if (selected.getName().equals(this.dhPlugin.getName())) {
+                return;
+            }
+            this.dhPlugin = selected;
+            getEmbedPanel().setPluginOptionPanel(EmbedOptionsUIFactory.create(selected.getName(), this));
+            // Reset the embed fields (the writable extensions differ between algorithms) and sync the
+            // new plugin's default config into its options panel
+            resetGUI();
+        });
+    }
+
+    /**
+     * Returns the friendly, localized display name for a data-hiding plugin, falling back to the
+     * plugin's internal name when no label is defined.
+     *
+     * @param plugin Plugin
+     * @return Display name for the Algorithm dropdown
+     */
+    private String getAlgorithmDisplayName(OpenStegoPlugin<?> plugin) {
+        try {
+            String name = labelUtil.getString("gui.label.dhEmbed.algo." + plugin.getName());
+            if (name != null && !name.trim().isEmpty() && !name.startsWith("!")) {
+                return name;
+            }
+        } catch (Exception ignored) {
+            // No label defined for this plugin; fall through to the internal name
+        }
+        return plugin.getName();
     }
 
     /**
@@ -425,25 +492,23 @@ public class OpenStegoUI extends OpenStegoFrame {
         WorkerTask task = new WorkerTask(this, null, false) {
             @Override
             protected Object doInBackground() throws Exception {
-                OpenStego openStego;
-                OpenStegoConfig config;
                 String stegoFileName;
                 String outputFolder;
                 String outputFileName;
                 File file;
                 List<?> stegoOutput;
 
-                dhPlugin.resetConfig();
-                config = dhPlugin.getConfig();
-                openStego = new OpenStego(dhPlugin, config);
-                config.setPassword(getExtractPanel().getExtractPwdTextField().getPassword());
                 stegoFileName = getExtractPanel().getInputStegoFileTextField().getText();
                 outputFolder = getExtractPanel().getOutputFolderTextField().getText();
 
+                // Extraction is algorithm-agnostic: the stego file carries no record of which plugin
+                // wrote it, so we try the data-hiding plugins in turn until one decodes successfully.
+                // This keeps old (Adaptive/LSB) files decodable and adds the new JPEG plugin.
+                char[] password = getExtractPanel().getExtractPwdTextField().getPassword();
                 try {
-                    stegoOutput = openStego.extractData(new File(stegoFileName));
+                    stegoOutput = extractWithAutoDetect(new File(stegoFileName), password);
                 } finally {
-                    config.clearPassword();
+                    java.util.Arrays.fill(password, '\0');
                 }
                 outputFileName = (String) stegoOutput.get(0);
                 file = new File(outputFolder + File.separator + outputFileName);
@@ -489,6 +554,66 @@ public class OpenStegoUI extends OpenStegoFrame {
             }
         };
         task.start();
+    }
+
+    /**
+     * Attempts to extract hidden data from the given stego file by trying each data-hiding plugin in
+     * turn until one succeeds. The plugins are ordered by the stego file's extension (JPEG plugin
+     * first for {@code .jpg}/{@code .jpeg}); a fresh password copy is supplied to each attempt and
+     * wiped afterward.
+     *
+     * @param stegoFile Stego file to extract from
+     * @param password  Extraction password (may be {@code null}/empty); never mutated by this method
+     * @return Extracted output (element 0 is the file name, element 1 is the message bytes)
+     * @throws OpenStegoException If no plugin could decode the file
+     */
+    private List<?> extractWithAutoDetect(File stegoFile, char[] password) throws OpenStegoException {
+        byte[] stegoData = CommonUtil.fileToBytes(stegoFile);
+        String stegoFileName = stegoFile.getName();
+
+        OpenStegoException last = null;
+        for (OpenStegoPlugin<?> plugin : orderPluginsForExtract(stegoFileName)) {
+            plugin.resetConfig();
+            OpenStegoConfig config = plugin.getConfig();
+            config.setPassword(password == null ? null : password.clone());
+            try {
+                return new OpenStego(plugin, config).extractData(stegoData, stegoFileName);
+            } catch (OpenStegoException e) {
+                last = e;
+            } finally {
+                config.clearPassword();
+            }
+        }
+        if (last != null) {
+            throw last;
+        }
+        throw new OpenStegoException(new RuntimeException("No data-hiding plugin available for extraction"));
+    }
+
+    /**
+     * Returns the data-hiding plugins ordered for an extraction attempt. JPEG stego files are tried
+     * with the JPEG plugin first; for all other inputs the (mutually exclusive) spatial plugins are
+     * tried in their registered order. JPEG and spatial plugins reject each other's files cleanly, so
+     * the ordering only affects which error surfaces if every plugin fails.
+     *
+     * @param stegoFileName Name of the stego file (used only for its extension)
+     * @return Ordered list of candidate plugins
+     */
+    private List<OpenStegoPlugin<?>> orderPluginsForExtract(String stegoFileName) {
+        String lower = stegoFileName == null ? "" : stegoFileName.toLowerCase();
+        boolean jpeg = lower.endsWith(".jpg") || lower.endsWith(".jpeg");
+        List<OpenStegoPlugin<?>> ordered = new ArrayList<>();
+        List<OpenStegoPlugin<?>> deferred = new ArrayList<>();
+        for (OpenStegoPlugin<?> plugin : this.dhPlugins) {
+            boolean jpegPlugin = "JpegUniward".equals(plugin.getName());
+            if (jpeg == jpegPlugin) {
+                ordered.add(plugin);
+            } else {
+                deferred.add(plugin);
+            }
+        }
+        ordered.addAll(deferred);
+        return ordered;
     }
 
     /**

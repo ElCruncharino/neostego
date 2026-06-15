@@ -46,6 +46,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -200,16 +201,26 @@ fun StegoApp(initialImage: Uri? = null) {
     var showPassword by remember { mutableStateOf(false) }
     var algorithm by remember { mutableStateOf(StegoEngine.Algorithm.ADAPTIVE) }
     var embedFileName by remember { mutableStateOf(false) }
+    // Per-algorithm tuning; defaults mirror the core plugin defaults.
+    var jpegQuality by remember { mutableStateOf(90) }      // SI-UNIWARD output quality (meaningful)
+    var adaptiveCmd by remember { mutableStateOf(true) }    // Adaptive CMD clustering (advanced)
+    var adaptiveCmdMu by remember { mutableStateOf(3.0) }   // Adaptive CMD strength (advanced)
+    var lsbBits by remember { mutableStateOf(3) }           // LSB-matching bits/channel (advanced)
+    var showAdvanced by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var pendingBytes by remember { mutableStateOf<ByteArray?>(null) }
     var capacity by remember { mutableStateOf<Int?>(null) }
 
-    // Recompute the cover's capacity whenever the cover or chosen algorithm changes.
-    LaunchedEffect(coverUri, algorithm) {
+    // Bundle the per-algorithm options; only the field relevant to the chosen algorithm is read.
+    val options = StegoEngine.Options(jpegQuality, adaptiveCmd, adaptiveCmdMu, lsbBits)
+
+    // Recompute the cover's capacity whenever the cover, algorithm, or a capacity-affecting option
+    // changes (LSB bits/channel changes capacity; JPEG quality does not, but is harmless to key on).
+    LaunchedEffect(coverUri, algorithm, lsbBits, jpegQuality) {
         val uri = coverUri
         capacity = if (uri == null) null else withContext(Dispatchers.IO) {
             imageDimensions(context, uri)?.let { (w, h) ->
-                runCatching { StegoEngine.capacityBytes(algorithm, w, h) }.getOrNull()
+                runCatching { StegoEngine.capacityBytes(algorithm, w, h, options) }.getOrNull()
             }
         }
     }
@@ -220,7 +231,8 @@ fun StegoApp(initialImage: Uri? = null) {
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
-    val saveStego = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
+    // Broad image type so the suggested filename's extension (.png or .jpg) selects the real format.
+    val saveStego = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/*")) { uri ->
         val bytes = pendingBytes
         pendingBytes = null
         if (uri != null && bytes != null) {
@@ -275,11 +287,13 @@ fun StegoApp(initialImage: Uri? = null) {
                         displayName(context, message),
                         readBytes(context, cover),
                         displayName(context, cover),
-                        pw
+                        pw,
+                        options
                     )
                 }
                 pendingBytes = bytes
-                saveStego.launch("stego.png")
+                // Suggest the right extension so the output keeps its native format (PNG vs JPEG).
+                saveStego.launch(StegoEngine.outputName(algorithm))
             } catch (e: Exception) {
                 snackbar.showSnackbar(e.message ?: "Failed to hide data")
             } finally {
@@ -375,17 +389,90 @@ fun StegoApp(initialImage: Uri? = null) {
                         Text("Hiding method", fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(8.dp))
                         AlgorithmOption(
+                            selected = algorithm == StegoEngine.Algorithm.SI_UNIWARD,
+                            title = "SI-UNIWARD (JPEG)",
+                            subtitle = "Side-informed JPEG steganography. Saves a JPEG and is the strongest choice at low embedding rates against modern detectors.",
+                            onClick = { algorithm = StegoEngine.Algorithm.SI_UNIWARD }
+                        )
+                        AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.ADAPTIVE,
-                            title = "Adaptive (most secure)",
-                            subtitle = "HILL + STC: hides changes in textured areas to resist both statistical and AI steganalysis. Lower capacity.",
+                            title = "Adaptive (PNG)",
+                            subtitle = "HILL + STC: hides changes in textured areas to resist both statistical and AI steganalysis. Lossless PNG, lower capacity.",
                             onClick = { algorithm = StegoEngine.Algorithm.ADAPTIVE }
                         )
                         AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.MATCHING,
-                            title = "Standard (LSB matching)",
-                            subtitle = "Higher capacity and faster; resists classical steganalysis.",
+                            title = "LSB matching (PNG)",
+                            subtitle = "Higher capacity and faster; resists classical steganalysis. Lossless PNG.",
                             onClick = { algorithm = StegoEngine.Algorithm.MATCHING }
                         )
+
+                        // Meaningful, algorithm-specific control shown inline (not hidden in Advanced).
+                        if (algorithm == StegoEngine.Algorithm.SI_UNIWARD) {
+                            Spacer(Modifier.height(12.dp))
+                            Text("JPEG quality: $jpegQuality", fontWeight = FontWeight.SemiBold)
+                            Slider(
+                                value = jpegQuality.toFloat(),
+                                onValueChange = { jpegQuality = it.toInt() },
+                                valueRange = 50f..100f
+                            )
+                            Text(
+                                "Higher quality keeps the image crisper but enlarges the file; 90 is a good default.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        // Power-user knobs tucked behind a collapsible Advanced toggle.
+                        if (algorithm != StegoEngine.Algorithm.SI_UNIWARD) {
+                            Spacer(Modifier.height(8.dp))
+                            TextButton(onClick = { showAdvanced = !showAdvanced }) {
+                                Text(if (showAdvanced) "Advanced ▴" else "Advanced ▾")
+                            }
+                            if (showAdvanced) {
+                                if (algorithm == StegoEngine.Algorithm.ADAPTIVE) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text("Cluster changes (CMD)", fontWeight = FontWeight.SemiBold)
+                                            Text(
+                                                "Synchronizes neighbouring edits for slightly better resistance. Leave on unless reproducing legacy output.",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Switch(checked = adaptiveCmd, onCheckedChange = { adaptiveCmd = it })
+                                    }
+                                    if (adaptiveCmd) {
+                                        Spacer(Modifier.height(8.dp))
+                                        Text("Clustering strength (mu): ${"%.1f".format(adaptiveCmdMu)}")
+                                        Slider(
+                                            value = adaptiveCmdMu.toFloat(),
+                                            onValueChange = { adaptiveCmdMu = it.toDouble() },
+                                            valueRange = 1f..9f,
+                                            steps = 7
+                                        )
+                                    }
+                                } else { // LSB matching
+                                    Spacer(Modifier.height(8.dp))
+                                    Text("Bits per channel: $lsbBits")
+                                    Slider(
+                                        value = lsbBits.toFloat(),
+                                        onValueChange = { lsbBits = it.toInt() },
+                                        valueRange = 1f..8f,
+                                        steps = 6
+                                    )
+                                    Text(
+                                        "More bits store more data but are easier to detect; 3 balances the two.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 Card {
@@ -409,8 +496,12 @@ fun StegoApp(initialImage: Uri? = null) {
                     }
                 }
                 Text(
-                    "Keep the saved PNG as-is to share. Re-saving or sending it as JPEG (or any other " +
-                        "lossy format) destroys the hidden data.",
+                    if (algorithm == StegoEngine.Algorithm.SI_UNIWARD)
+                        "Share the saved JPEG as-is. Do not open and re-save it — re-compressing the " +
+                            "JPEG destroys the hidden data."
+                    else
+                        "Keep the saved PNG as-is to share. Re-saving or sending it as JPEG (or any other " +
+                            "lossy format) destroys the hidden data.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
