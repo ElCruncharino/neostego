@@ -25,8 +25,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * User preferences manager
  */
 public class UserPreferences {
-    private static final String PREF_FILENAME = "openstego.cfg";
-    private static final String DEFAULT_PREF_FILENAME = "openstego.default.cfg";
+    private static final String PREF_FILENAME = "neostego.cfg";
+    private static final String DEFAULT_PREF_FILENAME = "neostego.default.cfg";
     private static Properties prefs = null;
     private static Path prefFilePath = null;
 
@@ -58,7 +58,7 @@ public class UserPreferences {
             }
 
             // Create config directory if it does not exist
-            Path configPath = Paths.get(configHome, "openstego");
+            Path configPath = Paths.get(configHome, "neostego");
             if (Files.notExists(configPath)) {
                 Files.createDirectories(configPath);
             }
@@ -67,17 +67,10 @@ public class UserPreferences {
             Path prefFile = configPath.resolve(PREF_FILENAME);
             prefFilePath = prefFile;
             if (Files.notExists(prefFile)) {
-                // First check if old style "openstego.ini" file is present in user home
-                Path oldPrefFile = Paths.get(userHome, "openstego.ini");
-                if (Files.exists(oldPrefFile)) {
-                    Files.copy(oldPrefFile, prefFile);
-                    Files.delete(oldPrefFile);
-                } else {
-                    // Otherwise use the default template from application bundle
-                    try (InputStream tmplIS = UserPreferences.class.getResourceAsStream("/" + DEFAULT_PREF_FILENAME)) {
-                        assert tmplIS != null;
-                        Files.copy(tmplIS, prefFile, REPLACE_EXISTING);
-                    }
+                // Seed from the default template bundled with the application
+                try (InputStream tmplIS = UserPreferences.class.getResourceAsStream("/" + DEFAULT_PREF_FILENAME)) {
+                    assert tmplIS != null;
+                    Files.copy(tmplIS, prefFile, REPLACE_EXISTING);
                 }
             }
 
