@@ -14,12 +14,12 @@ plugins {
 
 android {
     namespace 'com.elcruncharino.neostego'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId 'com.elcruncharino.neostego'
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName project.version.toString()
     }
