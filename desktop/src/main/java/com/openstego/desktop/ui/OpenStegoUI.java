@@ -454,7 +454,9 @@ public class OpenStegoUI extends OpenStegoFrame {
                     }
                 }
 
-                CommonUtil.writeFile((byte[]) stegoOutput.get(1), outputFolder + File.separator + outputFileName);
+                byte[] extracted = (byte[]) stegoOutput.get(1);
+                CommonUtil.writeFile(extracted, outputFolder + File.separator + outputFileName);
+                java.util.Arrays.fill(extracted, (byte) 0); // wipe the decrypted plaintext from the heap once written
                 return outputFileName;
             }
 
