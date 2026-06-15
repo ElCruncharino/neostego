@@ -293,7 +293,7 @@ public class OpenStego {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_WM);
         }
 
-        if (this.config.getPassword() == null || this.config.getPassword().trim().length() == 0) {
+        if (!this.config.isPasswordSet()) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PWD_MANDATORY_FOR_GENSIG);
         }
 

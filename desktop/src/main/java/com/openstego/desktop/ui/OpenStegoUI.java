@@ -226,16 +226,16 @@ public class OpenStegoUI extends OpenStegoFrame {
      */
     private void embedData() {
         String outputFileName;
-        String password;
-        String confPassword;
+        char[] password;
+        char[] confPassword;
         File outputFile;
         List<File> coverFileList;
 
         outputFileName = getEmbedPanel().getStegoFileTextField().getText();
         outputFile = new File(outputFileName);
         coverFileList = CommonUtil.parseFileList(getEmbedPanel().getCoverFileTextField().getText(), ";");
-        password = new String(getEmbedPanel().getPasswordTextField().getPassword());
-        confPassword = new String(getEmbedPanel().getConfPasswordTextField().getPassword());
+        password = getEmbedPanel().getPasswordTextField().getPassword();
+        confPassword = getEmbedPanel().getConfPasswordTextField().getPassword();
 
         // START: Input Validations
         if (!checkMandatory(getEmbedPanel().getMsgFileTextField(), labelUtil.getString("gui.label.dhEmbed.msgFile"))) {
@@ -276,7 +276,10 @@ public class OpenStegoUI extends OpenStegoFrame {
             }
         }
 
-        if (!password.equals(confPassword)) {
+        boolean passwordMismatch = !java.util.Arrays.equals(password, confPassword);
+        java.util.Arrays.fill(password, '\0');
+        java.util.Arrays.fill(confPassword, '\0');
+        if (passwordMismatch) {
             JOptionPane.showMessageDialog(this, labelUtil.getString("gui.msg.err.dhEmbed.passwordMismatch"), labelUtil.getString("gui.msg.title.err"),
                     JOptionPane.ERROR_MESSAGE);
             getEmbedPanel().getConfPasswordTextField().requestFocus();
@@ -298,7 +301,7 @@ public class OpenStegoUI extends OpenStegoFrame {
                 String outputFileName;
                 String dataFileName;
                 String cryptAlgo;
-                String password;
+                char[] password;
                 File outputFile;
                 File cvrFile;
                 int processCount = 0;
@@ -309,7 +312,7 @@ public class OpenStegoUI extends OpenStegoFrame {
                 List<File> coverFileList = (List<File>) this.data;
 
                 cryptAlgo = (String) getEmbedPanel().getEncryptionAlgoComboBox().getSelectedItem();
-                password = new String(getEmbedPanel().getPasswordTextField().getPassword());
+                password = getEmbedPanel().getPasswordTextField().getPassword();
                 dataFileName = getEmbedPanel().getMsgFileTextField().getText();
                 outputFileName = getEmbedPanel().getStegoFileTextField().getText();
                 outputFile = new File(outputFileName);
@@ -369,6 +372,9 @@ public class OpenStegoUI extends OpenStegoFrame {
                         bulkException.add(cvrFile == null ? "-" : cvrFile.getName(), e);
                     }
                 }
+                // Wipe the password from memory once all files are processed
+                java.util.Arrays.fill(password, '\0');
+                config.clearPassword();
                 bulkException.throwIfRequired();
 
                 return new Integer[]{processCount, skipCount};
@@ -429,11 +435,15 @@ public class OpenStegoUI extends OpenStegoFrame {
                 dhPlugin.resetConfig();
                 config = dhPlugin.getConfig();
                 openStego = new OpenStego(dhPlugin, config);
-                config.setPassword(new String(getExtractPanel().getExtractPwdTextField().getPassword()));
+                config.setPassword(getExtractPanel().getExtractPwdTextField().getPassword());
                 stegoFileName = getExtractPanel().getInputStegoFileTextField().getText();
                 outputFolder = getExtractPanel().getOutputFolderTextField().getText();
 
-                stegoOutput = openStego.extractData(new File(stegoFileName));
+                try {
+                    stegoOutput = openStego.extractData(new File(stegoFileName));
+                } finally {
+                    config.clearPassword();
+                }
                 outputFileName = (String) stegoOutput.get(0);
                 file = new File(outputFolder + File.separator + outputFileName);
                 if (file.exists()) {

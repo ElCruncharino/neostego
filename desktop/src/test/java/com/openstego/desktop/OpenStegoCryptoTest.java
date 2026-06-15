@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class OpenStegoCryptoTest {
 
     private static final byte[] PLAIN = "The quick brown fox jumps over the lazy dog. 0123456789".getBytes(StandardCharsets.UTF_8);
-    private static final String PASSWORD = "correct horse battery staple";
+    private static final char[] PASSWORD = "correct horse battery staple".toCharArray();
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -45,7 +45,7 @@ public class OpenStegoCryptoTest {
     @Test
     public void testV3WrongPasswordFails() throws Exception {
         byte[] enc = new OpenStegoCrypto(PASSWORD, OpenStegoCrypto.ALGO_AES256, true).encrypt(PLAIN);
-        OpenStegoCrypto wrong = new OpenStegoCrypto("not the password", OpenStegoCrypto.ALGO_AES256, true);
+        OpenStegoCrypto wrong = new OpenStegoCrypto("not the password".toCharArray(), OpenStegoCrypto.ALGO_AES256, true);
         OpenStegoException ex = assertThrows(OpenStegoException.class, () -> wrong.decrypt(enc));
         assertEquals(OpenStegoErrors.INVALID_PASSWORD, ex.getErrorCode());
     }

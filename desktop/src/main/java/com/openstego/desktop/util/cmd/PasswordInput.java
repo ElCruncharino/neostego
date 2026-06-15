@@ -9,6 +9,7 @@ package com.openstego.desktop.util.cmd;
 import com.openstego.desktop.OpenStegoException;
 
 import java.io.BufferedReader;
+import java.io.Console;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -29,17 +30,21 @@ public class PasswordInput {
      * @return The password as entered by the user
      * @throws OpenStegoException Processing issue
      */
-    public static String readPassword(String prompt) throws OpenStegoException {
-        String password;
-        EraserThread et;
-        BufferedReader in;
-        Thread mask;
+    public static char[] readPassword(String prompt) throws OpenStegoException {
+        // Prefer the console, which reads directly into a char[] without echoing
+        Console console = System.console();
+        if (console != null) {
+            char[] password = console.readPassword("%s", prompt);
+            return (password == null) ? new char[0] : password;
+        }
 
-        et = new EraserThread(prompt);
-        mask = new Thread(et);
+        // Fallback (e.g. when there is no attached console): mask using the eraser thread
+        EraserThread et = new EraserThread(prompt);
+        Thread mask = new Thread(et);
         mask.start();
 
-        in = new BufferedReader(new InputStreamReader(System.in));
+        String password;
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         try {
             password = in.readLine();
         } catch (IOException ioEx) {
@@ -50,7 +55,7 @@ public class PasswordInput {
         et.stopMasking();
         System.out.println();
 
-        return password;
+        return (password == null) ? new char[0] : password.toCharArray();
     }
 
     /**

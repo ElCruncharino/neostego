@@ -510,7 +510,7 @@ public class OpenStegoTest extends MockitoTest {
 
         // Case - null password
         try {
-            config.setPassword(null);
+            config.setPassword((char[]) null);
             os.generateSignature();
             fail("Did not throw exception");
         } catch (OpenStegoException e) {

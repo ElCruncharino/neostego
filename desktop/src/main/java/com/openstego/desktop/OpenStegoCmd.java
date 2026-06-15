@@ -60,6 +60,7 @@ public class OpenStegoCmd {
      * @param args Command line arguments
      */
     public static void execute(String[] args) {
+        OpenStego stego = null;
         try {
             if (args.length == 0) {
                 displayUsage();
@@ -92,7 +93,6 @@ public class OpenStegoCmd {
 
             Map<String, String> opt = collectStringOptions(parseResult);
 
-            OpenStego stego = null;
             if (!command.equals("help") && !command.equals("algorithms")) {
                 if (plugin == null) {
                     throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.NO_PLUGIN_SPECIFIED);
@@ -159,6 +159,10 @@ public class OpenStegoCmd {
             System.err.println(sb);
         } catch (Exception ex) {
             logger.log(Level.SEVERE, ex.getMessage(), ex);
+        } finally {
+            if (stego != null) {
+                stego.getConfig().clearPassword();
+            }
         }
     }
 

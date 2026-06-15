@@ -116,7 +116,7 @@ public class OpenStegoCrypto {
      */
     private static final int V3_TAG_BITS = 128;
 
-    private final String password;
+    private final char[] password;
     private final int v3KeyBytes;
     private final boolean v3Capable;
     private final boolean strongEncryption;
@@ -129,7 +129,7 @@ public class OpenStegoCrypto {
      * @param algorithm Cryptography algorithm to use. If null or blank value is provided, then it defaults to AES128
      * @throws OpenStegoException Processing issues
      */
-    public OpenStegoCrypto(String password, String algorithm) throws OpenStegoException {
+    public OpenStegoCrypto(char[] password, String algorithm) throws OpenStegoException {
         this(password, algorithm, true);
     }
 
@@ -141,8 +141,8 @@ public class OpenStegoCrypto {
      * @param strongEncryption Whether to use the modern (v3) format for newly encrypted data
      * @throws OpenStegoException Processing issues
      */
-    public OpenStegoCrypto(String password, String algorithm, boolean strongEncryption) throws OpenStegoException {
-        this.password = (password == null) ? "" : password;
+    public OpenStegoCrypto(char[] password, String algorithm, boolean strongEncryption) throws OpenStegoException {
+        this.password = (password == null) ? new char[0] : password;
         this.strongEncryption = strongEncryption;
 
         String origAlgo = (algorithm == null) ? "" : algorithm.trim().toUpperCase();
@@ -174,8 +174,8 @@ public class OpenStegoCrypto {
      */
     private SecretKey getV2SecretKey() throws Exception {
         PBEKeySpec keySpec = (this.v2KeyBits > 0)
-                ? new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT, this.v2KeyBits)
-                : new PBEKeySpec(this.password.toCharArray(), this.SALT, this.ITER_COUNT);
+                ? new PBEKeySpec(this.password, this.SALT, this.ITER_COUNT, this.v2KeyBits)
+                : new PBEKeySpec(this.password, this.SALT, this.ITER_COUNT);
         try {
             return SecretKeyFactory.getInstance(this.pbeAlgorithm).generateSecret(keySpec);
         } finally {
@@ -290,7 +290,7 @@ public class OpenStegoCrypto {
      * wiping the transient key spec afterwards.
      */
     private SecretKey deriveAesKeyPbkdf2(byte[] salt, int iterations, int keyBits) throws Exception {
-        PBEKeySpec spec = new PBEKeySpec(this.password.toCharArray(), salt, iterations, keyBits);
+        PBEKeySpec spec = new PBEKeySpec(this.password, salt, iterations, keyBits);
         byte[] keyBytes;
         try {
             keyBytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
@@ -381,9 +381,9 @@ public class OpenStegoCrypto {
         }
     }
 
-    private static SecretKey deriveV3Key(String password, byte[] salt, int iterations, int keyBytes) throws Exception {
+    private static SecretKey deriveV3Key(char[] password, byte[] salt, int iterations, int keyBytes) throws Exception {
         SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, iterations, keyBytes * 8);
+        PBEKeySpec spec = new PBEKeySpec(password, salt, iterations, keyBytes * 8);
         byte[] keyData;
         try {
             keyData = factory.generateSecret(spec).getEncoded();

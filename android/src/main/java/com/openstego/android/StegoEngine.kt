@@ -23,7 +23,7 @@ object StegoEngine {
         msgName: String,
         cover: ByteArray,
         coverName: String,
-        password: String?
+        password: CharArray?
     ): ByteArray {
         val plugin = if (useMatching) RandomLSBMatchPlugin() else RandomLSBPlugin()
         plugin.resetConfig()
@@ -31,12 +31,16 @@ object StegoEngine {
         config.isUseCompression = true
         // The file name would be stored unencrypted, so do not embed it (privacy)
         config.isEmbedFileName = false
-        if (!password.isNullOrEmpty()) {
+        if (password != null && password.isNotEmpty()) {
             config.isUseEncryption = true
             config.password = password
         }
         val stego = OpenStego(plugin, config)
-        return stego.embedData(message, msgName, cover, coverName, "stego.png")
+        try {
+            return stego.embedData(message, msgName, cover, coverName, "stego.png")
+        } finally {
+            config.clearPassword()
+        }
     }
 
     /** Result of an extraction: the original embedded file name and its bytes. */
@@ -46,17 +50,21 @@ object StegoEngine {
      * Extracts hidden data from [stegoData]. Random-LSB extraction handles both plain and matching
      * embeddings (the recovered bits are identical), so the plain plugin is used.
      */
-    fun extract(stegoData: ByteArray, stegoName: String, password: String?): Extracted {
+    fun extract(stegoData: ByteArray, stegoName: String, password: CharArray?): Extracted {
         val plugin = RandomLSBPlugin()
         plugin.resetConfig()
         val config = plugin.config
-        if (!password.isNullOrEmpty()) {
+        if (password != null && password.isNotEmpty()) {
             config.password = password
         }
         val stego = OpenStego(plugin, config)
-        val out = stego.extractData(stegoData, stegoName)
-        val name = out[0] as? String ?: "extracted.dat"
-        val data = out[1] as ByteArray
-        return Extracted(name, data)
+        try {
+            val out = stego.extractData(stegoData, stegoName)
+            val name = out[0] as? String ?: "extracted.dat"
+            val data = out[1] as ByteArray
+            return Extracted(name, data)
+        } finally {
+            config.clearPassword()
+        }
     }
 }

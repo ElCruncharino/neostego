@@ -67,9 +67,10 @@ public class OpenStegoConfig {
     private boolean useEncryption = false;
 
     /**
-     * Password for encryption in case "useEncryption" is set to true
+     * Password for encryption in case "useEncryption" is set to true. Held as a char[] (rather than a
+     * String) so it can be wiped from memory after use.
      */
-    private String password = null;
+    private char[] password = null;
 
     /**
      * Algorithm to be used for encryption in case "useEncryption" is set to true
@@ -119,8 +120,11 @@ public class OpenStegoConfig {
                 }
                 break;
             case PASSWORD:
-                assert value instanceof String;
-                this.password = (String) value;
+                if (value instanceof char[]) {
+                    this.password = (char[]) value;
+                } else {
+                    this.password = (value == null) ? null : ((String) value).toCharArray();
+                }
                 break;
             case ENCRYPTION_ALGORITHM:
                 assert value instanceof String;
@@ -192,9 +196,9 @@ public class OpenStegoConfig {
     /**
      * Get Method for password
      *
-     * @return password
+     * @return password (the live char[]; do not mutate)
      */
-    public String getPassword() {
+    public char[] getPassword() {
         return this.password;
     }
 
@@ -203,8 +207,43 @@ public class OpenStegoConfig {
      *
      * @param password Value to be set
      */
-    public void setPassword(String password) {
+    public void setPassword(char[] password) {
         this.password = password;
+    }
+
+    /**
+     * Convenience setter that accepts a String. Note that the String itself cannot be wiped; prefer
+     * {@link #setPassword(char[])} for sensitive input.
+     *
+     * @param password Value to be set
+     */
+    public void setPassword(String password) {
+        this.password = (password == null) ? null : password.toCharArray();
+    }
+
+    /**
+     * @return true if a non-blank password has been set
+     */
+    public boolean isPasswordSet() {
+        if (this.password == null) {
+            return false;
+        }
+        for (char c : this.password) {
+            if (!Character.isWhitespace(c)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Wipes the password from memory.
+     */
+    public void clearPassword() {
+        if (this.password != null) {
+            java.util.Arrays.fill(this.password, '\0');
+            this.password = null;
+        }
     }
 
     /**
