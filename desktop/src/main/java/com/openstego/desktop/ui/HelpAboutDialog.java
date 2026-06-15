@@ -53,7 +53,7 @@ public class HelpAboutDialog extends JDialog {
                     "    <tr>" +
                     "      <td colspan=2 style='padding:5px;font-size:10px'>" +
                     "        <p>" + labelUtil.getString("copyright") + "</p><br/>" +
-                    "        <p>" + labelUtil.getString("gui.label.help.sitelink") + "</p><br/>" +
+                    "        <p>" + labelUtil.getString("gui.label.help.credit") + "</p><br/>" +
                     "        <p><b>" + labelUtil.getString("gui.label.help.ackHeader") + "</b></p>" +
                     "        <ol style='margin-left:10px; margin-top:2px;'>" +
                     "          <li>" + labelUtil.getString("gui.label.help.acknowledgement") + "</li>" +
@@ -101,7 +101,7 @@ public class HelpAboutDialog extends JDialog {
      * @param parent Parent frame for the dialog box
      */
     public HelpAboutDialog(Frame parent) {
-        super(parent, "About OpenStego", true);
+        super(parent, "About " + labelUtil.getString("appName"), true);
 
         getContentPane().setLayout(new GridBagLayout());
 
