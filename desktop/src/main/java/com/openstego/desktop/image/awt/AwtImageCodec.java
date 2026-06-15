@@ -35,12 +35,14 @@ public class AwtImageCodec implements ImageCodec {
     public PixelImage decode(byte[] data, String fileName) throws OpenStegoException {
         ImageHolder holder = ImageUtil.byteArrayToImage(data, fileName);
         BufferedImage image = holder.getImage();
-        // Normalize to TYPE_INT_RGB so that per-pixel get/set behaves consistently across source types
-        if (image.getType() != BufferedImage.TYPE_INT_RGB) {
-            BufferedImage rgb = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        // Normalize to TYPE_INT_ARGB so per-pixel get/set behaves consistently across source types and
+        // the alpha channel is preserved. Embedding only touches the RGB channels (bits 0-23), so any
+        // transparency in the cover survives the embed/extract round-trip unchanged.
+        if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
+            BufferedImage argb = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
             int[] pixels = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
-            rgb.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
-            image = rgb;
+            argb.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
+            image = argb;
         }
         return new BufferedImagePixelImage(image);
     }
