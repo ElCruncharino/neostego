@@ -7,8 +7,10 @@
 package com.elcruncharino.neostego
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.InputType
@@ -52,6 +54,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,17 +72,48 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
+    // Image handed to us via the system share sheet (ACTION_SEND); drives the initial selection.
+    private val sharedImage = mutableStateOf<Uri?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Prevent screenshots, screen recording and Recents thumbnails from capturing secrets/passwords
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        sharedImage.value = sharedImageFromIntent(intent)
         setContent {
             NeoStegoTheme {
-                StegoApp()
+                StegoApp(initialImage = sharedImage.value)
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        sharedImageFromIntent(intent)?.let { sharedImage.value = it }
+    }
+
+    /** Extracts a single image [Uri] from an incoming SEND / SEND_MULTIPLE intent, or null. */
+    private fun sharedImageFromIntent(intent: Intent?): Uri? {
+        if (intent == null) return null
+        return when (intent.action) {
+            Intent.ACTION_SEND -> intent.parcelableExtra(Intent.EXTRA_STREAM)
+            Intent.ACTION_SEND_MULTIPLE ->
+                intent.parcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.firstOrNull()
+            else -> null
+        }
+    }
 }
+
+@Suppress("DEPRECATION")
+private inline fun <reified T : android.os.Parcelable> Intent.parcelableExtra(name: String): T? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getParcelableExtra(name, T::class.java)
+    else getParcelableExtra(name) as? T
+
+@Suppress("DEPRECATION")
+private inline fun <reified T : android.os.Parcelable> Intent.parcelableArrayListExtra(name: String): ArrayList<T>? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getParcelableArrayListExtra(name, T::class.java)
+    else getParcelableArrayListExtra(name)
 
 private fun readBytes(context: Context, uri: Uri): ByteArray =
     context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
@@ -130,7 +164,7 @@ private fun oversizeWarning(context: Context, uri: Uri): String? {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun StegoApp() {
+fun StegoApp(initialImage: Uri? = null) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbar = remember { SnackbarHostState() }
@@ -139,6 +173,15 @@ fun StegoApp() {
     var coverUri by remember { mutableStateOf<Uri?>(null) }
     var messageUri by remember { mutableStateOf<Uri?>(null) }
     var stegoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // An image shared into the app preselects both roles, so it is ready whether the user hides into
+    // it (Hide tab, the default) or reveals from it (Reveal tab).
+    LaunchedEffect(initialImage) {
+        initialImage?.let {
+            coverUri = it
+            stegoUri = it
+        }
+    }
     var passwordView by remember { mutableStateOf<EditText?>(null) }
     var showPassword by remember { mutableStateOf(false) }
     var algorithm by remember { mutableStateOf(StegoEngine.Algorithm.ADAPTIVE) }
