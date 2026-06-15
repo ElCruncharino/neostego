@@ -8,3 +8,8 @@
 /build
 build/
 /local.properties
+
+# Android release signing secrets — never commit these
+android/keystore.properties
+*.jks
+*.keystore

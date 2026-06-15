@@ -1,6 +1,7 @@
 /*
  * Steganography utility to hide messages into cover files
- * Copyright (c) Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) 2026 Nick Haghiri
+ * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
  *
  * Android application built on the platform-independent :core module.
  */
@@ -20,7 +21,7 @@ android {
         minSdk 26
         targetSdk 34
         versionCode 1
-        versionName '0.8.6'
+        versionName project.version.toString()
     }
 
     buildFeatures {
@@ -36,9 +37,31 @@ android {
         jvmTarget = '17'
     }
 
+    // Release signing is read from a gitignored keystore.properties (see keystore.properties.example).
+    // When that file is absent (e.g. CI or a fresh checkout) the release build still assembles, just
+    // unsigned, so the build never hard-fails on a missing keystore.
+    signingConfigs {
+        release {
+            def keystoreProps = file('keystore.properties')
+            if (keystoreProps.exists()) {
+                def props = new Properties()
+                keystoreProps.withInputStream { props.load(it) }
+                storeFile file(props['storeFile'])
+                storePassword props['storePassword']
+                keyAlias props['keyAlias']
+                keyPassword props['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (file('keystore.properties').exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
