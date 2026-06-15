@@ -454,40 +454,42 @@ public class OpenStegoUI extends OpenStegoFrame {
                     }
                 }
 
-<span class="nc" id="L457">                CommonUtil.writeFile((byte[]) stegoOutput.get(1), outputFolder + File.separator + outputFileName);</span>
-<span class="nc" id="L458">                return outputFileName;</span>
+<span class="nc" id="L457">                byte[] extracted = (byte[]) stegoOutput.get(1);</span>
+<span class="nc" id="L458">                CommonUtil.writeFile(extracted, outputFolder + File.separator + outputFileName);</span>
+<span class="nc" id="L459">                java.util.Arrays.fill(extracted, (byte) 0); // wipe the decrypted plaintext from the heap once written</span>
+<span class="nc" id="L460">                return outputFileName;</span>
             }
 
             @Override
             public void done() {
-<span class="nc" id="L463">                super.done();</span>
-<span class="nc bnc" id="L464" title="All 2 branches missed.">                if (isCancelled()) {</span>
-<span class="nc" id="L465">                    return;</span>
+<span class="nc" id="L465">                super.done();</span>
+<span class="nc bnc" id="L466" title="All 2 branches missed.">                if (isCancelled()) {</span>
+<span class="nc" id="L467">                    return;</span>
                 }
 
                 String outputFileName;
                 try {
-<span class="nc" id="L470">                    outputFileName = (String) get();</span>
-<span class="nc" id="L471">                } catch (InterruptedException exc) {</span>
-<span class="nc" id="L472">                    logger.log(Level.SEVERE, exc.getMessage(), exc);</span>
-<span class="nc" id="L473">                    return;</span>
-<span class="nc" id="L474">                } catch (ExecutionException exc) {</span>
-<span class="nc" id="L475">                    handleException(exc);</span>
-<span class="nc" id="L476">                    return;</span>
-<span class="nc" id="L477">                }</span>
+<span class="nc" id="L472">                    outputFileName = (String) get();</span>
+<span class="nc" id="L473">                } catch (InterruptedException exc) {</span>
+<span class="nc" id="L474">                    logger.log(Level.SEVERE, exc.getMessage(), exc);</span>
+<span class="nc" id="L475">                    return;</span>
+<span class="nc" id="L476">                } catch (ExecutionException exc) {</span>
+<span class="nc" id="L477">                    handleException(exc);</span>
+<span class="nc" id="L478">                    return;</span>
+<span class="nc" id="L479">                }</span>
 
-<span class="nc" id="L479">                JOptionPane.showMessageDialog(this.parent, labelUtil.getString(&quot;gui.msg.success.dhExtract&quot;, outputFileName),</span>
-<span class="nc" id="L480">                        labelUtil.getString(&quot;gui.msg.title.success&quot;), JOptionPane.INFORMATION_MESSAGE);</span>
+<span class="nc" id="L481">                JOptionPane.showMessageDialog(this.parent, labelUtil.getString(&quot;gui.msg.success.dhExtract&quot;, outputFileName),</span>
+<span class="nc" id="L482">                        labelUtil.getString(&quot;gui.msg.title.success&quot;), JOptionPane.INFORMATION_MESSAGE);</span>
 
                 // Reset GUI
-<span class="nc" id="L483">                getExtractPanel().getInputStegoFileTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L484">                getExtractPanel().getOutputFolderTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L485">                getExtractPanel().getExtractPwdTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L486">                getExtractPanel().getInputStegoFileTextField().requestFocus();</span>
-<span class="nc" id="L487">            }</span>
+<span class="nc" id="L485">                getExtractPanel().getInputStegoFileTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L486">                getExtractPanel().getOutputFolderTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L487">                getExtractPanel().getExtractPwdTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L488">                getExtractPanel().getInputStegoFileTextField().requestFocus();</span>
+<span class="nc" id="L489">            }</span>
         };
-<span class="nc" id="L489">        task.start();</span>
-<span class="nc" id="L490">    }</span>
+<span class="nc" id="L491">        task.start();</span>
+<span class="nc" id="L492">    }</span>
 
     /**
      * This method generates signature for watermarking
@@ -502,42 +504,42 @@ public class OpenStegoUI extends OpenStegoFrame {
         File sigFile;
         OpenStegoConfig config;
 
-<span class="nc" id="L505">        wmPlugin.resetConfig();</span>
-<span class="nc" id="L506">        config = wmPlugin.getConfig();</span>
+<span class="nc" id="L507">        wmPlugin.resetConfig();</span>
+<span class="nc" id="L508">        config = wmPlugin.getConfig();</span>
 
-<span class="nc" id="L508">        inputKey = getGenSigPanel().getInputKeyTextField().getText();</span>
-<span class="nc" id="L509">        sigFileName = getGenSigPanel().getSignatureFileTextField().getText();</span>
-<span class="nc" id="L510">        sigFile = new File(sigFileName);</span>
+<span class="nc" id="L510">        inputKey = getGenSigPanel().getInputKeyTextField().getText();</span>
+<span class="nc" id="L511">        sigFileName = getGenSigPanel().getSignatureFileTextField().getText();</span>
+<span class="nc" id="L512">        sigFile = new File(sigFileName);</span>
 
         // START: Input Validations
-<span class="nc bnc" id="L513" title="All 2 branches missed.">        if (!checkMandatory(getGenSigPanel().getInputKeyTextField(), labelUtil.getString(&quot;gui.label.wmGenSig.inputKey&quot;))) {</span>
-<span class="nc" id="L514">            return;</span>
+<span class="nc bnc" id="L515" title="All 2 branches missed.">        if (!checkMandatory(getGenSigPanel().getInputKeyTextField(), labelUtil.getString(&quot;gui.label.wmGenSig.inputKey&quot;))) {</span>
+<span class="nc" id="L516">            return;</span>
         }
-<span class="nc bnc" id="L516" title="All 2 branches missed.">        if (!checkMandatory(getGenSigPanel().getSignatureFileTextField(), labelUtil.getString(&quot;gui.label.wmGenSig.sigFile&quot;))) {</span>
-<span class="nc" id="L517">            return;</span>
+<span class="nc bnc" id="L518" title="All 2 branches missed.">        if (!checkMandatory(getGenSigPanel().getSignatureFileTextField(), labelUtil.getString(&quot;gui.label.wmGenSig.sigFile&quot;))) {</span>
+<span class="nc" id="L519">            return;</span>
         }
         // END: Input Validations
 
-<span class="nc" id="L521">        config.setPassword(inputKey);</span>
-<span class="nc" id="L522">        openStego = new OpenStego(wmPlugin, config);</span>
-<span class="nc bnc" id="L523" title="All 2 branches missed.">        if (sigFile.exists()) {</span>
-<span class="nc bnc" id="L524" title="All 2 branches missed.">            if (JOptionPane.showConfirmDialog(this, labelUtil.getString(&quot;gui.msg.warn.fileExists&quot;, sigFileName),</span>
-<span class="nc" id="L525">                    labelUtil.getString(&quot;gui.msg.title.warn&quot;), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.NO_OPTION) {</span>
-<span class="nc" id="L526">                return;</span>
+<span class="nc" id="L523">        config.setPassword(inputKey);</span>
+<span class="nc" id="L524">        openStego = new OpenStego(wmPlugin, config);</span>
+<span class="nc bnc" id="L525" title="All 2 branches missed.">        if (sigFile.exists()) {</span>
+<span class="nc bnc" id="L526" title="All 2 branches missed.">            if (JOptionPane.showConfirmDialog(this, labelUtil.getString(&quot;gui.msg.warn.fileExists&quot;, sigFileName),</span>
+<span class="nc" id="L527">                    labelUtil.getString(&quot;gui.msg.title.warn&quot;), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.NO_OPTION) {</span>
+<span class="nc" id="L528">                return;</span>
             }
         }
 
-<span class="nc" id="L530">        sigData = openStego.generateSignature();</span>
-<span class="nc" id="L531">        CommonUtil.writeFile(sigData, sigFile);</span>
+<span class="nc" id="L532">        sigData = openStego.generateSignature();</span>
+<span class="nc" id="L533">        CommonUtil.writeFile(sigData, sigFile);</span>
 
-<span class="nc" id="L533">        JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.success.wmGenSig&quot;), labelUtil.getString(&quot;gui.msg.title.success&quot;),</span>
+<span class="nc" id="L535">        JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.success.wmGenSig&quot;), labelUtil.getString(&quot;gui.msg.title.success&quot;),</span>
                 JOptionPane.INFORMATION_MESSAGE);
 
         // Reset GUI
-<span class="nc" id="L537">        getGenSigPanel().getInputKeyTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L538">        getGenSigPanel().getSignatureFileTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L539">        getGenSigPanel().getInputKeyTextField().requestFocus();</span>
-<span class="nc" id="L540">    }</span>
+<span class="nc" id="L539">        getGenSigPanel().getInputKeyTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L540">        getGenSigPanel().getSignatureFileTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L541">        getGenSigPanel().getInputKeyTextField().requestFocus();</span>
+<span class="nc" id="L542">    }</span>
 
     /**
      * This method embeds the watermark into selected file
@@ -546,50 +548,50 @@ public class OpenStegoUI extends OpenStegoFrame {
         List&lt;File&gt; inputFileList;
         File outputFile;
 
-<span class="nc" id="L549">        inputFileList = CommonUtil.parseFileList(getEmbedWmPanel().getFileForWmTextField().getText(), &quot;;&quot;);</span>
-<span class="nc" id="L550">        outputFile = new File(getEmbedWmPanel().getOutputWmFileTextField().getText());</span>
+<span class="nc" id="L551">        inputFileList = CommonUtil.parseFileList(getEmbedWmPanel().getFileForWmTextField().getText(), &quot;;&quot;);</span>
+<span class="nc" id="L552">        outputFile = new File(getEmbedWmPanel().getOutputWmFileTextField().getText());</span>
 
         // START: Input Validations
-<span class="nc bnc" id="L553" title="All 2 branches missed.">        if (!checkMandatory(getEmbedWmPanel().getFileForWmTextField(), labelUtil.getString(&quot;gui.label.wmEmbed.fileForWm&quot;))) {</span>
-<span class="nc" id="L554">            return;</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">        if (!checkMandatory(getEmbedWmPanel().getFileForWmTextField(), labelUtil.getString(&quot;gui.label.wmEmbed.fileForWm&quot;))) {</span>
+<span class="nc" id="L556">            return;</span>
         }
-<span class="nc bnc" id="L556" title="All 2 branches missed.">        if (!checkMandatory(getEmbedWmPanel().getSignatureFileTextField(), labelUtil.getString(&quot;gui.label.wmEmbed.sigFile&quot;))) {</span>
-<span class="nc" id="L557">            return;</span>
+<span class="nc bnc" id="L558" title="All 2 branches missed.">        if (!checkMandatory(getEmbedWmPanel().getSignatureFileTextField(), labelUtil.getString(&quot;gui.label.wmEmbed.sigFile&quot;))) {</span>
+<span class="nc" id="L559">            return;</span>
         }
-<span class="nc bnc" id="L559" title="All 2 branches missed.">        if (!checkMandatory(getEmbedWmPanel().getOutputWmFileTextField(), labelUtil.getString(&quot;gui.label.wmEmbed.outputWmFile&quot;))) {</span>
-<span class="nc" id="L560">            return;</span>
+<span class="nc bnc" id="L561" title="All 2 branches missed.">        if (!checkMandatory(getEmbedWmPanel().getOutputWmFileTextField(), labelUtil.getString(&quot;gui.label.wmEmbed.outputWmFile&quot;))) {</span>
+<span class="nc" id="L562">            return;</span>
         }
 
         // Check if single or multiple input files are selected
-<span class="nc bnc" id="L564" title="All 2 branches missed.">        if (inputFileList.size() &lt;= 1) {</span>
+<span class="nc bnc" id="L566" title="All 2 branches missed.">        if (inputFileList.size() &lt;= 1) {</span>
             // If user has provided a wildcard for file name, and parser returns zero length, then it means that
             // there are no matching files with that wildcard
-<span class="nc bnc" id="L567" title="All 4 branches missed.">            if (inputFileList.size() == 0 &amp;&amp; !getEmbedWmPanel().getFileForWmTextField().getText().trim().equals(&quot;&quot;)) {</span>
-<span class="nc" id="L568">                JOptionPane.showMessageDialog(this,</span>
-<span class="nc" id="L569">                        labelUtil.getString(&quot;gui.msg.err.wmEmbed.inputFileNotFound&quot;, getEmbedWmPanel().getFileForWmTextField().getText()),</span>
-<span class="nc" id="L570">                        labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
-<span class="nc" id="L571">                getEmbedWmPanel().getFileForWmTextField().requestFocus();</span>
-<span class="nc" id="L572">                return;</span>
+<span class="nc bnc" id="L569" title="All 4 branches missed.">            if (inputFileList.size() == 0 &amp;&amp; !getEmbedWmPanel().getFileForWmTextField().getText().trim().equals(&quot;&quot;)) {</span>
+<span class="nc" id="L570">                JOptionPane.showMessageDialog(this,</span>
+<span class="nc" id="L571">                        labelUtil.getString(&quot;gui.msg.err.wmEmbed.inputFileNotFound&quot;, getEmbedWmPanel().getFileForWmTextField().getText()),</span>
+<span class="nc" id="L572">                        labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
+<span class="nc" id="L573">                getEmbedWmPanel().getFileForWmTextField().requestFocus();</span>
+<span class="nc" id="L574">                return;</span>
             }
             // If single input file is given, then output file must not be a directory
-<span class="nc bnc" id="L575" title="All 2 branches missed.">            if (outputFile.isDirectory()) {</span>
-<span class="nc" id="L576">                JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.err.wmEmbed.outputShouldBeFile&quot;),</span>
-<span class="nc" id="L577">                        labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
-<span class="nc" id="L578">                getEmbedWmPanel().getOutputWmFileTextField().requestFocus();</span>
-<span class="nc" id="L579">                return;</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">            if (outputFile.isDirectory()) {</span>
+<span class="nc" id="L578">                JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.err.wmEmbed.outputShouldBeFile&quot;),</span>
+<span class="nc" id="L579">                        labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
+<span class="nc" id="L580">                getEmbedWmPanel().getOutputWmFileTextField().requestFocus();</span>
+<span class="nc" id="L581">                return;</span>
             }
         } else {
             // If multiple input files are given, then output file must be a directory
-<span class="nc bnc" id="L583" title="All 2 branches missed.">            if (!outputFile.isDirectory()) {</span>
-<span class="nc" id="L584">                JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.err.wmEmbed.outputShouldBeDir&quot;),</span>
-<span class="nc" id="L585">                        labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
-<span class="nc" id="L586">                getEmbedWmPanel().getOutputWmFileTextField().requestFocus();</span>
-<span class="nc" id="L587">                return;</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">            if (!outputFile.isDirectory()) {</span>
+<span class="nc" id="L586">                JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.err.wmEmbed.outputShouldBeDir&quot;),</span>
+<span class="nc" id="L587">                        labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
+<span class="nc" id="L588">                getEmbedWmPanel().getOutputWmFileTextField().requestFocus();</span>
+<span class="nc" id="L589">                return;</span>
             }
         }
         // END: Input Validations
 
-<span class="nc bnc" id="L592" title="All 2 branches missed.">        WorkerTask task = new WorkerTask(this, inputFileList, inputFileList.size() &gt; 1) {</span>
+<span class="nc bnc" id="L594" title="All 2 branches missed.">        WorkerTask task = new WorkerTask(this, inputFileList, inputFileList.size() &gt; 1) {</span>
             @Override
             protected Object doInBackground() throws Exception {
                 OpenStego openStego;
@@ -598,91 +600,91 @@ public class OpenStegoUI extends OpenStegoFrame {
                 String outputFileName;
                 File inputFile;
                 File outputFile;
-<span class="nc" id="L601">                int processCount = 0;</span>
-<span class="nc" id="L602">                int skipCount = 0;</span>
+<span class="nc" id="L603">                int processCount = 0;</span>
+<span class="nc" id="L604">                int skipCount = 0;</span>
 
                 @SuppressWarnings(&quot;unchecked&quot;)
-<span class="nc" id="L605">                List&lt;File&gt; inputFileList = (List&lt;File&gt;) this.data;</span>
+<span class="nc" id="L607">                List&lt;File&gt; inputFileList = (List&lt;File&gt;) this.data;</span>
 
-<span class="nc" id="L607">                wmPlugin.resetConfig();</span>
-<span class="nc" id="L608">                openStego = new OpenStego(wmPlugin, wmPlugin.getConfig());</span>
+<span class="nc" id="L609">                wmPlugin.resetConfig();</span>
+<span class="nc" id="L610">                openStego = new OpenStego(wmPlugin, wmPlugin.getConfig());</span>
 
-<span class="nc" id="L610">                sigFileName = getEmbedWmPanel().getSignatureFileTextField().getText();</span>
-<span class="nc" id="L611">                outputFileName = getEmbedWmPanel().getOutputWmFileTextField().getText();</span>
-<span class="nc" id="L612">                outputFile = new File(outputFileName);</span>
+<span class="nc" id="L612">                sigFileName = getEmbedWmPanel().getSignatureFileTextField().getText();</span>
+<span class="nc" id="L613">                outputFileName = getEmbedWmPanel().getOutputWmFileTextField().getText();</span>
+<span class="nc" id="L614">                outputFile = new File(outputFileName);</span>
 
-<span class="nc" id="L614">                OpenStegoBulkException bulkException = new OpenStegoBulkException();</span>
-<span class="nc bnc" id="L615" title="All 2 branches missed.">                for (int i = 0; i &lt; inputFileList.size(); i++) {</span>
-<span class="nc" id="L616">                    setProgress(i * 100 / inputFileList.size());</span>
-<span class="nc" id="L617">                    inputFile = inputFileList.get(i);</span>
+<span class="nc" id="L616">                OpenStegoBulkException bulkException = new OpenStegoBulkException();</span>
+<span class="nc bnc" id="L617" title="All 2 branches missed.">                for (int i = 0; i &lt; inputFileList.size(); i++) {</span>
+<span class="nc" id="L618">                    setProgress(i * 100 / inputFileList.size());</span>
+<span class="nc" id="L619">                    inputFile = inputFileList.get(i);</span>
 
-<span class="nc bnc" id="L619" title="All 2 branches missed.">                    if (outputFile.isDirectory()) {</span>
+<span class="nc bnc" id="L621" title="All 2 branches missed.">                    if (outputFile.isDirectory()) {</span>
                         // Use input file name as the output file name. Change the folder to given output folder
-<span class="nc" id="L621">                        outputFileName = outputFile.getPath() + File.separator + inputFile.getName();</span>
+<span class="nc" id="L623">                        outputFileName = outputFile.getPath() + File.separator + inputFile.getName();</span>
                     }
 
                     // If the output filename extension is not supported for writing, then change the same
-<span class="nc bnc" id="L625" title="All 2 branches missed.">                    if (!wmPlugin.getWritableFileExtensions().contains(outputFileName.substring(outputFileName.lastIndexOf('.') + 1).toLowerCase())) {</span>
-<span class="nc" id="L626">                        outputFileName = outputFileName + &quot;.&quot; + wmPlugin.getWritableFileExtensions().get(0);</span>
+<span class="nc bnc" id="L627" title="All 2 branches missed.">                    if (!wmPlugin.getWritableFileExtensions().contains(outputFileName.substring(outputFileName.lastIndexOf('.') + 1).toLowerCase())) {</span>
+<span class="nc" id="L628">                        outputFileName = outputFileName + &quot;.&quot; + wmPlugin.getWritableFileExtensions().get(0);</span>
                     }
 
-<span class="nc bnc" id="L629" title="All 2 branches missed.">                    if ((new File(outputFileName)).exists()) {</span>
-<span class="nc bnc" id="L630" title="All 2 branches missed.">                        if (JOptionPane.showConfirmDialog(this.parent, labelUtil.getString(&quot;gui.msg.warn.fileExists&quot;, outputFileName),</span>
-<span class="nc" id="L631">                                labelUtil.getString(&quot;gui.msg.title.warn&quot;), JOptionPane.YES_NO_OPTION,</span>
+<span class="nc bnc" id="L631" title="All 2 branches missed.">                    if ((new File(outputFileName)).exists()) {</span>
+<span class="nc bnc" id="L632" title="All 2 branches missed.">                        if (JOptionPane.showConfirmDialog(this.parent, labelUtil.getString(&quot;gui.msg.warn.fileExists&quot;, outputFileName),</span>
+<span class="nc" id="L633">                                labelUtil.getString(&quot;gui.msg.title.warn&quot;), JOptionPane.YES_NO_OPTION,</span>
                                 JOptionPane.WARNING_MESSAGE) == JOptionPane.NO_OPTION) {
-<span class="nc bnc" id="L633" title="All 2 branches missed.">                            if (inputFileList.size() == 1) {</span>
-<span class="nc" id="L634">                                this.cancel(true);</span>
-<span class="nc" id="L635">                                return null;</span>
+<span class="nc bnc" id="L635" title="All 2 branches missed.">                            if (inputFileList.size() == 1) {</span>
+<span class="nc" id="L636">                                this.cancel(true);</span>
+<span class="nc" id="L637">                                return null;</span>
                             }
-<span class="nc" id="L637">                            skipCount++;</span>
-<span class="nc" id="L638">                            continue;</span>
+<span class="nc" id="L639">                            skipCount++;</span>
+<span class="nc" id="L640">                            continue;</span>
                         }
                     }
 
-<span class="nc" id="L642">                    processCount++;</span>
+<span class="nc" id="L644">                    processCount++;</span>
                     try {
-<span class="nc bnc" id="L644" title="All 4 branches missed.">                        wmData = openStego.embedMark(sigFileName == null || sigFileName.equals(&quot;&quot;) ? null : new File(sigFileName), inputFile,</span>
+<span class="nc bnc" id="L646" title="All 4 branches missed.">                        wmData = openStego.embedMark(sigFileName == null || sigFileName.equals(&quot;&quot;) ? null : new File(sigFileName), inputFile,</span>
                                 outputFileName);
-<span class="nc" id="L646">                        CommonUtil.writeFile(wmData, outputFileName);</span>
-<span class="nc" id="L647">                    } catch (OpenStegoException e) {</span>
-<span class="nc" id="L648">                        bulkException.add(inputFile.getName(), e);</span>
-<span class="nc" id="L649">                    }</span>
+<span class="nc" id="L648">                        CommonUtil.writeFile(wmData, outputFileName);</span>
+<span class="nc" id="L649">                    } catch (OpenStegoException e) {</span>
+<span class="nc" id="L650">                        bulkException.add(inputFile.getName(), e);</span>
+<span class="nc" id="L651">                    }</span>
                 }
-<span class="nc" id="L651">                bulkException.throwIfRequired();</span>
+<span class="nc" id="L653">                bulkException.throwIfRequired();</span>
 
-<span class="nc" id="L653">                return new Integer[]{processCount, skipCount};</span>
+<span class="nc" id="L655">                return new Integer[]{processCount, skipCount};</span>
             }
 
             @Override
             public void done() {
-<span class="nc" id="L658">                super.done();</span>
-<span class="nc bnc" id="L659" title="All 2 branches missed.">                if (isCancelled()) {</span>
-<span class="nc" id="L660">                    return;</span>
+<span class="nc" id="L660">                super.done();</span>
+<span class="nc bnc" id="L661" title="All 2 branches missed.">                if (isCancelled()) {</span>
+<span class="nc" id="L662">                    return;</span>
                 }
 
                 Integer[] val;
                 try {
-<span class="nc" id="L665">                    val = (Integer[]) get();</span>
-<span class="nc" id="L666">                } catch (InterruptedException exc) {</span>
-<span class="nc" id="L667">                    logger.log(Level.SEVERE, exc.getMessage(), exc);</span>
-<span class="nc" id="L668">                    return;</span>
-<span class="nc" id="L669">                } catch (ExecutionException exc) {</span>
-<span class="nc" id="L670">                    handleException(exc);</span>
-<span class="nc" id="L671">                    return;</span>
-<span class="nc" id="L672">                }</span>
+<span class="nc" id="L667">                    val = (Integer[]) get();</span>
+<span class="nc" id="L668">                } catch (InterruptedException exc) {</span>
+<span class="nc" id="L669">                    logger.log(Level.SEVERE, exc.getMessage(), exc);</span>
+<span class="nc" id="L670">                    return;</span>
+<span class="nc" id="L671">                } catch (ExecutionException exc) {</span>
+<span class="nc" id="L672">                    handleException(exc);</span>
+<span class="nc" id="L673">                    return;</span>
+<span class="nc" id="L674">                }</span>
 
-<span class="nc" id="L674">                JOptionPane.showMessageDialog(this.parent, labelUtil.getString(&quot;gui.msg.success.wmEmbed&quot;, val[0], val[1]),</span>
-<span class="nc" id="L675">                        labelUtil.getString(&quot;gui.msg.title.success&quot;), JOptionPane.INFORMATION_MESSAGE);</span>
+<span class="nc" id="L676">                JOptionPane.showMessageDialog(this.parent, labelUtil.getString(&quot;gui.msg.success.wmEmbed&quot;, val[0], val[1]),</span>
+<span class="nc" id="L677">                        labelUtil.getString(&quot;gui.msg.title.success&quot;), JOptionPane.INFORMATION_MESSAGE);</span>
 
                 // Reset GUI
-<span class="nc" id="L678">                getEmbedWmPanel().getFileForWmTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L679">                getEmbedWmPanel().getSignatureFileTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L680">                getEmbedWmPanel().getOutputWmFileTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L681">                getEmbedWmPanel().getFileForWmTextField().requestFocus();</span>
-<span class="nc" id="L682">            }</span>
+<span class="nc" id="L680">                getEmbedWmPanel().getFileForWmTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L681">                getEmbedWmPanel().getSignatureFileTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L682">                getEmbedWmPanel().getOutputWmFileTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L683">                getEmbedWmPanel().getFileForWmTextField().requestFocus();</span>
+<span class="nc" id="L684">            }</span>
         };
-<span class="nc" id="L684">        task.start();</span>
-<span class="nc" id="L685">    }</span>
+<span class="nc" id="L686">        task.start();</span>
+<span class="nc" id="L687">    }</span>
 
     /**
      * This method checks for watermark in the selected file
@@ -691,81 +693,81 @@ public class OpenStegoUI extends OpenStegoFrame {
         List&lt;File&gt; inputFileList;
 
         // START: Input Validations
-<span class="nc bnc" id="L694" title="All 2 branches missed.">        if (!checkMandatory(getVerifyWmPanel().getInputFileTextField(), labelUtil.getString(&quot;gui.label.wmVerify.inputWmFile&quot;))) {</span>
-<span class="nc" id="L695">            return;</span>
+<span class="nc bnc" id="L696" title="All 2 branches missed.">        if (!checkMandatory(getVerifyWmPanel().getInputFileTextField(), labelUtil.getString(&quot;gui.label.wmVerify.inputWmFile&quot;))) {</span>
+<span class="nc" id="L697">            return;</span>
         }
-<span class="nc bnc" id="L697" title="All 2 branches missed.">        if (!checkMandatory(getVerifyWmPanel().getSignatureFileTextField(), labelUtil.getString(&quot;gui.label.wmVerify.sigFile&quot;))) {</span>
-<span class="nc" id="L698">            return;</span>
+<span class="nc bnc" id="L699" title="All 2 branches missed.">        if (!checkMandatory(getVerifyWmPanel().getSignatureFileTextField(), labelUtil.getString(&quot;gui.label.wmVerify.sigFile&quot;))) {</span>
+<span class="nc" id="L700">            return;</span>
         }
 
         // If user has provided a wildcard for file name, and parser returns zero length, then it means that
         // there are no matching files with that wildcard
-<span class="nc" id="L703">        inputFileList = CommonUtil.parseFileList(getVerifyWmPanel().getInputFileTextField().getText(), &quot;;&quot;);</span>
-<span class="nc bnc" id="L704" title="All 4 branches missed.">        if (inputFileList.size() == 0 &amp;&amp; !getVerifyWmPanel().getInputFileTextField().getText().trim().equals(&quot;&quot;)) {</span>
-<span class="nc" id="L705">            JOptionPane.showMessageDialog(this,</span>
-<span class="nc" id="L706">                    labelUtil.getString(&quot;gui.msg.err.wmVerify.inputFileNotFound&quot;, getVerifyWmPanel().getInputFileTextField().getText()),</span>
-<span class="nc" id="L707">                    labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
-<span class="nc" id="L708">            getVerifyWmPanel().getInputFileTextField().requestFocus();</span>
-<span class="nc" id="L709">            return;</span>
+<span class="nc" id="L705">        inputFileList = CommonUtil.parseFileList(getVerifyWmPanel().getInputFileTextField().getText(), &quot;;&quot;);</span>
+<span class="nc bnc" id="L706" title="All 4 branches missed.">        if (inputFileList.size() == 0 &amp;&amp; !getVerifyWmPanel().getInputFileTextField().getText().trim().equals(&quot;&quot;)) {</span>
+<span class="nc" id="L707">            JOptionPane.showMessageDialog(this,</span>
+<span class="nc" id="L708">                    labelUtil.getString(&quot;gui.msg.err.wmVerify.inputFileNotFound&quot;, getVerifyWmPanel().getInputFileTextField().getText()),</span>
+<span class="nc" id="L709">                    labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
+<span class="nc" id="L710">            getVerifyWmPanel().getInputFileTextField().requestFocus();</span>
+<span class="nc" id="L711">            return;</span>
         }
         // END: Input Validations
 
-<span class="nc bnc" id="L713" title="All 2 branches missed.">        WorkerTask task = new WorkerTask(this, inputFileList, inputFileList.size() &gt; 1) {</span>
+<span class="nc bnc" id="L715" title="All 2 branches missed.">        WorkerTask task = new WorkerTask(this, inputFileList, inputFileList.size() &gt; 1) {</span>
             @Override
             protected Object doInBackground() throws Exception {
                 File sigFile;
                 OpenStego openStego;
-<span class="nc" id="L718">                NumberFormat formatter = NumberFormat.getPercentInstance();</span>
+<span class="nc" id="L720">                NumberFormat formatter = NumberFormat.getPercentInstance();</span>
                 double correlation;
 
                 @SuppressWarnings(&quot;unchecked&quot;)
-<span class="nc" id="L722">                List&lt;File&gt; inputFileList = (List&lt;File&gt;) this.data;</span>
+<span class="nc" id="L724">                List&lt;File&gt; inputFileList = (List&lt;File&gt;) this.data;</span>
 
-<span class="nc" id="L724">                wmPlugin.resetConfig();</span>
-<span class="nc" id="L725">                openStego = new OpenStego(wmPlugin, wmPlugin.getConfig());</span>
-<span class="nc" id="L726">                sigFile = new File(getVerifyWmPanel().getSignatureFileTextField().getText());</span>
+<span class="nc" id="L726">                wmPlugin.resetConfig();</span>
+<span class="nc" id="L727">                openStego = new OpenStego(wmPlugin, wmPlugin.getConfig());</span>
+<span class="nc" id="L728">                sigFile = new File(getVerifyWmPanel().getSignatureFileTextField().getText());</span>
 
-<span class="nc" id="L728">                Object[][] tblData = new Object[inputFileList.size()][2];</span>
-<span class="nc bnc" id="L729" title="All 2 branches missed.">                for (int i = 0; i &lt; inputFileList.size(); i++) {</span>
-<span class="nc" id="L730">                    setProgress(i * 100 / inputFileList.size());</span>
-<span class="nc" id="L731">                    File inputFile = inputFileList.get(i);</span>
-<span class="nc" id="L732">                    correlation = openStego.checkMark(inputFile, sigFile);</span>
-<span class="nc" id="L733">                    tblData[i][0] = inputFile.getName();</span>
+<span class="nc" id="L730">                Object[][] tblData = new Object[inputFileList.size()][2];</span>
+<span class="nc bnc" id="L731" title="All 2 branches missed.">                for (int i = 0; i &lt; inputFileList.size(); i++) {</span>
+<span class="nc" id="L732">                    setProgress(i * 100 / inputFileList.size());</span>
+<span class="nc" id="L733">                    File inputFile = inputFileList.get(i);</span>
+<span class="nc" id="L734">                    correlation = openStego.checkMark(inputFile, sigFile);</span>
+<span class="nc" id="L735">                    tblData[i][0] = inputFile.getName();</span>
                     String color;
-<span class="nc bnc" id="L735" title="All 2 branches missed.">                    if (correlation &gt; wmPlugin.getHighWatermarkLevel()) {</span>
-<span class="nc" id="L736">                        color = &quot;green&quot;;</span>
-<span class="nc bnc" id="L737" title="All 2 branches missed.">                    } else if (correlation &gt; wmPlugin.getLowWatermarkLevel()) {</span>
-<span class="nc" id="L738">                        color = &quot;#FFBF00&quot;;</span>
+<span class="nc bnc" id="L737" title="All 2 branches missed.">                    if (correlation &gt; wmPlugin.getHighWatermarkLevel()) {</span>
+<span class="nc" id="L738">                        color = &quot;green&quot;;</span>
+<span class="nc bnc" id="L739" title="All 2 branches missed.">                    } else if (correlation &gt; wmPlugin.getLowWatermarkLevel()) {</span>
+<span class="nc" id="L740">                        color = &quot;#FFBF00&quot;;</span>
                     } else {
-<span class="nc" id="L740">                        color = &quot;red&quot;;</span>
+<span class="nc" id="L742">                        color = &quot;red&quot;;</span>
                     }
-<span class="nc" id="L742">                    tblData[i][1] = &quot;&lt;html&gt;&lt;span style='color:&quot; + color + &quot;'&gt;\u25cf &quot; + formatter.format(correlation) + &quot;&lt;/span&gt;&lt;/html&gt;&quot;;</span>
+<span class="nc" id="L744">                    tblData[i][1] = &quot;&lt;html&gt;&lt;span style='color:&quot; + color + &quot;'&gt;\u25cf &quot; + formatter.format(correlation) + &quot;&lt;/span&gt;&lt;/html&gt;&quot;;</span>
                 }
-<span class="nc" id="L744">                setProgress(100);</span>
+<span class="nc" id="L746">                setProgress(100);</span>
 
-<span class="nc" id="L746">                return tblData;</span>
+<span class="nc" id="L748">                return tblData;</span>
             }
 
             @Override
             public void done() {
-<span class="nc" id="L751">                super.done();</span>
-<span class="nc bnc" id="L752" title="All 2 branches missed.">                if (isCancelled()) {</span>
-<span class="nc" id="L753">                    return;</span>
+<span class="nc" id="L753">                super.done();</span>
+<span class="nc bnc" id="L754" title="All 2 branches missed.">                if (isCancelled()) {</span>
+<span class="nc" id="L755">                    return;</span>
                 }
 
                 Object[][] tblData;
                 try {
-<span class="nc" id="L758">                    tblData = (Object[][]) get();</span>
-<span class="nc" id="L759">                } catch (InterruptedException exc) {</span>
-<span class="nc" id="L760">                    logger.log(Level.SEVERE, exc.getMessage(), exc);</span>
-<span class="nc" id="L761">                    return;</span>
-<span class="nc" id="L762">                } catch (ExecutionException exc) {</span>
-<span class="nc" id="L763">                    handleException(exc);</span>
-<span class="nc" id="L764">                    return;</span>
-<span class="nc" id="L765">                }</span>
+<span class="nc" id="L760">                    tblData = (Object[][]) get();</span>
+<span class="nc" id="L761">                } catch (InterruptedException exc) {</span>
+<span class="nc" id="L762">                    logger.log(Level.SEVERE, exc.getMessage(), exc);</span>
+<span class="nc" id="L763">                    return;</span>
+<span class="nc" id="L764">                } catch (ExecutionException exc) {</span>
+<span class="nc" id="L765">                    handleException(exc);</span>
+<span class="nc" id="L766">                    return;</span>
+<span class="nc" id="L767">                }</span>
 
-<span class="nc" id="L767">                JTable table = new JTable(tblData, new Object[]{labelUtil.getString(&quot;gui.label.wmVerify.result.header.fileName&quot;),</span>
-<span class="nc" id="L768">                        labelUtil.getString(&quot;gui.label.wmVerify.result.header.strength&quot;)}) {</span>
+<span class="nc" id="L769">                JTable table = new JTable(tblData, new Object[]{labelUtil.getString(&quot;gui.label.wmVerify.result.header.fileName&quot;),</span>
+<span class="nc" id="L770">                        labelUtil.getString(&quot;gui.label.wmVerify.result.header.strength&quot;)}) {</span>
                     /**
                      *
                      */
@@ -773,32 +775,32 @@ public class OpenStegoUI extends OpenStegoFrame {
 
                     @Override
                     public boolean isCellEditable(int rowIndex, int colIndex) {
-<span class="nc" id="L776">                        return false;</span>
+<span class="nc" id="L778">                        return false;</span>
                     }
                 };
-<span class="nc" id="L779">                JScrollPane pane = new JScrollPane(table);</span>
-<span class="nc" id="L780">                table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);</span>
-<span class="nc" id="L781">                table.setDragEnabled(false);</span>
-<span class="nc" id="L782">                table.setCellSelectionEnabled(false);</span>
-<span class="nc" id="L783">                table.setRowSelectionAllowed(false);</span>
-<span class="nc" id="L784">                table.setPreferredScrollableViewportSize(new Dimension(400, 150));</span>
+<span class="nc" id="L781">                JScrollPane pane = new JScrollPane(table);</span>
+<span class="nc" id="L782">                table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);</span>
+<span class="nc" id="L783">                table.setDragEnabled(false);</span>
+<span class="nc" id="L784">                table.setCellSelectionEnabled(false);</span>
+<span class="nc" id="L785">                table.setRowSelectionAllowed(false);</span>
+<span class="nc" id="L786">                table.setPreferredScrollableViewportSize(new Dimension(400, 150));</span>
 
-<span class="nc" id="L786">                JPanel panel = new JPanel(new BorderLayout());</span>
-<span class="nc" id="L787">                JLabel header = new JLabel(labelUtil.getString(&quot;gui.msg.success.wmVerify&quot;));</span>
-<span class="nc" id="L788">                header.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));</span>
-<span class="nc" id="L789">                panel.add(header, BorderLayout.NORTH);</span>
-<span class="nc" id="L790">                panel.add(pane, BorderLayout.CENTER);</span>
+<span class="nc" id="L788">                JPanel panel = new JPanel(new BorderLayout());</span>
+<span class="nc" id="L789">                JLabel header = new JLabel(labelUtil.getString(&quot;gui.msg.success.wmVerify&quot;));</span>
+<span class="nc" id="L790">                header.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));</span>
+<span class="nc" id="L791">                panel.add(header, BorderLayout.NORTH);</span>
+<span class="nc" id="L792">                panel.add(pane, BorderLayout.CENTER);</span>
 
-<span class="nc" id="L792">                JOptionPane.showMessageDialog(this.parent, panel, labelUtil.getString(&quot;gui.msg.title.results&quot;), JOptionPane.INFORMATION_MESSAGE);</span>
+<span class="nc" id="L794">                JOptionPane.showMessageDialog(this.parent, panel, labelUtil.getString(&quot;gui.msg.title.results&quot;), JOptionPane.INFORMATION_MESSAGE);</span>
 
                 // Reset GUI
-<span class="nc" id="L795">                getVerifyWmPanel().getInputFileTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L796">                getVerifyWmPanel().getSignatureFileTextField().setText(&quot;&quot;);</span>
-<span class="nc" id="L797">                getVerifyWmPanel().getInputFileTextField().requestFocus();</span>
-<span class="nc" id="L798">            }</span>
+<span class="nc" id="L797">                getVerifyWmPanel().getInputFileTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L798">                getVerifyWmPanel().getSignatureFileTextField().setText(&quot;&quot;);</span>
+<span class="nc" id="L799">                getVerifyWmPanel().getInputFileTextField().requestFocus();</span>
+<span class="nc" id="L800">            }</span>
         };
-<span class="nc" id="L800">        task.start();</span>
-<span class="nc" id="L801">    }</span>
+<span class="nc" id="L802">        task.start();</span>
+<span class="nc" id="L803">    }</span>
 
     /**
      * This method shows the file chooser and updates the text field based on the selection
@@ -806,146 +808,146 @@ public class OpenStegoUI extends OpenStegoFrame {
      * @throws OpenStegoException Processing issues
      */
     private void selectFile(String action) throws OpenStegoException {
-<span class="nc" id="L809">        FileBrowser browser = new FileBrowser();</span>
+<span class="nc" id="L811">        FileBrowser browser = new FileBrowser();</span>
         String fileName;
         String title;
-<span class="nc" id="L812">        String filterDesc = null;</span>
-<span class="nc" id="L813">        List&lt;String&gt; allowedExts = null;</span>
-<span class="nc" id="L814">        int allowFileDir = FileBrowser.ALLOW_FILE;</span>
-<span class="nc" id="L815">        boolean multiSelect = false;</span>
+<span class="nc" id="L814">        String filterDesc = null;</span>
+<span class="nc" id="L815">        List&lt;String&gt; allowedExts = null;</span>
+<span class="nc" id="L816">        int allowFileDir = FileBrowser.ALLOW_FILE;</span>
+<span class="nc" id="L817">        boolean multiSelect = false;</span>
         int coverFileListSize;
         int wmInputFileListSize;
         JTextField textField;
         OpenStegoPlugin&lt;?&gt; plugin;
 
-<span class="nc bnc" id="L821" title="All 2 branches missed.">        plugin = action.startsWith(&quot;BROWSE_DH_&quot;) ? dhPlugin : wmPlugin;</span>
+<span class="nc bnc" id="L823" title="All 2 branches missed.">        plugin = action.startsWith(&quot;BROWSE_DH_&quot;) ? dhPlugin : wmPlugin;</span>
 
-<span class="nc" id="L823">        coverFileListSize = CommonUtil.parseFileList(getEmbedPanel().getCoverFileTextField().getText(), &quot;;&quot;).size();</span>
-<span class="nc" id="L824">        wmInputFileListSize = CommonUtil.parseFileList(getEmbedWmPanel().getFileForWmTextField().getText(), &quot;;&quot;).size();</span>
+<span class="nc" id="L825">        coverFileListSize = CommonUtil.parseFileList(getEmbedPanel().getCoverFileTextField().getText(), &quot;;&quot;).size();</span>
+<span class="nc" id="L826">        wmInputFileListSize = CommonUtil.parseFileList(getEmbedWmPanel().getFileForWmTextField().getText(), &quot;;&quot;).size();</span>
 
-<span class="nc bnc" id="L826" title="All 12 branches missed.">        switch (action) {</span>
+<span class="nc bnc" id="L828" title="All 12 branches missed.">        switch (action) {</span>
             case ActionCommands.BROWSE_DH_EMB_MSGFILE:
-<span class="nc" id="L828">                title = labelUtil.getString(&quot;gui.filer.title.dhEmbed.msgFile&quot;);</span>
-<span class="nc" id="L829">                textField = getEmbedPanel().getMsgFileTextField();</span>
-<span class="nc" id="L830">                break;</span>
+<span class="nc" id="L830">                title = labelUtil.getString(&quot;gui.filer.title.dhEmbed.msgFile&quot;);</span>
+<span class="nc" id="L831">                textField = getEmbedPanel().getMsgFileTextField();</span>
+<span class="nc" id="L832">                break;</span>
             case ActionCommands.BROWSE_DH_EMB_CVRFILE:
-<span class="nc" id="L832">                title = labelUtil.getString(&quot;gui.filer.title.dhEmbed.coverFile&quot;);</span>
-<span class="nc" id="L833">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.coverFiles&quot;, getExtensionsString(plugin, READ_EXTENSIONS));</span>
-<span class="nc" id="L834">                allowedExts = getExtensionsList(plugin, READ_EXTENSIONS);</span>
-<span class="nc" id="L835">                textField = getEmbedPanel().getCoverFileTextField();</span>
-<span class="nc" id="L836">                multiSelect = true;</span>
-<span class="nc" id="L837">                break;</span>
+<span class="nc" id="L834">                title = labelUtil.getString(&quot;gui.filer.title.dhEmbed.coverFile&quot;);</span>
+<span class="nc" id="L835">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.coverFiles&quot;, getExtensionsString(plugin, READ_EXTENSIONS));</span>
+<span class="nc" id="L836">                allowedExts = getExtensionsList(plugin, READ_EXTENSIONS);</span>
+<span class="nc" id="L837">                textField = getEmbedPanel().getCoverFileTextField();</span>
+<span class="nc" id="L838">                multiSelect = true;</span>
+<span class="nc" id="L839">                break;</span>
             case ActionCommands.BROWSE_DH_EMB_STGFILE:
-<span class="nc" id="L839">                title = labelUtil.getString(&quot;gui.filer.title.dhEmbed.stegoFile&quot;);</span>
-<span class="nc bnc" id="L840" title="All 2 branches missed.">                if (coverFileListSize &gt; 1) {</span>
-<span class="nc" id="L841">                    allowFileDir = FileBrowser.ALLOW_DIRECTORY;</span>
+<span class="nc" id="L841">                title = labelUtil.getString(&quot;gui.filer.title.dhEmbed.stegoFile&quot;);</span>
+<span class="nc bnc" id="L842" title="All 2 branches missed.">                if (coverFileListSize &gt; 1) {</span>
+<span class="nc" id="L843">                    allowFileDir = FileBrowser.ALLOW_DIRECTORY;</span>
                 } else {
-<span class="nc" id="L843">                    filterDesc = labelUtil.getString(&quot;gui.filer.filter.stegoFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
-<span class="nc" id="L844">                    allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
+<span class="nc" id="L845">                    filterDesc = labelUtil.getString(&quot;gui.filer.filter.stegoFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
+<span class="nc" id="L846">                    allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
                 }
-<span class="nc" id="L846">                textField = getEmbedPanel().getStegoFileTextField();</span>
-<span class="nc" id="L847">                break;</span>
+<span class="nc" id="L848">                textField = getEmbedPanel().getStegoFileTextField();</span>
+<span class="nc" id="L849">                break;</span>
             case ActionCommands.BROWSE_DH_EXT_STGFILE:
-<span class="nc" id="L849">                title = labelUtil.getString(&quot;gui.filer.title.dhExtract.stegoFile&quot;);</span>
-<span class="nc" id="L850">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.stegoFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
-<span class="nc" id="L851">                allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
-<span class="nc" id="L852">                textField = getExtractPanel().getInputStegoFileTextField();</span>
-<span class="nc" id="L853">                break;</span>
+<span class="nc" id="L851">                title = labelUtil.getString(&quot;gui.filer.title.dhExtract.stegoFile&quot;);</span>
+<span class="nc" id="L852">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.stegoFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
+<span class="nc" id="L853">                allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
+<span class="nc" id="L854">                textField = getExtractPanel().getInputStegoFileTextField();</span>
+<span class="nc" id="L855">                break;</span>
             case ActionCommands.BROWSE_DH_EXT_OUTDIR:
-<span class="nc" id="L855">                title = labelUtil.getString(&quot;gui.filer.title.dhExtract.outputDir&quot;);</span>
-<span class="nc" id="L856">                allowFileDir = FileBrowser.ALLOW_DIRECTORY;</span>
-<span class="nc" id="L857">                textField = getExtractPanel().getOutputFolderTextField();</span>
-<span class="nc" id="L858">                break;</span>
+<span class="nc" id="L857">                title = labelUtil.getString(&quot;gui.filer.title.dhExtract.outputDir&quot;);</span>
+<span class="nc" id="L858">                allowFileDir = FileBrowser.ALLOW_DIRECTORY;</span>
+<span class="nc" id="L859">                textField = getExtractPanel().getOutputFolderTextField();</span>
+<span class="nc" id="L860">                break;</span>
             case ActionCommands.BROWSE_WM_GSG_SIGFILE:
-<span class="nc" id="L860">                title = labelUtil.getString(&quot;gui.filer.title.wmGenSig.sigFile&quot;);</span>
-<span class="nc" id="L861">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.sigFiles&quot;, &quot;*&quot; + SIG_FILE_EXTENSION);</span>
-<span class="nc" id="L862">                allowedExts = Collections.singletonList(SIG_FILE_EXTENSION);</span>
-<span class="nc" id="L863">                textField = getGenSigPanel().getSignatureFileTextField();</span>
-<span class="nc" id="L864">                break;</span>
+<span class="nc" id="L862">                title = labelUtil.getString(&quot;gui.filer.title.wmGenSig.sigFile&quot;);</span>
+<span class="nc" id="L863">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.sigFiles&quot;, &quot;*&quot; + SIG_FILE_EXTENSION);</span>
+<span class="nc" id="L864">                allowedExts = Collections.singletonList(SIG_FILE_EXTENSION);</span>
+<span class="nc" id="L865">                textField = getGenSigPanel().getSignatureFileTextField();</span>
+<span class="nc" id="L866">                break;</span>
             case ActionCommands.BROWSE_WM_EMB_INPFILE:
-<span class="nc" id="L866">                title = labelUtil.getString(&quot;gui.filer.title.wmEmbed.fileForWm&quot;);</span>
-<span class="nc" id="L867">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.filesForWm&quot;, getExtensionsString(plugin, READ_EXTENSIONS));</span>
-<span class="nc" id="L868">                allowedExts = getExtensionsList(plugin, READ_EXTENSIONS);</span>
-<span class="nc" id="L869">                textField = getEmbedWmPanel().getFileForWmTextField();</span>
-<span class="nc" id="L870">                multiSelect = true;</span>
-<span class="nc" id="L871">                break;</span>
+<span class="nc" id="L868">                title = labelUtil.getString(&quot;gui.filer.title.wmEmbed.fileForWm&quot;);</span>
+<span class="nc" id="L869">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.filesForWm&quot;, getExtensionsString(plugin, READ_EXTENSIONS));</span>
+<span class="nc" id="L870">                allowedExts = getExtensionsList(plugin, READ_EXTENSIONS);</span>
+<span class="nc" id="L871">                textField = getEmbedWmPanel().getFileForWmTextField();</span>
+<span class="nc" id="L872">                multiSelect = true;</span>
+<span class="nc" id="L873">                break;</span>
             case ActionCommands.BROWSE_WM_EMB_SIGFILE:
-<span class="nc" id="L873">                title = labelUtil.getString(&quot;gui.filer.title.wmEmbed.sigFile&quot;);</span>
-<span class="nc" id="L874">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.sigFiles&quot;, &quot;*&quot; + SIG_FILE_EXTENSION);</span>
-<span class="nc" id="L875">                allowedExts = Collections.singletonList(SIG_FILE_EXTENSION);</span>
-<span class="nc" id="L876">                textField = getEmbedWmPanel().getSignatureFileTextField();</span>
-<span class="nc" id="L877">                break;</span>
+<span class="nc" id="L875">                title = labelUtil.getString(&quot;gui.filer.title.wmEmbed.sigFile&quot;);</span>
+<span class="nc" id="L876">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.sigFiles&quot;, &quot;*&quot; + SIG_FILE_EXTENSION);</span>
+<span class="nc" id="L877">                allowedExts = Collections.singletonList(SIG_FILE_EXTENSION);</span>
+<span class="nc" id="L878">                textField = getEmbedWmPanel().getSignatureFileTextField();</span>
+<span class="nc" id="L879">                break;</span>
             case ActionCommands.BROWSE_WM_EMB_OUTFILE:
-<span class="nc" id="L879">                title = labelUtil.getString(&quot;gui.filer.title.wmEmbed.outputWmFile&quot;);</span>
-<span class="nc bnc" id="L880" title="All 2 branches missed.">                if (wmInputFileListSize &gt; 1) {</span>
-<span class="nc" id="L881">                    allowFileDir = FileBrowser.ALLOW_DIRECTORY;</span>
+<span class="nc" id="L881">                title = labelUtil.getString(&quot;gui.filer.title.wmEmbed.outputWmFile&quot;);</span>
+<span class="nc bnc" id="L882" title="All 2 branches missed.">                if (wmInputFileListSize &gt; 1) {</span>
+<span class="nc" id="L883">                    allowFileDir = FileBrowser.ALLOW_DIRECTORY;</span>
                 } else {
-<span class="nc" id="L883">                    filterDesc = labelUtil.getString(&quot;gui.filer.filter.wmFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
-<span class="nc" id="L884">                    allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
+<span class="nc" id="L885">                    filterDesc = labelUtil.getString(&quot;gui.filer.filter.wmFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
+<span class="nc" id="L886">                    allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
                 }
-<span class="nc" id="L886">                textField = getEmbedWmPanel().getOutputWmFileTextField();</span>
-<span class="nc" id="L887">                break;</span>
+<span class="nc" id="L888">                textField = getEmbedWmPanel().getOutputWmFileTextField();</span>
+<span class="nc" id="L889">                break;</span>
             case ActionCommands.BROWSE_WM_VER_INPFILE:
-<span class="nc" id="L889">                title = labelUtil.getString(&quot;gui.filer.title.wmExtract.inputWmFile&quot;);</span>
-<span class="nc" id="L890">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.wmFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
-<span class="nc" id="L891">                allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
-<span class="nc" id="L892">                textField = getVerifyWmPanel().getInputFileTextField();</span>
-<span class="nc" id="L893">                multiSelect = true;</span>
-<span class="nc" id="L894">                break;</span>
+<span class="nc" id="L891">                title = labelUtil.getString(&quot;gui.filer.title.wmExtract.inputWmFile&quot;);</span>
+<span class="nc" id="L892">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.wmFiles&quot;, getExtensionsString(plugin, WRITE_EXTENSIONS));</span>
+<span class="nc" id="L893">                allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);</span>
+<span class="nc" id="L894">                textField = getVerifyWmPanel().getInputFileTextField();</span>
+<span class="nc" id="L895">                multiSelect = true;</span>
+<span class="nc" id="L896">                break;</span>
             case ActionCommands.BROWSE_WM_VER_SIGFILE:
-<span class="nc" id="L896">                title = labelUtil.getString(&quot;gui.filer.title.wmExtract.sigFile&quot;);</span>
-<span class="nc" id="L897">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.sigFiles&quot;, &quot;*&quot; + SIG_FILE_EXTENSION);</span>
-<span class="nc" id="L898">                allowedExts = Collections.singletonList(SIG_FILE_EXTENSION);</span>
-<span class="nc" id="L899">                textField = getVerifyWmPanel().getSignatureFileTextField();</span>
-<span class="nc" id="L900">                break;</span>
+<span class="nc" id="L898">                title = labelUtil.getString(&quot;gui.filer.title.wmExtract.sigFile&quot;);</span>
+<span class="nc" id="L899">                filterDesc = labelUtil.getString(&quot;gui.filer.filter.sigFiles&quot;, &quot;*&quot; + SIG_FILE_EXTENSION);</span>
+<span class="nc" id="L900">                allowedExts = Collections.singletonList(SIG_FILE_EXTENSION);</span>
+<span class="nc" id="L901">                textField = getVerifyWmPanel().getSignatureFileTextField();</span>
+<span class="nc" id="L902">                break;</span>
             default:
-<span class="nc" id="L902">                throw new OpenStegoException(new RuntimeException(&quot;Unknown action: &quot; + action));</span>
+<span class="nc" id="L904">                throw new OpenStegoException(new RuntimeException(&quot;Unknown action: &quot; + action));</span>
         }
 
-<span class="nc bnc" id="L905" title="All 2 branches missed.">        boolean saveDialog = action.equals(ActionCommands.BROWSE_DH_EMB_STGFILE)</span>
-<span class="nc bnc" id="L906" title="All 2 branches missed.">                || action.equals(ActionCommands.BROWSE_WM_EMB_OUTFILE)</span>
-<span class="nc bnc" id="L907" title="All 2 branches missed.">                || action.equals(ActionCommands.BROWSE_WM_GSG_SIGFILE);</span>
-<span class="nc" id="L908">        fileName = browser.getFileName(this, title, filterDesc, allowedExts, allowFileDir, multiSelect, saveDialog);</span>
-<span class="nc bnc" id="L909" title="All 2 branches missed.">        if (fileName != null) {</span>
+<span class="nc bnc" id="L907" title="All 2 branches missed.">        boolean saveDialog = action.equals(ActionCommands.BROWSE_DH_EMB_STGFILE)</span>
+<span class="nc bnc" id="L908" title="All 2 branches missed.">                || action.equals(ActionCommands.BROWSE_WM_EMB_OUTFILE)</span>
+<span class="nc bnc" id="L909" title="All 2 branches missed.">                || action.equals(ActionCommands.BROWSE_WM_GSG_SIGFILE);</span>
+<span class="nc" id="L910">        fileName = browser.getFileName(this, title, filterDesc, allowedExts, allowFileDir, multiSelect, saveDialog);</span>
+<span class="nc bnc" id="L911" title="All 2 branches missed.">        if (fileName != null) {</span>
             // Check for valid extension for output file
-<span class="nc bnc" id="L911" title="All 4 branches missed.">            if ((action.equals(OpenStegoFrame.ActionCommands.BROWSE_DH_EMB_STGFILE) &amp;&amp; (coverFileListSize &lt;= 1))</span>
-<span class="nc bnc" id="L912" title="All 4 branches missed.">                    || (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_EMB_OUTFILE) &amp;&amp; (wmInputFileListSize &lt;= 1))) {</span>
-<span class="nc bnc" id="L913" title="All 2 branches missed.">                if (!plugin.getWritableFileExtensions().contains(fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase())) {</span>
+<span class="nc bnc" id="L913" title="All 4 branches missed.">            if ((action.equals(OpenStegoFrame.ActionCommands.BROWSE_DH_EMB_STGFILE) &amp;&amp; (coverFileListSize &lt;= 1))</span>
+<span class="nc bnc" id="L914" title="All 4 branches missed.">                    || (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_EMB_OUTFILE) &amp;&amp; (wmInputFileListSize &lt;= 1))) {</span>
+<span class="nc bnc" id="L915" title="All 2 branches missed.">                if (!plugin.getWritableFileExtensions().contains(fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase())) {</span>
                     // Replace an existing (unsupported) extension instead of appending a second one,
                     // so that e.g. &quot;photo.txt&quot; becomes &quot;photo.png&quot; rather than &quot;photo.txt.png&quot;
-<span class="nc" id="L916">                    int dotPos = fileName.lastIndexOf('.');</span>
-<span class="nc" id="L917">                    int sepPos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));</span>
-<span class="nc bnc" id="L918" title="All 2 branches missed.">                    if (dotPos &gt; sepPos) {</span>
-<span class="nc" id="L919">                        fileName = fileName.substring(0, dotPos);</span>
+<span class="nc" id="L918">                    int dotPos = fileName.lastIndexOf('.');</span>
+<span class="nc" id="L919">                    int sepPos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));</span>
+<span class="nc bnc" id="L920" title="All 2 branches missed.">                    if (dotPos &gt; sepPos) {</span>
+<span class="nc" id="L921">                        fileName = fileName.substring(0, dotPos);</span>
                     }
-<span class="nc" id="L921">                    fileName = fileName + &quot;.&quot; + plugin.getWritableFileExtensions().get(0);</span>
+<span class="nc" id="L923">                    fileName = fileName + &quot;.&quot; + plugin.getWritableFileExtensions().get(0);</span>
                 }
             }
             // Check for valid extension for signature file
-<span class="nc bnc" id="L925" title="All 2 branches missed.">            if (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_GSG_SIGFILE)) {</span>
-<span class="nc bnc" id="L926" title="All 2 branches missed.">                if (!fileName.toLowerCase().endsWith(SIG_FILE_EXTENSION)) {</span>
-<span class="nc" id="L927">                    fileName = fileName + SIG_FILE_EXTENSION;</span>
+<span class="nc bnc" id="L927" title="All 2 branches missed.">            if (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_GSG_SIGFILE)) {</span>
+<span class="nc bnc" id="L928" title="All 2 branches missed.">                if (!fileName.toLowerCase().endsWith(SIG_FILE_EXTENSION)) {</span>
+<span class="nc" id="L929">                    fileName = fileName + SIG_FILE_EXTENSION;</span>
                 }
             }
-<span class="nc" id="L930">            textField.setText(fileName);</span>
+<span class="nc" id="L932">            textField.setText(fileName);</span>
         }
-<span class="nc" id="L932">    }</span>
+<span class="nc" id="L934">    }</span>
 
     /**
      * This method exits the application.
      */
     private void close() {
-<span class="nc" id="L938">        saveSettings();</span>
-<span class="nc" id="L939">        System.exit(0);</span>
-<span class="nc" id="L940">    }</span>
+<span class="nc" id="L940">        saveSettings();</span>
+<span class="nc" id="L941">        System.exit(0);</span>
+<span class="nc" id="L942">    }</span>
 
     /**
      * This method displays the About dialog box
      */
     private void showHelpAbout() {
-<span class="nc" id="L946">        HelpAboutDialog aboutDialog = new HelpAboutDialog(this);</span>
-<span class="nc" id="L947">        aboutDialog.setVisible(true);</span>
-<span class="nc" id="L948">    }</span>
+<span class="nc" id="L948">        HelpAboutDialog aboutDialog = new HelpAboutDialog(this);</span>
+<span class="nc" id="L949">        aboutDialog.setVisible(true);</span>
+<span class="nc" id="L950">    }</span>
 
     /**
      * This method handles all the exceptions in the GUI
@@ -955,32 +957,32 @@ public class OpenStegoUI extends OpenStegoFrame {
     private void handleException(Throwable ex) {
         Object msg;
 
-<span class="nc bnc" id="L958" title="All 2 branches missed.">        if (ex instanceof OutOfMemoryError) {</span>
-<span class="nc" id="L959">            msg = labelUtil.getString(&quot;err.memory.full&quot;);</span>
-<span class="nc bnc" id="L960" title="All 2 branches missed.">        } else if (ex instanceof OpenStegoException) {</span>
-<span class="nc" id="L961">            msg = ex.getMessage();</span>
-<span class="nc bnc" id="L962" title="All 2 branches missed.">        } else if (ex instanceof OpenStegoBulkException) {</span>
-<span class="nc" id="L963">            msg = getBulkMessage((OpenStegoBulkException) ex);</span>
+<span class="nc bnc" id="L960" title="All 2 branches missed.">        if (ex instanceof OutOfMemoryError) {</span>
+<span class="nc" id="L961">            msg = labelUtil.getString(&quot;err.memory.full&quot;);</span>
+<span class="nc bnc" id="L962" title="All 2 branches missed.">        } else if (ex instanceof OpenStegoException) {</span>
+<span class="nc" id="L963">            msg = ex.getMessage();</span>
+<span class="nc bnc" id="L964" title="All 2 branches missed.">        } else if (ex instanceof OpenStegoBulkException) {</span>
+<span class="nc" id="L965">            msg = getBulkMessage((OpenStegoBulkException) ex);</span>
         } else {
-<span class="nc" id="L965">            Throwable cause = ex.getCause();</span>
-<span class="nc bnc" id="L966" title="All 2 branches missed.">            if (cause instanceof OpenStegoException) {</span>
-<span class="nc" id="L967">                msg = cause.getMessage();</span>
-<span class="nc bnc" id="L968" title="All 2 branches missed.">            } else if (cause instanceof OpenStegoBulkException) {</span>
-<span class="nc" id="L969">                msg = getBulkMessage((OpenStegoBulkException) cause);</span>
+<span class="nc" id="L967">            Throwable cause = ex.getCause();</span>
+<span class="nc bnc" id="L968" title="All 2 branches missed.">            if (cause instanceof OpenStegoException) {</span>
+<span class="nc" id="L969">                msg = cause.getMessage();</span>
+<span class="nc bnc" id="L970" title="All 2 branches missed.">            } else if (cause instanceof OpenStegoBulkException) {</span>
+<span class="nc" id="L971">                msg = getBulkMessage((OpenStegoBulkException) cause);</span>
             } else {
-<span class="nc" id="L971">                msg = ex.getMessage();</span>
+<span class="nc" id="L973">                msg = ex.getMessage();</span>
             }
         }
 
-<span class="nc bnc" id="L975" title="All 6 branches missed.">        if (msg == null || (msg instanceof String &amp;&amp; ((String) msg).trim().equals(&quot;&quot;))) {</span>
-<span class="nc" id="L976">            StringWriter writer = new StringWriter();</span>
-<span class="nc" id="L977">            ex.printStackTrace(new PrintWriter(writer));</span>
-<span class="nc" id="L978">            msg = writer.toString();</span>
+<span class="nc bnc" id="L977" title="All 6 branches missed.">        if (msg == null || (msg instanceof String &amp;&amp; ((String) msg).trim().equals(&quot;&quot;))) {</span>
+<span class="nc" id="L978">            StringWriter writer = new StringWriter();</span>
+<span class="nc" id="L979">            ex.printStackTrace(new PrintWriter(writer));</span>
+<span class="nc" id="L980">            msg = writer.toString();</span>
         }
 
-<span class="nc" id="L981">        logger.log(Level.SEVERE, ex.getMessage(), ex);</span>
-<span class="nc" id="L982">        JOptionPane.showMessageDialog(this, msg, labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
-<span class="nc" id="L983">    }</span>
+<span class="nc" id="L983">        logger.log(Level.SEVERE, ex.getMessage(), ex);</span>
+<span class="nc" id="L984">        JOptionPane.showMessageDialog(this, msg, labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
+<span class="nc" id="L985">    }</span>
 
     /**
      * Helper method to build single output component out of all exceptions within a Bulk Exception
@@ -989,26 +991,26 @@ public class OpenStegoUI extends OpenStegoFrame {
      * @return Output message component
      */
     private Object getBulkMessage(OpenStegoBulkException ex) {
-<span class="nc" id="L992">        int len = ex.getExceptions().size();</span>
-<span class="nc bnc" id="L993" title="All 2 branches missed.">        if (len == 1) {</span>
-<span class="nc" id="L994">            return ex.getExceptions().get(0);</span>
+<span class="nc" id="L994">        int len = ex.getExceptions().size();</span>
+<span class="nc bnc" id="L995" title="All 2 branches missed.">        if (len == 1) {</span>
+<span class="nc" id="L996">            return ex.getExceptions().get(0);</span>
         }
 
-<span class="nc" id="L997">        String prefix = &quot;&lt;html&gt;&lt;head&gt;&lt;style type='text/css'&gt;&quot; +</span>
+<span class="nc" id="L999">        String prefix = &quot;&lt;html&gt;&lt;head&gt;&lt;style type='text/css'&gt;&quot; +</span>
                 &quot;table, th, td { border: 1px solid #333; }&quot; +
                 &quot;table { border-width: 0 0 1px 1px }&quot; +
                 &quot;th, td { border-width: 1px 1px 0 0 }&quot; +
                 &quot;td { background-color: white }&quot; +
                 &quot;&lt;/style&gt;&lt;/head&gt;&lt;body&gt;&lt;table border='0' cellspacing='0' cellpadding='5'&gt;&quot;;
-<span class="nc" id="L1003">        StringBuilder sb = new StringBuilder(prefix).append(&quot;&lt;tr&gt;&lt;th&gt;&quot;)</span>
-<span class="nc" id="L1004">                .append(labelUtil.getString(&quot;gui.msg.err.header.file&quot;)).append(&quot;&lt;/th&gt;&lt;th&gt;&quot;)</span>
-<span class="nc" id="L1005">                .append(labelUtil.getString(&quot;gui.msg.err.header.error&quot;)).append(&quot;&lt;/th&gt;&lt;/tr&gt;&quot;);</span>
-<span class="nc bnc" id="L1006" title="All 2 branches missed.">        for (int i = 0; i &lt; ex.getKeys().size(); i++) {</span>
-<span class="nc" id="L1007">            sb.append(&quot;&lt;tr&gt;&lt;td&gt;&quot;).append(ex.getKeys().get(i)).append(&quot;&lt;/td&gt;&lt;td&gt;&quot;)</span>
-<span class="nc" id="L1008">                    .append(ex.getExceptions().get(i).getMessage()).append(&quot;&lt;/td&gt;&lt;/tr&gt;&quot;);</span>
+<span class="nc" id="L1005">        StringBuilder sb = new StringBuilder(prefix).append(&quot;&lt;tr&gt;&lt;th&gt;&quot;)</span>
+<span class="nc" id="L1006">                .append(labelUtil.getString(&quot;gui.msg.err.header.file&quot;)).append(&quot;&lt;/th&gt;&lt;th&gt;&quot;)</span>
+<span class="nc" id="L1007">                .append(labelUtil.getString(&quot;gui.msg.err.header.error&quot;)).append(&quot;&lt;/th&gt;&lt;/tr&gt;&quot;);</span>
+<span class="nc bnc" id="L1008" title="All 2 branches missed.">        for (int i = 0; i &lt; ex.getKeys().size(); i++) {</span>
+<span class="nc" id="L1009">            sb.append(&quot;&lt;tr&gt;&lt;td&gt;&quot;).append(ex.getKeys().get(i)).append(&quot;&lt;/td&gt;&lt;td&gt;&quot;)</span>
+<span class="nc" id="L1010">                    .append(ex.getExceptions().get(i).getMessage()).append(&quot;&lt;/td&gt;&lt;/tr&gt;&quot;);</span>
         }
-<span class="nc" id="L1010">        sb.append(&quot;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;&quot;);</span>
-<span class="nc" id="L1011">        return new JLabel(sb.toString());</span>
+<span class="nc" id="L1012">        sb.append(&quot;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;&quot;);</span>
+<span class="nc" id="L1013">        return new JLabel(sb.toString());</span>
     }
 
     /**
@@ -1020,20 +1022,20 @@ public class OpenStegoUI extends OpenStegoFrame {
      */
     @SuppressWarnings(&quot;BooleanMethodIsAlwaysInverted&quot;)
     private boolean checkMandatory(JTextField textField, String fieldName) {
-<span class="nc bnc" id="L1023" title="All 2 branches missed.">        if (!textField.isEnabled()) {</span>
-<span class="nc" id="L1024">            return true;</span>
+<span class="nc bnc" id="L1025" title="All 2 branches missed.">        if (!textField.isEnabled()) {</span>
+<span class="nc" id="L1026">            return true;</span>
         }
 
-<span class="nc" id="L1027">        String value = textField.getText();</span>
-<span class="nc bnc" id="L1028" title="All 4 branches missed.">        if (value == null || value.trim().equals(&quot;&quot;)) {</span>
-<span class="nc" id="L1029">            JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.err.mandatoryCheck&quot;, fieldName),</span>
-<span class="nc" id="L1030">                    labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
+<span class="nc" id="L1029">        String value = textField.getText();</span>
+<span class="nc bnc" id="L1030" title="All 4 branches missed.">        if (value == null || value.trim().equals(&quot;&quot;)) {</span>
+<span class="nc" id="L1031">            JOptionPane.showMessageDialog(this, labelUtil.getString(&quot;gui.msg.err.mandatoryCheck&quot;, fieldName),</span>
+<span class="nc" id="L1032">                    labelUtil.getString(&quot;gui.msg.title.err&quot;), JOptionPane.ERROR_MESSAGE);</span>
 
-<span class="nc" id="L1032">            textField.requestFocus();</span>
-<span class="nc" id="L1033">            return false;</span>
+<span class="nc" id="L1034">            textField.requestFocus();</span>
+<span class="nc" id="L1035">            return false;</span>
         }
 
-<span class="nc" id="L1036">        return true;</span>
+<span class="nc" id="L1038">        return true;</span>
     }
 
     /**
@@ -1047,16 +1049,16 @@ public class OpenStegoUI extends OpenStegoFrame {
      */
     private String getExtensionsString(OpenStegoPlugin&lt;?&gt; plugin, int flag) throws OpenStegoException {
         List&lt;String&gt; list;
-<span class="nc" id="L1050">        StringBuilder output = new StringBuilder();</span>
+<span class="nc" id="L1052">        StringBuilder output = new StringBuilder();</span>
 
-<span class="nc" id="L1052">        list = getExtensionsList(plugin, flag);</span>
-<span class="nc bnc" id="L1053" title="All 2 branches missed.">        for (int i = 0; i &lt; list.size(); i++) {</span>
-<span class="nc bnc" id="L1054" title="All 2 branches missed.">            if (i &gt; 0) {</span>
-<span class="nc" id="L1055">                output.append(&quot;, &quot;);</span>
+<span class="nc" id="L1054">        list = getExtensionsList(plugin, flag);</span>
+<span class="nc bnc" id="L1055" title="All 2 branches missed.">        for (int i = 0; i &lt; list.size(); i++) {</span>
+<span class="nc bnc" id="L1056" title="All 2 branches missed.">            if (i &gt; 0) {</span>
+<span class="nc" id="L1057">                output.append(&quot;, &quot;);</span>
             }
-<span class="nc" id="L1057">            output.append(&quot;*&quot;).append(list.get(i));</span>
+<span class="nc" id="L1059">            output.append(&quot;*&quot;).append(list.get(i));</span>
         }
-<span class="nc" id="L1059">        return output.toString();</span>
+<span class="nc" id="L1061">        return output.toString();</span>
     }
 
     /**
@@ -1070,133 +1072,133 @@ public class OpenStegoUI extends OpenStegoFrame {
      */
     private List&lt;String&gt; getExtensionsList(OpenStegoPlugin&lt;?&gt; plugin, int flag) throws OpenStegoException {
         List&lt;String&gt; list;
-<span class="nc" id="L1073">        List&lt;String&gt; output = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L1075">        List&lt;String&gt; output = new ArrayList&lt;&gt;();</span>
 
-<span class="nc bnc" id="L1075" title="All 2 branches missed.">        if (flag == READ_EXTENSIONS) {</span>
-<span class="nc" id="L1076">            list = plugin.getReadableFileExtensions();</span>
-<span class="nc bnc" id="L1077" title="All 2 branches missed.">        } else if (flag == WRITE_EXTENSIONS) {</span>
-<span class="nc" id="L1078">            list = plugin.getWritableFileExtensions();</span>
+<span class="nc bnc" id="L1077" title="All 2 branches missed.">        if (flag == READ_EXTENSIONS) {</span>
+<span class="nc" id="L1078">            list = plugin.getReadableFileExtensions();</span>
+<span class="nc bnc" id="L1079" title="All 2 branches missed.">        } else if (flag == WRITE_EXTENSIONS) {</span>
+<span class="nc" id="L1080">            list = plugin.getWritableFileExtensions();</span>
         } else {
-<span class="nc" id="L1080">            throw new OpenStegoException(new RuntimeException(&quot;Unknown flag: &quot; + flag));</span>
+<span class="nc" id="L1082">            throw new OpenStegoException(new RuntimeException(&quot;Unknown flag: &quot; + flag));</span>
         }
 
-<span class="nc bnc" id="L1083" title="All 2 branches missed.">        for (String s : list) {</span>
-<span class="nc" id="L1084">            output.add(&quot;.&quot; + s);</span>
-<span class="nc" id="L1085">        }</span>
-<span class="nc" id="L1086">        return output;</span>
+<span class="nc bnc" id="L1085" title="All 2 branches missed.">        for (String s : list) {</span>
+<span class="nc" id="L1086">            output.add(&quot;.&quot; + s);</span>
+<span class="nc" id="L1087">        }</span>
+<span class="nc" id="L1088">        return output;</span>
     }
 
     /**
      * Common listener class to handlw action and window events
      */
-<span class="nc" id="L1092">    class Listener implements ActionListener, WindowListener {</span>
+<span class="nc" id="L1094">    class Listener implements ActionListener, WindowListener {</span>
         @Override
         public void actionPerformed(ActionEvent ev) {
             try {
-<span class="nc" id="L1096">                String action = ev.getActionCommand();</span>
+<span class="nc" id="L1098">                String action = ev.getActionCommand();</span>
 
-<span class="nc bnc" id="L1098" title="All 2 branches missed.">                if (action.startsWith(&quot;MENU_&quot;)) {</span>
-<span class="nc bnc" id="L1099" title="All 2 branches missed.">                    if (action.equals(OpenStegoFrame.ActionCommands.MENU_FILE_EXIT)) {</span>
-<span class="nc" id="L1100">                        close();</span>
-<span class="nc bnc" id="L1101" title="All 2 branches missed.">                    } else if (action.equals(OpenStegoFrame.ActionCommands.MENU_HELP_ABOUT)) {</span>
-<span class="nc" id="L1102">                        showHelpAbout();</span>
+<span class="nc bnc" id="L1100" title="All 2 branches missed.">                if (action.startsWith(&quot;MENU_&quot;)) {</span>
+<span class="nc bnc" id="L1101" title="All 2 branches missed.">                    if (action.equals(OpenStegoFrame.ActionCommands.MENU_FILE_EXIT)) {</span>
+<span class="nc" id="L1102">                        close();</span>
+<span class="nc bnc" id="L1103" title="All 2 branches missed.">                    } else if (action.equals(OpenStegoFrame.ActionCommands.MENU_HELP_ABOUT)) {</span>
+<span class="nc" id="L1104">                        showHelpAbout();</span>
                     }
-<span class="nc bnc" id="L1104" title="All 2 branches missed.">                } else if (action.startsWith(&quot;BROWSE_&quot;)) {</span>
-<span class="nc" id="L1105">                    selectFile(action);</span>
-<span class="nc bnc" id="L1106" title="All 2 branches missed.">                } else if (action.startsWith(&quot;SWITCH_&quot;)) {</span>
-<span class="nc" id="L1107">                    getMainPanel().removeAll();</span>
-<span class="nc bnc" id="L1108" title="All 6 branches missed.">                    switch (action) {</span>
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">                } else if (action.startsWith(&quot;BROWSE_&quot;)) {</span>
+<span class="nc" id="L1107">                    selectFile(action);</span>
+<span class="nc bnc" id="L1108" title="All 2 branches missed.">                } else if (action.startsWith(&quot;SWITCH_&quot;)) {</span>
+<span class="nc" id="L1109">                    getMainPanel().removeAll();</span>
+<span class="nc bnc" id="L1110" title="All 6 branches missed.">                    switch (action) {</span>
                         case ActionCommands.SWITCH_DH_EMBED:
-<span class="nc" id="L1110">                            getMainPanel().add(getEmbedPanel());</span>
-<span class="nc" id="L1111">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.dhEmbed&quot;));</span>
-<span class="nc" id="L1112">                            getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());</span>
-<span class="nc" id="L1113">                            break;</span>
+<span class="nc" id="L1112">                            getMainPanel().add(getEmbedPanel());</span>
+<span class="nc" id="L1113">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.dhEmbed&quot;));</span>
+<span class="nc" id="L1114">                            getRootPane().setDefaultButton(getEmbedPanel().getRunEmbedButton());</span>
+<span class="nc" id="L1115">                            break;</span>
                         case ActionCommands.SWITCH_DH_EXTRACT:
-<span class="nc" id="L1115">                            getMainPanel().add(getExtractPanel());</span>
-<span class="nc" id="L1116">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.dhExtract&quot;));</span>
-<span class="nc" id="L1117">                            getRootPane().setDefaultButton(getExtractPanel().getRunExtractButton());</span>
-<span class="nc" id="L1118">                            break;</span>
+<span class="nc" id="L1117">                            getMainPanel().add(getExtractPanel());</span>
+<span class="nc" id="L1118">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.dhExtract&quot;));</span>
+<span class="nc" id="L1119">                            getRootPane().setDefaultButton(getExtractPanel().getRunExtractButton());</span>
+<span class="nc" id="L1120">                            break;</span>
                         case ActionCommands.SWITCH_WM_GENSIG:
-<span class="nc" id="L1120">                            getMainPanel().add(getGenSigPanel());</span>
-<span class="nc" id="L1121">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.wmGenSig&quot;));</span>
-<span class="nc" id="L1122">                            getRootPane().setDefaultButton(getGenSigPanel().getRunGenSigButton());</span>
-<span class="nc" id="L1123">                            break;</span>
+<span class="nc" id="L1122">                            getMainPanel().add(getGenSigPanel());</span>
+<span class="nc" id="L1123">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.wmGenSig&quot;));</span>
+<span class="nc" id="L1124">                            getRootPane().setDefaultButton(getGenSigPanel().getRunGenSigButton());</span>
+<span class="nc" id="L1125">                            break;</span>
                         case ActionCommands.SWITCH_WM_EMBED:
-<span class="nc" id="L1125">                            getMainPanel().add(getEmbedWmPanel());</span>
-<span class="nc" id="L1126">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.wmEmbed&quot;));</span>
-<span class="nc" id="L1127">                            getRootPane().setDefaultButton(getEmbedWmPanel().getRunEmbedWmButton());</span>
-<span class="nc" id="L1128">                            break;</span>
+<span class="nc" id="L1127">                            getMainPanel().add(getEmbedWmPanel());</span>
+<span class="nc" id="L1128">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.wmEmbed&quot;));</span>
+<span class="nc" id="L1129">                            getRootPane().setDefaultButton(getEmbedWmPanel().getRunEmbedWmButton());</span>
+<span class="nc" id="L1130">                            break;</span>
                         case ActionCommands.SWITCH_WM_VERIFY:
-<span class="nc" id="L1130">                            getMainPanel().add(getVerifyWmPanel());</span>
-<span class="nc" id="L1131">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.wmVerify&quot;));</span>
-<span class="nc" id="L1132">                            getRootPane().setDefaultButton(getVerifyWmPanel().getRunVerifyWmButton());</span>
+<span class="nc" id="L1132">                            getMainPanel().add(getVerifyWmPanel());</span>
+<span class="nc" id="L1133">                            getHeader().setText(labelUtil.getString(&quot;gui.label.panelHeader.wmVerify&quot;));</span>
+<span class="nc" id="L1134">                            getRootPane().setDefaultButton(getVerifyWmPanel().getRunVerifyWmButton());</span>
                             break;
                     }
-<span class="nc" id="L1135">                    getMainPanel().revalidate();</span>
-<span class="nc" id="L1136">                    getMainPanel().repaint();</span>
-<span class="nc bnc" id="L1137" title="All 2 branches missed.">                } else if (action.startsWith(&quot;RUN_&quot;)) {</span>
+<span class="nc" id="L1137">                    getMainPanel().revalidate();</span>
+<span class="nc" id="L1138">                    getMainPanel().repaint();</span>
+<span class="nc bnc" id="L1139" title="All 2 branches missed.">                } else if (action.startsWith(&quot;RUN_&quot;)) {</span>
                     try {
-<span class="nc" id="L1139">                        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));</span>
-<span class="nc bnc" id="L1140" title="All 6 branches missed.">                        switch (action) {</span>
+<span class="nc" id="L1141">                        setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));</span>
+<span class="nc bnc" id="L1142" title="All 6 branches missed.">                        switch (action) {</span>
                             case ActionCommands.RUN_DH_EMBED:
-<span class="nc" id="L1142">                                embedData();</span>
-<span class="nc" id="L1143">                                break;</span>
+<span class="nc" id="L1144">                                embedData();</span>
+<span class="nc" id="L1145">                                break;</span>
                             case ActionCommands.RUN_DH_EXTRACT:
-<span class="nc" id="L1145">                                extractData();</span>
-<span class="nc" id="L1146">                                break;</span>
+<span class="nc" id="L1147">                                extractData();</span>
+<span class="nc" id="L1148">                                break;</span>
                             case ActionCommands.RUN_WM_GENSIG:
-<span class="nc" id="L1148">                                generateSignature();</span>
-<span class="nc" id="L1149">                                break;</span>
+<span class="nc" id="L1150">                                generateSignature();</span>
+<span class="nc" id="L1151">                                break;</span>
                             case ActionCommands.RUN_WM_EMBED:
-<span class="nc" id="L1151">                                embedMark();</span>
-<span class="nc" id="L1152">                                break;</span>
+<span class="nc" id="L1153">                                embedMark();</span>
+<span class="nc" id="L1154">                                break;</span>
                             case ActionCommands.RUN_WM_VERIFY:
-<span class="nc" id="L1154">                                checkMark();</span>
+<span class="nc" id="L1156">                                checkMark();</span>
                                 break;
                         }
                     } finally {
-<span class="nc" id="L1158">                        setCursor(Cursor.getDefaultCursor());</span>
+<span class="nc" id="L1160">                        setCursor(Cursor.getDefaultCursor());</span>
                     }
                 }
-<span class="nc" id="L1161">            } catch (Throwable ex) {</span>
-<span class="nc" id="L1162">                handleException(ex);</span>
-<span class="nc" id="L1163">            }</span>
-<span class="nc" id="L1164">        }</span>
+<span class="nc" id="L1163">            } catch (Throwable ex) {</span>
+<span class="nc" id="L1164">                handleException(ex);</span>
+<span class="nc" id="L1165">            }</span>
+<span class="nc" id="L1166">        }</span>
 
         @Override
         public void windowClosing(WindowEvent ev) {
-<span class="nc" id="L1168">            close();</span>
-<span class="nc" id="L1169">        }</span>
+<span class="nc" id="L1170">            close();</span>
+<span class="nc" id="L1171">        }</span>
 
         @Override
         public void windowActivated(WindowEvent ev) {
-<span class="nc" id="L1173">        }</span>
+<span class="nc" id="L1175">        }</span>
 
         @Override
         public void windowClosed(WindowEvent ev) {
-<span class="nc" id="L1177">        }</span>
+<span class="nc" id="L1179">        }</span>
 
         @Override
         public void windowDeactivated(WindowEvent ev) {
-<span class="nc" id="L1181">        }</span>
+<span class="nc" id="L1183">        }</span>
 
         @Override
         public void windowDeiconified(WindowEvent ev) {
-<span class="nc" id="L1185">        }</span>
+<span class="nc" id="L1187">        }</span>
 
         @Override
         public void windowIconified(WindowEvent ev) {
-<span class="nc" id="L1189">        }</span>
+<span class="nc" id="L1191">        }</span>
 
         @Override
         public void windowOpened(WindowEvent ev) {
-<span class="nc" id="L1193">        }</span>
+<span class="nc" id="L1195">        }</span>
     }
 
     /**
      * Class to implement File Chooser
      */
-<span class="nc" id="L1199">    static class FileBrowser {</span>
+<span class="nc" id="L1201">    static class FileBrowser {</span>
         public static final int ALLOW_FILE = 1;
         public static final int ALLOW_DIRECTORY = 2;
         public static final int ALLOW_FILE_AND_DIR = 3;
@@ -1223,10 +1225,10 @@ public class OpenStegoUI extends OpenStegoFrame {
                                   boolean multiSelect, boolean saveDialog) {
             // The native AWT file dialog can only select files, so fall back to the Swing chooser when a
             // directory may be selected.
-<span class="nc bnc" id="L1226" title="All 2 branches missed.">            if (allowFileDir != ALLOW_FILE) {</span>
-<span class="nc" id="L1227">                return getFileNameUsingChooser(dialogTitle, filterDesc, allowedExts, allowFileDir, multiSelect);</span>
+<span class="nc bnc" id="L1228" title="All 2 branches missed.">            if (allowFileDir != ALLOW_FILE) {</span>
+<span class="nc" id="L1229">                return getFileNameUsingChooser(dialogTitle, filterDesc, allowedExts, allowFileDir, multiSelect);</span>
             }
-<span class="nc" id="L1229">            return getFileNameUsingNativeDialog(parent, dialogTitle, allowedExts, multiSelect, saveDialog);</span>
+<span class="nc" id="L1231">            return getFileNameUsingNativeDialog(parent, dialogTitle, allowedExts, multiSelect, saveDialog);</span>
         }
 
         /**
@@ -1234,54 +1236,54 @@ public class OpenStegoUI extends OpenStegoFrame {
          */
         private String getFileNameUsingNativeDialog(Frame parent, String dialogTitle, List&lt;String&gt; allowedExts, boolean multiSelect,
                                                     boolean saveDialog) {
-<span class="nc bnc" id="L1237" title="All 2 branches missed.">            FileDialog dialog = new FileDialog(parent, dialogTitle, saveDialog ? FileDialog.SAVE : FileDialog.LOAD);</span>
-<span class="nc bnc" id="L1238" title="All 2 branches missed.">            if (lastFolder != null) {</span>
-<span class="nc" id="L1239">                dialog.setDirectory(lastFolder);</span>
+<span class="nc bnc" id="L1239" title="All 2 branches missed.">            FileDialog dialog = new FileDialog(parent, dialogTitle, saveDialog ? FileDialog.SAVE : FileDialog.LOAD);</span>
+<span class="nc bnc" id="L1240" title="All 2 branches missed.">            if (lastFolder != null) {</span>
+<span class="nc" id="L1241">                dialog.setDirectory(lastFolder);</span>
             }
-<span class="nc" id="L1241">            dialog.setMultipleMode(multiSelect);</span>
+<span class="nc" id="L1243">            dialog.setMultipleMode(multiSelect);</span>
 
-<span class="nc bnc" id="L1243" title="All 4 branches missed.">            if (allowedExts != null &amp;&amp; !allowedExts.isEmpty()) {</span>
+<span class="nc bnc" id="L1245" title="All 4 branches missed.">            if (allowedExts != null &amp;&amp; !allowedExts.isEmpty()) {</span>
                 // Linux/macOS honor the FilenameFilter; Windows honors a wildcard pattern set via setFile().
-<span class="nc" id="L1245">                dialog.setFilenameFilter((dir, name) -&gt; {</span>
-<span class="nc" id="L1246">                    String lower = name.toLowerCase();</span>
-<span class="nc bnc" id="L1247" title="All 2 branches missed.">                    for (String ext : allowedExts) {</span>
-<span class="nc bnc" id="L1248" title="All 2 branches missed.">                        if (lower.endsWith(ext.toLowerCase())) {</span>
-<span class="nc" id="L1249">                            return true;</span>
+<span class="nc" id="L1247">                dialog.setFilenameFilter((dir, name) -&gt; {</span>
+<span class="nc" id="L1248">                    String lower = name.toLowerCase();</span>
+<span class="nc bnc" id="L1249" title="All 2 branches missed.">                    for (String ext : allowedExts) {</span>
+<span class="nc bnc" id="L1250" title="All 2 branches missed.">                        if (lower.endsWith(ext.toLowerCase())) {</span>
+<span class="nc" id="L1251">                            return true;</span>
                         }
-<span class="nc" id="L1251">                    }</span>
-<span class="nc" id="L1252">                    return false;</span>
+<span class="nc" id="L1253">                    }</span>
+<span class="nc" id="L1254">                    return false;</span>
                 });
-<span class="nc bnc" id="L1254" title="All 2 branches missed.">                if (!saveDialog) {</span>
-<span class="nc" id="L1255">                    StringBuilder pattern = new StringBuilder();</span>
-<span class="nc bnc" id="L1256" title="All 2 branches missed.">                    for (String ext : allowedExts) {</span>
-<span class="nc bnc" id="L1257" title="All 2 branches missed.">                        if (pattern.length() &gt; 0) {</span>
-<span class="nc" id="L1258">                            pattern.append(&quot;;&quot;);</span>
+<span class="nc bnc" id="L1256" title="All 2 branches missed.">                if (!saveDialog) {</span>
+<span class="nc" id="L1257">                    StringBuilder pattern = new StringBuilder();</span>
+<span class="nc bnc" id="L1258" title="All 2 branches missed.">                    for (String ext : allowedExts) {</span>
+<span class="nc bnc" id="L1259" title="All 2 branches missed.">                        if (pattern.length() &gt; 0) {</span>
+<span class="nc" id="L1260">                            pattern.append(&quot;;&quot;);</span>
                         }
-<span class="nc bnc" id="L1260" title="All 2 branches missed.">                        pattern.append(&quot;*&quot;).append(ext.startsWith(&quot;.&quot;) ? ext : &quot;.&quot; + ext);</span>
-<span class="nc" id="L1261">                    }</span>
-<span class="nc" id="L1262">                    dialog.setFile(pattern.toString());</span>
+<span class="nc bnc" id="L1262" title="All 2 branches missed.">                        pattern.append(&quot;*&quot;).append(ext.startsWith(&quot;.&quot;) ? ext : &quot;.&quot; + ext);</span>
+<span class="nc" id="L1263">                    }</span>
+<span class="nc" id="L1264">                    dialog.setFile(pattern.toString());</span>
                 }
             }
 
-<span class="nc" id="L1266">            dialog.setVisible(true);</span>
+<span class="nc" id="L1268">            dialog.setVisible(true);</span>
 
-<span class="nc" id="L1268">            File[] files = dialog.getFiles();</span>
-<span class="nc bnc" id="L1269" title="All 4 branches missed.">            if (files == null || files.length == 0) {</span>
-<span class="nc" id="L1270">                return null;</span>
+<span class="nc" id="L1270">            File[] files = dialog.getFiles();</span>
+<span class="nc bnc" id="L1271" title="All 4 branches missed.">            if (files == null || files.length == 0) {</span>
+<span class="nc" id="L1272">                return null;</span>
             }
-<span class="nc" id="L1272">            lastFolder = dialog.getDirectory();</span>
+<span class="nc" id="L1274">            lastFolder = dialog.getDirectory();</span>
 
-<span class="nc bnc" id="L1274" title="All 2 branches missed.">            if (multiSelect) {</span>
-<span class="nc" id="L1275">                StringBuilder fileList = new StringBuilder();</span>
-<span class="nc bnc" id="L1276" title="All 2 branches missed.">                for (int i = 0; i &lt; files.length; i++) {</span>
-<span class="nc bnc" id="L1277" title="All 2 branches missed.">                    if (i != 0) {</span>
-<span class="nc" id="L1278">                        fileList.append(&quot;;&quot;);</span>
+<span class="nc bnc" id="L1276" title="All 2 branches missed.">            if (multiSelect) {</span>
+<span class="nc" id="L1277">                StringBuilder fileList = new StringBuilder();</span>
+<span class="nc bnc" id="L1278" title="All 2 branches missed.">                for (int i = 0; i &lt; files.length; i++) {</span>
+<span class="nc bnc" id="L1279" title="All 2 branches missed.">                    if (i != 0) {</span>
+<span class="nc" id="L1280">                        fileList.append(&quot;;&quot;);</span>
                     }
-<span class="nc" id="L1280">                    fileList.append(files[i].getPath());</span>
+<span class="nc" id="L1282">                    fileList.append(files[i].getPath());</span>
                 }
-<span class="nc" id="L1282">                return fileList.toString();</span>
+<span class="nc" id="L1284">                return fileList.toString();</span>
             }
-<span class="nc" id="L1284">            return files[0].getPath();</span>
+<span class="nc" id="L1286">            return files[0].getPath();</span>
         }
 
         /**
@@ -1290,47 +1292,47 @@ public class OpenStegoUI extends OpenStegoFrame {
         private String getFileNameUsingChooser(String dialogTitle, String filterDesc, List&lt;String&gt; allowedExts, int allowFileDir,
                                                boolean multiSelect) {
             int retVal;
-<span class="nc" id="L1293">            String fileName = null;</span>
+<span class="nc" id="L1295">            String fileName = null;</span>
             File[] files;
 
-<span class="nc" id="L1296">            JFileChooser chooser = new JFileChooser(lastFolder);</span>
-<span class="nc" id="L1297">            chooser.setMultiSelectionEnabled(multiSelect);</span>
-<span class="nc bnc" id="L1298" title="All 4 branches missed.">            switch (allowFileDir) {</span>
+<span class="nc" id="L1298">            JFileChooser chooser = new JFileChooser(lastFolder);</span>
+<span class="nc" id="L1299">            chooser.setMultiSelectionEnabled(multiSelect);</span>
+<span class="nc bnc" id="L1300" title="All 4 branches missed.">            switch (allowFileDir) {</span>
                 case ALLOW_FILE:
-<span class="nc" id="L1300">                    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);</span>
-<span class="nc" id="L1301">                    break;</span>
+<span class="nc" id="L1302">                    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);</span>
+<span class="nc" id="L1303">                    break;</span>
                 case ALLOW_DIRECTORY:
-<span class="nc" id="L1303">                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);</span>
-<span class="nc" id="L1304">                    break;</span>
+<span class="nc" id="L1305">                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);</span>
+<span class="nc" id="L1306">                    break;</span>
                 case ALLOW_FILE_AND_DIR:
-<span class="nc" id="L1306">                    chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);</span>
+<span class="nc" id="L1308">                    chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);</span>
                     break;
             }
 
-<span class="nc bnc" id="L1310" title="All 2 branches missed.">            if (filterDesc != null) {</span>
-<span class="nc" id="L1311">                chooser.setFileFilter(new FileBrowserFilter(filterDesc, allowedExts));</span>
+<span class="nc bnc" id="L1312" title="All 2 branches missed.">            if (filterDesc != null) {</span>
+<span class="nc" id="L1313">                chooser.setFileFilter(new FileBrowserFilter(filterDesc, allowedExts));</span>
             }
-<span class="nc" id="L1313">            chooser.setDialogTitle(dialogTitle);</span>
-<span class="nc" id="L1314">            retVal = chooser.showOpenDialog(null);</span>
+<span class="nc" id="L1315">            chooser.setDialogTitle(dialogTitle);</span>
+<span class="nc" id="L1316">            retVal = chooser.showOpenDialog(null);</span>
 
-<span class="nc bnc" id="L1316" title="All 2 branches missed.">            if (retVal == JFileChooser.APPROVE_OPTION) {</span>
-<span class="nc bnc" id="L1317" title="All 2 branches missed.">                if (multiSelect) {</span>
-<span class="nc" id="L1318">                    StringBuilder fileList = new StringBuilder();</span>
-<span class="nc" id="L1319">                    files = chooser.getSelectedFiles();</span>
-<span class="nc bnc" id="L1320" title="All 2 branches missed.">                    for (int i = 0; i &lt; files.length; i++) {</span>
-<span class="nc bnc" id="L1321" title="All 2 branches missed.">                        if (i != 0) {</span>
-<span class="nc" id="L1322">                            fileList.append(&quot;;&quot;);</span>
+<span class="nc bnc" id="L1318" title="All 2 branches missed.">            if (retVal == JFileChooser.APPROVE_OPTION) {</span>
+<span class="nc bnc" id="L1319" title="All 2 branches missed.">                if (multiSelect) {</span>
+<span class="nc" id="L1320">                    StringBuilder fileList = new StringBuilder();</span>
+<span class="nc" id="L1321">                    files = chooser.getSelectedFiles();</span>
+<span class="nc bnc" id="L1322" title="All 2 branches missed.">                    for (int i = 0; i &lt; files.length; i++) {</span>
+<span class="nc bnc" id="L1323" title="All 2 branches missed.">                        if (i != 0) {</span>
+<span class="nc" id="L1324">                            fileList.append(&quot;;&quot;);</span>
                         }
-<span class="nc" id="L1324">                        fileList.append(files[i].getPath());</span>
+<span class="nc" id="L1326">                        fileList.append(files[i].getPath());</span>
                     }
-<span class="nc" id="L1326">                    fileName = fileList.toString();</span>
-<span class="nc" id="L1327">                } else {</span>
-<span class="nc" id="L1328">                    fileName = chooser.getSelectedFile().getPath();</span>
+<span class="nc" id="L1328">                    fileName = fileList.toString();</span>
+<span class="nc" id="L1329">                } else {</span>
+<span class="nc" id="L1330">                    fileName = chooser.getSelectedFile().getPath();</span>
                 }
-<span class="nc" id="L1330">                lastFolder = chooser.getSelectedFile().getParent();</span>
+<span class="nc" id="L1332">                lastFolder = chooser.getSelectedFile().getParent();</span>
             }
 
-<span class="nc" id="L1333">            return fileName;</span>
+<span class="nc" id="L1335">            return fileName;</span>
         }
 
         /**
@@ -1353,10 +1355,10 @@ public class OpenStegoUI extends OpenStegoFrame {
              * @param filterDesc  Description of the filter
              * @param allowedExts List of allowed file extensions
              */
-<span class="nc" id="L1356">            public FileBrowserFilter(String filterDesc, List&lt;String&gt; allowedExts) {</span>
-<span class="nc" id="L1357">                this.filterDesc = filterDesc;</span>
-<span class="nc" id="L1358">                this.allowedExts = allowedExts;</span>
-<span class="nc" id="L1359">            }</span>
+<span class="nc" id="L1358">            public FileBrowserFilter(String filterDesc, List&lt;String&gt; allowedExts) {</span>
+<span class="nc" id="L1359">                this.filterDesc = filterDesc;</span>
+<span class="nc" id="L1360">                this.allowedExts = allowedExts;</span>
+<span class="nc" id="L1361">            }</span>
 
             /**
              * Implementation of &lt;code&gt;accept&lt;/accept&gt; method of &lt;code&gt;FileFilter&lt;/code&gt; class
@@ -1366,19 +1368,19 @@ public class OpenStegoUI extends OpenStegoFrame {
              */
             @Override
             public boolean accept(File file) {
-<span class="nc bnc" id="L1369" title="All 2 branches missed.">                if (file != null) {</span>
-<span class="nc bnc" id="L1370" title="All 6 branches missed.">                    if (this.allowedExts == null || this.allowedExts.size() == 0 || file.isDirectory()) {</span>
-<span class="nc" id="L1371">                        return true;</span>
+<span class="nc bnc" id="L1371" title="All 2 branches missed.">                if (file != null) {</span>
+<span class="nc bnc" id="L1372" title="All 6 branches missed.">                    if (this.allowedExts == null || this.allowedExts.size() == 0 || file.isDirectory()) {</span>
+<span class="nc" id="L1373">                        return true;</span>
                     }
 
-<span class="nc bnc" id="L1374" title="All 2 branches missed.">                    for (String allowedExt : this.allowedExts) {</span>
-<span class="nc bnc" id="L1375" title="All 2 branches missed.">                        if (file.getName().toLowerCase().endsWith(allowedExt)) {</span>
-<span class="nc" id="L1376">                            return true;</span>
+<span class="nc bnc" id="L1376" title="All 2 branches missed.">                    for (String allowedExt : this.allowedExts) {</span>
+<span class="nc bnc" id="L1377" title="All 2 branches missed.">                        if (file.getName().toLowerCase().endsWith(allowedExt)) {</span>
+<span class="nc" id="L1378">                            return true;</span>
                         }
-<span class="nc" id="L1378">                    }</span>
+<span class="nc" id="L1380">                    }</span>
                 }
 
-<span class="nc" id="L1381">                return false;</span>
+<span class="nc" id="L1383">                return false;</span>
             }
 
             /**
@@ -1388,7 +1390,7 @@ public class OpenStegoUI extends OpenStegoFrame {
              */
             @Override
             public String getDescription() {
-<span class="nc" id="L1391">                return this.filterDesc;</span>
+<span class="nc" id="L1393">                return this.filterDesc;</span>
             }
         }
     }

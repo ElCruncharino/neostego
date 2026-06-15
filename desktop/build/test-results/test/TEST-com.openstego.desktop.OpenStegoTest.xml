@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.openstego.desktop.OpenStegoTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-06-15T00:46:51" hostname="NICK-WINDOWS-PC" time="1.383">
+<testsuite name="com.openstego.desktop.OpenStegoTest" tests="21" skipped="0" failures="0" errors="0" timestamp="2026-06-15T00:56:55" hostname="NICK-WINDOWS-PC" time="1.293">
   <properties/>
-  <testcase name="testEmbedDataFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.851"/>
-  <testcase name="testCheckMark_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
-  <testcase name="testEmbedData_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.011"/>
-  <testcase name="testEmbedDataFile_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
-  <testcase name="testEmbedData()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
-  <testcase name="testEmbedMark()" classname="com.openstego.desktop.OpenStegoTest" time="0.001"/>
+  <testcase name="testEmbedDataFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.946"/>
+  <testcase name="testCheckMark_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.004"/>
+  <testcase name="testEmbedData_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.01"/>
+  <testcase name="testEmbedDataFile_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
+  <testcase name="testEmbedData()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
+  <testcase name="testEmbedMark()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
   <testcase name="testGetDiff()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
-  <testcase name="testCheckMarkFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.01"/>
-  <testcase name="testExtractData_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.005"/>
-  <testcase name="testEmbedData_withCompressionAndEncryption()" classname="com.openstego.desktop.OpenStegoTest" time="0.378"/>
-  <testcase name="testEmbedMarkFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.005"/>
+  <testcase name="testCheckMarkFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.009"/>
+  <testcase name="testExtractData_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.006"/>
+  <testcase name="testEmbedData_withCompressionAndEncryption()" classname="com.openstego.desktop.OpenStegoTest" time="0.185"/>
+  <testcase name="testEmbedMarkFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.006"/>
   <testcase name="testCGenerateSignature_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
-  <testcase name="testCheckMark()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
+  <testcase name="testCheckMark()" classname="com.openstego.desktop.OpenStegoTest" time="0.006"/>
   <testcase name="testExtractData()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
   <testcase name="testExtractDataFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
-  <testcase name="testGetDiffFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
-  <testcase name="testEmbedMarkFile_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.001"/>
-  <testcase name="testEmbedMark_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
-  <testcase name="testExtractData_withCompressionAndEncryption()" classname="com.openstego.desktop.OpenStegoTest" time="0.075"/>
-  <testcase name="testCGenerateSignature()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
+  <testcase name="testGetDiffFile()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
+  <testcase name="testEmbedMarkFile_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.002"/>
+  <testcase name="testEmbedMark_exception()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
+  <testcase name="testExtractData_withCompressionAndEncryption()" classname="com.openstego.desktop.OpenStegoTest" time="0.076"/>
+  <testcase name="testCGenerateSignature()" classname="com.openstego.desktop.OpenStegoTest" time="0.003"/>
   <testcase name="testConstructor()" classname="com.openstego.desktop.OpenStegoTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build what is described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html#0.3
