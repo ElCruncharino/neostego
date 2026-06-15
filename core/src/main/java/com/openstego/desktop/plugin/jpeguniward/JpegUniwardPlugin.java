@@ -17,8 +17,8 @@ import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -59,8 +59,24 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
     /** STC constraint height used for embedding/extraction. */
     private static final int STC_HEIGHT = Stc.DEFAULT_HEIGHT;
 
-    /** Number of extra header bytes used to store the STC width. */
-    private static final int WIDTH_FIELD_BYTES = 4;
+    /**
+     * Fixed-geometry bootstrap field: two {@link #putInt} little-endian ints
+     * {@code (headerByteLen, bodyWidth)} = 8 bytes = 64 bits, STC-coded at {@link #BOOT_WIDTH}. Being a
+     * constant size and width, the receiver STC-extracts it with no side information, then learns the
+     * geometry of the variable header and body that follow.
+     */
+    private static final int BOOT_BYTES = 8;
+
+    /**
+     * STC carrier width for the bootstrap field and the variable header. Deliberately generous: the
+     * header is tiny, and a wide carrier lets STC realise its bits with very few, very low-cost
+     * coefficient changes. Cost-blind header placement was the dominant detectability source, so the
+     * header is now cost-driven exactly like the body.
+     */
+    private static final int BOOT_WIDTH = 16;
+
+    /** STC carrier width for the variable {@link LSBDataHeader} bytes (see {@link #BOOT_WIDTH}). */
+    private static final int HEADER_WIDTH = 16;
 
     /** Baseline AC coefficients are limited to magnitude category 10, i.e. |value| &le; 1023. */
     private static final int AC_LIMIT = 1023;
@@ -101,9 +117,13 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             throws OpenStegoException {
         PixelImage precover;
         if (cover == null) {
-            int headerBits = (LSBDataHeader.getMaxHeaderSize() + WIDTH_FIELD_BYTES) * 8;
-            // ~1.4 AC carriers per pixel at 4:2:0; one pixel per carrier bit is a safe over-estimate.
-            int numOfPixels = headerBits + msg.length * 8 + 256;
+            // Carrier bits the embed path consumes: fixed bootstrap, the (over-estimated) variable
+            // header at HEADER_WIDTH, and the body at width 1 (highest payload). ~1.4 AC carriers per
+            // pixel at 4:2:0; one pixel per carrier bit is a safe over-estimate.
+            long carrierBits = (long) BOOT_BYTES * 8 * BOOT_WIDTH
+                    + (long) LSBDataHeader.getMaxHeaderSize() * 8 * HEADER_WIDTH
+                    + (long) msg.length * 8;
+            int numOfPixels = (int) carrierBits + 256;
             precover = ImageCodecRegistry.get().createRandomImage(numOfPixels);
         } else {
             precover = ImageCodecRegistry.get().decode(cover, coverFileName);
@@ -118,46 +138,32 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
 
         LSBDataHeader header = new LSBDataHeader(msg.length, 1, msgFileName, this.config);
         byte[] headerBytes = header.getHeaderData();
-        int headerLen = headerBytes.length + WIDTH_FIELD_BYTES;
-        int headerElems = headerLen * 8;
+        int headerBits = headerBytes.length * 8;
+
+        int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
+        int headerElems = headerBits * HEADER_WIDTH;
+        int used = bootElems + headerElems;
 
         int bodyBits = msg.length * 8;
-        int remaining = n - headerElems;
+        int remaining = n - used;
         if (remaining < 0 || (bodyBits > 0 && remaining < bodyBits)) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.IMAGE_SIZE_INSUFFICIENT);
         }
-        int wField = (bodyBits == 0) ? 1 : remaining / bodyBits;
+        int bodyWidth = (bodyBits == 0) ? 1 : remaining / bodyBits;
 
-        byte[] fullHeader = new byte[headerLen];
-        System.arraycopy(headerBytes, 0, fullHeader, 0, headerBytes.length);
-        putInt(fullHeader, headerBytes.length, wField);
+        // Bootstrap field: (variable-header byte length, body STC width), STC-coded at a fixed width
+        // so the receiver can read it with no side information.
+        byte[] boot = new byte[BOOT_BYTES];
+        putInt(boot, 0, headerBytes.length);
+        putInt(boot, 4, bodyWidth);
+        stcEmbedRegion(el, perm, 0, bytesToBits(boot), BOOT_WIDTH);
 
-        // Write the header bits into the first headerElems permuted coefficients.
-        int bitPos = 0;
-        for (byte b : fullHeader) {
-            for (int k = 7; k >= 0; k--) {
-                setParity(el, perm[bitPos++], (b >> k) & 1);
-            }
-        }
+        // Variable header bytes, STC-coded (cost-aware) right after the bootstrap.
+        stcEmbedRegion(el, perm, bootElems, bytesToBits(headerBytes), HEADER_WIDTH);
 
         // STC-coded body.
         if (bodyBits > 0) {
-            int w = wField;
-            int bodyElems = bodyBits * w;
-            int[] x = new int[bodyElems];
-            double[] rho = new double[bodyElems];
-            for (int i = 0; i < bodyElems; i++) {
-                int e = perm[headerElems + i];
-                x[i] = parity(el, e);
-                rho[i] = el.cost[e];
-            }
-            int[] message = bytesToBits(msg);
-            int[] y = Stc.embed(x, rho, message, w, STC_HEIGHT);
-            for (int i = 0; i < bodyElems; i++) {
-                if (y[i] != x[i]) {
-                    flip(el, perm[headerElems + i]);
-                }
-            }
+            stcEmbedRegion(el, perm, used, bytesToBits(msg), bodyWidth);
         }
 
         return JpegCodec.encode(jpg);
@@ -168,8 +174,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         JpegImage jpg = decode(stegoData);
         Elements el = enumerate(jpg, null);
         int[] perm = permutation(el.count, this.config.getPassword());
-        PermutedCoeffInputStream in = new PermutedCoeffInputStream(el, perm);
-        LSBDataHeader header = new LSBDataHeader(in, this.config);
+        LSBDataHeader header = readHeader(el, perm);
         return header.getFileName();
     }
 
@@ -180,34 +185,54 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         int n = el.count;
         int[] perm = permutation(n, this.config.getPassword());
 
-        PermutedCoeffInputStream in = new PermutedCoeffInputStream(el, perm);
-        LSBDataHeader header = new LSBDataHeader(in, this.config);
-        byte[] widthBytes = new byte[WIDTH_FIELD_BYTES];
-        if (in.read(widthBytes, 0, WIDTH_FIELD_BYTES) != WIDTH_FIELD_BYTES) {
+        int[] bootBits = stcExtractRegion(el, perm, 0, BOOT_BYTES * 8, BOOT_WIDTH);
+        byte[] boot = new byte[BOOT_BYTES];
+        bitsToBytes(bootBits, boot);
+        int headerByteLen = getInt(boot, 0);
+        int bodyWidth = getInt(boot, 4);
+
+        int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
+        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > n) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
-        int w = getInt(widthBytes, 0);
+        int headerElems = headerByteLen * 8 * HEADER_WIDTH;
+        int[] headerBitsArr = stcExtractRegion(el, perm, bootElems, headerByteLen * 8, HEADER_WIDTH);
+        byte[] headerBytes = new byte[headerByteLen];
+        bitsToBytes(headerBitsArr, headerBytes);
+
+        LSBDataHeader header = new LSBDataHeader(new ByteArrayInputStream(headerBytes), this.config);
         int dataLength = header.getDataLength();
         if (dataLength < 0) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
+        int used = bootElems + headerElems;
         int bodyBits = dataLength * 8;
-        int headerElems = in.elementsRead();
         byte[] data = new byte[dataLength];
 
-        if (w < 1 || (long) headerElems + (long) bodyBits * w > n) {
+        if (bodyWidth < 1 || (long) used + (long) bodyBits * bodyWidth > n) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
         if (bodyBits > 0) {
-            int bodyElems = bodyBits * w;
-            int[] y = new int[bodyElems];
-            for (int i = 0; i < bodyElems; i++) {
-                y[i] = parity(el, perm[headerElems + i]);
-            }
-            int[] bits = Stc.extract(y, bodyBits, w, STC_HEIGHT);
+            int[] bits = stcExtractRegion(el, perm, used, bodyBits, bodyWidth);
             bitsToBytes(bits, data);
         }
         return data;
+    }
+
+    /** Reads the bootstrap field then the variable {@link LSBDataHeader} from a stego image. */
+    private LSBDataHeader readHeader(Elements el, int[] perm) throws OpenStegoException {
+        int[] bootBits = stcExtractRegion(el, perm, 0, BOOT_BYTES * 8, BOOT_WIDTH);
+        byte[] boot = new byte[BOOT_BYTES];
+        bitsToBytes(bootBits, boot);
+        int headerByteLen = getInt(boot, 0);
+        int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
+        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > el.count) {
+            throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
+        }
+        int[] headerBitsArr = stcExtractRegion(el, perm, bootElems, headerByteLen * 8, HEADER_WIDTH);
+        byte[] headerBytes = new byte[headerByteLen];
+        bitsToBytes(headerBitsArr, headerBytes);
+        return new LSBDataHeader(new ByteArrayInputStream(headerBytes), this.config);
     }
 
     /**
@@ -222,9 +247,9 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         // Y is 2x2 blocks per MCU, Cb and Cr one each; 63 AC carriers per block.
         long blocks = (long) mcuCols * mcuRows * (4 + 1 + 1);
         long n = blocks * 63;
-        int headerElems = (new LSBDataHeader(0, 1, null, getConfig()).getHeaderData().length
-                + WIDTH_FIELD_BYTES) * 8;
-        long body = n - headerElems;
+        int headerBytes = new LSBDataHeader(0, 1, null, getConfig()).getHeaderData().length;
+        long used = (long) BOOT_BYTES * 8 * BOOT_WIDTH + (long) headerBytes * 8 * HEADER_WIDTH;
+        long body = n - used;
         return (int) Math.max(0, body / 8);
     }
 
@@ -335,10 +360,40 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         return el.block[e][el.k[e]] & 1;
     }
 
-    private static void setParity(Elements el, int e, int bit) {
-        if (parity(el, e) != bit) {
-            flip(el, e);
+    /**
+     * STC-embeds {@code bits} into the permuted carrier region {@code [start, start + bits.length*w)}
+     * using the per-element SI-scaled UNIWARD costs, realising each STC flip as the side-info change.
+     * The carrier parities (the LSBs) are the cover symbols; STC chooses which to flip to minimise cost.
+     */
+    private static void stcEmbedRegion(Elements el, int[] perm, int start, int[] bits, int w) {
+        int elems = bits.length * w;
+        int[] x = new int[elems];
+        double[] rho = new double[elems];
+        for (int i = 0; i < elems; i++) {
+            int e = perm[start + i];
+            x[i] = parity(el, e);
+            rho[i] = el.cost[e];
         }
+        int[] y = Stc.embed(x, rho, bits, w, STC_HEIGHT);
+        for (int i = 0; i < elems; i++) {
+            if (y[i] != x[i]) {
+                flip(el, perm[start + i]);
+            }
+        }
+    }
+
+    /**
+     * STC-extracts {@code numBits} message bits from the permuted carrier region
+     * {@code [start, start + numBits*w)}. Cost-free: it reads only coefficient parities and the
+     * (fixed or already-decoded) geometry, so it needs no side information.
+     */
+    private static int[] stcExtractRegion(Elements el, int[] perm, int start, int numBits, int w) {
+        int elems = numBits * w;
+        int[] y = new int[elems];
+        for (int i = 0; i < elems; i++) {
+            y[i] = parity(el, perm[start + i]);
+        }
+        return Stc.extract(y, numBits, w, STC_HEIGHT);
     }
 
     /** Flips a coefficient's parity by the side-info &plusmn;1, staying inside the AC value range. */
@@ -417,51 +472,5 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
                 | ((buf[off + 1] & 0xFF) << 8)
                 | ((buf[off + 2] & 0xFF) << 16)
                 | ((buf[off + 3] & 0xFF) << 24);
-    }
-
-    /**
-     * An {@link InputStream} that yields bytes assembled MSB-first from the parities of the cover
-     * coefficients in permutation order. Parses the bootstrap header; {@link #elementsRead()} reports
-     * how many coefficients were consumed so the body can continue right after it.
-     */
-    private static final class PermutedCoeffInputStream extends InputStream {
-        private final Elements el;
-        private final int[] perm;
-        private int pos;
-
-        PermutedCoeffInputStream(Elements el, int[] perm) {
-            this.el = el;
-            this.perm = perm;
-        }
-
-        @Override
-        public int read() {
-            if (pos + 8 > perm.length) {
-                return -1;
-            }
-            int b = 0;
-            for (int k = 0; k < 8; k++) {
-                b = (b << 1) | parity(el, perm[pos++]);
-            }
-            return b & 0xFF;
-        }
-
-        @Override
-        public int read(byte[] buf, int off, int len) {
-            int count = 0;
-            for (int i = 0; i < len; i++) {
-                int v = read();
-                if (v == -1) {
-                    return count == 0 ? -1 : count;
-                }
-                buf[off + i] = (byte) v;
-                count++;
-            }
-            return count;
-        }
-
-        int elementsRead() {
-            return pos;
-        }
     }
 }
