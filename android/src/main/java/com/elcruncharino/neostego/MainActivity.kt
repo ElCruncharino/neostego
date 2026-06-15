@@ -4,7 +4,7 @@
  * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
  */
 
-package com.openstego.android
+package com.elcruncharino.neostego
 
 import android.content.Context
 import android.graphics.BitmapFactory
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
         // Prevent screenshots, screen recording and Recents thumbnails from capturing secrets/passwords
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         setContent {
-            OpenStegoTheme {
+            NeoStegoTheme {
                 StegoApp()
             }
         }
@@ -238,7 +238,7 @@ fun StegoApp() {
     }
 
     Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("OpenStego") }) },
+        topBar = { CenterAlignedTopAppBar(title = { Text("NeoStego") }) },
         snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
         Column(

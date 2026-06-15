@@ -4,7 +4,7 @@
  * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
  */
 
-package com.openstego.android
+package com.elcruncharino.neostego
 
 import com.openstego.desktop.OpenStego
 import com.openstego.desktop.plugin.randlsb.RandomLSBMatchPlugin

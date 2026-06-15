@@ -13,4 +13,4 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-java ${JAVA_OPTS} -jar ${DIR}/lib/openstego.jar $*
+java ${JAVA_OPTS} -jar ${DIR}/lib/neostego.jar $*

@@ -68,7 +68,7 @@ public class OpenStegoUI extends OpenStegoFrame {
         this.wmPlugin = wmPlugin;
         resetGUI();
 
-        URL iconURL = getClass().getResource("/images/OpenStegoIcon.png");
+        URL iconURL = getClass().getResource("/images/NeoStegoIcon.png");
         if (iconURL != null) {
             this.setIconImage(new ImageIcon(iconURL).getImage());
         }

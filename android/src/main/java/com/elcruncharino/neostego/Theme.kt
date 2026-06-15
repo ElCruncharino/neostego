@@ -4,7 +4,7 @@
  * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
  */
 
-package com.openstego.android
+package com.elcruncharino.neostego
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -34,7 +34,7 @@ private val DarkColors = darkColorScheme(
  * scheme on older devices, and follows the system light/dark setting.
  */
 @Composable
-fun OpenStegoTheme(content: @Composable () -> Unit) {
+fun NeoStegoTheme(content: @Composable () -> Unit) {
     val dark = isSystemInDarkTheme()
     val context = LocalContext.current
     val colorScheme = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {

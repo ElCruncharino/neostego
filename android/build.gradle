@@ -13,11 +13,11 @@ plugins {
 }
 
 android {
-    namespace 'com.openstego.android'
+    namespace 'com.elcruncharino.neostego'
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.openstego.android'
+        applicationId 'com.elcruncharino.neostego'
         minSdk 26
         targetSdk 34
         versionCode 1
