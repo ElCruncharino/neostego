@@ -10,13 +10,13 @@ import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 import java.util.Properties;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -50,15 +50,8 @@ public class UserPreferences {
         prefs = new Properties();
 
         try {
-            // Find the path where config file should be stored
-            String userHome = System.getProperty("user.home");
-            String configHome = System.getenv("XDG_CONFIG_HOME");
-            if (configHome == null || configHome.trim().length() == 0) {
-                configHome = userHome + File.separator + ".config";
-            }
-
-            // Create config directory if it does not exist
-            Path configPath = Paths.get(configHome, "neostego");
+            // Create the platform-appropriate config directory if it does not exist
+            Path configPath = resolveConfigDir();
             if (Files.notExists(configPath)) {
                 Files.createDirectories(configPath);
             }
@@ -80,6 +73,36 @@ public class UserPreferences {
         } catch (IOException e) {
             throw new OpenStegoException(e);
         }
+    }
+
+    /**
+     * Resolves the per-user configuration directory following each platform's convention:
+     * {@code %APPDATA%} (Roaming) on Windows, {@code ~/Library/Application Support} on macOS, and
+     * the XDG base directory ({@code $XDG_CONFIG_HOME}, defaulting to {@code ~/.config}) elsewhere.
+     *
+     * @return the directory in which the preferences file should be stored
+     */
+    private static Path resolveConfigDir() {
+        String userHome = System.getProperty("user.home");
+        String os = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+
+        if (os.contains("win")) {
+            String appData = System.getenv("APPDATA");
+            Path base = (appData != null && !appData.trim().isEmpty())
+                    ? Paths.get(appData)
+                    : Paths.get(userHome, "AppData", "Roaming");
+            return base.resolve("NeoStego");
+        }
+
+        if (os.contains("mac")) {
+            return Paths.get(userHome, "Library", "Application Support", "NeoStego");
+        }
+
+        String xdg = System.getenv("XDG_CONFIG_HOME");
+        Path base = (xdg != null && !xdg.trim().isEmpty())
+                ? Paths.get(xdg)
+                : Paths.get(userHome, ".config");
+        return base.resolve("neostego");
     }
 
     /**
