@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.openstego.desktop.OpenStegoCryptoTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-06-15T00:56:55" hostname="NICK-WINDOWS-PC" time="0.322">
+<testsuite name="com.openstego.desktop.OpenStegoCryptoTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-06-15T01:24:42" hostname="NICK-WINDOWS-PC" time="0.336">
   <properties/>
   <testcase name="testDecryptAutoDetectsV2WhenStrongEnabled()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.003"/>
-  <testcase name="testV3WrongPasswordFails()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.089"/>
-  <testcase name="testV3IsRandomized()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.072"/>
-  <testcase name="testLegacyV2RoundTrip_aes256()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.002"/>
-  <testcase name="testDesRejectedForEncryption()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.008"/>
+  <testcase name="testV3WrongPasswordFails()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.101"/>
+  <testcase name="testV3IsRandomized()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.081"/>
+  <testcase name="testLegacyV2RoundTrip_aes256()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.001"/>
+  <testcase name="testDesRejectedForEncryption()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.005"/>
   <testcase name="testLegacyV2RoundTrip()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.001"/>
   <testcase name="testV3RoundTrip_aes128()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.072"/>
-  <testcase name="testV3RoundTrip_aes256()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.07"/>
+  <testcase name="testV3RoundTrip_aes256()" classname="com.openstego.desktop.OpenStegoCryptoTest" time="0.068"/>
   <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[Jun 14, 2026 8:56:54 PM com.openstego.desktop.OpenStegoCrypto <init>
+  <system-err><![CDATA[Jun 14, 2026 9:24:43 PM com.openstego.desktop.OpenStegoCrypto <init>
 WARNING: Using insecure algorithm: DES
 ]]></system-err>
 </testsuite>
