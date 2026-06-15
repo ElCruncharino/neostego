@@ -236,6 +236,7 @@ public class OpenStegoCmd {
         addOption(spec, false, "-e", "--encrypt");
         addOption(spec, false, "-E", "--noencrypt");
         addOption(spec, false, "-L", "--legacyencrypt");
+        addOption(spec, false, "-nf", "--nofilename");
 
         // Plugin-specific options
         if (plugin != null) {
@@ -298,6 +299,9 @@ public class OpenStegoCmd {
         }
         if (parseResult.hasMatchedOption("-L")) { // legacy (v2) encryption for upstream compatibility
             map.put(OpenStegoConfig.USE_STRONG_ENCRYPTION, false);
+        }
+        if (parseResult.hasMatchedOption("-nf")) { // do not embed the (unencrypted) original file name
+            map.put(OpenStegoConfig.EMBED_FILE_NAME, false);
         }
 
         // Plugin-specific options

@@ -76,11 +76,17 @@ public class OpenStegoCryptoTest {
     }
 
     @Test
-    public void testDesUsesLegacyFormat() throws Exception {
-        // DES is not v3-capable, so even with strong encryption requested it falls back to v2
-        OpenStegoCrypto crypto = new OpenStegoCrypto(PASSWORD, OpenStegoCrypto.ALGO_DES, true);
+    public void testLegacyV2RoundTrip_aes256() throws Exception {
+        OpenStegoCrypto crypto = new OpenStegoCrypto(PASSWORD, OpenStegoCrypto.ALGO_AES256, false);
         byte[] enc = crypto.encrypt(PLAIN);
-        assertNotEquals(0, enc[0], "DES must use the legacy v2 format");
+        assertNotEquals(0, enc[0], "v2 payload starts with a non-zero parameter length");
         assertArrayEquals(PLAIN, crypto.decrypt(enc));
+    }
+
+    @Test
+    public void testDesRejectedForEncryption() throws Exception {
+        // DES is cryptographically broken and no longer allowed for new encryption (read-only)
+        OpenStegoCrypto crypto = new OpenStegoCrypto(PASSWORD, OpenStegoCrypto.ALGO_DES, true);
+        assertThrows(OpenStegoException.class, () -> crypto.encrypt(PLAIN));
     }
 }

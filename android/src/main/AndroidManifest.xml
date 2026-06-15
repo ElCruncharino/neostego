@@ -3,7 +3,7 @@
 
     <application
         android:name=".OpenStegoApp"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:label="OpenStego"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
