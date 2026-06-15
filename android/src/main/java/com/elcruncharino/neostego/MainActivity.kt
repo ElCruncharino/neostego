@@ -141,6 +141,20 @@ private fun imagePixelCount(context: Context, uri: Uri): Long {
     return if (w > 0 && h > 0) w * h else 0L
 }
 
+/** Reads an image's pixel dimensions without decoding its pixels. Returns null if unknown. */
+private fun imageDimensions(context: Context, uri: Uri): Pair<Int, Int>? {
+    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
+    return if (opts.outWidth > 0 && opts.outHeight > 0) opts.outWidth to opts.outHeight else null
+}
+
+/** Formats a byte count as a short human-readable string (e.g. "12 KB", "3.4 MB"). */
+private fun humanBytes(bytes: Int): String = when {
+    bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
+    bytes >= 1_000 -> "%d KB".format(bytes / 1_000)
+    else -> "$bytes bytes"
+}
+
 /**
  * Returns a warning only when an image genuinely cannot fit in the app's heap, otherwise null.
  *
@@ -188,6 +202,17 @@ fun StegoApp(initialImage: Uri? = null) {
     var embedFileName by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var pendingBytes by remember { mutableStateOf<ByteArray?>(null) }
+    var capacity by remember { mutableStateOf<Int?>(null) }
+
+    // Recompute the cover's capacity whenever the cover or chosen algorithm changes.
+    LaunchedEffect(coverUri, algorithm) {
+        val uri = coverUri
+        capacity = if (uri == null) null else withContext(Dispatchers.IO) {
+            imageDimensions(context, uri)?.let { (w, h) ->
+                runCatching { StegoEngine.capacityBytes(algorithm, w, h) }.getOrNull()
+            }
+        }
+    }
 
     val openCover = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { coverUri = it }
     val openMessage = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { messageUri = it }
@@ -316,6 +341,13 @@ fun StegoApp(initialImage: Uri? = null) {
                     hint = "The image the data will be hidden in",
                     onPick = { openCover.launch(arrayOf("image/*")) }
                 )
+                capacity?.let {
+                    Text(
+                        "Can hide up to about ${humanBytes(it)} in this image",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
                 FilePickCard(
                     label = "File to hide",
                     chosen = messageUri?.let { displayName(context, it) },

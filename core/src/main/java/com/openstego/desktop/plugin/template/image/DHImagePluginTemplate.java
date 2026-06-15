@@ -14,6 +14,7 @@ import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 
 import java.util.List;
 
@@ -80,6 +81,35 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
     @Override
     public List<String> getWritableFileExtensions() throws OpenStegoException {
         return ImageCodecRegistry.get().getWritableFormats();
+    }
+
+    /**
+     * Returns the maximum number of message bytes that can be embedded in the given cover image. This
+     * is the single source of truth for capacity (used by capacity indicators in the UIs), so it is
+     * consistent with what {@link #embedData} will accept. The default assumes one embedded bit per
+     * RGB channel (the rate the LSB family uses), minus the on-image header; sub-classes with a
+     * different rate or layout override it.
+     *
+     * @param image cover image
+     * @return maximum embeddable message length in bytes
+     */
+    public int getMaxDataLength(PixelImage image) {
+        return getMaxDataLength(image.getWidth(), image.getHeight());
+    }
+
+    /**
+     * Capacity in bytes for a cover of the given dimensions. Separated from {@link #getMaxDataLength(PixelImage)}
+     * so callers that only know the image size (e.g. a UI reading just the image bounds) can compute it
+     * without decoding the pixels.
+     *
+     * @param width  cover width in pixels
+     * @param height cover height in pixels
+     * @return maximum embeddable message length in bytes
+     */
+    public int getMaxDataLength(int width, int height) {
+        int samples = width * height * 3; // RGB channels, one embedded bit each
+        int headerSize = new LSBDataHeader(0, 1, null, getConfig()).getHeaderSize();
+        return Math.max(0, samples / 8 - headerSize);
     }
 
 }

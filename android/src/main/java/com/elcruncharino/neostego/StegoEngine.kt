@@ -11,6 +11,7 @@ import com.openstego.desktop.OpenStegoPlugin
 import com.openstego.desktop.plugin.adaptive.AdaptiveImagePlugin
 import com.openstego.desktop.plugin.randlsb.RandomLSBMatchPlugin
 import com.openstego.desktop.plugin.randlsb.RandomLSBPlugin
+import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
 
 /**
  * Thin Kotlin wrapper over the core [OpenStego] API for embedding and extracting data.
@@ -54,6 +55,20 @@ object StegoEngine {
         } finally {
             config.clearPassword()
         }
+    }
+
+    /**
+     * Returns roughly how many message bytes fit in a cover of [width] x [height] pixels with the
+     * given [algorithm]. This is the embeddable (post-compression/encryption) size, so an ordinary
+     * file is usually larger since it compresses; it serves as a conservative capacity indicator.
+     */
+    fun capacityBytes(algorithm: Algorithm, width: Int, height: Int): Int {
+        val plugin: DHImagePluginTemplate<*> = when (algorithm) {
+            Algorithm.ADAPTIVE -> AdaptiveImagePlugin()
+            Algorithm.MATCHING -> RandomLSBMatchPlugin()
+        }
+        plugin.resetConfig()
+        return plugin.getMaxDataLength(width, height)
     }
 
     /** Result of an extraction: the original embedded file name and its bytes. */
