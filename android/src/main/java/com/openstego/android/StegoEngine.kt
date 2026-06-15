@@ -19,6 +19,7 @@ object StegoEngine {
      */
     fun embed(
         useMatching: Boolean,
+        embedFileName: Boolean,
         message: ByteArray,
         msgName: String,
         cover: ByteArray,
@@ -29,8 +30,8 @@ object StegoEngine {
         plugin.resetConfig()
         val config = plugin.config
         config.isUseCompression = true
-        // The file name would be stored unencrypted, so do not embed it (privacy)
-        config.isEmbedFileName = false
+        // The file name is stored unencrypted, so embedding it is opt-in (defaults to off for privacy)
+        config.isEmbedFileName = embedFileName
         if (password != null && password.isNotEmpty()) {
             config.isUseEncryption = true
             config.password = password
