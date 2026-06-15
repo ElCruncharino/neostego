@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Name: NeoStego
-Main-Class: com.openstego.desktop.OpenStegoLauncher
-Implementation-Version: 1.0.0
-Built-By: Samir Vaidya
-Class-Path: neostego-core.jar flatlaf-3.6.jar picocli-4.7.6.jar
-
