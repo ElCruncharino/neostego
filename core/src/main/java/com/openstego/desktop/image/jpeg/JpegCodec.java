@@ -27,6 +27,13 @@ public final class JpegCodec {
 
     private static final int[] ZZ = JpegTables.ZIGZAG;
 
+    /**
+     * Baseline AC coefficients are entropy-coded with magnitude categories 1..10, i.e.
+     * {@code |value| <= 1023}. Category 11 has no standard AC Huffman code, so an AC coefficient that
+     * large would corrupt the stream; we clamp defensively on the precover path.
+     */
+    private static final int AC_LIMIT = 1023;
+
     // Standard Huffman tables used for writing.
     private static final HuffTable ENC_DC_LUMA =
             new HuffTable(JpegTables.STD_DC_LUMA_BITS, JpegTables.STD_DC_LUMA_VAL);
@@ -194,7 +201,7 @@ public final class JpegCodec {
             throw new IOException("Corrupt JPEG: no frame header");
         }
         return new JpegImage(width, height, comps, quantTables, maxH, maxV, mcuCols, mcuRows,
-                coeff, null);
+                coeff, null, null);
     }
 
     private static void parseDqt(byte[] d, int pos, int end, int[][] quantTables) {
@@ -581,7 +588,12 @@ public final class JpegCodec {
         coeff[2] = transformPlane(cr, ch, cw, comps[2].blocksWide, comps[2].blocksHigh, chromaQ,
                 rounding, 2);
 
-        return new JpegImage(w, h, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, rounding);
+        // Retain the spatial sample planes (luma full-size, chroma at its own resolution) as side
+        // information for cost models that need the uncompressed cover.
+        double[][][] planes = {yP, cb, cr};
+
+        return new JpegImage(w, h, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, rounding,
+                planes);
     }
 
     /** Averages a plane down by 2x2 (with edge clamping) to {@code cw x ch}. */
@@ -626,8 +638,15 @@ public final class JpegCodec {
                 for (int k = 0; k < 64; k++) {
                     double uq = u[k] / quant[k];
                     int rounded = (int) Math.floor(uq + 0.5);
+                    double ek = uq - rounded; // in [-0.5, 0.5)
+                    if (k > 0 && (rounded > AC_LIMIT || rounded < -AC_LIMIT)) {
+                        // Saturated AC: clamp into representable range and drop the (now meaningless)
+                        // side information so cost modulation stays neutral for this coefficient.
+                        rounded = rounded > AC_LIMIT ? AC_LIMIT : -AC_LIMIT;
+                        ek = 0.0;
+                    }
                     q[k] = rounded;
-                    e[k] = uq - rounded; // in [-0.5, 0.5)
+                    e[k] = ek;
                 }
             }
         }
