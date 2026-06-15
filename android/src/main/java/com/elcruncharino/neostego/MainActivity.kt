@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -40,6 +41,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -139,7 +141,7 @@ fun StegoApp() {
     var stegoUri by remember { mutableStateOf<Uri?>(null) }
     var passwordView by remember { mutableStateOf<EditText?>(null) }
     var showPassword by remember { mutableStateOf(false) }
-    var useMatching by remember { mutableStateOf(true) }
+    var algorithm by remember { mutableStateOf(StegoEngine.Algorithm.ADAPTIVE) }
     var embedFileName by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var pendingBytes by remember { mutableStateOf<ByteArray?>(null) }
@@ -199,7 +201,7 @@ fun StegoApp() {
             try {
                 val bytes = withContext(Dispatchers.IO) {
                     StegoEngine.embed(
-                        useMatching,
+                        algorithm,
                         embedFileName,
                         readBytes(context, message),
                         displayName(context, message),
@@ -294,22 +296,21 @@ fun StegoApp() {
 
             if (tab == 0) {
                 Card {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Harder to detect", fontWeight = FontWeight.SemiBold)
-                            Text(
-                                "Use LSB matching, which resists statistical steganalysis",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Switch(checked = useMatching, onCheckedChange = { useMatching = it })
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                        Text("Hiding method", fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(8.dp))
+                        AlgorithmOption(
+                            selected = algorithm == StegoEngine.Algorithm.ADAPTIVE,
+                            title = "Adaptive (most secure)",
+                            subtitle = "HILL + STC: hides changes in textured areas to resist both statistical and AI steganalysis. Lower capacity.",
+                            onClick = { algorithm = StegoEngine.Algorithm.ADAPTIVE }
+                        )
+                        AlgorithmOption(
+                            selected = algorithm == StegoEngine.Algorithm.MATCHING,
+                            title = "Standard (LSB matching)",
+                            subtitle = "Higher capacity and faster; resists classical steganalysis.",
+                            onClick = { algorithm = StegoEngine.Algorithm.MATCHING }
+                        )
                     }
                 }
                 Card {
@@ -353,6 +354,27 @@ fun StegoApp() {
                     Text(if (tab == 0) "Hide & Save" else "Reveal & Save")
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AlgorithmOption(selected: Boolean, title: String, subtitle: String, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        RadioButton(selected = selected, onClick = onClick)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontWeight = FontWeight.SemiBold)
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
