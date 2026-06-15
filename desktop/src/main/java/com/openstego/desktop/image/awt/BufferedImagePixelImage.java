@@ -17,7 +17,8 @@ public class BufferedImagePixelImage implements PixelImage {
     private final BufferedImage image;
 
     /**
-     * @param image Backing image (expected to be of type {@link BufferedImage#TYPE_INT_RGB})
+     * @param image Backing image (expected to be of type {@link BufferedImage#TYPE_INT_ARGB} so that
+     *              alpha is preserved; embedding only modifies the RGB channels)
      */
     public BufferedImagePixelImage(BufferedImage image) {
         this.image = image;
