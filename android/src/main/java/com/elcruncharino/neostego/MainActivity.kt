@@ -408,6 +408,12 @@ fun StegoApp(initialImage: Uri? = null) {
                         Switch(checked = embedFileName, onCheckedChange = { embedFileName = it })
                     }
                 }
+                Text(
+                    "Keep the saved PNG as-is to share. Re-saving or sending it as JPEG (or any other " +
+                        "lossy format) destroys the hidden data.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
             Button(

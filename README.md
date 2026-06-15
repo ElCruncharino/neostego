@@ -23,6 +23,12 @@ Changes in this fork:
 - A more detection-resistant data-hiding algorithm: `RandomLSBMatch` uses LSB matching (&plusmn;1)
   instead of LSB replacement, which defeats the structural artifacts that RS / Sample-Pair /
   Chi-square steganalysis (e.g. StegExpose) rely on, while staying readable by the normal extractor.
+- A content-adaptive algorithm: `Adaptive` combines the HILL cost function with Syndrome-Trellis
+  Codes (STC) to concentrate the &plusmn;1 changes in textured, hard-to-model regions and minimise
+  total embedding distortion. It is the default in the Android app. In a benchmark over 1,000
+  BOSSbase&nbsp;1.01 images at ~0.4&nbsp;bpp, StegExpose flagged 0.3% of `Adaptive` stego images &mdash;
+  identical to the clean-cover control, versus 99.5% for plain LSB replacement. This raises the bar
+  against modern (including CNN-based) steganalysis; it does not make embedding undetectable.
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
@@ -71,6 +77,17 @@ gradlew clean dist           (Windows)
 ```
 ./gradlew clean dist -x distWin
 ```
+
+## Limitations
+- **Save and share losslessly.** Hidden data lives in the least-significant bits of the image, so
+  the output must stay in a lossless format (PNG). Re-encoding a stego image as JPEG &mdash; or any
+  other lossy format, including the automatic recompression some chat apps apply when sending a
+  "photo" &mdash; destroys the hidden data. Share the PNG as a file/document, not as a photo.
+- **Transparency is preserved, not used.** Images with an alpha channel keep it through the
+  embed/extract round-trip; data is hidden only in the RGB channels, never in alpha. Fully
+  transparent pixels still carry data in their (invisible) colour values.
+- **Capacity varies by algorithm.** The content-adaptive algorithm trades capacity for security and
+  holds less than plain LSB; the app shows the usable capacity once a cover image is selected.
 
 ## Authors
 - Original OpenStego: Samir Vaidya (samir [at] openstego.com)
