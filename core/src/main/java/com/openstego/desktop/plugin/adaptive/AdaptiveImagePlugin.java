@@ -186,14 +186,17 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     }
 
     /**
-     * Returns the maximum number of message bytes that can be embedded in the given image (at the
-     * highest-payload width of 1, with no embedded filename). Useful for a capacity indicator.
+     * Returns the maximum number of message bytes that can be embedded in a cover of the given size
+     * (at the highest-payload STC width of 1, with no embedded filename). Overrides the LSB-rate
+     * default to account for the extra STC-width field that precedes the body.
      *
-     * @param image cover image
+     * @param width  cover width in pixels
+     * @param height cover height in pixels
      * @return maximum embeddable message length in bytes
      */
-    public int getMaxDataLength(PixelImage image) {
-        int n = image.getWidth() * image.getHeight() * 3;
+    @Override
+    public int getMaxDataLength(int width, int height) {
+        int n = width * height * 3;
         LSBDataHeader header = new LSBDataHeader(0, 1, null, this.config);
         int headerElems = (header.getHeaderData().length + WIDTH_FIELD_BYTES) * 8;
         int bodyElems = n - headerElems;
