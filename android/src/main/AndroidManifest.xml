@@ -4,6 +4,8 @@
     <application
         android:name=".OpenStegoApp"
         android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="OpenStego"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
