@@ -72,14 +72,18 @@ gradlew clean dist           (Windows)
 ./gradlew clean dist -x distWin
 ```
 
-## Author
-Samir Vaidya (samir [at] openstego.com)
+## Authors
+- Original OpenStego: Samir Vaidya (samir [at] openstego.com)
+- This fork: Nick Haghiri
 
 ## Homepage
-https://www.openstego.com
+https://www.openstego.com (original project)
 
 ## License
-GNU General Public License 2.0 (GPL) (see ```LICENSE``` file)
+This is a modified version of OpenStego, distributed under the **GNU General Public License,
+version 2** (see the ```LICENSE``` file). In keeping with the GPL: the original copyright notices
+are retained, files changed in this fork carry modification notices, and the complete corresponding
+source code for the fork is the contents of this repository.
 
 ## Acknowledgement
 The digital watermarking code in this product is based on the code provided by Peter Meerwald. Refer to his excellent thesis on [watermarking](http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/): Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
