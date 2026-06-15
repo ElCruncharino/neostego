@@ -2,6 +2,7 @@
  * Steganography utility to hide messages into cover files
  * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
  * Copyright (c) Samir Vaidya
+ * Modifications copyright (c) 2026 Nick Haghiri
  */
 
 package com.openstego.desktop.plugin.template.image;
@@ -21,16 +22,16 @@ import java.util.List;
 /**
  * Template plugin for OpenStego which implements image based steganography for watermarking
  */
-<span class="fc" id="L24">public abstract class WMImagePluginTemplate extends WatermarkingPlugin&lt;OpenStegoConfig&gt; {</span>
+<span class="fc" id="L25">public abstract class WMImagePluginTemplate extends WatermarkingPlugin&lt;OpenStegoConfig&gt; {</span>
     /**
      * Static list of supported read formats
      */
-<span class="fc" id="L28">    protected static List&lt;String&gt; readFormats = null;</span>
+<span class="fc" id="L29">    protected static List&lt;String&gt; readFormats = null;</span>
 
     /**
      * Static list of supported write formats
      */
-<span class="fc" id="L33">    protected static List&lt;String&gt; writeFormats = null;</span>
+<span class="fc" id="L34">    protected static List&lt;String&gt; writeFormats = null;</span>
 
     /**
      * Method to get difference between original cover file and the stegged file
@@ -50,11 +51,11 @@ import java.util.List;
         ImageHolder coverImage;
         ImageHolder diffImage;
 
-<span class="nc" id="L53">        stegoImage = ImageUtil.byteArrayToImage(stegoData, stegoFileName);</span>
-<span class="nc" id="L54">        coverImage = ImageUtil.byteArrayToImage(coverData, coverFileName);</span>
-<span class="nc" id="L55">        diffImage = ImageUtil.getDiffImage(stegoImage, coverImage);</span>
+<span class="nc" id="L54">        stegoImage = ImageUtil.byteArrayToImage(stegoData, stegoFileName);</span>
+<span class="nc" id="L55">        coverImage = ImageUtil.byteArrayToImage(coverData, coverFileName);</span>
+<span class="nc" id="L56">        diffImage = ImageUtil.getDiffImage(stegoImage, coverImage);</span>
 
-<span class="nc" id="L57">        return ImageUtil.imageToByteArray(diffImage, diffFileName, this);</span>
+<span class="nc" id="L58">        return ImageUtil.imageToByteArray(diffImage, diffFileName, this);</span>
     }
 
     /**
@@ -64,27 +65,27 @@ import java.util.List;
      */
     @Override
     public List&lt;String&gt; getReadableFileExtensions() {
-<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (readFormats != null) {</span>
-<span class="nc" id="L68">            return readFormats;</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        if (readFormats != null) {</span>
+<span class="nc" id="L69">            return readFormats;</span>
         }
 
         String format;
         String[] formats;
-<span class="nc" id="L73">        readFormats = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L74">        readFormats = new ArrayList&lt;&gt;();</span>
 
-<span class="nc" id="L75">        formats = ImageIO.getReaderFormatNames();</span>
-<span class="nc bnc" id="L76" title="All 2 branches missed.">        for (String s : formats) {</span>
-<span class="nc" id="L77">            format = s.toLowerCase();</span>
-<span class="nc bnc" id="L78" title="All 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
-<span class="nc" id="L79">                format = &quot;jp2&quot;;</span>
+<span class="nc" id="L76">        formats = ImageIO.getReaderFormatNames();</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        for (String s : formats) {</span>
+<span class="nc" id="L78">            format = s.toLowerCase();</span>
+<span class="nc bnc" id="L79" title="All 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
+<span class="nc" id="L80">                format = &quot;jp2&quot;;</span>
             }
-<span class="nc bnc" id="L81" title="All 2 branches missed.">            if (!readFormats.contains(format)) {</span>
-<span class="nc" id="L82">                readFormats.add(format);</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">            if (!readFormats.contains(format)) {</span>
+<span class="nc" id="L83">                readFormats.add(format);</span>
             }
         }
 
-<span class="nc" id="L86">        Collections.sort(readFormats);</span>
-<span class="nc" id="L87">        return readFormats;</span>
+<span class="nc" id="L87">        Collections.sort(readFormats);</span>
+<span class="nc" id="L88">        return readFormats;</span>
     }
 
     /**
@@ -95,27 +96,27 @@ import java.util.List;
      */
     @Override
     public List&lt;String&gt; getWritableFileExtensions() throws OpenStegoException {
-<span class="nc bnc" id="L98" title="All 2 branches missed.">        if (writeFormats != null) {</span>
-<span class="nc" id="L99">            return writeFormats;</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (writeFormats != null) {</span>
+<span class="nc" id="L100">            return writeFormats;</span>
         }
 
         String format;
         String[] formats;
-<span class="nc" id="L104">        writeFormats = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L105">        writeFormats = new ArrayList&lt;&gt;();</span>
 
-<span class="nc" id="L106">        formats = ImageIO.getWriterFormatNames();</span>
-<span class="nc bnc" id="L107" title="All 2 branches missed.">        for (String s : formats) {</span>
-<span class="nc" id="L108">            format = s.toLowerCase();</span>
-<span class="nc bnc" id="L109" title="All 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
-<span class="nc" id="L110">                format = &quot;jp2&quot;;</span>
+<span class="nc" id="L107">        formats = ImageIO.getWriterFormatNames();</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        for (String s : formats) {</span>
+<span class="nc" id="L109">            format = s.toLowerCase();</span>
+<span class="nc bnc" id="L110" title="All 4 branches missed.">            if (format.contains(&quot;jpeg&quot;) &amp;&amp; format.contains(&quot;2000&quot;)) {</span>
+<span class="nc" id="L111">                format = &quot;jp2&quot;;</span>
             }
-<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (!writeFormats.contains(format)) {</span>
-<span class="nc" id="L113">                writeFormats.add(format);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">            if (!writeFormats.contains(format)) {</span>
+<span class="nc" id="L114">                writeFormats.add(format);</span>
             }
         }
 
-<span class="nc" id="L117">        Collections.sort(writeFormats);</span>
-<span class="nc" id="L118">        return writeFormats;</span>
+<span class="nc" id="L118">        Collections.sort(writeFormats);</span>
+<span class="nc" id="L119">        return writeFormats;</span>
     }
 
     /**
@@ -125,7 +126,7 @@ import java.util.List;
      */
     @Override
     protected OpenStegoConfig createConfig() {
-<span class="nc" id="L128">        return new OpenStegoConfig();</span>
+<span class="nc" id="L129">        return new OpenStegoConfig();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

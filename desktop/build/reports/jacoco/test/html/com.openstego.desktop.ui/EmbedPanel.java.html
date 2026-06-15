@@ -2,6 +2,7 @@
  * Steganography utility to hide messages into cover files
  * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
  * Copyright (c) Samir Vaidya
+ * Modifications copyright (c) 2026 Nick Haghiri
  */
 package com.openstego.desktop.ui;
 
@@ -25,7 +26,7 @@ public class EmbedPanel extends JPanel {
     /**
      * LabelUtil instance to retrieve labels
      */
-<span class="nc" id="L28">    private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);</span>
+<span class="nc" id="L29">    private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);</span>
 
     private JPanel optionPanel;
     private JTextField msgFileTextField;
@@ -45,14 +46,14 @@ public class EmbedPanel extends JPanel {
      * Default constructor
      */
     public EmbedPanel(PluginEmbedOptionsUI pluginOptionPanel) {
-<span class="nc" id="L48">        super();</span>
-<span class="nc" id="L49">        this.pluginOptionPanel = pluginOptionPanel;</span>
-<span class="nc bnc" id="L50" title="All 2 branches missed.">        if (pluginOptionPanel != null) {</span>
-<span class="nc" id="L51">            this.pluginOptionPanel.setBorder(new TitledBorder(</span>
+<span class="nc" id="L49">        super();</span>
+<span class="nc" id="L50">        this.pluginOptionPanel = pluginOptionPanel;</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (pluginOptionPanel != null) {</span>
+<span class="nc" id="L52">            this.pluginOptionPanel.setBorder(new TitledBorder(</span>
                     new CompoundBorder(new EmptyBorder(new Insets(5, 5, 5, 5)), new EtchedBorder()),
-<span class="nc" id="L53">                    &quot; &quot; + labelUtil.getString(&quot;gui.label.dhEmbed.pluginOption.title&quot;) + &quot; &quot;));</span>
+<span class="nc" id="L54">                    &quot; &quot; + labelUtil.getString(&quot;gui.label.dhEmbed.pluginOption.title&quot;) + &quot; &quot;));</span>
         }
-<span class="nc" id="L55">    }</span>
+<span class="nc" id="L56">    }</span>
 
     /**
      * Getter method for optionPanel
@@ -60,74 +61,74 @@ public class EmbedPanel extends JPanel {
      * @return optionPanel
      */
     public JPanel getOptionPanel() {
-<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (this.optionPanel == null) {</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        if (this.optionPanel == null) {</span>
             JLabel label;
-<span class="nc" id="L65">            this.optionPanel = new JPanel();</span>
-<span class="nc" id="L66">            this.optionPanel.setBorder(new TitledBorder(new CompoundBorder(new EmptyBorder(new java.awt.Insets(5, 5, 5, 5)), new EtchedBorder()),</span>
-<span class="nc" id="L67">                    &quot; &quot; + labelUtil.getString(&quot;gui.label.dhEmbed.option.title&quot;) + &quot; &quot;));</span>
-<span class="nc" id="L68">            this.optionPanel.setLayout(new GridBagLayout());</span>
+<span class="nc" id="L66">            this.optionPanel = new JPanel();</span>
+<span class="nc" id="L67">            this.optionPanel.setBorder(new TitledBorder(new CompoundBorder(new EmptyBorder(new java.awt.Insets(5, 5, 5, 5)), new EtchedBorder()),</span>
+<span class="nc" id="L68">                    &quot; &quot; + labelUtil.getString(&quot;gui.label.dhEmbed.option.title&quot;) + &quot; &quot;));</span>
+<span class="nc" id="L69">            this.optionPanel.setLayout(new GridBagLayout());</span>
 
-<span class="nc" id="L70">            GridBagConstraints gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L71">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L72">            gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L73">            gridBagConstraints.gridy = 0;</span>
-<span class="nc" id="L74">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
-<span class="nc" id="L75">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L76">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L77">            label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.option.cryptalgo&quot;));</span>
-<span class="nc" id="L78">            label.setLabelFor(getEncryptionAlgoComboBox());</span>
-<span class="nc" id="L79">            this.optionPanel.add(label, gridBagConstraints);</span>
+<span class="nc" id="L71">            GridBagConstraints gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L72">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L73">            gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L74">            gridBagConstraints.gridy = 0;</span>
+<span class="nc" id="L75">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L76">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L77">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L78">            label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.option.cryptalgo&quot;));</span>
+<span class="nc" id="L79">            label.setLabelFor(getEncryptionAlgoComboBox());</span>
+<span class="nc" id="L80">            this.optionPanel.add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L81">            gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L82">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L83">            gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L84">            gridBagConstraints.gridy = 0;</span>
-<span class="nc" id="L85">            gridBagConstraints.insets = new Insets(5, 5, 5, 30);</span>
-<span class="nc" id="L86">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L87">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L88">            this.optionPanel.add(getEncryptionAlgoComboBox(), gridBagConstraints);</span>
+<span class="nc" id="L82">            gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L83">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L84">            gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L85">            gridBagConstraints.gridy = 0;</span>
+<span class="nc" id="L86">            gridBagConstraints.insets = new Insets(5, 5, 5, 30);</span>
+<span class="nc" id="L87">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L88">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L89">            this.optionPanel.add(getEncryptionAlgoComboBox(), gridBagConstraints);</span>
 
-<span class="nc" id="L90">            gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L91">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L92">            gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L93">            gridBagConstraints.gridy = 1;</span>
-<span class="nc" id="L94">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
-<span class="nc" id="L95">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L96">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L97">            label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.option.password&quot;));</span>
-<span class="nc" id="L98">            label.setLabelFor(getPasswordTextField());</span>
-<span class="nc" id="L99">            this.optionPanel.add(label, gridBagConstraints);</span>
+<span class="nc" id="L91">            gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L92">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L93">            gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L94">            gridBagConstraints.gridy = 1;</span>
+<span class="nc" id="L95">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L96">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L97">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L98">            label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.option.password&quot;));</span>
+<span class="nc" id="L99">            label.setLabelFor(getPasswordTextField());</span>
+<span class="nc" id="L100">            this.optionPanel.add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L101">            gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L102">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L103">            gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L104">            gridBagConstraints.gridy = 1;</span>
-<span class="nc" id="L105">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
-<span class="nc" id="L106">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L107">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L108">            this.optionPanel.add(getPasswordTextField(), gridBagConstraints);</span>
+<span class="nc" id="L102">            gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L103">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L104">            gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L105">            gridBagConstraints.gridy = 1;</span>
+<span class="nc" id="L106">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L107">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L108">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L109">            this.optionPanel.add(getPasswordTextField(), gridBagConstraints);</span>
 
-<span class="nc" id="L110">            gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L111">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L112">            gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L113">            gridBagConstraints.gridy = 2;</span>
-<span class="nc" id="L114">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
-<span class="nc" id="L115">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L116">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L117">            label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.option.confPassword&quot;));</span>
-<span class="nc" id="L118">            label.setLabelFor(getConfPasswordTextField());</span>
-<span class="nc" id="L119">            this.optionPanel.add(label, gridBagConstraints);</span>
+<span class="nc" id="L111">            gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L112">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L113">            gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L114">            gridBagConstraints.gridy = 2;</span>
+<span class="nc" id="L115">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L116">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L117">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L118">            label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.option.confPassword&quot;));</span>
+<span class="nc" id="L119">            label.setLabelFor(getConfPasswordTextField());</span>
+<span class="nc" id="L120">            this.optionPanel.add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L121">            gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L122">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L123">            gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L124">            gridBagConstraints.gridy = 2;</span>
-<span class="nc" id="L125">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
-<span class="nc" id="L126">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L127">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L128">            this.optionPanel.add(getConfPasswordTextField(), gridBagConstraints);</span>
+<span class="nc" id="L122">            gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L123">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L124">            gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L125">            gridBagConstraints.gridy = 2;</span>
+<span class="nc" id="L126">            gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L127">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L128">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L129">            this.optionPanel.add(getConfPasswordTextField(), gridBagConstraints);</span>
         }
-<span class="nc" id="L130">        return this.optionPanel;</span>
+<span class="nc" id="L131">        return this.optionPanel;</span>
     }
 
     /**
@@ -136,7 +137,7 @@ public class EmbedPanel extends JPanel {
      * @return pluginOptionPanel
      */
     public PluginEmbedOptionsUI getPluginOptionPanel() {
-<span class="nc" id="L139">        return this.pluginOptionPanel;</span>
+<span class="nc" id="L140">        return this.pluginOptionPanel;</span>
     }
 
     /**
@@ -145,11 +146,11 @@ public class EmbedPanel extends JPanel {
      * @return msgFileTextField
      */
     public JTextField getMsgFileTextField() {
-<span class="nc bnc" id="L148" title="All 2 branches missed.">        if (this.msgFileTextField == null) {</span>
-<span class="nc" id="L149">            this.msgFileTextField = new JTextField();</span>
-<span class="nc" id="L150">            this.msgFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        if (this.msgFileTextField == null) {</span>
+<span class="nc" id="L150">            this.msgFileTextField = new JTextField();</span>
+<span class="nc" id="L151">            this.msgFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
         }
-<span class="nc" id="L152">        return this.msgFileTextField;</span>
+<span class="nc" id="L153">        return this.msgFileTextField;</span>
     }
 
     /**
@@ -158,11 +159,11 @@ public class EmbedPanel extends JPanel {
      * @return msgFileButton
      */
     public JButton getMsgFileButton() {
-<span class="nc bnc" id="L161" title="All 2 branches missed.">        if (this.msgFileButton == null) {</span>
-<span class="nc" id="L162">            this.msgFileButton = new JButton();</span>
-<span class="nc" id="L163">            this.msgFileButton.setText(&quot;...&quot;);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        if (this.msgFileButton == null) {</span>
+<span class="nc" id="L163">            this.msgFileButton = new JButton();</span>
+<span class="nc" id="L164">            this.msgFileButton.setText(&quot;...&quot;);</span>
         }
-<span class="nc" id="L165">        return this.msgFileButton;</span>
+<span class="nc" id="L166">        return this.msgFileButton;</span>
     }
 
     /**
@@ -171,11 +172,11 @@ public class EmbedPanel extends JPanel {
      * @return coverFileTextField
      */
     public JTextField getCoverFileTextField() {
-<span class="nc bnc" id="L174" title="All 2 branches missed.">        if (this.coverFileTextField == null) {</span>
-<span class="nc" id="L175">            this.coverFileTextField = new JTextField();</span>
-<span class="nc" id="L176">            this.coverFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        if (this.coverFileTextField == null) {</span>
+<span class="nc" id="L176">            this.coverFileTextField = new JTextField();</span>
+<span class="nc" id="L177">            this.coverFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
         }
-<span class="nc" id="L178">        return this.coverFileTextField;</span>
+<span class="nc" id="L179">        return this.coverFileTextField;</span>
     }
 
     /**
@@ -184,11 +185,11 @@ public class EmbedPanel extends JPanel {
      * @return coverFileButton
      */
     public JButton getCoverFileButton() {
-<span class="nc bnc" id="L187" title="All 2 branches missed.">        if (this.coverFileButton == null) {</span>
-<span class="nc" id="L188">            this.coverFileButton = new JButton();</span>
-<span class="nc" id="L189">            this.coverFileButton.setText(&quot;...&quot;);</span>
+<span class="nc bnc" id="L188" title="All 2 branches missed.">        if (this.coverFileButton == null) {</span>
+<span class="nc" id="L189">            this.coverFileButton = new JButton();</span>
+<span class="nc" id="L190">            this.coverFileButton.setText(&quot;...&quot;);</span>
         }
-<span class="nc" id="L191">        return this.coverFileButton;</span>
+<span class="nc" id="L192">        return this.coverFileButton;</span>
     }
 
     /**
@@ -197,11 +198,11 @@ public class EmbedPanel extends JPanel {
      * @return stegoFileTextField
      */
     public JTextField getStegoFileTextField() {
-<span class="nc bnc" id="L200" title="All 2 branches missed.">        if (this.stegoFileTextField == null) {</span>
-<span class="nc" id="L201">            this.stegoFileTextField = new JTextField();</span>
-<span class="nc" id="L202">            this.stegoFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        if (this.stegoFileTextField == null) {</span>
+<span class="nc" id="L202">            this.stegoFileTextField = new JTextField();</span>
+<span class="nc" id="L203">            this.stegoFileTextField.setColumns(OpenStegoFrame.TEXTFIELD_SIZE);</span>
         }
-<span class="nc" id="L204">        return this.stegoFileTextField;</span>
+<span class="nc" id="L205">        return this.stegoFileTextField;</span>
     }
 
     /**
@@ -210,11 +211,11 @@ public class EmbedPanel extends JPanel {
      * @return stegoFileButton
      */
     public JButton getStegoFileButton() {
-<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (this.stegoFileButton == null) {</span>
-<span class="nc" id="L214">            this.stegoFileButton = new JButton();</span>
-<span class="nc" id="L215">            this.stegoFileButton.setText(&quot;...&quot;);</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        if (this.stegoFileButton == null) {</span>
+<span class="nc" id="L215">            this.stegoFileButton = new JButton();</span>
+<span class="nc" id="L216">            this.stegoFileButton.setText(&quot;...&quot;);</span>
         }
-<span class="nc" id="L217">        return this.stegoFileButton;</span>
+<span class="nc" id="L218">        return this.stegoFileButton;</span>
     }
 
     /**
@@ -223,13 +224,13 @@ public class EmbedPanel extends JPanel {
      * @return encryptionAlgoComboBox
      */
     public JComboBox&lt;String&gt; getEncryptionAlgoComboBox() {
-<span class="nc bnc" id="L226" title="All 2 branches missed.">        if (this.encryptionAlgoComboBox == null) {</span>
-<span class="nc" id="L227">            this.encryptionAlgoComboBox = new JComboBox&lt;&gt;(new String[]{</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        if (this.encryptionAlgoComboBox == null) {</span>
+<span class="nc" id="L228">            this.encryptionAlgoComboBox = new JComboBox&lt;&gt;(new String[]{</span>
                     OpenStegoCrypto.ALGO_AES128,
                     OpenStegoCrypto.ALGO_AES256
             });
         }
-<span class="nc" id="L232">        return this.encryptionAlgoComboBox;</span>
+<span class="nc" id="L233">        return this.encryptionAlgoComboBox;</span>
     }
 
     /**
@@ -238,12 +239,12 @@ public class EmbedPanel extends JPanel {
      * @return passwordTextField
      */
     public JPasswordField getPasswordTextField() {
-<span class="nc bnc" id="L241" title="All 2 branches missed.">        if (this.passwordTextField == null) {</span>
-<span class="nc" id="L242">            this.passwordTextField = new JPasswordField();</span>
-<span class="nc" id="L243">            this.passwordTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);</span>
-<span class="nc" id="L244">            this.passwordTextField.setToolTipText(labelUtil.getString(&quot;gui.tooltip.password&quot;));</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">        if (this.passwordTextField == null) {</span>
+<span class="nc" id="L243">            this.passwordTextField = new JPasswordField();</span>
+<span class="nc" id="L244">            this.passwordTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);</span>
+<span class="nc" id="L245">            this.passwordTextField.setToolTipText(labelUtil.getString(&quot;gui.tooltip.password&quot;));</span>
         }
-<span class="nc" id="L246">        return this.passwordTextField;</span>
+<span class="nc" id="L247">        return this.passwordTextField;</span>
     }
 
     /**
@@ -252,12 +253,12 @@ public class EmbedPanel extends JPanel {
      * @return confPasswordTextField
      */
     public JPasswordField getConfPasswordTextField() {
-<span class="nc bnc" id="L255" title="All 2 branches missed.">        if (this.confPasswordTextField == null) {</span>
-<span class="nc" id="L256">            this.confPasswordTextField = new JPasswordField();</span>
-<span class="nc" id="L257">            this.confPasswordTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);</span>
-<span class="nc" id="L258">            this.confPasswordTextField.setToolTipText(labelUtil.getString(&quot;gui.tooltip.confPassword&quot;));</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">        if (this.confPasswordTextField == null) {</span>
+<span class="nc" id="L257">            this.confPasswordTextField = new JPasswordField();</span>
+<span class="nc" id="L258">            this.confPasswordTextField.setColumns(OpenStegoFrame.PWD_FIELD_SIZE);</span>
+<span class="nc" id="L259">            this.confPasswordTextField.setToolTipText(labelUtil.getString(&quot;gui.tooltip.confPassword&quot;));</span>
         }
-<span class="nc" id="L260">        return this.confPasswordTextField;</span>
+<span class="nc" id="L261">        return this.confPasswordTextField;</span>
     }
 
     /**
@@ -266,162 +267,162 @@ public class EmbedPanel extends JPanel {
      * @return runEmbedButton
      */
     public JButton getRunEmbedButton() {
-<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (this.runEmbedButton == null) {</span>
-<span class="nc" id="L270">            this.runEmbedButton = new JButton();</span>
-<span class="nc" id="L271">            this.runEmbedButton.setText(labelUtil.getString(&quot;gui.button.dhEmbed.run&quot;));</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">        if (this.runEmbedButton == null) {</span>
+<span class="nc" id="L271">            this.runEmbedButton = new JButton();</span>
+<span class="nc" id="L272">            this.runEmbedButton.setText(labelUtil.getString(&quot;gui.button.dhEmbed.run&quot;));</span>
         }
-<span class="nc" id="L273">        return this.runEmbedButton;</span>
+<span class="nc" id="L274">        return this.runEmbedButton;</span>
     }
 
     public void initialize() {
         JLabel label;
-<span class="nc" id="L278">        setLayout(new GridBagLayout());</span>
+<span class="nc" id="L279">        setLayout(new GridBagLayout());</span>
 
-<span class="nc" id="L280">        GridBagConstraints gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L281">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L282">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L283">        gridBagConstraints.gridy = 1;</span>
-<span class="nc" id="L284">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
-<span class="nc" id="L285">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L286">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L287">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.msgFile&quot;));</span>
-<span class="nc" id="L288">        label.setLabelFor(getMsgFileTextField());</span>
-<span class="nc" id="L289">        add(label, gridBagConstraints);</span>
+<span class="nc" id="L281">        GridBagConstraints gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L282">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L283">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L284">        gridBagConstraints.gridy = 1;</span>
+<span class="nc" id="L285">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
+<span class="nc" id="L286">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L287">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L288">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.msgFile&quot;));</span>
+<span class="nc" id="L289">        label.setLabelFor(getMsgFileTextField());</span>
+<span class="nc" id="L290">        add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L291">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L292">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L293">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L294">        gridBagConstraints.gridy = 3;</span>
-<span class="nc" id="L295">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
-<span class="nc" id="L296">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L297">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L298">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.coverFile&quot;));</span>
-<span class="nc" id="L299">        label.setLabelFor(getCoverFileTextField());</span>
-<span class="nc" id="L300">        add(label, gridBagConstraints);</span>
+<span class="nc" id="L292">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L293">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L294">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L295">        gridBagConstraints.gridy = 3;</span>
+<span class="nc" id="L296">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
+<span class="nc" id="L297">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L298">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L299">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.coverFile&quot;));</span>
+<span class="nc" id="L300">        label.setLabelFor(getCoverFileTextField());</span>
+<span class="nc" id="L301">        add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L302">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L303">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L304">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
-<span class="nc" id="L305">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L306">        gridBagConstraints.gridy = 6;</span>
-<span class="nc" id="L307">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L308">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L309">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.stegoFile&quot;));</span>
-<span class="nc" id="L310">        label.setLabelFor(getStegoFileTextField());</span>
-<span class="nc" id="L311">        add(label, gridBagConstraints);</span>
+<span class="nc" id="L303">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L304">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L305">        gridBagConstraints.insets = new Insets(5, 5, 0, 5);</span>
+<span class="nc" id="L306">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L307">        gridBagConstraints.gridy = 6;</span>
+<span class="nc" id="L308">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L309">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L310">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.stegoFile&quot;));</span>
+<span class="nc" id="L311">        label.setLabelFor(getStegoFileTextField());</span>
+<span class="nc" id="L312">        add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L313">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L314">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L315">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L316">        gridBagConstraints.gridy = 4;</span>
-<span class="nc" id="L317">        gridBagConstraints.insets = new Insets(0, 5, 0, 5);</span>
-<span class="nc" id="L318">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L319">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L320">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.coverFileMsg&quot;));</span>
-<span class="nc" id="L321">        label.setFont(label.getFont().deriveFont(Font.ITALIC));</span>
-<span class="nc" id="L322">        add(label, gridBagConstraints);</span>
+<span class="nc" id="L314">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L315">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L316">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L317">        gridBagConstraints.gridy = 4;</span>
+<span class="nc" id="L318">        gridBagConstraints.insets = new Insets(0, 5, 0, 5);</span>
+<span class="nc" id="L319">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L320">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L321">        label = new JLabel(labelUtil.getString(&quot;gui.label.dhEmbed.coverFileMsg&quot;));</span>
+<span class="nc" id="L322">        label.setFont(label.getFont().deriveFont(Font.ITALIC));</span>
+<span class="nc" id="L323">        add(label, gridBagConstraints);</span>
 
-<span class="nc" id="L324">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L325">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L326">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
-<span class="nc" id="L327">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L328">        gridBagConstraints.gridy = 2;</span>
-<span class="nc" id="L329">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
-<span class="nc" id="L330">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L331">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L332">        add(getMsgFileTextField(), gridBagConstraints);</span>
+<span class="nc" id="L325">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L326">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L327">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L328">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L329">        gridBagConstraints.gridy = 2;</span>
+<span class="nc" id="L330">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
+<span class="nc" id="L331">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L332">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L333">        add(getMsgFileTextField(), gridBagConstraints);</span>
 
-<span class="nc" id="L334">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L335">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L336">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
-<span class="nc" id="L337">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L338">        gridBagConstraints.gridy = 5;</span>
-<span class="nc" id="L339">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
-<span class="nc" id="L340">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L341">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L342">        add(getCoverFileTextField(), gridBagConstraints);</span>
+<span class="nc" id="L335">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L336">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L337">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L338">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L339">        gridBagConstraints.gridy = 5;</span>
+<span class="nc" id="L340">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
+<span class="nc" id="L341">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L342">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L343">        add(getCoverFileTextField(), gridBagConstraints);</span>
 
-<span class="nc" id="L344">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L345">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L346">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
-<span class="nc" id="L347">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L348">        gridBagConstraints.gridy = 7;</span>
-<span class="nc" id="L349">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
-<span class="nc" id="L350">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L351">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L352">        add(getStegoFileTextField(), gridBagConstraints);</span>
+<span class="nc" id="L345">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L346">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L347">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L348">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L349">        gridBagConstraints.gridy = 7;</span>
+<span class="nc" id="L350">        gridBagConstraints.insets = new Insets(0, 5, 5, 5);</span>
+<span class="nc" id="L351">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L352">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L353">        add(getStegoFileTextField(), gridBagConstraints);</span>
 
-<span class="nc" id="L354">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L355">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L356">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
-<span class="nc" id="L357">        gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L358">        gridBagConstraints.gridy = 2;</span>
-<span class="nc" id="L359">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
-<span class="nc" id="L360">        gridBagConstraints.weightx = 0.0;</span>
-<span class="nc" id="L361">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L362">        add(getMsgFileButton(), gridBagConstraints);</span>
+<span class="nc" id="L355">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L356">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L357">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
+<span class="nc" id="L358">        gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L359">        gridBagConstraints.gridy = 2;</span>
+<span class="nc" id="L360">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L361">        gridBagConstraints.weightx = 0.0;</span>
+<span class="nc" id="L362">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L363">        add(getMsgFileButton(), gridBagConstraints);</span>
 
-<span class="nc" id="L364">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L365">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L366">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
-<span class="nc" id="L367">        gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L368">        gridBagConstraints.gridy = 5;</span>
-<span class="nc" id="L369">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
-<span class="nc" id="L370">        gridBagConstraints.weightx = 0.0;</span>
-<span class="nc" id="L371">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L372">        add(getCoverFileButton(), gridBagConstraints);</span>
+<span class="nc" id="L365">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L366">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L367">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
+<span class="nc" id="L368">        gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L369">        gridBagConstraints.gridy = 5;</span>
+<span class="nc" id="L370">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L371">        gridBagConstraints.weightx = 0.0;</span>
+<span class="nc" id="L372">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L373">        add(getCoverFileButton(), gridBagConstraints);</span>
 
-<span class="nc" id="L374">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L375">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L376">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
-<span class="nc" id="L377">        gridBagConstraints.gridx = 1;</span>
-<span class="nc" id="L378">        gridBagConstraints.gridy = 7;</span>
-<span class="nc" id="L379">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
-<span class="nc" id="L380">        gridBagConstraints.weightx = 0.0;</span>
-<span class="nc" id="L381">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L382">        add(getStegoFileButton(), gridBagConstraints);</span>
+<span class="nc" id="L375">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L376">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L377">        gridBagConstraints.fill = GridBagConstraints.NONE;</span>
+<span class="nc" id="L378">        gridBagConstraints.gridx = 1;</span>
+<span class="nc" id="L379">        gridBagConstraints.gridy = 7;</span>
+<span class="nc" id="L380">        gridBagConstraints.insets = new Insets(0, 0, 5, 5);</span>
+<span class="nc" id="L381">        gridBagConstraints.weightx = 0.0;</span>
+<span class="nc" id="L382">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L383">        add(getStegoFileButton(), gridBagConstraints);</span>
 
-<span class="nc" id="L384">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L385">        gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L386">        gridBagConstraints.gridwidth = 2;</span>
-<span class="nc" id="L387">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L388">        gridBagConstraints.gridy = 8;</span>
-<span class="nc" id="L389">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L390">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L391">        add(getOptionPanel(), gridBagConstraints);</span>
+<span class="nc" id="L385">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L386">        gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L387">        gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L388">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L389">        gridBagConstraints.gridy = 8;</span>
+<span class="nc" id="L390">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L391">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L392">        add(getOptionPanel(), gridBagConstraints);</span>
 
-<span class="nc bnc" id="L393" title="All 2 branches missed.">        if (getPluginOptionPanel() != null) {</span>
-<span class="nc" id="L394">            gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L395">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
-<span class="nc" id="L396">            gridBagConstraints.gridwidth = 2;</span>
-<span class="nc" id="L397">            gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L398">            gridBagConstraints.gridy = 9;</span>
-<span class="nc" id="L399">            gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L400">            gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L401">            add(getPluginOptionPanel(), gridBagConstraints);</span>
-<span class="nc" id="L402">            getPluginOptionPanel().initialize();</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">        if (getPluginOptionPanel() != null) {</span>
+<span class="nc" id="L395">            gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L396">            gridBagConstraints.fill = GridBagConstraints.BOTH;</span>
+<span class="nc" id="L397">            gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L398">            gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L399">            gridBagConstraints.gridy = 9;</span>
+<span class="nc" id="L400">            gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L401">            gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L402">            add(getPluginOptionPanel(), gridBagConstraints);</span>
+<span class="nc" id="L403">            getPluginOptionPanel().initialize();</span>
         }
 
-<span class="nc" id="L405">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L406">        gridBagConstraints.anchor = GridBagConstraints.EAST;</span>
-<span class="nc" id="L407">        gridBagConstraints.gridwidth = 2;</span>
-<span class="nc" id="L408">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L409">        gridBagConstraints.gridy = 10;</span>
-<span class="nc" id="L410">        gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
-<span class="nc" id="L411">        gridBagConstraints.weightx = 1.0;</span>
-<span class="nc" id="L412">        gridBagConstraints.weighty = 0.0;</span>
-<span class="nc" id="L413">        add(getRunEmbedButton(), gridBagConstraints);</span>
+<span class="nc" id="L406">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L407">        gridBagConstraints.anchor = GridBagConstraints.EAST;</span>
+<span class="nc" id="L408">        gridBagConstraints.gridwidth = 2;</span>
+<span class="nc" id="L409">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L410">        gridBagConstraints.gridy = 10;</span>
+<span class="nc" id="L411">        gridBagConstraints.insets = new Insets(5, 5, 5, 5);</span>
+<span class="nc" id="L412">        gridBagConstraints.weightx = 1.0;</span>
+<span class="nc" id="L413">        gridBagConstraints.weighty = 0.0;</span>
+<span class="nc" id="L414">        add(getRunEmbedButton(), gridBagConstraints);</span>
 
         // Dummy padding
-<span class="nc" id="L416">        gridBagConstraints = new GridBagConstraints();</span>
-<span class="nc" id="L417">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
-<span class="nc" id="L418">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
-<span class="nc" id="L419">        gridBagConstraints.gridx = 0;</span>
-<span class="nc" id="L420">        gridBagConstraints.gridy = 11;</span>
-<span class="nc" id="L421">        gridBagConstraints.insets = new Insets(0, 0, 0, 0);</span>
-<span class="nc" id="L422">        gridBagConstraints.weightx = 0.01;</span>
-<span class="nc" id="L423">        gridBagConstraints.weighty = 1.0;</span>
-<span class="nc" id="L424">        add(new JLabel(&quot; &quot;), gridBagConstraints);</span>
-<span class="nc" id="L425">    }</span>
+<span class="nc" id="L417">        gridBagConstraints = new GridBagConstraints();</span>
+<span class="nc" id="L418">        gridBagConstraints.anchor = GridBagConstraints.WEST;</span>
+<span class="nc" id="L419">        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;</span>
+<span class="nc" id="L420">        gridBagConstraints.gridx = 0;</span>
+<span class="nc" id="L421">        gridBagConstraints.gridy = 11;</span>
+<span class="nc" id="L422">        gridBagConstraints.insets = new Insets(0, 0, 0, 0);</span>
+<span class="nc" id="L423">        gridBagConstraints.weightx = 0.01;</span>
+<span class="nc" id="L424">        gridBagConstraints.weighty = 1.0;</span>
+<span class="nc" id="L425">        add(new JLabel(&quot; &quot;), gridBagConstraints);</span>
+<span class="nc" id="L426">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
