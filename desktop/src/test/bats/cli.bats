@@ -72,3 +72,18 @@ ns() { bash "$LAUNCHER" "$@"; }
     out="$(NEOSTEGO_PASSWORD=pw bash "$LAUNCHER" extract -a RandomLSB -sf "$WORK/e2.png" -xf - 2>/dev/null)"
     [ "$out" = "enc msg" ]
 }
+
+@test "strict: a missing cover file exits non-zero (operation error)" {
+    run bash -c "echo hi | '$LAUNCHER' embed -a RandomLSB -cf '$WORK/does-not-exist.png' -sf '$WORK/o.png'"
+    [ "$status" -eq 1 ]
+}
+
+@test "strict: a missing required option exits 2 (usage error)" {
+    run ns extract -a RandomLSB
+    [ "$status" -eq 2 ]
+}
+
+@test "strict: checkmark without its required files exits 2 (usage error)" {
+    run ns checkmark -a DWTSVD
+    [ "$status" -eq 2 ]
+}

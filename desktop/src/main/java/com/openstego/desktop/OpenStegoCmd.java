@@ -168,7 +168,8 @@ public class OpenStegoCmd {
             } else {
                 System.err.println(osEx.getMessage());
             }
-            exitCode = 1;
+            // Usage errors exit 2 (POSIX convention); all other failures exit 1.
+            exitCode = (osEx.getErrorCode() == OpenStegoErrors.MISSING_REQUIRED_OPTION) ? 2 : 1;
         } catch (OpenStegoBulkException bulkEx) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < bulkEx.getExceptions().size(); i++) {
@@ -385,8 +386,7 @@ public class OpenStegoCmd {
         // If no coverfile or only one coverfile is provided then use stegofile name given by the user
         if (coverFileList.size() <= 1) {
             if (coverFileList.size() == 0 && coverFileName != null && !coverFileName.equals("-")) {
-                System.err.println(labelUtil.getString("cmd.msg.coverFileNotFound", coverFileName));
-                return;
+                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.COVER_FILE_NOT_FOUND, coverFileName);
             }
 
             String stegoFile = (stegoFileName == null || stegoFileName.equals("-")) ? null : stegoFileName;
@@ -486,8 +486,7 @@ public class OpenStegoCmd {
         // If no coverfile or only one coverfile is provided then use stegofile name given by the user
         if (coverFileList.size() <= 1) {
             if (coverFileList.size() == 0 && coverFileName != null && !coverFileName.equals("-")) {
-                System.err.println(labelUtil.getString("cmd.msg.coverFileNotFound", coverFileName));
-                return;
+                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.COVER_FILE_NOT_FOUND, coverFileName);
             }
 
             String stegoFile = (stegoFileName == null || stegoFileName.equals("-")) ? null : stegoFileName;
@@ -532,8 +531,7 @@ public class OpenStegoCmd {
         List<?> msgData;
 
         if (stegoFileName == null) {
-            displayUsage();
-            return;
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.MISSING_REQUIRED_OPTION);
         }
 
         if (splitMode) {
@@ -643,8 +641,7 @@ public class OpenStegoCmd {
         List<File> stegoFileList;
 
         if (stegoFileName == null || sigFileName == null) {
-            displayUsage();
-            return;
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.MISSING_REQUIRED_OPTION);
         }
 
         stegoFileList = CommonUtil.parseFileList(stegoFileName, ";");
