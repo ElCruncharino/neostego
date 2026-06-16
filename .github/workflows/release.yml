@@ -118,7 +118,9 @@ jobs:
         shell: bash
         run: |
           ./gradlew :android:assembleRelease -Pversion=${GITHUB_REF_NAME#v} --no-daemon --console=plain
-          cp android/build/outputs/apk/release/app-release.apk "NeoStego-${GITHUB_REF_NAME#v}.apk"
+          apk=$(ls android/build/outputs/apk/release/*.apk | grep -v -- '-unsigned' | head -1)
+          echo "Packaging APK: $apk"
+          cp "$apk" "NeoStego-${GITHUB_REF_NAME#v}.apk"
 
       - name: Upload APK
         if: steps.signing.outputs.enabled == 'true'
