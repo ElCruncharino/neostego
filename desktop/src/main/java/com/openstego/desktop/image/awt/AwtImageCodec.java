@@ -45,13 +45,18 @@ public class AwtImageCodec implements ImageCodec {
             argb.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
             image = argb;
         }
-        return new BufferedImagePixelImage(image);
+        BufferedImagePixelImage pixelImage = new BufferedImagePixelImage(image);
+        // Carry the cover's ICC profile through the embed so the stego output keeps it (issue #62).
+        pixelImage.setIccProfile(holder.getIccProfile());
+        return pixelImage;
     }
 
     @Override
     public byte[] encode(PixelImage image, String fileName) throws OpenStegoException {
-        BufferedImage bufferedImage = ((BufferedImagePixelImage) image).getBufferedImage();
-        return ImageUtil.imageToByteArray(new ImageHolder(bufferedImage, null), fileName, getWritableFormats());
+        BufferedImagePixelImage pixelImage = (BufferedImagePixelImage) image;
+        ImageHolder holder = new ImageHolder(pixelImage.getBufferedImage(), null);
+        holder.setIccProfile(pixelImage.getIccProfile());
+        return ImageUtil.imageToByteArray(holder, fileName, getWritableFormats());
     }
 
     @Override

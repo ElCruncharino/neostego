@@ -18,7 +18,15 @@ import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
 import javax.imageio.stream.ImageInputStream;
 import javax.imageio.stream.ImageOutputStream;
+import java.awt.Graphics2D;
+import java.awt.color.ColorSpace;
+import java.awt.color.ICC_ColorSpace;
+import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DirectColorModel;
+import java.awt.image.Raster;
 import java.io.*;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -40,6 +48,26 @@ public class ImageUtil {
      * Default image type in case not provided
      */
     public static final String DEFAULT_IMAGE_TYPE = "png";
+
+    /**
+     * Explicit JPEG output quality (0.0-1.0) overriding the stored user preference. Set from the CLI
+     * {@code --quality} option / GUI so callers can control JPEG compression (upstream issue #24). Null
+     * means "use the preference, else the default".
+     */
+    private static volatile Float jpegQualityOverride = null;
+
+    /**
+     * Sets the JPEG output quality override.
+     *
+     * @param quality Quality in [0.0, 1.0], or null to clear the override
+     */
+    public static void setJpegQuality(Float quality) {
+        if (quality == null) {
+            jpegQualityOverride = null;
+        } else {
+            jpegQualityOverride = Math.max(0.0f, Math.min(1.0f, quality));
+        }
+    }
 
     /**
      * Method to generate a random image filled with noise.
@@ -464,14 +492,138 @@ public class ImageUtil {
         return new ImageHolder(diffImage, null);
     }
 
+    /**
+     * Extracts the embedded ICC colour profile from an image, if any. Only images decoded with an explicit
+     * {@link ICC_ColorSpace} (i.e. a profile was embedded in the source file) return a non-null result;
+     * images in the JVM's default sRGB space have no profile to preserve.
+     *
+     * @param image Source image
+     * @return Raw ICC profile bytes, or null if the source carried no embedded profile
+     */
+    public static byte[] extractIccProfile(BufferedImage image) {
+        if (image == null) {
+            return null;
+        }
+        ColorSpace cs = image.getColorModel().getColorSpace();
+        if (cs instanceof ICC_ColorSpace) {
+            try {
+                return ((ICC_ColorSpace) cs).getProfile().getData();
+            } catch (RuntimeException ex) {
+                return null;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Re-tags an output image with a previously-captured ICC profile so that colour-managed viewers render it
+     * the same way the source was rendered (upstream issue #62: "icc profile is removed after embedding").
+     * <p>
+     * The steganography and watermarking pipelines work on the image's sRGB pixel values, so the profile can
+     * be re-attached <em>losslessly</em> (the raster samples are reinterpreted, never converted) only when the
+     * profile is an sRGB-family profile - which is verified by sampling the colour space for near-identity to
+     * sRGB. This keeps hidden LSB data byte-exact. Wide-gamut profiles (e.g. Display&nbsp;P3, Adobe&nbsp;RGB)
+     * cannot be re-attached without a colour conversion that would corrupt the hidden bits, so the output is
+     * left in sRGB (a documented limitation). When in doubt, the original image is returned unchanged.
+     *
+     * @param image       Output image whose pixels are in sRGB
+     * @param profileBytes ICC profile bytes captured from the source (may be null)
+     * @return An image tagged with the profile, or the original image when the profile cannot be preserved
+     */
+    public static BufferedImage tagWithProfile(BufferedImage image, byte[] profileBytes) {
+        if (profileBytes == null || image == null) {
+            return image;
+        }
+        ICC_Profile profile;
+        ICC_ColorSpace cs;
+        try {
+            profile = ICC_Profile.getInstance(profileBytes);
+            if (profile.getColorSpaceType() != ColorSpace.TYPE_RGB) {
+                return image; // Only RGB profiles map onto our packed-int RGB rasters
+            }
+            cs = new ICC_ColorSpace(profile);
+        } catch (RuntimeException ex) {
+            return image;
+        }
+        if (!isSrgbFamily(cs)) {
+            return image; // Wide-gamut: leave as sRGB rather than corrupt pixels with a conversion
+        }
+
+        boolean hasAlpha = image.getColorModel().hasAlpha();
+        int bits = hasAlpha ? 32 : 24;
+        int alphaMask = hasAlpha ? 0xFF000000 : 0;
+        try {
+            DirectColorModel dcm = new DirectColorModel(cs, bits, 0xFF0000, 0xFF00, 0xFF, alphaMask, false,
+                    DataBuffer.TYPE_INT);
+            Raster raster = image.getRaster();
+            if (!dcm.isCompatibleRaster(raster)) {
+                return image; // Unexpected raster layout - don't risk it
+            }
+            // Reinterpret the SAME raster under the ICC colour model: sample values are untouched, so any
+            // embedded data survives byte-for-byte; ImageIO then emits an iCCP chunk (PNG) / APP2 marker (JPEG).
+            return new BufferedImage(dcm, image.getRaster(), false, null);
+        } catch (RuntimeException ex) {
+            return image;
+        }
+    }
+
+    /** Whether a colour space is sRGB-family (re-tagging onto sRGB pixels is appearance-correct and lossless). */
+    private static boolean isSrgbFamily(ICC_ColorSpace cs) {
+        if (cs.isCS_sRGB()) {
+            return true;
+        }
+        float[][] pts = {{0.25f, 0.5f, 0.75f}, {0.8f, 0.2f, 0.4f}, {0.1f, 0.9f, 0.6f}, {0.95f, 0.95f, 0.95f}};
+        try {
+            double max = 0.0;
+            for (float[] p : pts) {
+                float[] out = cs.toRGB(p);
+                for (int i = 0; i < 3; i++) {
+                    max = Math.max(max, Math.abs(out[i] - p[i]));
+                }
+            }
+            // Strict bound: < 0.5/255 guarantees the re-tag round-trips through getRGB without flipping an LSB.
+            return max < 0.0015;
+        } catch (RuntimeException ex) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns an opaque RGB copy of an image, compositing any translucency over white. Used before writing to
+     * formats (JPEG, BMP) that cannot encode an alpha channel, so they no longer fail with
+     * "image cannot be encoded with compression type ..." (upstream issue #58).
+     *
+     * @param image Source image
+     * @return The image itself when already opaque, otherwise an alpha-flattened {@link BufferedImage#TYPE_INT_RGB} copy
+     */
+    private static BufferedImage flattenAlpha(BufferedImage image) {
+        if (!image.getColorModel().hasAlpha()) {
+            return image;
+        }
+        BufferedImage rgb = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = rgb.createGraphics();
+        try {
+            g.setColor(java.awt.Color.WHITE);
+            g.fillRect(0, 0, rgb.getWidth(), rgb.getHeight());
+            g.drawImage(image, 0, 0, null);
+        } finally {
+            g.dispose();
+        }
+        return rgb;
+    }
+
     private static void writeImage(ImageHolder image, String imageType, OutputStream os) throws OpenStegoException {
         if ("jpeg".equals(imageType) || "jpg".equals(imageType)) {
             writeJpegImage(image, os);
         } else {
+            BufferedImage out = tagWithProfile(image.getImage(), image.getIccProfile());
             ImageWriter writer = ImageIO.getImageWritersByFormatName(imageType).next();
             try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {
                 writer.setOutput(imgOS);
-                writer.write(null, new IIOImage(image.getImage(), null, image.getMetadata()), null);
+                // Drop stale metadata when the image was re-tagged with a profile (the ColorModel now carries
+                // the colour space); merging old metadata could fight the iCCP the writer derives.
+                IIOMetadata md = out == image.getImage() ? image.getMetadata() : null;
+                writer.write(null, new IIOImage(out, null, md), null);
             } catch (IOException e) {
                 throw new OpenStegoException(e);
             } finally {
@@ -485,11 +637,20 @@ public class ImageUtil {
             JPEGImageWriteParam jpegParams = new JPEGImageWriteParam(null);
             jpegParams.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
             jpegParams.setOptimizeHuffmanTables(true);
-            Float qual = UserPreferences.getFloat("image.writer.jpeg.quality");
+            // Quality precedence: explicit override (CLI --quality / GUI) > stored preference > default.
+            Float qual = jpegQualityOverride;
+            if (qual == null) {
+                qual = UserPreferences.getFloat("image.writer.jpeg.quality");
+            }
             if (qual == null) {
                 qual = 0.75f;
             }
             jpegParams.setCompressionQuality(qual);
+
+            // JPEG cannot carry an alpha channel; flatten any translucency over white instead of letting
+            // ImageIO fail with "image cannot be encoded ..." (upstream issue #58). Then re-tag the captured
+            // ICC profile (issue #62) so colour-managed viewers render the watermarked JPEG correctly.
+            BufferedImage outImage = tagWithProfile(flattenAlpha(image.getImage()), image.getIccProfile());
 
             ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
             try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {
@@ -498,8 +659,12 @@ public class ImageUtil {
                 // We only copy over EXIF data from original file. When the source metadata was dropped
                 // (e.g. after an orientation-normalizing rotate, so the stale orientation tag is not
                 // re-attached), write with default metadata instead.
-                IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(image.getImage()), jpegParams);
-                if (image.getMetadata() != null) {
+                IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(outImage), jpegParams);
+                // Copying the EXIF marker only makes sense when the source was itself JPEG. A non-JPEG cover
+                // (e.g. a PNG watermarked out to JPEG) carries metadata in a different native format that
+                // cannot be merged into a JPEG metadata tree, so skip it and use the defaults.
+                if (image.getMetadata() != null
+                        && "javax_imageio_jpeg_image_1.0".equals(image.getMetadata().getNativeMetadataFormatName())) {
                     String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();
                     Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);
                     Node mdNode = mdRoot.getFirstChild();
@@ -522,7 +687,7 @@ public class ImageUtil {
                     metadata.mergeTree(metadataFormatName, mdRoot);
                 }
 
-                writer.write(null, new IIOImage(image.getImage(), null, metadata), jpegParams);
+                writer.write(null, new IIOImage(outImage, null, metadata), jpegParams);
             } finally {
                 writer.dispose();
             }
@@ -551,7 +716,9 @@ public class ImageUtil {
                     metadata = writer.getDefaultImageMetadata(ImageTypeSpecifier.createFromRenderedImage(image), param);
                     writer.dispose();
                 }
-                return new ImageHolder(image, metadata);
+                ImageHolder holder = new ImageHolder(image, metadata);
+                holder.setIccProfile(extractIccProfile(image));
+                return holder;
             } finally {
                 reader.dispose();
             }

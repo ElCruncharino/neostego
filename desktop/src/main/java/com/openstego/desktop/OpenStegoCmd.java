@@ -53,7 +53,7 @@ public class OpenStegoCmd {
     /**
      * Value-bearing standard options that the command handlers read
      */
-    private static final String[] VALUE_OPTIONS = {"-a", "-mf", "-cf", "-sf", "-xf", "-xd", "-gf", "-p", "-A"};
+    private static final String[] VALUE_OPTIONS = {"-a", "-mf", "-cf", "-sf", "-xf", "-xd", "-gf", "-p", "-A", "-q"};
 
     /**
      * Main method for processing command line
@@ -93,6 +93,20 @@ public class OpenStegoCmd {
             }
 
             Map<String, String> opt = collectStringOptions(parseResult);
+
+            // Optional JPEG output quality (0-100), e.g. for watermarking out to JPEG (upstream issue #24).
+            if (opt.containsKey("-q")) {
+                try {
+                    float pct = Float.parseFloat(opt.get("-q"));
+                    if (pct < 0 || pct > 100) {
+                        throw new NumberFormatException();
+                    }
+                    com.openstego.desktop.util.ImageUtil.setJpegQuality(pct / 100.0f);
+                } catch (NumberFormatException nfe) {
+                    System.err.println("Invalid --quality value (expected 0-100): " + opt.get("-q"));
+                    return;
+                }
+            }
 
             if (!command.equals("help") && !command.equals("algorithms")) {
                 if (plugin == null) {
@@ -234,6 +248,7 @@ public class OpenStegoCmd {
         addOption(spec, true, "-gf", "--sigfile");
         addOption(spec, true, "-p", "--password");
         addOption(spec, true, "-A", "--cryptalgo");
+        addOption(spec, true, "-q", "--quality");
 
         // Command flags
         addOption(spec, false, "-c", "--compress");
