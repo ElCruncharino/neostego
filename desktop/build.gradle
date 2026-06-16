@@ -290,6 +290,115 @@ tasks.register("dist") {
     dependsOn distBin, distWin, distDeb, distRpm
 }
 
+// ---------------------------------------------------------------------------------------
+// Native installers via jpackage. Unlike distWin/distDeb/distRpm (which require a system
+// JRE), these bundle a Java runtime inside the installer, so end users install nothing else.
+// One config emits the right native installer per OS; the release CI runs the matching task
+// on a runner of that OS. Requires the JDK's jpackage on PATH/JAVA_HOME, plus Inno Setup
+// (Windows .exe) and rpm tools (Linux .rpm) on the build machine.
+// ---------------------------------------------------------------------------------------
+def jpackageInputDir = layout.buildDirectory.dir('jpackage/input')
+def jpackageOutDir   = layout.buildDirectory.dir('jpackage/out')
+// jpackage requires a strictly numeric version (e.g. 1.0.0); drop any -SNAPSHOT/-rc suffix.
+def jpackageVersion  = project.version.toString().replaceAll(/-.*$/, '')
+
+def jpackageBin = {
+    String jh = System.getenv('JAVA_HOME')
+    String exe = Os.isFamily(Os.FAMILY_WINDOWS) ? 'jpackage.exe' : 'jpackage'
+    jh ? new File(jh, "bin/${exe}").absolutePath : exe
+}
+
+tasks.register('jpackageInput', Copy) {
+    dependsOn jar
+    into jpackageInputDir
+    // Main jar plus all runtime deps, flat, so the jar manifest's Class-Path (filenames) resolves.
+    from(tasks.jar)
+    from(configurations.runtimeClasspath)
+}
+
+def commonJpackageArgs = {
+    [
+            '--name'        , projectName,
+            '--app-version' , jpackageVersion,
+            '--vendor'      , project.author.toString(),
+            '--copyright'   , "Copyright (c) Samir Vaidya and ${project.author}".toString(),
+            '--about-url'   , project.homepageUrl.toString(),
+            '--input'       , jpackageInputDir.get().asFile.absolutePath,
+            '--main-jar'    , 'neostego.jar',
+            '--main-class'  , 'com.openstego.desktop.OpenStegoLauncher',
+            '--license-file', rootProject.file('LICENSE').absolutePath,
+            '--dest'        , jpackageOutDir.get().asFile.absolutePath
+    ]
+}
+
+tasks.register('jpackageExe', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled Windows .exe installer (Inno Setup).'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'exe',
+                '--icon', file('src/main/dist/neostego.ico').absolutePath,
+                '--win-menu', '--win-shortcut', '--win-dir-chooser', '--win-per-user-install'
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageDmg', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled macOS .dmg.'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + ['--type', 'dmg', '--mac-package-name', projectName]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageDeb', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled Linux .deb.'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'deb',
+                '--linux-shortcut', '--linux-menu-group', 'Utility',
+                '--linux-deb-maintainer', project.authorMail.toString()
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageRpm', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled Linux .rpm.'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'rpm',
+                '--linux-shortcut', '--linux-menu-group', 'Utility',
+                '--linux-rpm-license-type', 'GPLv2'
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+// Umbrella: each sub-task is a no-op unless the host OS matches, so this builds whatever
+// native installer the current runner can produce.
+tasks.register('jpackage') {
+    group = 'distribution'
+    description = 'Build the native runtime-bundled installer(s) for the current OS.'
+    dependsOn jpackageExe, jpackageDmg, jpackageDeb, jpackageRpm
+}
+
 // Benchmark helper: batch-embed a directory of covers with one algorithm in a single JVM.
 // Usage: ./gradlew :desktop:benchEmbed -PcoverDir=... -PoutDir=... -Palgo=Adaptive -Ppayload=9800 [-Ppw=secret]
 tasks.register("benchEmbed", JavaExec) {

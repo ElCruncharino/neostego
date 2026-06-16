@@ -1,0 +1,95 @@
+name: Release
+
+# Build runtime-bundled native installers on each OS and attach them to a GitHub Release.
+# Push a tag like v1.0.0 to cut a release; or run manually (workflow_dispatch) to test the
+# build and inspect artifacts without publishing a release.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            tasks: ':desktop:jpackageExe'
+            artifacts: desktop/build/jpackage/out/*.exe
+          - name: macos-arm64
+            os: macos-latest
+            tasks: ':desktop:jpackageDmg'
+            artifacts: desktop/build/jpackage/out/*.dmg
+          - name: linux-x64
+            os: ubuntu-latest
+            tasks: ':desktop:jpackageDeb :desktop:jpackageRpm :desktop:distBin'
+            artifacts: |
+              desktop/build/jpackage/out/*.deb
+              desktop/build/jpackage/out/*.rpm
+              desktop/build/distributions/*.zip
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Install Inno Setup (Windows .exe)
+        if: runner.os == 'Windows'
+        run: choco install innosetup --no-progress -y
+
+      - name: Install rpm/deb tooling (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot binutils
+
+      - name: Resolve version from tag
+        id: ver
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            echo "arg=-Pversion=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "arg=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build installer(s)
+        shell: bash
+        run: ./gradlew ${{ matrix.tasks }} ${{ steps.ver.outputs.arg }} --no-daemon --console=plain
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all installers
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Publish release (draft)
+        uses: softprops/action-gh-release@v2
+        with:
+          # Draft so you can verify every asset before it goes public; flip in the GitHub UI,
+          # or set draft: false here once you trust the pipeline.
+          draft: true
+          generate_release_notes: true
+          files: dist/**/*
