@@ -8,8 +8,8 @@
 
 plugins {
     id 'com.android.application' version '8.6.1'
-    id 'org.jetbrains.kotlin.android' version '2.0.20'
-    id 'org.jetbrains.kotlin.plugin.compose' version '2.0.20'
+    id 'org.jetbrains.kotlin.android' version '2.4.0'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.4.0'
 }
 
 android {
@@ -74,7 +74,7 @@ repositories {
 dependencies {
     implementation project(':core')
 
-    def composeBom = platform('androidx.compose:compose-bom:2024.09.02')
+    def composeBom = platform('androidx.compose:compose-bom:2026.05.01')
     implementation composeBom
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material-icons-extended'
@@ -83,6 +83,6 @@ dependencies {
     debugImplementation 'androidx.compose.ui:ui-tooling'
     implementation 'androidx.activity:activity-compose:1.9.2'
     implementation 'androidx.core:core-ktx:1.13.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.8.6'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.10.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
 }
