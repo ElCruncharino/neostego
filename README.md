@@ -141,3 +141,20 @@ source code for the fork is the contents of this repository.
 
 ## Acknowledgement
 The legacy spread-spectrum DWT watermarking plugins (Dugad/Kim/Xie) in this product are based on the code provided by Peter Meerwald. Refer to his excellent thesis on [watermarking](http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/): Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001. The default `DWTSVD` watermark is a hybrid DWT&ndash;SVD scheme with QIM on the largest singular value, a well-established robust, blind approach (see e.g. Kang, Zhao, Lin &amp; Chen, *Multimedia Tools and Applications* 77, 2018, and subsequent DWT&ndash;SVD&ndash;QIM evaluations).
+
+### Steganography & steganalysis algorithms
+The modern data-hiding and steganalysis capabilities in NeoStego would not exist without the
+foundational research published by Jessica Fridrich's [DDE Lab at Binghamton University](https://dde.binghamton.edu/download/stego_algorithms/)
+and collaborators, whose papers and reference implementations defined this field. The DDE Lab's own
+source code is released by them for **research and non-profit use** (the DDE Lab retains copyright).
+The corresponding NeoStego plugins are **independent, clean-room implementations written from the
+published papers** &mdash; they implement the *methods* described below; no DDE Lab source code is
+used or derived. Citations:
+
+- **`Adaptive` (content-adaptive spatial embedding)** implements:
+  - the **HILL** cost function &mdash; B. Li, M. Wang, J. Huang &amp; X. Li, "A new cost function for spatial image steganography," *IEEE ICIP*, 2014; and
+  - **Syndrome-Trellis Codes (STC)** for minimal-distortion coding &mdash; T. Filler, J. Judas &amp; J. Fridrich, "Minimizing additive distortion in steganography using syndrome-trellis codes," *IEEE TIFS*, 2011.
+- **`SI-UNIWARD` / `JpegUniward` (JPEG-domain adaptive embedding)** implements **UNIWARD** &mdash; V. Holub, J. Fridrich &amp; T. Denemark, "Universal distortion function for steganography in an arbitrary domain," *EURASIP Journal on Information Security*, 2014.
+- The **steganalysis benchmark harnesses** (`benchmark/`) reimplement, for evaluation only, the **DCTR** features (V. Holub &amp; J. Fridrich, *IEEE TIFS*, 2015), the **SRM** rich model and **FLD ensemble** (J. Fridrich &amp; J. Kodovsky, *IEEE TIFS*, 2012/2013), and the **SRNet** detector (M. Boroumand, M. Chen &amp; J. Fridrich, *IEEE TIFS*, 2019).
+
+Deep gratitude to these researchers for making their work openly available to the community.

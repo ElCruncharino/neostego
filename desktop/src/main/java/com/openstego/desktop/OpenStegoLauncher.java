@@ -1,7 +1,8 @@
 /*
  * Steganography utility to hide messages into cover files
- * Copyright (c) 2026 Nick Haghiri
- * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Author: Samir Vaidya (mailto:syvaidya@gmail.com)
+ * Copyright (c) Samir Vaidya
+ * Modifications copyright (c) 2026 Nick Haghiri
  */
 
 package com.openstego.desktop;
