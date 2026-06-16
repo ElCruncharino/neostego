@@ -46,22 +46,20 @@ Changes in this fork:
   [`benchmark/watermark`](benchmark/watermark). It also tolerates a **small pure crop** (trimming a
   modest border without rescaling, the common "crop the edges and re-save" edit): extraction searches
   small grid-phase and block-origin offsets to re-synchronise the block grid, and the code bits are
-  tiled by an absolute, size-independent keyed mapping so blocks that survive a crop still decode (a
-  reported weakness, upstream issue&nbsp;#69). As for other non-neural blind schemes, large
+  tiled by an absolute, size-independent keyed mapping so blocks that survive a crop still decode
+  (crop robustness is a known weak point for blind watermarks). As for other non-neural blind schemes, large
   **contrast** changes are only partially handled (contrast is an around-the-mean affine shift that
   &mu;-normalisation does not fully cancel) and larger geometric desynchronisation (big crops, crop
   **plus** rescale, large rotation/scaling to a different size) remains out of scope.
 - **Audio data hiding.** A new `WavLSB` algorithm hides data in the least-significant bit of each
-  integer PCM sample of an uncompressed **WAV** cover (upstream issue&nbsp;#5). The output is a
+  integer PCM sample of an uncompressed **WAV** cover. The output is a
   same-format WAV that still plays normally, and compression/encryption work just like the image
   algorithms. Lossy/compressed audio (MP3, AAC, Ogg) cannot carry LSB data, by nature.
-- **More cover formats and fidelity.** **WebP** covers can be read (upstream issue&nbsp;#63; output
-  stays a lossless PNG). The cover's embedded **ICC colour profile** is now carried through to the
-  output for both data hiding and watermarking (upstream issue&nbsp;#62), alpha images watermarked to
-  JPEG are flattened instead of erroring (issue&nbsp;#58), JPEG output quality is selectable
-  (`--quality` / a slider; issue&nbsp;#24), and a single filename may contain the `;` list delimiter
-  (issue&nbsp;#60). Oversized payloads fail with a clear capacity/heap message rather than an
-  `OutOfMemoryError` (issue&nbsp;#67).
+- **More cover formats and fidelity.** **WebP** covers can be read (output stays a lossless PNG). The
+  cover's embedded **ICC colour profile** is now carried through to the output for both data hiding and
+  watermarking, alpha images watermarked to JPEG are flattened instead of erroring, JPEG output quality
+  is selectable (`--quality` / a slider), and a single filename may contain the `;` list delimiter.
+  Oversized payloads fail with a clear capacity/heap message rather than an `OutOfMemoryError`.
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
