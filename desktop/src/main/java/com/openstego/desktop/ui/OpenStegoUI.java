@@ -9,6 +9,7 @@ package com.openstego.desktop.ui;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.openstego.desktop.*;
 import com.openstego.desktop.util.CommonUtil;
+import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.PluginManager;
 import com.openstego.desktop.util.UserPreferences;
@@ -1016,6 +1017,9 @@ public class OpenStegoUI extends OpenStegoFrame {
 
                 wmPlugin.resetConfig();
                 openStego = new OpenStego(wmPlugin, wmPlugin.getConfig());
+
+                // Apply the chosen JPEG output quality; only takes effect when the output is a JPEG (issue #24).
+                ImageUtil.setJpegQuality(getEmbedWmPanel().getJpegQuality());
 
                 sigFileName = getEmbedWmPanel().getSignatureFileTextField().getText();
                 outputFileName = getEmbedWmPanel().getOutputWmFileTextField().getText();

@@ -28,6 +28,7 @@ public class EmbedWatermarkPanel extends JPanel {
     private JButton signatureFileButton;
     private JTextField outputWmFileTextField;
     private JButton outputWmFileButton;
+    private JSlider jpegQualitySlider;
     private JButton runEmbedWmButton;
 
     /**
@@ -114,6 +115,30 @@ public class EmbedWatermarkPanel extends JPanel {
             this.outputWmFileButton.setText("...");
         }
         return this.outputWmFileButton;
+    }
+
+    /**
+     * Getter method for the JPEG output-quality slider (1-100). Only affects the output when the watermarked
+     * file is saved as a JPEG; ignored for lossless formats. Addresses upstream issue #24.
+     *
+     * @return jpegQualitySlider
+     */
+    public JSlider getJpegQualitySlider() {
+        if (this.jpegQualitySlider == null) {
+            this.jpegQualitySlider = new JSlider(1, 100, 75);
+            this.jpegQualitySlider.setMajorTickSpacing(25);
+            this.jpegQualitySlider.setMinorTickSpacing(5);
+            this.jpegQualitySlider.setPaintTicks(true);
+            this.jpegQualitySlider.setPaintLabels(true);
+        }
+        return this.jpegQualitySlider;
+    }
+
+    /**
+     * @return the currently selected JPEG output quality as a fraction in [0.0, 1.0]
+     */
+    public float getJpegQuality() {
+        return getJpegQualitySlider().getValue() / 100.0f;
     }
 
     /**
@@ -238,10 +263,42 @@ public class EmbedWatermarkPanel extends JPanel {
         add(getOutputWmFileButton(), gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 8;
+        gridBagConstraints.insets = new Insets(5, 5, 0, 5);
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 0.0;
+        label = new JLabel(labelUtil.getString("gui.label.wmEmbed.jpegQuality"));
+        label.setLabelFor(getJpegQualitySlider());
+        add(label, gridBagConstraints);
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 9;
+        gridBagConstraints.insets = new Insets(0, 5, 0, 5);
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 0.0;
+        label = new JLabel(labelUtil.getString("gui.label.wmEmbed.jpegQualityMsg"));
+        label.setFont(label.getFont().deriveFont(Font.ITALIC));
+        add(label, gridBagConstraints);
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 10;
+        gridBagConstraints.insets = new Insets(0, 5, 5, 5);
+        gridBagConstraints.weightx = 1.0;
+        gridBagConstraints.weighty = 0.0;
+        add(getJpegQualitySlider(), gridBagConstraints);
+
+        gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.EAST;
         gridBagConstraints.gridwidth = 2;
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 8;
+        gridBagConstraints.gridy = 11;
         gridBagConstraints.insets = new Insets(5, 5, 5, 5);
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 0.0;
@@ -252,7 +309,7 @@ public class EmbedWatermarkPanel extends JPanel {
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagConstraints.gridx = 0;
-        gridBagConstraints.gridy = 9;
+        gridBagConstraints.gridy = 12;
         gridBagConstraints.insets = new Insets(0, 0, 0, 0);
         gridBagConstraints.weightx = 0.01;
         gridBagConstraints.weighty = 1.0;
