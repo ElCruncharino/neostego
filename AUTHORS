@@ -1,0 +1,27 @@
+NeoStego authors and contributors
+==================================
+
+NeoStego is a downstream fork of OpenStego.
+
+Original work (OpenStego)
+-------------------------
+Samir Vaidya <syvaidya@gmail.com>
+  Original author and copyright holder of OpenStego (https://www.openstego.com),
+  from which NeoStego is derived. The majority of the core data-hiding
+  framework, plugin SPI, and the legacy LSB/DWT plugins originate from his work.
+
+NeoStego fork
+-------------
+Nick Haghiri <ns.haghiri@gmail.com>
+  Fork maintainer. Author of the NeoStego-specific changes: the Android app,
+  the content-adaptive (HILL+STC) and SI-UNIWARD plugins, the DWT-SVD
+  watermarking plugin, the pure-Java JPEG and WAV codecs, the modernized
+  desktop UI, the strengthened encryption, and the :core/:desktop module split.
+  See CHANGELOG.md for details.
+
+Third-party code
+----------------
+Peter Meerwald
+  The legacy spread-spectrum DWT watermarking plugins (Dugad, Kim, Xie) are
+  based on code from his thesis "Digital Image Watermarking in the Wavelet
+  Transfer Domain" (University of Salzburg, 2001).
