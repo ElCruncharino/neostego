@@ -144,6 +144,11 @@ public class OpenStegoErrors {
     public static final int SPLIT_NOT_SUPPORTED = 27;
 
     /**
+     * Error Code - A password is required but none was supplied and no interactive terminal is available
+     */
+    public static final int PASSWORD_REQUIRED = 28;
+
+    /**
      * Initialize the error code - message key map
      */
     public static void init() {
@@ -173,5 +178,6 @@ public class OpenStegoErrors {
         addErrorCode(NAMESPACE, SPLIT_MANIFEST_MISMATCH, "err.split.manifestMismatch");
         addErrorCode(NAMESPACE, SPLIT_REQUIRES_OUTPUT_DIR, "err.split.requiresOutputDir");
         addErrorCode(NAMESPACE, SPLIT_NOT_SUPPORTED, "err.split.notSupported");
+        addErrorCode(NAMESPACE, PASSWORD_REQUIRED, "err.passwordRequired");
     }
 }
