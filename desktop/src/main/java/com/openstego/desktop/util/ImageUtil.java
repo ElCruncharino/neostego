@@ -136,6 +136,44 @@ public class ImageUtil {
     }
 
     /**
+     * Apply an Exif orientation (1-8) to an image, returning an upright copy as {@link BufferedImage#TYPE_INT_ARGB}.
+     * Pixels are remapped exactly (no interpolation); orientations 5-8 swap width and height. Orientation 1
+     * yields a plain ARGB copy. This is what makes the embedded/extracted stego image match how viewers
+     * (which honor the tag) render the original cover.
+     *
+     * @param src         source image
+     * @param orientation Exif orientation value 1-8
+     * @return upright ARGB image
+     */
+    public static BufferedImage applyExifOrientation(BufferedImage src, int orientation) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        boolean swap = orientation >= 5 && orientation <= 8;
+        int dw = swap ? h : w;
+        int dh = swap ? w : h;
+        BufferedImage dst = new BufferedImage(dw, dh, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int rgb = src.getRGB(x, y);
+                int dx;
+                int dy;
+                switch (orientation) {
+                    case 2: dx = w - 1 - x; dy = y;             break; // mirror horizontal
+                    case 3: dx = w - 1 - x; dy = h - 1 - y;     break; // rotate 180
+                    case 4: dx = x;         dy = h - 1 - y;     break; // mirror vertical
+                    case 5: dx = y;         dy = x;             break; // transpose
+                    case 6: dx = h - 1 - y; dy = x;             break; // rotate 90 CW
+                    case 7: dx = h - 1 - y; dy = w - 1 - x;     break; // transverse
+                    case 8: dx = y;         dy = w - 1 - x;     break; // rotate 90 CCW
+                    default: dx = x;        dy = y;             break; // 1 = normal
+                }
+                dst.setRGB(dx, dy, rgb);
+            }
+        }
+        return dst;
+    }
+
+    /**
      * Get RGB data array from given image
      *
      * @param image Image
