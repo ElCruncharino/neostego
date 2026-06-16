@@ -48,6 +48,7 @@ sourceSets {
 dependencies {
     implementation project(':core')
     implementation 'com.formdev:flatlaf:3.6'
+    implementation 'com.formdev:flatlaf-extras:3.6'
     implementation 'info.picocli:picocli:4.7.6'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
@@ -87,7 +88,28 @@ jar {
 
 test {
     useJUnitPlatform()
+    // The large-cover tiling proof runs under a tight heap in its own task (:desktop:tilingTest);
+    // keep it out of the default suite so routine test runs stay fast and heap-roomy.
+    exclude '**/LargeCoverTilingTest*'
     finalizedBy jacocoTestReport
+}
+
+// Constrained-heap proof that Adaptive + SI-UNIWARD tiling bounds the working set to one band:
+// a 13.5 MP cover + 150 KB payload round-trips under -Xmx320m (all three algorithms pass by ~256m;
+// 224m OOMs, and the old per-image arrays needed ~900m), so a regression that reintroduces an
+// O(image) array fails loudly. Banding the JPEG codec too (planes + rounding recomputed per
+// block-row strip), the 1M-carrier band budget, and the short[] DCT coefficient store (half the
+// resident footprint of int[]) are what pulled the peak down here.
+// Override the cap with -PtileXmx=<size>. Usage: ./gradlew :desktop:tilingTest
+tasks.register("tilingTest", Test) {
+    group = "verification"
+    description = "Large-cover tiled-embedding round-trip under a constrained heap."
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/LargeCoverTilingTest*'
+    maxHeapSize = (project.findProperty("tileXmx") ?: '320m').toString()
+    forkEvery = 1
 }
 
 jacocoTestReport {
@@ -296,5 +318,17 @@ tasks.register("benchJpeg", JavaExec) {
             (project.findProperty("payload") ?: "0").toString(),
             project.findProperty("algo") ?: "JpegUniward",
             project.findProperty("pw") ?: ""
+    ]
+}
+
+tasks.register("stcBench", JavaExec) {
+    group = "verification"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.openstego.desktop.bench.StcBench"
+    args = [
+            (project.findProperty("msg") ?: "4000").toString(),
+            project.findProperty("ws") ?: "5,10,25,50,96",
+            project.findProperty("hs") ?: "7,10,12,14"
     ]
 }

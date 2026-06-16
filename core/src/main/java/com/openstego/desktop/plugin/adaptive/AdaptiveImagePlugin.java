@@ -26,12 +26,21 @@ import java.util.Random;
  * realised as a random &plusmn;1 (LSB matching). This resists both classical statistical
  * steganalysis and raises the bar against CNN steganalysis, far beyond uniform LSB replacement.
  * <p>
- * Layout (all positions taken from a password-seeded permutation of the R/G/B sample LSBs):
+ * <b>Tiled embedding.</b> The cover is partitioned into independent horizontal <em>bands</em> of at
+ * most {@link #BAND_ELEMS} R/G/B samples each (a whole number of pixel rows). Every band is a
+ * self-contained embedding problem &mdash; its own password-seeded permutation, its own HILL cost
+ * map, and its own STC trellis &mdash; so the working-set memory (permutation, costs, trellis path)
+ * is bounded by the band size rather than the whole image. This lets multi-megapixel covers be
+ * embedded within a small heap (e.g. on Android) with no downscaling. The message bits are split
+ * across the bands in proportion to each band's spare capacity, deterministically, so embed and
+ * extract agree on the split from the image geometry and the stored data length alone.
+ * <p>
+ * Layout (all positions taken from per-band permutations of the R/G/B sample LSBs):
  * <ol>
- *   <li>a bootstrap header (reusing {@link LSBDataHeader} plus a 4-byte STC width) written with LSB
- *       matching into the first elements, so the receiver can recover the data length, flags,
- *       filename and width without knowing them in advance;</li>
- *   <li>the STC-coded body in the following elements, using HILL costs.</li>
+ *   <li>band&nbsp;0 begins with a bootstrap header (reusing {@link LSBDataHeader} plus a 4-byte mode
+ *       flag) written with LSB matching, so the receiver recovers the data length, flags, filename
+ *       and CMD mode without knowing them in advance;</li>
+ *   <li>the STC-coded body follows, spread across all bands using HILL costs.</li>
  * </ol>
  * The on-disk metadata reuses the existing {@code OPENSTEGO} header so the compression/encryption
  * flags flow back to the core unchanged. Existing plugins and their formats are untouched.
@@ -44,18 +53,35 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     /** STC constraint height used for embedding/extraction. */
     private static final int STC_HEIGHT = Stc.DEFAULT_HEIGHT;
 
-    /** Number of extra header bytes used to store the STC width. */
-    private static final int WIDTH_FIELD_BYTES = 4;
+    /** Number of header bytes used to store the embedding mode flag (0 = plain STC, 1 = CMD). */
+    private static final int MODE_FIELD_BYTES = 4;
+
+    /** Plain (single STC per band) mode marker. */
+    private static final int MODE_PLAIN = 0;
+
+    /** CMD (four sub-lattices per band) mode marker. */
+    private static final int MODE_CMD = 1;
 
     /**
-     * Sentinel written into the width field to mark a v2 (CMD) stego stream. {@code -1} is never a
-     * valid v1 width (which is always {@code >= 1}), so the decoder can branch unambiguously while
-     * keeping the header byte-size identical to v1.
+     * Maximum number of R/G/B sample LSBs processed per band. Caps the per-band working set
+     * (permutation {@code int[]}, HILL cost {@code double[]}, STC {@code path long[]}) so peak memory
+     * stays bounded regardless of image resolution. 2,000,000 elements is ~82&nbsp;MB of transient
+     * arrays per band, comfortably within a constrained mobile heap.
      */
-    private static final int V2_SENTINEL = -1;
+    private static final int BAND_ELEMS = 2_000_000;
 
-    /** Number of 2&times;2 sub-lattices used by the CMD (v2) embedding. */
+    /**
+     * Halo rows added above and below a band when computing its HILL cost, so that the cost at band
+     * seams matches a whole-image computation. HILL's vertical reach is 9 rows (3&times;3 high-pass +
+     * 3&times;3 L1 + 15&times;15 L2). Cost only affects detectability, never correctness.
+     */
+    private static final int COST_HALO = 9;
+
+    /** Number of 2&times;2 sub-lattices used by the CMD embedding. */
     private static final int CMD_LATTICES = 4;
+
+    /** Mixing constant (golden-ratio odd 64-bit) folded into the per-band permutation seed. */
+    private static final long BAND_SEED_MIX = 0x9E3779B97F4A7C15L;
 
     /** 8-neighbour offsets (same channel) used to measure the local modification trend for CMD. */
     private static final int[] NB_DX = {-1, 0, 1, -1, 1, -1, 0, 1};
@@ -86,76 +112,77 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
             throws OpenStegoException {
         PixelImage image;
         if (cover == null) {
-            int headerBits = (LSBDataHeader.getMaxHeaderSize() + WIDTH_FIELD_BYTES) * 8;
+            int headerBits = (LSBDataHeader.getMaxHeaderSize() + MODE_FIELD_BYTES) * 8;
             int numOfPixels = (headerBits + msg.length * 8) / 3 + 16;
             image = ImageCodecRegistry.get().createRandomImage(numOfPixels);
         } else {
             image = ImageCodecRegistry.get().decode(cover, coverFileName);
         }
         int width = image.getWidth();
-        int n = width * image.getHeight() * 3;
+        int height = image.getHeight();
 
-        int[] perm = permutation(n, this.config.getPassword());
-
-        // Bootstrap header: standard OpenStego header + STC width
+        // Bootstrap header (band 0): standard OpenStego header + a 4-byte embedding-mode flag.
         LSBDataHeader header = new LSBDataHeader(msg.length, 1, msgFileName, this.config);
         byte[] headerBytes = header.getHeaderData();
-        int headerLen = headerBytes.length + WIDTH_FIELD_BYTES;
+        int headerLen = headerBytes.length + MODE_FIELD_BYTES;
         int headerElems = headerLen * 8;
 
         int bodyBits = msg.length * 8;
-        int remaining = n - headerElems;
-        if (bodyBits > 0 && remaining < bodyBits) {
+        int[] caps = bandCaps(width, height, headerElems);
+        long totalCap = 0;
+        for (int c : caps) {
+            totalCap += c;
+        }
+        if (bodyBits > 0 && totalCap < bodyBits) {
             throw new OpenStegoException(null, NAMESPACE, AdaptiveErrors.IMAGE_SIZE_INSUFFICIENT);
         }
 
-        boolean useCmd = this.config.isCmd() && bodyBits > 0;
-        int wField;
-        if (useCmd) {
-            wField = V2_SENTINEL;
-        } else if (bodyBits == 0) {
-            wField = 1;
-        } else {
-            wField = remaining / bodyBits;
-        }
+        int mode = (this.config.isCmd() && bodyBits > 0) ? MODE_CMD : MODE_PLAIN;
 
         byte[] fullHeader = new byte[headerLen];
         System.arraycopy(headerBytes, 0, fullHeader, 0, headerBytes.length);
-        putInt(fullHeader, headerBytes.length, wField);
+        putInt(fullHeader, headerBytes.length, mode);
 
         SecureRandom dir = new SecureRandom();
 
-        // Write the header bits (LSB matching) into the first headerElems permuted elements
+        // Band 0 permutation also carries the header in its first headerElems entries.
+        int rpb = rowsPerBand(width);
+        int numBands = caps.length;
+        int[] perm0 = bandPermutation(bandCount(width, height, 0, rpb), this.config.getPassword(), 0);
+
         int bitPos = 0;
         for (byte b : fullHeader) {
             for (int k = 7; k >= 0; k--) {
                 int bit = (b >> k) & 1;
-                setMatchingLsb(image, width, perm[bitPos++], bit, dir);
+                setMatchingLsb(image, width, perm0[bitPos++], bit, dir);
             }
         }
 
-        // STC-coded body
         if (bodyBits > 0) {
             int[] message = bytesToBits(msg);
-            double[] costAll = hillCosts(image, width);
-            if (useCmd) {
-                embedCmd(image, width, perm, headerElems, n, message, costAll, this.config.getCmdMu());
-            } else {
-                int w = wField;
-                int bodyElems = bodyBits * w;
-                int[] x = new int[bodyElems];
-                double[] rho = new double[bodyElems];
-                for (int i = 0; i < bodyElems; i++) {
-                    int e = perm[headerElems + i];
-                    x[i] = channelValue(image, width, e) & 1;
-                    rho[i] = costAll[e];
+            int[] bandBits = splitBits(bodyBits, caps);
+            int off = 0;
+            for (int b = 0; b < numBands; b++) {
+                int bits = bandBits[b];
+                if (bits == 0) {
+                    continue;
                 }
-                int[] y = Stc.embed(x, rho, message, w, STC_HEIGHT);
-                for (int i = 0; i < bodyElems; i++) {
-                    if (y[i] != x[i]) {
-                        setMatchingLsb(image, width, perm[headerElems + i], y[i], dir);
-                    }
+                int y0 = b * rpb;
+                int y1 = Math.min(height, y0 + rpb);
+                int start = y0 * width * 3;
+                int count = (y1 - y0) * width * 3;
+                int bodyStart = (b == 0) ? headerElems : 0;
+                int[] perm = (b == 0) ? perm0 : bandPermutation(count, this.config.getPassword(), b);
+                double[] cost = hillCostsBand(image, width, height, y0, y1);
+                int[] seg = Arrays.copyOfRange(message, off, off + bits);
+
+                if (mode == MODE_CMD) {
+                    embedCmdBand(image, width, start, y0, y1, perm, bodyStart, seg, cost,
+                            this.config.getCmdMu());
+                } else {
+                    embedPlainBand(image, width, start, perm, bodyStart, seg, cost, dir);
                 }
+                off += bits;
             }
         }
 
@@ -166,9 +193,9 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     public String extractMsgFileName(byte[] stegoData, String stegoFileName) throws OpenStegoException {
         PixelImage image = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
         int width = image.getWidth();
-        int n = width * image.getHeight() * 3;
-        int[] perm = permutation(n, this.config.getPassword());
-        PermutedLsbInputStream in = new PermutedLsbInputStream(image, width, perm);
+        int height = image.getHeight();
+        int[] perm0 = bandPermutation(bandCount(width, height, 0, rowsPerBand(width)), this.config.getPassword(), 0);
+        PermutedLsbInputStream in = new PermutedLsbInputStream(image, width, perm0);
         LSBDataHeader header = new LSBDataHeader(in, this.config);
         return header.getFileName();
     }
@@ -177,52 +204,62 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     public byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException {
         PixelImage image = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
         int width = image.getWidth();
-        int n = width * image.getHeight() * 3;
-        int[] perm = permutation(n, this.config.getPassword());
+        int height = image.getHeight();
+        int rpb = rowsPerBand(width);
 
-        PermutedLsbInputStream in = new PermutedLsbInputStream(image, width, perm);
+        int[] perm0 = bandPermutation(bandCount(width, height, 0, rpb), this.config.getPassword(), 0);
+        PermutedLsbInputStream in = new PermutedLsbInputStream(image, width, perm0);
         LSBDataHeader header = new LSBDataHeader(in, this.config);
-        byte[] widthBytes = new byte[WIDTH_FIELD_BYTES];
-        if (in.read(widthBytes, 0, WIDTH_FIELD_BYTES) != WIDTH_FIELD_BYTES) {
+        byte[] modeBytes = new byte[MODE_FIELD_BYTES];
+        if (in.read(modeBytes, 0, MODE_FIELD_BYTES) != MODE_FIELD_BYTES) {
             throw new OpenStegoException(null, NAMESPACE, AdaptiveErrors.ERR_IMAGE_DATA_READ);
         }
-        int w = getInt(widthBytes, 0);
+        int mode = getInt(modeBytes, 0);
         int dataLength = header.getDataLength();
-        if (dataLength < 0) {
+        if (dataLength < 0 || (mode != MODE_PLAIN && mode != MODE_CMD)) {
             throw new OpenStegoException(null, NAMESPACE, AdaptiveErrors.ERR_IMAGE_DATA_READ);
         }
-        int bodyBits = dataLength * 8;
         int headerElems = in.elementsRead();
         byte[] data = new byte[dataLength];
-
-        if (w == V2_SENTINEL) {
-            // v2 (CMD): the body is split across 2x2 sub-lattices, each its own binary STC.
-            if (bodyBits > 0) {
-                extractCmd(image, width, perm, headerElems, n, bodyBits, data);
-            }
+        int bodyBits = dataLength * 8;
+        if (bodyBits == 0) {
             return data;
         }
 
-        // v1: a single binary STC over all body elements.
-        if (w < 1 || (long) headerElems + (long) bodyBits * w > n) {
-            throw new OpenStegoException(null, NAMESPACE, AdaptiveErrors.ERR_IMAGE_DATA_READ);
-        }
-        if (bodyBits > 0) {
-            int bodyElems = bodyBits * w;
-            int[] y = new int[bodyElems];
-            for (int i = 0; i < bodyElems; i++) {
-                y[i] = channelValue(image, width, perm[headerElems + i]) & 1;
+        int[] caps = bandCaps(width, height, headerElems);
+        int[] bandBits = splitBits(bodyBits, caps);
+        int numBands = caps.length;
+        int[] allBits = new int[bodyBits];
+        int off = 0;
+        for (int b = 0; b < numBands; b++) {
+            int bits = bandBits[b];
+            if (bits == 0) {
+                continue;
             }
-            int[] bits = Stc.extract(y, bodyBits, w, STC_HEIGHT);
-            bitsToBytes(bits, data);
+            int y0 = b * rpb;
+            int y1 = Math.min(height, y0 + rpb);
+            int start = y0 * width * 3;
+            int count = (y1 - y0) * width * 3;
+            int bodyStart = (b == 0) ? headerElems : 0;
+            int[] perm = (b == 0) ? perm0 : bandPermutation(count, this.config.getPassword(), b);
+            int bodyCap = caps[b];
+
+            if (mode == MODE_CMD) {
+                extractCmdBand(image, width, start, perm, bodyStart, bits, allBits, off);
+            } else {
+                extractPlainBand(image, width, start, perm, bodyStart, bodyCap, bits, allBits, off);
+            }
+            off += bits;
         }
+        bitsToBytes(allBits, data);
         return data;
     }
 
     /**
      * Returns the maximum number of message bytes that can be embedded in a cover of the given size
      * (at the highest-payload STC width of 1, with no embedded filename). Overrides the LSB-rate
-     * default to account for the extra STC-width field that precedes the body.
+     * default to account for the extra mode field that precedes the body; the header lives only in
+     * band&nbsp;0, so the total body capacity is the same {@code n - headerElems} as before tiling.
      *
      * @param width  cover width in pixels
      * @param height cover height in pixels
@@ -232,7 +269,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     public int getMaxDataLength(int width, int height) {
         int n = width * height * 3;
         LSBDataHeader header = new LSBDataHeader(0, 1, null, this.config);
-        int headerElems = (header.getHeaderData().length + WIDTH_FIELD_BYTES) * 8;
+        int headerElems = (header.getHeaderData().length + MODE_FIELD_BYTES) * 8;
         int bodyElems = n - headerElems;
         return Math.max(0, bodyElems / 8);
     }
@@ -247,65 +284,116 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         return labelUtil.getString("plugin.usage");
     }
 
-    // ---------------- helpers ----------------
+    // ---------------- band geometry ----------------
 
-    /** Builds a password-seeded permutation of {@code [0, n)} (Fisher-Yates). */
-    private static int[] permutation(int n, char[] password) throws OpenStegoException {
-        int[] perm = new int[n];
-        for (int i = 0; i < n; i++) {
-            perm[i] = i;
-        }
-        Random rand = new Random(StringUtil.passwordHash(password));
-        for (int i = n - 1; i > 0; i--) {
-            int j = rand.nextInt(i + 1);
-            int t = perm[i];
-            perm[i] = perm[j];
-            perm[j] = t;
-        }
-        return perm;
+    /** Number of pixel rows per band, so a band holds at most {@link #BAND_ELEMS} R/G/B samples. */
+    private static int rowsPerBand(int width) {
+        return Math.max(1, BAND_ELEMS / (width * 3));
     }
 
-    /** Computes HILL costs for every R/G/B sample, indexed as {@code (y*width + x)*3 + channel}. */
-    private static double[] hillCosts(PixelImage image, int width) {
-        int height = image.getHeight();
-        double[] costAll = new double[width * height * 3];
-        int[][] channel = new int[height][width];
-        for (int ch = 0; ch < 3; ch++) {
-            int shift = 16 - 8 * ch;
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    channel[y][x] = (image.getRGB(x, y) >> shift) & 0xFF;
-                }
-            }
-            double[][] cost = HillCost.cost(channel);
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    costAll[(y * width + x) * 3 + ch] = cost[y][x];
-                }
-            }
-        }
-        return costAll;
+    /** Number of R/G/B samples in band {@code b} given {@code rowsPerBand}. */
+    private static int bandCount(int width, int height, int b, int rpb) {
+        int y0 = b * rpb;
+        int y1 = Math.min(height, y0 + rpb);
+        return (y1 - y0) * width * 3;
     }
 
     /**
-     * CMD (v2) embedding. The body elements are partitioned into four 2&times;2 sub-lattices by pixel
-     * parity and processed in order. As each sub-lattice is embedded with its own binary STC, the
-     * already-decided modification directions of the neighbouring (earlier) sub-lattices are used to
-     * <em>reduce the STC cost on the neighbour-aligned side</em>, biasing both which pixels change and
-     * the &plusmn;1 direction so that changes cluster into coherent groups (Li et al., TIFS 2015).
-     * <p>
-     * Extraction never needs the directions: it reads only LSBs, and a flipped LSB is the same bit
-     * regardless of whether it was reached by +1 or &minus;1. Each sub-lattice is an independent,
-     * already-tested binary STC problem, so this reuses {@link Stc} verbatim with no new coding math.
+     * Per-band body capacities: each band's sample count, minus the header reservation in band&nbsp;0.
+     * Identical on embed and extract (depends only on geometry and the fixed header size).
+     */
+    private static int[] bandCaps(int width, int height, int headerElems) {
+        int rpb = rowsPerBand(width);
+        int numBands = (height + rpb - 1) / rpb;
+        int[] caps = new int[numBands];
+        for (int b = 0; b < numBands; b++) {
+            int count = bandCount(width, height, b, rpb);
+            caps[b] = Math.max(0, (b == 0) ? count - headerElems : count);
+        }
+        return caps;
+    }
+
+    /**
+     * Distributes {@code bodyBits} across bands in proportion to each band's capacity (floored), then
+     * hands any rounding remainder to bands with spare capacity in order. Deterministic; sums to
+     * {@code bodyBits} whenever {@code sum(caps) >= bodyBits}, with every {@code bits[b] <= caps[b]}.
+     */
+    private static int[] splitBits(int bodyBits, int[] caps) {
+        int numBands = caps.length;
+        int[] bits = new int[numBands];
+        long total = 0;
+        for (int c : caps) {
+            total += c;
+        }
+        if (total == 0 || bodyBits == 0) {
+            return bits;
+        }
+        int assigned = 0;
+        for (int b = 0; b < numBands; b++) {
+            bits[b] = (int) ((long) bodyBits * caps[b] / total);
+            assigned += bits[b];
+        }
+        int rem = bodyBits - assigned;
+        for (int b = 0; b < numBands && rem > 0; b++) {
+            int add = Math.min(caps[b] - bits[b], rem);
+            bits[b] += add;
+            rem -= add;
+        }
+        return bits;
+    }
+
+    // ---------------- per-band embedding ----------------
+
+    /** Plain mode: a single binary STC over the band's body elements. */
+    private static void embedPlainBand(PixelImage image, int width, int start, int[] perm, int bodyStart,
+                                       int[] seg, double[] cost, SecureRandom dir) throws OpenStegoException {
+        int bits = seg.length;
+        int bodyCap = perm.length - bodyStart;
+        int w = bodyCap / bits;
+        int used = bits * w;
+        int[] x = new int[used];
+        double[] rho = new double[used];
+        for (int i = 0; i < used; i++) {
+            int local = perm[bodyStart + i];
+            x[i] = channelValue(image, width, start + local) & 1;
+            rho[i] = cost[local];
+        }
+        int[] y = Stc.embed(x, rho, seg, w, STC_HEIGHT);
+        for (int i = 0; i < used; i++) {
+            if (y[i] != x[i]) {
+                setMatchingLsb(image, width, start + perm[bodyStart + i], y[i], dir);
+            }
+        }
+    }
+
+    /** Plain mode extraction: re-derive width and {@link Stc#extract} the band's body. */
+    private static void extractPlainBand(PixelImage image, int width, int start, int[] perm, int bodyStart,
+                                         int bodyCap, int bits, int[] outBits, int outOff) throws OpenStegoException {
+        int w = bodyCap / bits;
+        int used = bits * w;
+        int[] y = new int[used];
+        for (int i = 0; i < used; i++) {
+            y[i] = channelValue(image, width, start + perm[bodyStart + i]) & 1;
+        }
+        int[] seg = Stc.extract(y, bits, w, STC_HEIGHT);
+        System.arraycopy(seg, 0, outBits, outOff, bits);
+    }
+
+    /**
+     * CMD embedding within one band. The band's body elements are partitioned into four 2&times;2
+     * sub-lattices by pixel parity and processed in order; the already-decided modification directions
+     * of neighbouring (earlier) sub-lattices reduce the STC cost on the neighbour-aligned side, biasing
+     * which pixels change and the &plusmn;1 direction so changes cluster (Li et al., TIFS 2015). The
+     * direction map is band-local; neighbours outside the band's rows are simply ignored, which only
+     * relaxes coherence at the (few) seam rows. Extraction never needs the directions.
      *
      * @param mu alignment cost-reduction factor (&ge;1; 1 disables the selection bias)
      */
-    private static void embedCmd(PixelImage image, int width, int[] perm, int headerElems, int n,
-                                 int[] message, double[] costAll, double mu) throws OpenStegoException {
-        int height = image.getHeight();
-        int[] dirMap = new int[n];
-        int[][] lattice = subLattices(perm, headerElems, n, width);
-        int[] segLen = segLengths(message.length);
+    private static void embedCmdBand(PixelImage image, int width, int start, int y0, int y1, int[] perm,
+                                     int bodyStart, int[] seg, double[] cost, double mu) throws OpenStegoException {
+        byte[] dirMap = new byte[perm.length];
+        int[][] lattice = subLatticesBand(perm, bodyStart, start, width);
+        int[] segLen = segLengths(seg.length);
 
         int off = 0;
         for (int g = 0; g < CMD_LATTICES; g++) {
@@ -324,54 +412,53 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
             double[] rhog = new double[used];
             int[] alignedDir = new int[used];
             for (int j = 0; j < used; j++) {
-                int e = elems[j];
+                int local = elems[j];
+                int e = start + local;
                 int value = channelValue(image, width, e);
                 xg[j] = value & 1;
-                double base = costAll[e];
+                double base = cost[local];
                 int d;
-                double cost;
+                double c;
                 if (value == 0) {
                     d = 1;
-                    cost = base;
+                    c = base;
                 } else if (value == 255) {
                     d = -1;
-                    cost = base;
+                    c = base;
                 } else {
-                    int s = neighborDir(dirMap, e, width, height);
+                    int s = neighborDir(dirMap, e, start, width, y0, y1);
                     if (s > 0) {
                         d = 1;
-                        cost = base / mu;
+                        c = base / mu;
                     } else if (s < 0) {
                         d = -1;
-                        cost = base / mu;
+                        c = base / mu;
                     } else {
-                        // No local trend: deterministic tie-break, no selection bias.
                         d = ((((long) e * 2654435761L) >>> 16) & 1L) == 0L ? 1 : -1;
-                        cost = base;
+                        c = base;
                     }
                 }
                 alignedDir[j] = d;
-                rhog[j] = cost;
+                rhog[j] = c;
             }
-            int[] seg = Arrays.copyOfRange(message, off, off + lg);
-            int[] yg = Stc.embed(xg, rhog, seg, wg, STC_HEIGHT);
+            int[] segG = Arrays.copyOfRange(seg, off, off + lg);
+            int[] yg = Stc.embed(xg, rhog, segG, wg, STC_HEIGHT);
             for (int j = 0; j < used; j++) {
                 if (yg[j] != xg[j]) {
-                    int e = elems[j];
-                    applyDelta(image, width, e, alignedDir[j]);
-                    dirMap[e] = alignedDir[j];
+                    int local = elems[j];
+                    applyDelta(image, width, start + local, alignedDir[j]);
+                    dirMap[local] = (byte) alignedDir[j];
                 }
             }
             off += lg;
         }
     }
 
-    /** CMD (v2) extraction: re-partition identically and {@link Stc#extract} each sub-lattice. */
-    private static void extractCmd(PixelImage image, int width, int[] perm, int headerElems, int n,
-                                   int bodyBits, byte[] data) throws OpenStegoException {
-        int[][] lattice = subLattices(perm, headerElems, n, width);
-        int[] segLen = segLengths(bodyBits);
-        int[] bits = new int[bodyBits];
+    /** CMD extraction within one band: re-partition identically and {@link Stc#extract} each sub-lattice. */
+    private static void extractCmdBand(PixelImage image, int width, int start, int[] perm, int bodyStart,
+                                       int bits, int[] outBits, int outOff) throws OpenStegoException {
+        int[][] lattice = subLatticesBand(perm, bodyStart, start, width);
+        int[] segLen = segLengths(bits);
         int off = 0;
         for (int g = 0; g < CMD_LATTICES; g++) {
             int lg = segLen[g];
@@ -387,24 +474,79 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
             int used = lg * wg;
             int[] yg = new int[used];
             for (int j = 0; j < used; j++) {
-                yg[j] = channelValue(image, width, elems[j]) & 1;
+                yg[j] = channelValue(image, width, start + elems[j]) & 1;
             }
             int[] seg = Stc.extract(yg, lg, wg, STC_HEIGHT);
-            System.arraycopy(seg, 0, bits, off, lg);
+            System.arraycopy(seg, 0, outBits, outOff + off, lg);
             off += lg;
         }
-        bitsToBytes(bits, data);
+    }
+
+    // ---------------- helpers ----------------
+
+    /**
+     * Builds a password-seeded permutation of {@code [0, count)} for band {@code bandIndex} (Fisher-Yates).
+     * The band index is mixed into the seed so bands do not share an ordering. Entries are band-local
+     * sample offsets; the caller adds the band's start element to reach a global index.
+     */
+    private static int[] bandPermutation(int count, char[] password, int bandIndex) throws OpenStegoException {
+        int[] perm = new int[count];
+        for (int i = 0; i < count; i++) {
+            perm[i] = i;
+        }
+        long seed = StringUtil.passwordHash(password) ^ (bandIndex * BAND_SEED_MIX);
+        Random rand = new Random(seed);
+        for (int i = count - 1; i > 0; i--) {
+            int j = rand.nextInt(i + 1);
+            int t = perm[i];
+            perm[i] = perm[j];
+            perm[j] = t;
+        }
+        return perm;
     }
 
     /**
-     * Partitions the body elements {@code perm[headerElems..n)} into four lists by the 2&times;2 parity
-     * of their pixel, preserving the permuted order. Identical on embed and extract.
+     * Computes HILL costs for one band's R/G/B samples, indexed by band-local element
+     * {@code ((y-y0)*width + x)*3 + channel}. A {@link #COST_HALO}-row halo above and below the band is
+     * included so the costs match a whole-image computation at the band's interior and seams.
      */
-    private static int[][] subLattices(int[] perm, int headerElems, int n, int width) {
-        int remaining = n - headerElems;
+    private static double[] hillCostsBand(PixelImage image, int width, int height, int y0, int y1) {
+        int bandRows = y1 - y0;
+        double[] cost = new double[bandRows * width * 3];
+        int hy0 = Math.max(0, y0 - COST_HALO);
+        int hy1 = Math.min(height, y1 + COST_HALO);
+        int haloRows = hy1 - hy0;
+        int[][] channel = new int[haloRows][width];
+        for (int ch = 0; ch < 3; ch++) {
+            int shift = 16 - 8 * ch;
+            for (int y = 0; y < haloRows; y++) {
+                for (int x = 0; x < width; x++) {
+                    channel[y][x] = (image.getRGB(x, hy0 + y) >> shift) & 0xFF;
+                }
+            }
+            double[][] c = HillCost.cost(channel);
+            for (int y = y0; y < y1; y++) {
+                int cy = y - hy0;
+                int ly = y - y0;
+                for (int x = 0; x < width; x++) {
+                    cost[(ly * width + x) * 3 + ch] = c[cy][x];
+                }
+            }
+        }
+        return cost;
+    }
+
+    /**
+     * Partitions a band's body elements {@code perm[bodyStart..count)} into four lists by the 2&times;2
+     * parity of their (global) pixel, preserving the permuted order. Stores band-local sample offsets.
+     * Identical on embed and extract.
+     */
+    private static int[][] subLatticesBand(int[] perm, int bodyStart, int start, int width) {
+        int count = perm.length;
+        int remaining = count - bodyStart;
         int[] cnt = new int[CMD_LATTICES];
         for (int i = 0; i < remaining; i++) {
-            int pixel = perm[headerElems + i] / 3;
+            int pixel = (start + perm[bodyStart + i]) / 3;
             cnt[((pixel / width) & 1) * 2 + ((pixel % width) & 1)]++;
         }
         int[][] lattice = new int[CMD_LATTICES][];
@@ -413,10 +555,10 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         }
         int[] fill = new int[CMD_LATTICES];
         for (int i = 0; i < remaining; i++) {
-            int e = perm[headerElems + i];
-            int pixel = e / 3;
+            int local = perm[bodyStart + i];
+            int pixel = (start + local) / 3;
             int g = ((pixel / width) & 1) * 2 + ((pixel % width) & 1);
-            lattice[g][fill[g]++] = e;
+            lattice[g][fill[g]++] = local;
         }
         return lattice;
     }
@@ -427,8 +569,12 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         return new int[] {q, q, q, l - 3 * q};
     }
 
-    /** Sum of decided modification directions over the 8 same-channel neighbours of element {@code e}. */
-    private static int neighborDir(int[] dirMap, int e, int width, int height) {
+    /**
+     * Sum of decided modification directions over the 8 same-channel neighbours of element {@code e}
+     * that lie within the current band's rows {@code [y0, y1)}. {@code dirMap} is band-local, indexed
+     * by sample offset {@code globalElement - start}.
+     */
+    private static int neighborDir(byte[] dirMap, int e, int start, int width, int y0, int y1) {
         int pixel = e / 3;
         int ch = e % 3;
         int xc = pixel % width;
@@ -437,10 +583,10 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         for (int t = 0; t < 8; t++) {
             int nx = xc + NB_DX[t];
             int ny = yc + NB_DY[t];
-            if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+            if (nx < 0 || nx >= width || ny < y0 || ny >= y1) {
                 continue;
             }
-            s += dirMap[(ny * width + nx) * 3 + ch];
+            s += dirMap[(ny * width + nx) * 3 + ch - start];
         }
         return s;
     }

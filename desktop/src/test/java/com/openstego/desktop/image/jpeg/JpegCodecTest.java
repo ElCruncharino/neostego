@@ -139,7 +139,7 @@ class JpegCodecTest {
         int br = img.getBlocksHigh(comp) / 2;
         int bc = img.getBlocksWide(comp) / 2;
         int natIdx = 5; // an AC coefficient (natural-order index, not DC)
-        int[] before = img.getBlock(comp, br, bc).clone();
+        short[] before = img.getBlock(comp, br, bc).clone();
         img.getBlock(comp, br, bc)[natIdx] += 1;
 
         JpegImage round = JpegCodec.decode(JpegCodec.encode(img));
@@ -148,8 +148,8 @@ class JpegCodecTest {
         for (int c = 0; c < img.getComponentCount(); c++) {
             for (int r = 0; r < img.getBlocksHigh(c); r++) {
                 for (int cc = 0; cc < img.getBlocksWide(c); cc++) {
-                    int[] now = round.getBlock(c, r, cc);
-                    int[] want = img.getBlock(c, r, cc);
+                    short[] now = round.getBlock(c, r, cc);
+                    short[] want = img.getBlock(c, r, cc);
                     for (int k = 0; k < 64; k++) {
                         if (now[k] != want[k]) {
                             diffs++;

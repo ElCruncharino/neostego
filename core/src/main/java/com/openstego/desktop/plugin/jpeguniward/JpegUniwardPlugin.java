@@ -19,6 +19,7 @@ import com.openstego.desktop.util.StringUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -37,15 +38,20 @@ import java.util.Random;
  *       computed per coefficient and scaled by the side information: {@code rho *= (1 - 2|e|)}, so a
  *       coefficient whose precover value sat near a rounding boundary is cheap to round the other way.
  *       The single allowed change direction is {@code sign(e)}.</li>
- *   <li>All AC coefficient positions (DC excluded) are flattened in a fixed geometric order and
- *       password-permuted. The first elements carry a bootstrap header (reusing {@link LSBDataHeader}
- *       plus a 4-byte STC width); the rest carry the STC-coded body, each carrier bit being the parity
- *       of a coefficient and each STC flip realised as the side-info &plusmn;1.</li>
+ *   <li>The AC coefficient positions (DC excluded) are partitioned into memory-bounded <em>bands</em>
+ *       of contiguous DCT block-rows (at most {@link #BAND_ELEMS} carriers each), so cost, permutation
+ *       and STC state never exceed one band &mdash; a full-resolution cover embeds in O(band), not
+ *       O(image), heap. Within each band the carriers are password-permuted (seed mixed with the band
+ *       index). Band&nbsp;0's permuted prefix carries a bootstrap field then the variable
+ *       {@link LSBDataHeader}; the body is split deterministically across all bands in proportion to
+ *       capacity, each carrier bit being the parity of a coefficient and each STC flip realised as the
+ *       side-info &plusmn;1.</li>
  * </ol>
- * Extraction decodes the JPEG, rebuilds the identical permutation from the (value-independent) block
- * geometry, reads the header, then {@link Stc#extract}s the body &mdash; it needs neither the precover
- * nor the quality. The carrier set is the fixed AC-position grid, so a coefficient that an edit drives
- * to zero (or away from it) never desynchronises the receiver.
+ * Extraction decodes the JPEG, rebuilds the identical band geometry and per-band permutations from the
+ * (value-independent) block geometry, reads the header from band&nbsp;0, recomputes the same capacity
+ * split, then {@link Stc#extract}s each band's slice &mdash; it needs neither the precover nor the
+ * quality, and never computes a cost. The carrier set is the fixed AC-position grid, so a coefficient
+ * that an edit drives to zero (or away from it) never desynchronises the receiver.
  * <p>
  * On-disk metadata reuses the existing {@code OPENSTEGO} header, so the compression/encryption flags
  * flow back to the core unchanged and existing plugins/files are untouched. Honest framing: this
@@ -61,11 +67,29 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
 
     /**
      * Fixed-geometry bootstrap field: two {@link #putInt} little-endian ints
-     * {@code (headerByteLen, bodyWidth)} = 8 bytes = 64 bits, STC-coded at {@link #BOOT_WIDTH}. Being a
-     * constant size and width, the receiver STC-extracts it with no side information, then learns the
-     * geometry of the variable header and body that follow.
+     * {@code (headerByteLen, reserved)} = 8 bytes = 64 bits, STC-coded at {@link #BOOT_WIDTH} in
+     * band&nbsp;0. Being a constant size and width, the receiver STC-extracts it with no side
+     * information, then learns the byte length of the variable header that follows. The body's per-band
+     * STC widths are derived from band geometry (not stored), so the second int is reserved.
      */
     private static final int BOOT_BYTES = 8;
+
+    /**
+     * Memory budget per band, in embeddable AC carriers. Bands are contiguous DCT block-row ranges
+     * within a component holding at most this many carriers, so every O(n) working array (cost,
+     * permutation, STC trellis) is bounded to one band regardless of image resolution.
+     */
+    private static final int BAND_ELEMS = 1_000_000;
+
+    /**
+     * Block-row halo added above and below a band when computing its UNIWARD cost, so each band's
+     * coefficient costs match the whole-image computation exactly. The db8 wavelet's vertical reach is
+     * under two 8-sample block-rows; two blocks of halo cover it with margin.
+     */
+    private static final int HALO_BLOCKS = 2;
+
+    /** Golden-ratio odd constant mixed with the band index to decorrelate per-band permutations. */
+    private static final long BAND_SEED_MIX = 0x9E3779B97F4A7C15L;
 
     /**
      * STC carrier width for the bootstrap field and the variable header. Deliberately generous: the
@@ -130,40 +154,61 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         }
 
         JpegImage jpg = JpegCodec.fromPrecover(precover, this.config.getQuality());
-        double[][][] cost = uniwardCosts(jpg);
-        Elements el = enumerate(jpg, cost);
-        int n = el.count;
-
-        int[] perm = permutation(n, this.config.getPassword());
+        int[][] bands = bandList(jpg);
 
         LSBDataHeader header = new LSBDataHeader(msg.length, 1, msgFileName, this.config);
         byte[] headerBytes = header.getHeaderData();
-        int headerBits = headerBytes.length * 8;
-
         int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
-        int headerElems = headerBits * HEADER_WIDTH;
-        int used = bootElems + headerElems;
+        int headerElems = headerBytes.length * 8 * HEADER_WIDTH;
+        int reserve = bootElems + headerElems;
 
+        // Band 0 reserves its permuted prefix for the bootstrap + variable header; every band's
+        // remaining carriers form the body capacity. The split is proportional and deterministic, so
+        // extract reproduces it from geometry + the decoded header alone.
+        int[] caps = bandCaps(jpg, bands, reserve);
         int bodyBits = msg.length * 8;
-        int remaining = n - used;
-        if (remaining < 0 || (bodyBits > 0 && remaining < bodyBits)) {
+        long totalCap = 0;
+        for (int cap : caps) {
+            totalCap += cap;
+        }
+        if (caps[0] < 0 || (bodyBits > 0 && totalCap < bodyBits)) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.IMAGE_SIZE_INSUFFICIENT);
         }
-        int bodyWidth = (bodyBits == 0) ? 1 : remaining / bodyBits;
+        int[] bits = splitBits(bodyBits, caps);
+        int[] msgBits = bytesToBits(msg);
 
-        // Bootstrap field: (variable-header byte length, body STC width), STC-coded at a fixed width
-        // so the receiver can read it with no side information.
-        byte[] boot = new byte[BOOT_BYTES];
-        putInt(boot, 0, headerBytes.length);
-        putInt(boot, 4, bodyWidth);
-        stcEmbedRegion(el, perm, 0, bytesToBits(boot), BOOT_WIDTH);
+        int off = 0;
+        for (int b = 0; b < bands.length; b++) {
+            int c = bands[b][0];
+            int r0 = bands[b][1];
+            int r1 = bands[b][2];
+            double[][] rounding = jpg.roundingStrip(c, r0, r1);
+            double[][] cost = uniwardCostsBand(jpg, c, r0, r1, rounding);
+            Elements el = enumerateBand(jpg, c, r0, r1, cost, rounding);
+            int[] perm = bandPermutation(el.count, this.config.getPassword(), b);
 
-        // Variable header bytes, STC-coded (cost-aware) right after the bootstrap.
-        stcEmbedRegion(el, perm, bootElems, bytesToBits(headerBytes), HEADER_WIDTH);
+            int bodyStart;
+            if (b == 0) {
+                // Bootstrap field: (variable-header byte length, reserved), STC-coded at a fixed width
+                // so the receiver can read it with no side information.
+                byte[] boot = new byte[BOOT_BYTES];
+                putInt(boot, 0, headerBytes.length);
+                putInt(boot, 4, 0);
+                stcEmbedRegion(el, perm, 0, bytesToBits(boot), BOOT_WIDTH);
+                // Variable header bytes, STC-coded (cost-aware) right after the bootstrap.
+                stcEmbedRegion(el, perm, bootElems, bytesToBits(headerBytes), HEADER_WIDTH);
+                bodyStart = reserve;
+            } else {
+                bodyStart = 0;
+            }
 
-        // STC-coded body.
-        if (bodyBits > 0) {
-            stcEmbedRegion(el, perm, used, bytesToBits(msg), bodyWidth);
+            int segBits = bits[b];
+            if (segBits > 0) {
+                int w = caps[b] / segBits;
+                int[] seg = Arrays.copyOfRange(msgBits, off, off + segBits);
+                stcEmbedRegion(el, perm, bodyStart, seg, w);
+                off += segBits;
+            }
         }
 
         return JpegCodec.encode(jpg);
@@ -172,31 +217,32 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
     @Override
     public String extractMsgFileName(byte[] stegoData, String stegoFileName) throws OpenStegoException {
         JpegImage jpg = decode(stegoData);
-        Elements el = enumerate(jpg, null);
-        int[] perm = permutation(el.count, this.config.getPassword());
-        LSBDataHeader header = readHeader(el, perm);
-        return header.getFileName();
+        int[][] bands = bandList(jpg);
+        Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
+        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0);
+        return readHeader(el0, perm0).getFileName();
     }
 
     @Override
     public byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException {
         JpegImage jpg = decode(stegoData);
-        Elements el = enumerate(jpg, null);
-        int n = el.count;
-        int[] perm = permutation(n, this.config.getPassword());
+        int[][] bands = bandList(jpg);
 
-        int[] bootBits = stcExtractRegion(el, perm, 0, BOOT_BYTES * 8, BOOT_WIDTH);
+        // Band 0 carries the bootstrap + variable header in its permuted prefix.
+        Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
+        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0);
+
+        int[] bootBits = stcExtractRegion(el0, perm0, 0, BOOT_BYTES * 8, BOOT_WIDTH);
         byte[] boot = new byte[BOOT_BYTES];
         bitsToBytes(bootBits, boot);
         int headerByteLen = getInt(boot, 0);
-        int bodyWidth = getInt(boot, 4);
 
         int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
-        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > n) {
+        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > el0.count) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
         int headerElems = headerByteLen * 8 * HEADER_WIDTH;
-        int[] headerBitsArr = stcExtractRegion(el, perm, bootElems, headerByteLen * 8, HEADER_WIDTH);
+        int[] headerBitsArr = stcExtractRegion(el0, perm0, bootElems, headerByteLen * 8, HEADER_WIDTH);
         byte[] headerBytes = new byte[headerByteLen];
         bitsToBytes(headerBitsArr, headerBytes);
 
@@ -205,21 +251,50 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         if (dataLength < 0) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
-        int used = bootElems + headerElems;
+        int reserve = bootElems + headerElems;
         int bodyBits = dataLength * 8;
         byte[] data = new byte[dataLength];
+        if (bodyBits == 0) {
+            return data;
+        }
 
-        if (bodyWidth < 1 || (long) used + (long) bodyBits * bodyWidth > n) {
+        // Recompute the identical capacity split, then extract each band's slice. Band 0's body
+        // starts past its reserved header prefix; later bands use their whole permuted range.
+        int[] caps = bandCaps(jpg, bands, reserve);
+        long totalCap = 0;
+        for (int cap : caps) {
+            totalCap += cap;
+        }
+        if (caps[0] < 0 || totalCap < bodyBits) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
-        if (bodyBits > 0) {
-            int[] bits = stcExtractRegion(el, perm, used, bodyBits, bodyWidth);
-            bitsToBytes(bits, data);
+        int[] bits = splitBits(bodyBits, caps);
+
+        int[] allBits = new int[bodyBits];
+        int off = 0;
+        for (int b = 0; b < bands.length; b++) {
+            int segBits = bits[b];
+            if (segBits == 0) {
+                continue;
+            }
+            Elements el = (b == 0) ? el0
+                    : enumerateBand(jpg, bands[b][0], bands[b][1], bands[b][2], null, null);
+            int[] perm = (b == 0) ? perm0
+                    : bandPermutation(el.count, this.config.getPassword(), b);
+            int w = caps[b] / segBits;
+            int bodyStart = (b == 0) ? reserve : 0;
+            if (w < 1 || (long) bodyStart + (long) segBits * w > el.count) {
+                throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
+            }
+            int[] seg = stcExtractRegion(el, perm, bodyStart, segBits, w);
+            System.arraycopy(seg, 0, allBits, off, segBits);
+            off += segBits;
         }
+        bitsToBytes(allBits, data);
         return data;
     }
 
-    /** Reads the bootstrap field then the variable {@link LSBDataHeader} from a stego image. */
+    /** Reads the bootstrap field then the variable {@link LSBDataHeader} from band&nbsp;0. */
     private LSBDataHeader readHeader(Elements el, int[] perm) throws OpenStegoException {
         int[] bootBits = stcExtractRegion(el, perm, 0, BOOT_BYTES * 8, BOOT_WIDTH);
         byte[] boot = new byte[BOOT_BYTES];
@@ -273,12 +348,12 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
      */
     private static final class Elements {
         final int count;
-        final int[][] block;
+        final short[][] block;
         final int[] k;
         final int[] dir;
         final double[] cost;
 
-        Elements(int count, int[][] block, int[] k, int[] dir, double[] cost) {
+        Elements(int count, short[][] block, int[] k, int[] dir, double[] cost) {
             this.count = count;
             this.block = block;
             this.k = k;
@@ -288,72 +363,142 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
     }
 
     /**
-     * Flattens every AC coefficient position across all components in a fixed geometric order
-     * (component, block raster, natural AC index 1..63). The order depends only on geometry, so embed
-     * and extract enumerate identically. When {@code cost != null} (embed) the per-element side-info
-     * direction and SI-scaled cost are filled in too.
+     * Enumerates the embeddable AC coefficients of one band &mdash; component {@code c}, block-rows
+     * {@code [r0, r1)} &mdash; in the same fixed geometric order the whole-image enumeration would use
+     * (block raster, natural AC index 1..63), so embed and extract agree band for band. {@code block[e]}
+     * references the live coefficient array, so parity reads/writes touch the JPEG directly. When
+     * {@code cost != null} (embed) the SI change direction and band-local cost are filled in too;
+     * {@code cost} and {@code rounding} are indexed by band-local block
+     * {@code (br - r0) * blocksWide + bc}. On extract both are {@code null}.
      */
-    private static Elements enumerate(JpegImage jpg, double[][][] cost) {
-        int comps = jpg.getComponentCount();
-        long total = 0;
-        for (int c = 0; c < comps; c++) {
-            total += (long) jpg.getBlocksWide(c) * jpg.getBlocksHigh(c) * 63;
-        }
-        int n = (int) total;
-        int[][] block = new int[n][];
-        int[] kArr = new int[n];
-        int[] dir = (cost != null) ? new int[n] : null;
-        double[] costArr = (cost != null) ? new double[n] : null;
+    private static Elements enumerateBand(JpegImage jpg, int c, int r0, int r1, double[][] cost,
+            double[][] rounding) {
+        int bw = jpg.getBlocksWide(c);
+        int count = (r1 - r0) * bw * 63;
+        short[][] block = new short[count][];
+        int[] kArr = new int[count];
+        int[] dir = (cost != null) ? new int[count] : null;
+        double[] costArr = (cost != null) ? new double[count] : null;
 
         int idx = 0;
-        for (int c = 0; c < comps; c++) {
-            int bw = jpg.getBlocksWide(c);
-            int bh = jpg.getBlocksHigh(c);
-            for (int br = 0; br < bh; br++) {
-                for (int bc = 0; bc < bw; bc++) {
-                    int[] blk = jpg.getBlock(c, br, bc);
-                    double[] err = (cost != null) ? jpg.getRounding(c, br, bc) : null;
-                    double[] cc = (cost != null) ? cost[c][br * bw + bc] : null;
-                    for (int k = 1; k < 64; k++) {
-                        block[idx] = blk;
-                        kArr[idx] = k;
-                        if (cost != null) {
-                            double e = err[k];
-                            dir[idx] = (e > 0) ? 1 : (e < 0 ? -1 : 1);
-                            costArr[idx] = cc[k];
-                        }
-                        idx++;
+        for (int br = r0; br < r1; br++) {
+            for (int bc = 0; bc < bw; bc++) {
+                short[] blk = jpg.getBlock(c, br, bc);
+                double[] err = (cost != null) ? rounding[(br - r0) * bw + bc] : null;
+                double[] cc = (cost != null) ? cost[(br - r0) * bw + bc] : null;
+                for (int k = 1; k < 64; k++) {
+                    block[idx] = blk;
+                    kArr[idx] = k;
+                    if (cost != null) {
+                        double e = err[k];
+                        dir[idx] = (e > 0) ? 1 : (e < 0 ? -1 : 1);
+                        costArr[idx] = cc[k];
                     }
+                    idx++;
                 }
             }
         }
-        return new Elements(n, block, kArr, dir, costArr);
+        return new Elements(count, block, kArr, dir, costArr);
     }
 
-    /** UNIWARD costs per component, side-info-scaled by {@code (1 - 2|e|)}. */
-    private static double[][][] uniwardCosts(JpegImage jpg) {
+    /**
+     * UNIWARD costs for one band's blocks (component {@code c}, block-rows {@code [r0, r1)}),
+     * side-info-scaled by {@code (1 - 2|e|)}. The cost is computed on the band's plane strip plus a
+     * {@link #HALO_BLOCKS}-block halo above and below (clamped to the plane), so the band blocks'
+     * costs are bit-identical to the whole-image computation; the halo blocks are discarded. The
+     * band's rounding errors are passed in (computed once per band); returned indexed by band-local
+     * block {@code (br - r0) * blocksWide + bc}.
+     */
+    private static double[][] uniwardCostsBand(JpegImage jpg, int c, int r0, int r1, double[][] rounding) {
+        int bw = jpg.getBlocksWide(c);
+        int bh = jpg.getBlocksHigh(c);
+        int pw = jpg.getPlaneWidth(c);
+        int ph = jpg.getPlaneHeight(c);
+
+        int sr0 = Math.max(0, r0 - HALO_BLOCKS);
+        int sr1 = Math.min(bh, r1 + HALO_BLOCKS);
+        int planeTop = sr0 * 8;
+        int planeBot = Math.min(ph, sr1 * 8);
+        double[][] strip = jpg.planeStrip(c, planeTop, planeBot);
+        int stripH = strip.length;
+
+        double[][] base = UniwardCost.compute(strip, stripH, pw, bw, sr1 - sr0, jpg.getQuantTable(c));
+
+        double[][] out = new double[(r1 - r0) * bw][];
+        for (int br = r0; br < r1; br++) {
+            for (int bc = 0; bc < bw; bc++) {
+                double[] rho = base[(br - sr0) * bw + bc];
+                double[] e = rounding[(br - r0) * bw + bc];
+                for (int k = 1; k < 64; k++) {
+                    rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
+                }
+                out[(br - r0) * bw + bc] = rho;
+            }
+        }
+        return out;
+    }
+
+    /**
+     * Partitions every component's DCT block-rows into bands of at most {@link #BAND_ELEMS} carriers,
+     * each {@code {component, r0, r1}} (block-rows {@code [r0, r1)}). The order &mdash; all of
+     * component 0's bands, then component 1's, ... &mdash; is a pure function of the JPEG block
+     * geometry, so embed and extract derive the identical band list. Band 0 holds the header.
+     */
+    private static int[][] bandList(JpegImage jpg) {
         int comps = jpg.getComponentCount();
-        double[][][] cost = new double[comps][][];
+        List<int[]> list = new ArrayList<>();
         for (int c = 0; c < comps; c++) {
-            double[][] plane = jpg.getPlane(c);
-            int ph = plane.length;
-            int pw = plane[0].length;
             int bw = jpg.getBlocksWide(c);
             int bh = jpg.getBlocksHigh(c);
-            double[][] base = UniwardCost.compute(plane, ph, pw, bw, bh, jpg.getQuantTable(c));
-            for (int br = 0; br < bh; br++) {
-                for (int bc = 0; bc < bw; bc++) {
-                    int bi = br * bw + bc;
-                    double[] e = jpg.getRounding(c, br, bc);
-                    double[] rho = base[bi];
-                    for (int k = 1; k < 64; k++) {
-                        rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
-                    }
-                }
+            int rowsPerBand = Math.max(1, BAND_ELEMS / (bw * 63));
+            for (int r0 = 0; r0 < bh; r0 += rowsPerBand) {
+                list.add(new int[]{c, r0, Math.min(bh, r0 + rowsPerBand)});
             }
-            cost[c] = base;
         }
-        return cost;
+        return list.toArray(new int[0][]);
+    }
+
+    /**
+     * Body carrier capacity of each band: a band's full carrier count, except band 0 which first
+     * reserves {@code reserve} carriers for the bootstrap + variable header.
+     */
+    private static int[] bandCaps(JpegImage jpg, int[][] bands, int reserve) {
+        int[] caps = new int[bands.length];
+        for (int b = 0; b < bands.length; b++) {
+            int bw = jpg.getBlocksWide(bands[b][0]);
+            int count = (bands[b][2] - bands[b][1]) * bw * 63;
+            caps[b] = (b == 0) ? count - reserve : count;
+        }
+        return caps;
+    }
+
+    /**
+     * Distributes {@code bodyBits} across bands in proportion to each band's capacity (floored), then
+     * hands any rounding remainder to bands with spare capacity in order. Deterministic; sums to
+     * {@code bodyBits} whenever {@code sum(caps) >= bodyBits}, with every {@code bits[b] <= caps[b]}.
+     */
+    private static int[] splitBits(int bodyBits, int[] caps) {
+        int numBands = caps.length;
+        int[] bits = new int[numBands];
+        long total = 0;
+        for (int c : caps) {
+            total += c;
+        }
+        if (total == 0 || bodyBits == 0) {
+            return bits;
+        }
+        int assigned = 0;
+        for (int b = 0; b < numBands; b++) {
+            bits[b] = (int) ((long) bodyBits * caps[b] / total);
+            assigned += bits[b];
+        }
+        int rem = bodyBits - assigned;
+        for (int b = 0; b < numBands && rem > 0; b++) {
+            int add = Math.min(caps[b] - bits[b], rem);
+            bits[b] += add;
+            rem -= add;
+        }
+        return bits;
     }
 
     private static int parity(Elements el, int e) {
@@ -398,7 +543,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
 
     /** Flips a coefficient's parity by the side-info &plusmn;1, staying inside the AC value range. */
     private static void flip(Elements el, int e) {
-        int[] b = el.block[e];
+        short[] b = el.block[e];
         int kk = el.k[e];
         int v = b[kk];
         int d = el.dir[e];
@@ -406,7 +551,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         if (nv > AC_LIMIT || nv < -AC_LIMIT) {
             nv = v - d; // the opposite parity-flipping step keeps us representable
         }
-        b[kk] = nv;
+        b[kk] = (short) nv;
     }
 
     // ---------------- helpers ----------------
@@ -419,14 +564,18 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         }
     }
 
-    /** Builds a password-seeded permutation of {@code [0, n)} (Fisher-Yates). */
-    private static int[] permutation(int n, char[] password) throws OpenStegoException {
-        int[] perm = new int[n];
-        for (int i = 0; i < n; i++) {
+    /**
+     * Builds a password-seeded permutation of one band's {@code [0, count)} carriers (Fisher-Yates).
+     * The seed is mixed with the band index so each band draws an independent ordering, yet both
+     * embed and extract reproduce it from the password and band index alone.
+     */
+    private static int[] bandPermutation(int count, char[] password, int bandIndex) throws OpenStegoException {
+        int[] perm = new int[count];
+        for (int i = 0; i < count; i++) {
             perm[i] = i;
         }
-        Random rand = new Random(StringUtil.passwordHash(password));
-        for (int i = n - 1; i > 0; i--) {
+        Random rand = new Random(StringUtil.passwordHash(password) ^ (bandIndex * BAND_SEED_MIX));
+        for (int i = count - 1; i > 0; i--) {
             int j = rand.nextInt(i + 1);
             int t = perm[i];
             perm[i] = perm[j];
