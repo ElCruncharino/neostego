@@ -149,6 +149,16 @@ public class OpenStegoErrors {
     public static final int PASSWORD_REQUIRED = 28;
 
     /**
+     * Error Code - The specified cover file could not be found
+     */
+    public static final int COVER_FILE_NOT_FOUND = 29;
+
+    /**
+     * Error Code - A required command-line option is missing (usage error)
+     */
+    public static final int MISSING_REQUIRED_OPTION = 30;
+
+    /**
      * Initialize the error code - message key map
      */
     public static void init() {
@@ -179,5 +189,7 @@ public class OpenStegoErrors {
         addErrorCode(NAMESPACE, SPLIT_REQUIRES_OUTPUT_DIR, "err.split.requiresOutputDir");
         addErrorCode(NAMESPACE, SPLIT_NOT_SUPPORTED, "err.split.notSupported");
         addErrorCode(NAMESPACE, PASSWORD_REQUIRED, "err.passwordRequired");
+        addErrorCode(NAMESPACE, COVER_FILE_NOT_FOUND, "cmd.msg.coverFileNotFound");
+        addErrorCode(NAMESPACE, MISSING_REQUIRED_OPTION, "err.cmd.missingRequiredOption");
     }
 }
