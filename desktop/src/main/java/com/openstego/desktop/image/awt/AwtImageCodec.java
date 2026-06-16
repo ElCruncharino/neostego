@@ -11,7 +11,6 @@ import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.ImageCodec;
 import com.openstego.desktop.image.PixelImage;
-import com.openstego.desktop.util.ExifUtil;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 
@@ -34,16 +33,17 @@ public class AwtImageCodec implements ImageCodec {
 
     @Override
     public PixelImage decode(byte[] data, String fileName) throws OpenStegoException {
+        // byteArrayToImage already normalizes Exif orientation (the shared decode funnel), so pixels arrive
+        // upright here. Normalize to TYPE_INT_ARGB so per-pixel get/set behaves consistently across source
+        // types and the alpha channel is preserved. Embedding only touches the RGB channels (bits 0-23), so
+        // any transparency in the cover survives the embed/extract round-trip unchanged.
         ImageHolder holder = ImageUtil.byteArrayToImage(data, fileName);
         BufferedImage image = holder.getImage();
-        // Honor the Exif/eXIf orientation tag (which ImageIO ignores) and normalize to TYPE_INT_ARGB in one
-        // pass. Without this, a cover shot in portrait but stored landscape-with-orientation embeds sideways
-        // and the stego output looks rotated relative to the original (pixels otherwise identical). The
-        // remap also gives us the consistent ARGB surface per-pixel get/set wants while preserving alpha
-        // (embedding only touches RGB bits 0-23, so any transparency survives the round-trip unchanged).
-        int orientation = ExifUtil.readExifOrientation(data);
-        if (orientation != 1 || image.getType() != BufferedImage.TYPE_INT_ARGB) {
-            image = ImageUtil.applyExifOrientation(image, orientation);
+        if (image.getType() != BufferedImage.TYPE_INT_ARGB) {
+            BufferedImage argb = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            int[] pixels = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+            argb.setRGB(0, 0, image.getWidth(), image.getHeight(), pixels, 0, image.getWidth());
+            image = argb;
         }
         return new BufferedImagePixelImage(image);
     }
