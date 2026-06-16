@@ -132,6 +132,18 @@ public class ImageUtil {
         if (image == null) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID, imgFileName);
         }
+        // ImageIO returns raw stored pixels and ignores the Exif/eXIf orientation tag, so a portrait photo
+        // stored landscape-with-orientation would be embedded (and re-emitted) sideways relative to how
+        // every viewer renders it. Normalize here, the single decode funnel shared by the data-hiding and
+        // watermarking paths, so both stay upright. Drop the now-stale metadata too: writeJpegImage copies
+        // the source EXIF (orientation included) into JPEG output, which would otherwise re-rotate the
+        // upright pixels. Our lossless output then carries no orientation tag, so a re-decode is a no-op and
+        // embed/extract (and watermark embed/detect) agree.
+        int orientation = ExifUtil.readExifOrientation(imageData);
+        if (orientation != 1) {
+            image.setImage(applyExifOrientation(image.getImage(), orientation));
+            image.setMetadata(null);
+        }
         return image;
     }
 
@@ -483,28 +495,32 @@ public class ImageUtil {
             try (ImageOutputStream imgOS = ImageIO.createImageOutputStream(os)) {
                 writer.setOutput(imgOS);
 
-                // We only copy over EXIF data from original file
+                // We only copy over EXIF data from original file. When the source metadata was dropped
+                // (e.g. after an orientation-normalizing rotate, so the stale orientation tag is not
+                // re-attached), write with default metadata instead.
                 IIOMetadata metadata = writer.getDefaultImageMetadata(new ImageTypeSpecifier(image.getImage()), jpegParams);
-                String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();
-                Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);
-                Node mdNode = mdRoot.getFirstChild();
-                while (mdNode != null) {
-                    if ("markerSequence".equals(mdNode.getNodeName())) {
-                        Node marker = mdNode.getFirstChild();
-                        while (marker != null) {
-                            Node next = marker.getNextSibling();
-                            // Remove all markers other than EXIF (225)
-                            if (marker.getAttributes().getNamedItem("MarkerTag") == null
-                                    || !"225".equals(marker.getAttributes().getNamedItem("MarkerTag").getNodeValue())) {
-                                mdNode.removeChild(marker);
+                if (image.getMetadata() != null) {
+                    String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();
+                    Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);
+                    Node mdNode = mdRoot.getFirstChild();
+                    while (mdNode != null) {
+                        if ("markerSequence".equals(mdNode.getNodeName())) {
+                            Node marker = mdNode.getFirstChild();
+                            while (marker != null) {
+                                Node next = marker.getNextSibling();
+                                // Remove all markers other than EXIF (225)
+                                if (marker.getAttributes().getNamedItem("MarkerTag") == null
+                                        || !"225".equals(marker.getAttributes().getNamedItem("MarkerTag").getNodeValue())) {
+                                    mdNode.removeChild(marker);
+                                }
+                                marker = next;
                             }
-                            marker = next;
+                            break;
                         }
-                        break;
+                        mdNode = mdNode.getNextSibling();
                     }
-                    mdNode = mdNode.getNextSibling();
+                    metadata.mergeTree(metadataFormatName, mdRoot);
                 }
-                metadata.mergeTree(metadataFormatName, mdRoot);
 
                 writer.write(null, new IIOImage(image.getImage(), null, metadata), jpegParams);
             } finally {
