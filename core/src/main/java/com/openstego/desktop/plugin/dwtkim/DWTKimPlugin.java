@@ -7,9 +7,10 @@
 package com.openstego.desktop.plugin.dwtkim;
 
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.ImageCodecRegistry;
+import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.image.YuvImageUtil;
 import com.openstego.desktop.plugin.template.image.WMImagePluginTemplate;
-import com.openstego.desktop.util.ImageHolder;
-import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.DWT;
@@ -84,14 +85,13 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
      */
     @Override
     public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
-        ImageHolder image;
+        PixelImage image;
         List<int[][]> yuv;
         DWT dwt;
         ImageTree dwtTree;
         ImageTree p;
         Signature sig;
         int[][] luminance;
-        int imgType;
         int cols;
         int rows;
         int levels;
@@ -104,13 +104,12 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
         if (cover == null) {
             throw new OpenStegoException(null, NAMESPACE, DWTKimErrors.ERR_NO_COVER_FILE);
         } else {
-            image = ImageUtil.byteArrayToImage(cover, coverFileName);
+            image = ImageCodecRegistry.get().decode(cover, coverFileName);
         }
 
-        imgType = image.getImage().getType();
-        cols = image.getImage().getWidth();
-        rows = image.getImage().getHeight();
-        yuv = ImageUtil.getYuvFromImage(image.getImage());
+        cols = image.getWidth();
+        rows = image.getHeight();
+        yuv = YuvImageUtil.getYuvFromImage(image);
         luminance = yuv.get(0);
         sig = new Signature(msg);
 
@@ -161,8 +160,8 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
         dwt.inverseDWT(dwtTree, luminance);
         yuv.set(0, luminance);
 
-        image.setImage(ImageUtil.getImageFromYuv(yuv, imgType));
-        return ImageUtil.imageToByteArray(image, stegoFileName, this);
+        YuvImageUtil.applyYuvToImage(yuv, image);
+        return ImageCodecRegistry.get().encode(image, stegoFileName);
     }
 
     /**

@@ -3,3 +3,5 @@ com.openstego.desktop.plugin.randlsb.RandomLSBMatchPlugin
 com.openstego.desktop.plugin.adaptive.AdaptiveImagePlugin
 com.openstego.desktop.plugin.jpeguniward.JpegUniwardPlugin
 com.openstego.desktop.plugin.wavlsb.WavLSBPlugin
+com.openstego.desktop.plugin.dwtsvd.DWTSVDPlugin
+com.openstego.desktop.plugin.dwtdugad.DWTDugadPlugin

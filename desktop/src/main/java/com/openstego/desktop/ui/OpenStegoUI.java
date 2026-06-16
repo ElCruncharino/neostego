@@ -8,6 +8,8 @@ package com.openstego.desktop.ui;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.openstego.desktop.*;
+import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter;
+import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
@@ -563,6 +565,7 @@ public class OpenStegoUI extends OpenStegoFrame {
         getEmbedPanel().getStegoFileTextField().setText("");
         getEmbedPanel().getPasswordTextField().setText("");
         getEmbedPanel().getConfPasswordTextField().setText("");
+        getEmbedPanel().getSplitCheckBox().setSelected(false);
         getEmbedPanel().getMsgFileTextField().requestFocus();
 
         try {
@@ -602,8 +605,22 @@ public class OpenStegoUI extends OpenStegoFrame {
             return;
         }
 
-        // Check if single or multiple cover files are selected
-        if (coverFileList.size() <= 1) {
+        boolean splitMode = getEmbedPanel().getSplitCheckBox().isSelected();
+        if (splitMode) {
+            // Split mode (upstream issue #67): need at least two covers and a directory output.
+            if (coverFileList.size() < 2) {
+                JOptionPane.showMessageDialog(this, labelUtil.getString("gui.msg.err.dhEmbed.splitNeedsCovers"),
+                        labelUtil.getString("gui.msg.title.err"), JOptionPane.ERROR_MESSAGE);
+                getEmbedPanel().getCoverFileTextField().requestFocus();
+                return;
+            }
+            if (!outputFile.isDirectory()) {
+                JOptionPane.showMessageDialog(this, labelUtil.getString("gui.msg.err.dhEmbed.outputShouldBeDir"),
+                        labelUtil.getString("gui.msg.title.err"), JOptionPane.ERROR_MESSAGE);
+                getEmbedPanel().getStegoFileTextField().requestFocus();
+                return;
+            }
+        } else if (coverFileList.size() <= 1) {
             // If user has provided a wildcard for cover file name, and parser returns zero length, then it means that
             // there are no matching files with that wildcard
             if (coverFileList.size() == 0 && !getEmbedPanel().getCoverFileTextField().getText().trim().equals("")) {
@@ -681,6 +698,44 @@ public class OpenStegoUI extends OpenStegoFrame {
                     getEmbedPanel().getPluginOptionPanel().setConfigFromGUI(config);
                 }
                 openStego = new OpenStego(dhPlugin, config);
+
+                // Split one payload across all covers (upstream issue #67), one stego image per cover.
+                if (getEmbedPanel().getSplitCheckBox().isSelected()) {
+                    if (!(dhPlugin instanceof DHImagePluginTemplate)) {
+                        throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_NOT_SUPPORTED);
+                    }
+                    DHImagePluginTemplate<?> dhTemplate = (DHImagePluginTemplate<?>) dhPlugin;
+
+                    byte[] msg = CommonUtil.fileToBytes(new File(dataFileName));
+                    String msgName = new File(dataFileName).getName();
+                    List<byte[]> covers = new ArrayList<>(coverFileList.size());
+                    List<String> coverNames = new ArrayList<>(coverFileList.size());
+                    List<String> outPaths = new ArrayList<>(coverFileList.size());
+                    for (File cf : coverFileList) {
+                        covers.add(CommonUtil.fileToBytes(cf));
+                        coverNames.add(cf.getName());
+                        outPaths.add(outputFile.getPath() + File.separator + cf.getName());
+                    }
+
+                    for (String p : outPaths) {
+                        if (new File(p).exists() && JOptionPane.showConfirmDialog(this.parent,
+                                labelUtil.getString("gui.msg.warn.fileExists", p), labelUtil.getString("gui.msg.title.warn"),
+                                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.NO_OPTION) {
+                            this.cancel(true);
+                            return null;
+                        }
+                    }
+
+                    List<byte[]> stegoImages = MultiCoverPayloadSplitter.embedSplit(msg, msgName, covers, coverNames,
+                            outPaths, config, dhTemplate);
+                    for (int i = 0; i < stegoImages.size(); i++) {
+                        setProgress(i * 100 / stegoImages.size());
+                        CommonUtil.writeFile(stegoImages.get(i), outPaths.get(i));
+                    }
+                    java.util.Arrays.fill(password, '\0');
+                    config.clearPassword();
+                    return new Integer[]{stegoImages.size(), 0};
+                }
 
                 // Add null entry for coverfile if not provided
                 if (coverFileList.isEmpty()) {
@@ -790,7 +845,11 @@ public class OpenStegoUI extends OpenStegoFrame {
                 // This keeps old (Adaptive/LSB) files decodable and adds the new JPEG plugin.
                 char[] password = getExtractPanel().getExtractPwdTextField().getPassword();
                 try {
-                    stegoOutput = extractWithAutoDetect(new File(stegoFileName), password);
+                    if (getExtractPanel().getSplitCheckBox().isSelected()) {
+                        stegoOutput = extractSplitWithAutoDetect(stegoFileName, password);
+                    } else {
+                        stegoOutput = extractWithAutoDetect(new File(stegoFileName), password);
+                    }
                 } finally {
                     java.util.Arrays.fill(password, '\0');
                 }
@@ -834,6 +893,7 @@ public class OpenStegoUI extends OpenStegoFrame {
                 getExtractPanel().getInputStegoFileTextField().setText("");
                 getExtractPanel().getOutputFolderTextField().setText("");
                 getExtractPanel().getExtractPwdTextField().setText("");
+                getExtractPanel().getSplitCheckBox().setSelected(false);
                 getExtractPanel().getInputStegoFileTextField().requestFocus();
             }
         };
@@ -863,6 +923,55 @@ public class OpenStegoUI extends OpenStegoFrame {
             try {
                 return new OpenStego(plugin, config).extractData(stegoData, stegoFileName);
             } catch (OpenStegoException e) {
+                last = e;
+            } finally {
+                config.clearPassword();
+            }
+        }
+        if (last != null) {
+            throw last;
+        }
+        throw new OpenStegoException(new RuntimeException("No data-hiding plugin available for extraction"));
+    }
+
+    /**
+     * Reassembles a payload that was split across multiple covers (upstream issue #67). The parts are
+     * given as a {@code ;}-separated list of stego files. As with single-file extraction the algorithm
+     * is auto-detected: each image data-hiding plugin is tried until one decodes the parts. An invalid
+     * password (the right plugin matched but the password is wrong) is surfaced immediately.
+     *
+     * @param stegoFileNames {@code ;}-separated list of the split parts
+     * @param password       Extraction password (may be {@code null}/empty); never mutated by this method
+     * @return Extracted output (element 0 is the file name, element 1 is the message bytes)
+     * @throws OpenStegoException If the parts are invalid or no plugin could decode them
+     */
+    private List<?> extractSplitWithAutoDetect(String stegoFileNames, char[] password) throws OpenStegoException {
+        List<File> parts = CommonUtil.parseFileList(stegoFileNames, ";");
+        if (parts.size() < 2) {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_REQUIRES_MULTIPLE_PARTS, parts.size());
+        }
+
+        List<byte[]> images = new ArrayList<>(parts.size());
+        List<String> names = new ArrayList<>(parts.size());
+        for (File part : parts) {
+            images.add(CommonUtil.fileToBytes(part));
+            names.add(part.getName());
+        }
+
+        OpenStegoException last = null;
+        for (OpenStegoPlugin<?> plugin : orderPluginsForExtract(names.get(0))) {
+            if (!(plugin instanceof DHImagePluginTemplate)) {
+                continue;
+            }
+            plugin.resetConfig();
+            OpenStegoConfig config = plugin.getConfig();
+            config.setPassword(password == null ? null : password.clone());
+            try {
+                return MultiCoverPayloadSplitter.extractSplit(images, names, config, (DHImagePluginTemplate<?>) plugin);
+            } catch (OpenStegoException e) {
+                if (e.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
+                    throw e; // right plugin, wrong password - no point trying the others
+                }
                 last = e;
             } finally {
                 config.clearPassword();
@@ -1267,6 +1376,8 @@ public class OpenStegoUI extends OpenStegoFrame {
                 filterDesc = labelUtil.getString("gui.filer.filter.stegoFiles", allStegoWritableExtensionsString());
                 allowedExts = allStegoWritableExtensions();
                 textField = getExtractPanel().getInputStegoFileTextField();
+                // In split mode the user picks several parts at once (upstream issue #67)
+                multiSelect = getExtractPanel().getSplitCheckBox().isSelected();
                 break;
             case ActionCommands.BROWSE_DH_EXT_OUTDIR:
                 title = labelUtil.getString("gui.filer.title.dhExtract.outputDir");

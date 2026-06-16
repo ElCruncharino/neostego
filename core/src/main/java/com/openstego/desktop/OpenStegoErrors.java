@@ -104,6 +104,46 @@ public class OpenStegoErrors {
     public static final int USERPREF_INVALID_BOOL = 19;
 
     /**
+     * Error Code - Multi-cover split needs at least two cover files
+     */
+    public static final int SPLIT_REQUIRES_MULTIPLE_COVERS = 20;
+
+    /**
+     * Error Code - Multi-cover split extraction needs at least two stego files
+     */
+    public static final int SPLIT_REQUIRES_MULTIPLE_PARTS = 21;
+
+    /**
+     * Error Code - The provided covers cannot hold the payload when splitting
+     */
+    public static final int SPLIT_INSUFFICIENT_CAPACITY = 22;
+
+    /**
+     * Error Code - A split part's manifest is corrupt or not a multi-cover part
+     */
+    public static final int SPLIT_MANIFEST_CORRUPT = 23;
+
+    /**
+     * Error Code - Not all parts of a multi-cover split were provided
+     */
+    public static final int SPLIT_MANIFEST_INCOMPLETE = 24;
+
+    /**
+     * Error Code - Provided stego files belong to different splits
+     */
+    public static final int SPLIT_MANIFEST_MISMATCH = 25;
+
+    /**
+     * Error Code - Multi-cover split embedding needs the output to be a directory
+     */
+    public static final int SPLIT_REQUIRES_OUTPUT_DIR = 26;
+
+    /**
+     * Error Code - The selected algorithm does not support multi-cover splitting
+     */
+    public static final int SPLIT_NOT_SUPPORTED = 27;
+
+    /**
      * Initialize the error code - message key map
      */
     public static void init() {
@@ -125,5 +165,13 @@ public class OpenStegoErrors {
         addErrorCode(NAMESPACE, PLUGIN_NOT_FOUND, "err.plugin.notFound");
         addErrorCode(NAMESPACE, IMAGE_SIZE_MISMATCH, "err.image.size.mismatch");
         addErrorCode(NAMESPACE, PWD_MANDATORY_FOR_GENSIG, "err.gensig.pwdMandatory");
+        addErrorCode(NAMESPACE, SPLIT_REQUIRES_MULTIPLE_COVERS, "err.split.requiresMultipleCovers");
+        addErrorCode(NAMESPACE, SPLIT_REQUIRES_MULTIPLE_PARTS, "err.split.requiresMultipleParts");
+        addErrorCode(NAMESPACE, SPLIT_INSUFFICIENT_CAPACITY, "err.split.insufficientCapacity");
+        addErrorCode(NAMESPACE, SPLIT_MANIFEST_CORRUPT, "err.split.manifestCorrupt");
+        addErrorCode(NAMESPACE, SPLIT_MANIFEST_INCOMPLETE, "err.split.manifestIncomplete");
+        addErrorCode(NAMESPACE, SPLIT_MANIFEST_MISMATCH, "err.split.manifestMismatch");
+        addErrorCode(NAMESPACE, SPLIT_REQUIRES_OUTPUT_DIR, "err.split.requiresOutputDir");
+        addErrorCode(NAMESPACE, SPLIT_NOT_SUPPORTED, "err.split.notSupported");
     }
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DayNight app theme (light variant here, dark in values-night). Compose draws the real UI;
+         this mainly governs the cold-start window background so it doesn't flash the wrong colour
+         before the first frame, and pairs with enableEdgeToEdge() for transparent system bars. -->
+    <style name="Theme.NeoStego" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+    </style>
+</resources>

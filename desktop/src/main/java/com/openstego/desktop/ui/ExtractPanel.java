@@ -25,6 +25,7 @@ public class ExtractPanel extends JPanel {
 
     private JTextField inputStegoFileTextField;
     private JButton inputStegoFileButton;
+    private JCheckBox splitCheckBox;
     private JTextField outputFolderTextField;
     private JButton outputFolderButton;
     private JPasswordField extractPwdTextField;
@@ -63,6 +64,21 @@ public class ExtractPanel extends JPanel {
             this.inputStegoFileButton.setText("...");
         }
         return this.inputStegoFileButton;
+    }
+
+    /**
+     * Get method for the "Split parts" check box. When selected, the stego-file field is treated as a
+     * {@code ;}-separated list of the parts of a payload that was split across several covers
+     * (upstream issue #67), and they are reassembled on extract.
+     *
+     * @return splitCheckBox
+     */
+    public JCheckBox getSplitCheckBox() {
+        if (this.splitCheckBox == null) {
+            this.splitCheckBox = new JCheckBox(labelUtil.getString("gui.label.dhExtract.split"));
+            this.splitCheckBox.setToolTipText(labelUtil.getString("gui.tooltip.dhExtract.split"));
+        }
+        return this.splitCheckBox;
     }
 
     /**
@@ -144,6 +160,15 @@ public class ExtractPanel extends JPanel {
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 0.0;
         add(new JLabel(labelUtil.getString("gui.label.dhExtract.stegoFile")), gridBagConstraints);
+
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.anchor = GridBagConstraints.EAST;
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.insets = new Insets(5, 5, 0, 5);
+        gridBagConstraints.weightx = 0.0;
+        gridBagConstraints.weighty = 0.0;
+        add(getSplitCheckBox(), gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;

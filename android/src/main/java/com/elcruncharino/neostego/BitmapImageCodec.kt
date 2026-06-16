@@ -20,10 +20,24 @@ import java.io.ByteArrayOutputStream
 import java.security.SecureRandom
 
 /**
- * Android [ImageCodec] backed by [Bitmap] / [BitmapFactory]. Output is always written as lossless PNG
- * (required for steganography).
+ * Android [ImageCodec] backed by [Bitmap] / [BitmapFactory]. Data-hiding output is always lossless PNG
+ * (required to preserve the embedded bits); the watermarking path may request JPEG output (a robust
+ * watermark survives lossy compression) via a `.jpg`/`.jpeg` output name and [jpegQuality].
  */
 class BitmapImageCodec : ImageCodec {
+
+    companion object {
+        private const val DEFAULT_JPEG_QUALITY = 90
+    }
+
+    /** Quality (1-100) used when the output name is a JPEG. Only the watermarking path sets this. */
+    @Volatile
+    var jpegQuality: Int = DEFAULT_JPEG_QUALITY
+
+    /** Restore the default JPEG quality after a watermark embed. */
+    fun resetJpegQuality() {
+        jpegQuality = DEFAULT_JPEG_QUALITY
+    }
 
     override fun decode(data: ByteArray, fileName: String?): PixelImage {
         // Decode bit-exactly: no density scaling, no dithering, no alpha premultiplication and no
@@ -76,8 +90,15 @@ class BitmapImageCodec : ImageCodec {
     override fun encode(image: PixelImage, fileName: String?): ByteArray {
         val bitmap = (image as BitmapPixelImage).bitmap
         val out = ByteArrayOutputStream(32 * 1024)
-        // PNG is lossless, which is required to preserve the embedded bits
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        val ext = fileName?.substringAfterLast('.', "")?.lowercase()
+        if (ext == "jpg" || ext == "jpeg") {
+            // Robust watermark output. JPEG cannot store alpha, so Bitmap drops it (transparent areas
+            // composite to black). Data hiding never requests this path - it always outputs PNG.
+            bitmap.compress(Bitmap.CompressFormat.JPEG, jpegQuality.coerceIn(1, 100), out)
+        } else {
+            // PNG is lossless, which is required to preserve the embedded bits
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
         return out.toByteArray()
     }
 

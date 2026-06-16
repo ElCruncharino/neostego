@@ -7,6 +7,8 @@
 
 package com.openstego.desktop;
 
+import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter;
+import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.PluginManager;
@@ -18,6 +20,7 @@ import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -93,6 +96,7 @@ public class OpenStegoCmd {
             }
 
             Map<String, String> opt = collectStringOptions(parseResult);
+            boolean splitMode = parseResult.hasMatchedOption("-S");
 
             // Optional JPEG output quality (0-100), e.g. for watermarking out to JPEG (upstream issue #24).
             if (opt.containsKey("-q")) {
@@ -119,13 +123,13 @@ public class OpenStegoCmd {
 
             switch (command) {
                 case "embed":
-                    executeEmbed(opt, stego);
+                    executeEmbed(opt, stego, plugin, splitMode);
                     break;
                 case "embedmark":
                     executeEmbedMark(opt, stego);
                     break;
                 case "extract":
-                    executeExtract(opt, stego);
+                    executeExtract(opt, stego, plugin, splitMode);
                     break;
                 case "checkmark":
                     executeCheckMark(opt, stego);
@@ -261,6 +265,7 @@ public class OpenStegoCmd {
         addOption(spec, false, "-E", "--noencrypt");
         addOption(spec, false, "-L", "--legacyencrypt");
         addOption(spec, false, "-nf", "--nofilename");
+        addOption(spec, false, "-S", "--split");
 
         // Plugin-specific options
         if (plugin != null) {
@@ -348,7 +353,7 @@ public class OpenStegoCmd {
      * @throws OpenStegoException     Processing issues
      * @throws OpenStegoBulkException Errors for multiple files
      */
-    private static void executeEmbed(Map<String, String> opt, OpenStego stego)
+    private static void executeEmbed(Map<String, String> opt, OpenStego stego, OpenStegoPlugin<?> plugin, boolean splitMode)
             throws OpenStegoException, OpenStegoBulkException {
         String msgFileName = opt.get("-mf");
         String coverFileName = opt.get("-cf");
@@ -361,6 +366,15 @@ public class OpenStegoCmd {
         }
 
         File msgFile = (msgFileName == null || msgFileName.equals("-")) ? null : new File(msgFileName);
+
+        // Split mode (upstream issue #67): spread one payload across multiple covers, one stego image
+        // per cover, into the given output directory. Opt-in only; the default multi-cover behaviour
+        // below (same message into each cover) is unchanged.
+        if (splitMode) {
+            executeEmbedSplit(msgFile, msgFileName, coverFileName, stegoFileName, stego, plugin);
+            return;
+        }
+
         coverFileList = CommonUtil.parseFileList(coverFileName, ";");
         // If no coverfile or only one coverfile is provided then use stegofile name given by the user
         if (coverFileList.size() <= 1) {
@@ -393,6 +407,57 @@ public class OpenStegoCmd {
                 }
             }
             bulkException.throwIfRequired();
+        }
+    }
+
+    /**
+     * Splits one payload across multiple covers (upstream issue #67), writing one stego image per
+     * cover into the output directory given by {@code -sf}.
+     */
+    private static void executeEmbedSplit(File msgFile, String msgFileName, String coverFileName, String stegoFileName,
+                                          OpenStego stego, OpenStegoPlugin<?> plugin) throws OpenStegoException {
+        if (!(plugin instanceof DHImagePluginTemplate)) {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_NOT_SUPPORTED);
+        }
+        DHImagePluginTemplate<?> dhPlugin = (DHImagePluginTemplate<?>) plugin;
+
+        List<File> coverFileList = CommonUtil.parseFileList(coverFileName, ";");
+        if (coverFileList.size() < 2) {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_REQUIRES_MULTIPLE_COVERS, coverFileList.size());
+        }
+        if (stegoFileName == null || stegoFileName.equals("-") || !new File(stegoFileName).isDirectory()) {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_REQUIRES_OUTPUT_DIR);
+        }
+        File outDir = new File(stegoFileName);
+
+        byte[] msg;
+        String embeddedName;
+        if (msgFile == null) {
+            try (java.io.InputStream is = System.in) {
+                msg = CommonUtil.streamToBytes(is);
+            } catch (java.io.IOException ioEx) {
+                throw new OpenStegoException(ioEx);
+            }
+            embeddedName = null;
+        } else {
+            msg = CommonUtil.fileToBytes(msgFile);
+            embeddedName = msgFile.getName();
+        }
+
+        List<byte[]> covers = new ArrayList<>(coverFileList.size());
+        List<String> coverNames = new ArrayList<>(coverFileList.size());
+        List<String> stegoOutPaths = new ArrayList<>(coverFileList.size());
+        for (File cover : coverFileList) {
+            covers.add(CommonUtil.fileToBytes(cover));
+            coverNames.add(cover.getName());
+            stegoOutPaths.add(new File(outDir, cover.getName()).getPath());
+        }
+
+        List<byte[]> stegoImages = MultiCoverPayloadSplitter.embedSplit(msg, embeddedName, covers, coverNames,
+                stegoOutPaths, stego.getConfig(), dhPlugin);
+        for (int i = 0; i < stegoImages.size(); i++) {
+            CommonUtil.writeFile(stegoImages.get(i), stegoOutPaths.get(i));
+            System.err.println(labelUtil.getString("cmd.msg.coverProcessed", stegoOutPaths.get(i)));
         }
     }
 
@@ -453,7 +518,8 @@ public class OpenStegoCmd {
      * @param stego {@link OpenStego} object
      * @throws OpenStegoException Processing issues
      */
-    private static void executeExtract(Map<String, String> opt, OpenStego stego) throws OpenStegoException {
+    private static void executeExtract(Map<String, String> opt, OpenStego stego, OpenStegoPlugin<?> plugin, boolean splitMode)
+            throws OpenStegoException {
         String stegoFileName = opt.get("-sf");
         String extractDir = opt.get("-xd");
         String extractFileName;
@@ -464,29 +530,40 @@ public class OpenStegoCmd {
             return;
         }
 
-        try {
-            msgData = stego.extractData(new File(stegoFileName));
-        } catch (OpenStegoException osEx) {
-            if (osEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD || osEx.getErrorCode() == OpenStegoErrors.NO_VALID_PLUGIN) {
-                if (stego.getConfig().getPassword() == null) {
-                    stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
+        if (splitMode) {
+            // Reassemble a payload that was split across multiple covers (upstream issue #67).
+            if (!(plugin instanceof DHImagePluginTemplate)) {
+                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_NOT_SUPPORTED);
+            }
+            msgData = extractSplitWithPrompt(stegoFileName, stego, (DHImagePluginTemplate<?>) plugin);
+            if (msgData == null) {
+                return; // invalid password already reported
+            }
+        } else {
+            try {
+                msgData = stego.extractData(new File(stegoFileName));
+            } catch (OpenStegoException osEx) {
+                if (osEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD || osEx.getErrorCode() == OpenStegoErrors.NO_VALID_PLUGIN) {
+                    if (stego.getConfig().getPassword() == null) {
+                        stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
 
-                    try {
-                        msgData = stego.extractData(new File(stegoFileName));
-                    } catch (OpenStegoException inEx) {
-                        if (inEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
-                            System.err.println(inEx.getMessage());
-                            return;
-                        } else {
-                            throw inEx;
+                        try {
+                            msgData = stego.extractData(new File(stegoFileName));
+                        } catch (OpenStegoException inEx) {
+                            if (inEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
+                                System.err.println(inEx.getMessage());
+                                return;
+                            } else {
+                                throw inEx;
+                            }
                         }
+                    } else {
+                        System.err.println(osEx.getMessage());
+                        return;
                     }
                 } else {
-                    System.err.println(osEx.getMessage());
-                    return;
+                    throw osEx;
                 }
-            } else {
-                throw osEx;
             }
         }
 
@@ -504,6 +581,45 @@ public class OpenStegoCmd {
 
         CommonUtil.writeFile((byte[]) msgData.get(1), extractFileName);
         System.err.println(labelUtil.getString("cmd.msg.fileExtracted", extractFileName));
+    }
+
+    /**
+     * Reassembles a split payload from the {@code ;}-separated list of stego files, prompting once for
+     * a password if the data turns out to be encrypted and none was supplied.
+     *
+     * @return The extracted [filename, bytes] list, or {@code null} if an invalid password was reported
+     */
+    private static List<?> extractSplitWithPrompt(String stegoFileNames, OpenStego stego, DHImagePluginTemplate<?> plugin)
+            throws OpenStegoException {
+        List<File> parts = CommonUtil.parseFileList(stegoFileNames, ";");
+        if (parts.size() < 2) {
+            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_REQUIRES_MULTIPLE_PARTS, parts.size());
+        }
+
+        List<byte[]> images = new ArrayList<>(parts.size());
+        List<String> names = new ArrayList<>(parts.size());
+        for (File part : parts) {
+            images.add(CommonUtil.fileToBytes(part));
+            names.add(part.getName());
+        }
+
+        try {
+            return MultiCoverPayloadSplitter.extractSplit(images, names, stego.getConfig(), plugin);
+        } catch (OpenStegoException osEx) {
+            if (osEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD && stego.getConfig().getPassword() == null) {
+                stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
+                try {
+                    return MultiCoverPayloadSplitter.extractSplit(images, names, stego.getConfig(), plugin);
+                } catch (OpenStegoException inEx) {
+                    if (inEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
+                        System.err.println(inEx.getMessage());
+                        return null;
+                    }
+                    throw inEx;
+                }
+            }
+            throw osEx;
+        }
     }
 
     /**

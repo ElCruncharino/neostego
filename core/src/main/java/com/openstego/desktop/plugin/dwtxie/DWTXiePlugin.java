@@ -7,9 +7,10 @@
 package com.openstego.desktop.plugin.dwtxie;
 
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.ImageCodecRegistry;
+import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.image.YuvImageUtil;
 import com.openstego.desktop.plugin.template.image.WMImagePluginTemplate;
-import com.openstego.desktop.util.ImageHolder;
-import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.DWT;
@@ -85,7 +86,7 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
      */
     @Override
     public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
-        ImageHolder image;
+        PixelImage image;
         List<int[][]> yuv;
         DWT dwt;
         ImageTree dwtTree;
@@ -95,7 +96,6 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         Pixel pixel2;
         Pixel pixel3;
         int[][] luminance;
-        int imgType;
         int origWidth;
         int origHeight;
         int cols;
@@ -107,18 +107,18 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         if (cover == null) {
             throw new OpenStegoException(null, NAMESPACE, DWTXieErrors.ERR_NO_COVER_FILE);
         } else {
-            image = ImageUtil.byteArrayToImage(cover, coverFileName);
+            image = ImageCodecRegistry.get().decode(cover, coverFileName);
         }
 
-        imgType = image.getImage().getType();
-        origWidth = image.getImage().getWidth();
-        origHeight = image.getImage().getHeight();
-        ImageUtil.makeImageSquare(image);
+        origWidth = image.getWidth();
+        origHeight = image.getHeight();
 
-        cols = image.getImage().getWidth();
-        rows = image.getImage().getHeight();
-        yuv = ImageUtil.getYuvFromImage(image.getImage());
-        luminance = yuv.get(0);
+        // The DWT needs a square plane; pad the luminance to max(w,h) with black (Y=0), exactly as the
+        // legacy AWT path padded the whole image, then crop the result back to the original dimensions.
+        yuv = YuvImageUtil.getYuvFromImage(image);
+        cols = Math.max(origWidth, origHeight);
+        rows = cols;
+        luminance = padToSquare(yuv.get(0), cols);
         sig = new Signature(msg);
 
         // Wavelet transform
@@ -163,11 +163,10 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         }
 
         dwt.inverseDWT(dwtTree, luminance);
-        yuv.set(0, luminance);
-        image.setImage(ImageUtil.getImageFromYuv(yuv, imgType));
-        ImageUtil.cropImage(image, origWidth, origHeight);
+        yuv.set(0, cropPlane(luminance, origHeight, origWidth));
+        YuvImageUtil.applyYuvToImage(yuv, image);
 
-        return ImageUtil.imageToByteArray(image, stegoFileName, this);
+        return ImageCodecRegistry.get().encode(image, stegoFileName);
     }
 
     /**
@@ -182,7 +181,7 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
     @Override
     public byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException {
         List<Integer> sigBitList = new ArrayList<>();
-        ImageHolder image;
+        PixelImage image;
         DWT dwt;
         ImageTree dwtTree;
         ImageTree p;
@@ -194,12 +193,11 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         int cols;
         int rows;
 
-        image = ImageUtil.byteArrayToImage(stegoData, stegoFileName);
-        ImageUtil.makeImageSquare(image);
+        image = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
 
-        cols = image.getImage().getWidth();
-        rows = image.getImage().getHeight();
-        luminance = ImageUtil.getYuvFromImage(image.getImage()).get(0);
+        cols = Math.max(image.getWidth(), image.getHeight());
+        rows = cols;
+        luminance = padToSquare(YuvImageUtil.getYuvFromImage(image).get(0), cols);
         sig = new Signature(origSigData);
 
         // Wavelet transform
@@ -340,6 +338,41 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         int bit = n & 7;
 
         return (watermark[byteNum] & (1 << bit)) >> bit;
+    }
+
+    /**
+     * Pad a luminance plane to a {@code size}&times;{@code size} square, filling the new area with 0 (black
+     * luminance). Mirrors the legacy black padding applied to the whole image before the DWT.
+     *
+     * @param plane Luminance plane indexed as {@code [row][col]}
+     * @param size  Target square side
+     * @return a new {@code [size][size]} plane with the source copied into the top-left
+     */
+    private static int[][] padToSquare(int[][] plane, int size) {
+        int height = Math.min(plane.length, size);
+        int[][] out = new int[size][size];
+        for (int i = 0; i < height; i++) {
+            int width = Math.min(plane[i].length, size);
+            System.arraycopy(plane[i], 0, out[i], 0, width);
+        }
+        return out;
+    }
+
+    /**
+     * Crop a luminance plane back to the given dimensions (inverse of {@link #padToSquare}).
+     *
+     * @param plane  Square luminance plane indexed as {@code [row][col]}
+     * @param height Target height
+     * @param width  Target width
+     * @return a new {@code [height][width]} plane copied from the top-left of {@code plane}
+     */
+    private static int[][] cropPlane(int[][] plane, int height, int width) {
+        int[][] out = new int[height][width];
+        for (int i = 0; i < height; i++) {
+            int copy = Math.min(width, plane[i].length);
+            System.arraycopy(plane[i], 0, out[i], 0, copy);
+        }
+        return out;
     }
 
     /**

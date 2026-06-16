@@ -7,9 +7,10 @@
 package com.openstego.desktop.plugin.dwtsvd;
 
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.ImageCodecRegistry;
+import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.image.YuvImageUtil;
 import com.openstego.desktop.plugin.template.image.WMImagePluginTemplate;
-import com.openstego.desktop.util.ImageHolder;
-import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.DWT;
@@ -114,12 +115,11 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
             throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_NO_COVER_FILE);
         }
 
-        ImageHolder image = ImageUtil.byteArrayToImage(cover, coverFileName);
-        int imgType = image.getImage().getType();
-        int cols = image.getImage().getWidth();
-        int rows = image.getImage().getHeight();
+        PixelImage image = ImageCodecRegistry.get().decode(cover, coverFileName);
+        int cols = image.getWidth();
+        int rows = image.getHeight();
 
-        List<int[][]> yuv = ImageUtil.getYuvFromImage(image.getImage());
+        List<int[][]> yuv = YuvImageUtil.getYuvFromImage(image);
         int[][] luminance = yuv.get(0);
 
         Signature sig = new Signature(msg);
@@ -133,9 +133,9 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
 
         dwt.inverseDWT(tree, luminance);
         yuv.set(0, luminance);
-        image.setImage(ImageUtil.getImageFromYuv(yuv, imgType));
+        YuvImageUtil.applyYuvToImage(yuv, image);
 
-        return ImageUtil.imageToByteArray(image, stegoFileName, this);
+        return ImageCodecRegistry.get().encode(image, stegoFileName);
     }
 
     private void embedIntoLL(Image ll, Signature sig, int[] codeBits) throws OpenStegoException {
@@ -212,10 +212,10 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
     public byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException {
         Signature sig = new Signature(origSigData);
 
-        ImageHolder image = ImageUtil.byteArrayToImage(stegoData, stegoFileName);
-        int cols = image.getImage().getWidth();
-        int rows = image.getImage().getHeight();
-        int[][] luminance = ImageUtil.getYuvFromImage(image.getImage()).get(0);
+        PixelImage image = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
+        int cols = image.getWidth();
+        int rows = image.getHeight();
+        int[][] luminance = YuvImageUtil.getYuvFromImage(image).get(0);
 
         DWT dwt = new DWT(cols, rows, DWT_FILTER_ID, DWT_LEVEL, DWT_METHOD);
         ImageTree tree = dwt.forwardDWT(luminance);
