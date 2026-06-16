@@ -43,10 +43,14 @@ Changes in this fork:
   additive noise, blurring, resampling and global brightness scaling (a benchmark over 7 covers
   detects 100% with zero bit errors across all of those). The legacy DWT plugins remain available via
   the command line. A reproducible robustness benchmark lives in
-  [`benchmark/watermark`](benchmark/watermark). As for other non-neural blind schemes, large
+  [`benchmark/watermark`](benchmark/watermark). It also tolerates a **small pure crop** (trimming a
+  modest border without rescaling, the common "crop the edges and re-save" edit): extraction searches
+  small grid-phase and block-origin offsets to re-synchronise the block grid, and the code bits are
+  tiled by an absolute, size-independent keyed mapping so blocks that survive a crop still decode (a
+  reported weakness, upstream issue&nbsp;#69). As for other non-neural blind schemes, large
   **contrast** changes are only partially handled (contrast is an around-the-mean affine shift that
-  &mu;-normalisation does not fully cancel) and geometric desynchronisation (cropping, large
-  rotation/scaling to a different size) is out of scope.
+  &mu;-normalisation does not fully cancel) and larger geometric desynchronisation (big crops, crop
+  **plus** rescale, large rotation/scaling to a different size) remains out of scope.
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
