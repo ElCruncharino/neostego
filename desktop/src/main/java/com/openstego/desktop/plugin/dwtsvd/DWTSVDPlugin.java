@@ -160,20 +160,53 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         }
         double step = sig.strength * mu;
 
-        int[] perm = blockPermutation(sig.seed, numBlocks);
-        for (int rank = 0; rank < numBlocks; rank++) {
-            int block = perm[rank];
-            int bit = codeBits[rank % codeBits.length];
-            Svd svd = svds[block];
-            double newS0 = quantize(svd.getSingularValue(0), step, bit);
-            svd.setSingularValue(0, newS0);
-            putBlock(ll, block / blocksW, block % blocksW, svd.reconstruct());
+        // Assign each block a code-bit index from a password-keyed hash of its ABSOLUTE (row, col). Unlike a
+        // global permutation over the block count, this mapping does not change when the image is later
+        // cropped/resized: blocks that survive a crop still carry the same code index, which (together with the
+        // alignment search in extractData) is what lets the watermark survive small crops/translations (#69).
+        for (int br = 0; br < blocksH; br++) {
+            for (int bc = 0; bc < blocksW; bc++) {
+                int idx = codeIndexForBlock(sig.seed, br, bc, codeBits.length);
+                int bit = codeBits[idx];
+                Svd svd = svds[br * blocksW + bc];
+                double newS0 = quantize(svd.getSingularValue(0), step, bit);
+                svd.setSingularValue(0, newS0);
+                putBlock(ll, br, bc, svd.reconstruct());
+            }
         }
+    }
+
+    /**
+     * Deterministic, password-keyed, <em>position-absolute</em> mapping from a block's (row, col) to a code-bit
+     * index. SplitMix64-style avalanche gives a near-uniform spread of code indices across blocks (so each bit
+     * is repetition-tiled many times) while depending only on the absolute coordinates - not on the image size -
+     * so a crop that removes border blocks leaves the remaining assignments intact.
+     */
+    private static int codeIndexForBlock(long seed, int row, int col, int codeLen) {
+        long h = seed + 0x9E3779B97F4A7C15L * (row + 1) + 0xC2B2AE3D27D4EB4FL * (col + 1);
+        h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
+        h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
+        h = h ^ (h >>> 31);
+        return (int) Math.floorMod(h, (long) codeLen);
     }
 
     // ------------------------------------------------------------------
     // Extraction
     // ------------------------------------------------------------------
+
+    /** Max number of LL blocks a crop may have removed from the top/left that the alignment search will recover. */
+    private static final int MAX_BLOCK_OFFSET = 4;
+
+    /** Code-bit match fraction at which the zero-offset (uncropped) alignment is accepted without searching. */
+    private static final double FASTPATH_MATCH = 0.92;
+
+    /**
+     * Minimum code-bit match a <em>searched</em> (non-baseline) alignment must reach to be trusted. The search
+     * maximises the match over many candidate offsets, so by chance alone the best of them sits a little above
+     * 50%; this floor stays well clear of that, so an absent/wrong watermark falls back to the zero-offset
+     * decode (~50%, i.e. correlation ~0) instead of a spurious high reading.
+     */
+    private static final double SEARCH_ACCEPT_MATCH = 0.70;
 
     @Override
     public byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException {
@@ -189,34 +222,88 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         Image ll = tree.getCoarse().getImage();
 
         int codeLen = codeBitLength(sig);
-        int blocksW = ll.getWidth() / BLOCK;
-        int blocksH = ll.getHeight() / BLOCK;
-        int numBlocks = blocksW * blocksH;
-        if (numBlocks < codeLen) {
+        if ((ll.getWidth() / BLOCK) * (ll.getHeight() / BLOCK) < codeLen) {
             throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
         }
 
-        // Recompute the global reference mu from the received image. Under a global gain it tracks the gain, so the
-        // mu-relative step matches the one used at embed time and the QIM decision bins line up.
-        double[] s0 = new double[numBlocks];
-        double sum = 0.0;
-        for (int block = 0; block < numBlocks; block++) {
-            s0[block] = new Svd(getBlock(ll, block / blocksW, block % blocksW)).getSingularValue(0);
-            sum += s0[block];
+        // The expected code bits (RS-encoded original payload) are known from the signature, so the best
+        // grid alignment is the one whose decoded bits match them most closely. Try the natural (uncropped)
+        // alignment first; if it is already a strong match, skip the search entirely so the common case (and
+        // the JPEG/noise/brightness robustness) is unchanged. Otherwise search small grid-phase and
+        // block-origin offsets to resynchronise after a crop/translation (#69).
+        int[] expected = buildCodeBits(sig);
+        int[] baseline = decodeCodeBits(ll, sig, 0, 0, 0, 0, codeLen);
+        int baselineScore = matchCount(baseline, expected);
+
+        int[] best = baseline;
+        if ((double) baselineScore / codeLen < FASTPATH_MATCH) {
+            int[] searchBest = null;
+            int searchBestScore = -1;
+            for (int phaseY = 0; phaseY < BLOCK; phaseY++) {
+                for (int phaseX = 0; phaseX < BLOCK; phaseX++) {
+                    for (int offR = 0; offR <= MAX_BLOCK_OFFSET; offR++) {
+                        for (int offC = 0; offC <= MAX_BLOCK_OFFSET; offC++) {
+                            if (phaseY == 0 && phaseX == 0 && offR == 0 && offC == 0) {
+                                continue; // already evaluated as the baseline
+                            }
+                            int[] cand = decodeCodeBits(ll, sig, phaseY, phaseX, offR, offC, codeLen);
+                            int score = matchCount(cand, expected);
+                            if (score > searchBestScore) {
+                                searchBestScore = score;
+                                searchBest = cand;
+                            }
+                        }
+                    }
+                }
+            }
+            // Only trust a resynchronised alignment if it beats the baseline AND clears the chance floor; this
+            // keeps a small crop recoverable without turning the multi-offset search into a false-positive source.
+            if (searchBest != null && searchBestScore > baselineScore
+                    && (double) searchBestScore / codeLen >= SEARCH_ACCEPT_MATCH) {
+                best = searchBest;
+            }
         }
-        double mu = sum / numBlocks;
-        double step = sig.strength * mu;
+
+        ReedSolomon rs = new ReedSolomon(sig.parityBytes);
+        byte[] payload = rs.decode(bitsToBytes(best));
+
+        // Wrap with marker so getWatermarkCorrelation can validate and compare.
+        byte[] out = new byte[SIG_MARKER.length() + payload.length];
+        System.arraycopy(SIG_MARKER.getBytes(StandardCharsets.UTF_8), 0, out, 0, SIG_MARKER.length());
+        System.arraycopy(payload, 0, out, SIG_MARKER.length(), payload.length);
+        return out;
+    }
+
+    /**
+     * Decodes the code bits for one candidate grid alignment: a sub-block grid phase {@code (phaseY, phaseX)}
+     * in LL pixels and a block-origin offset {@code (offR, offC)} describing how many whole blocks a crop is
+     * assumed to have removed from the top/left. Each surviving block votes for its absolutely-addressed code
+     * index; the majority over all repetitions gives the bit.
+     */
+    private int[] decodeCodeBits(Image ll, Signature sig, int phaseY, int phaseX, int offR, int offC, int codeLen) {
+        int gridH = (ll.getHeight() - phaseY) / BLOCK;
+        int gridW = (ll.getWidth() - phaseX) / BLOCK;
+
+        double[][] s0 = new double[gridH][gridW];
+        double sum = 0.0;
+        for (int r = 0; r < gridH; r++) {
+            for (int c = 0; c < gridW; c++) {
+                s0[r][c] = new Svd(getBlockAt(ll, phaseY + r * BLOCK, phaseX + c * BLOCK)).getSingularValue(0);
+                sum += s0[r][c];
+            }
+        }
+        double step = sig.strength * (sum / (gridH * gridW));
 
         int[] votesFor1 = new int[codeLen];
         int[] votesFor0 = new int[codeLen];
-        int[] perm = blockPermutation(sig.seed, numBlocks);
-        for (int rank = 0; rank < numBlocks; rank++) {
-            int bit = decodeBit(s0[perm[rank]], step);
-            int idx = rank % codeLen;
-            if (bit == 1) {
-                votesFor1[idx]++;
-            } else {
-                votesFor0[idx]++;
+        for (int r = 0; r < gridH; r++) {
+            for (int c = 0; c < gridW; c++) {
+                int idx = codeIndexForBlock(sig.seed, r + offR, c + offC, codeLen);
+                if (decodeBit(s0[r][c], step) == 1) {
+                    votesFor1[idx]++;
+                } else {
+                    votesFor0[idx]++;
+                }
             }
         }
 
@@ -224,16 +311,17 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         for (int i = 0; i < codeLen; i++) {
             codeBits[i] = (votesFor1[i] > votesFor0[i]) ? 1 : 0;
         }
+        return codeBits;
+    }
 
-        byte[] codeBytes = bitsToBytes(codeBits);
-        ReedSolomon rs = new ReedSolomon(sig.parityBytes);
-        byte[] payload = rs.decode(codeBytes);
-
-        // Wrap with marker so getWatermarkCorrelation can validate and compare.
-        byte[] out = new byte[SIG_MARKER.length() + payload.length];
-        System.arraycopy(SIG_MARKER.getBytes(StandardCharsets.UTF_8), 0, out, 0, SIG_MARKER.length());
-        System.arraycopy(payload, 0, out, SIG_MARKER.length(), payload.length);
-        return out;
+    private static int matchCount(int[] a, int[] b) {
+        int n = 0;
+        for (int i = 0; i < a.length; i++) {
+            if (a[i] == b[i]) {
+                n++;
+            }
+        }
+        return n;
     }
 
     // ------------------------------------------------------------------
@@ -316,22 +404,6 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         return bytes;
     }
 
-    /** Deterministic Fisher-Yates permutation of block indices, seeded so embed and extract agree. */
-    private static int[] blockPermutation(long seed, int count) {
-        int[] perm = new int[count];
-        for (int i = 0; i < count; i++) {
-            perm[i] = i;
-        }
-        Random rand = new Random(seed);
-        for (int i = count - 1; i > 0; i--) {
-            int j = rand.nextInt(i + 1);
-            int tmp = perm[i];
-            perm[i] = perm[j];
-            perm[j] = tmp;
-        }
-        return perm;
-    }
-
     /** QIM embed: return the nearest multiple of {@code step} whose index parity equals {@code bit}. */
     private static double quantize(double value, double step, int bit) {
         long q = Math.round(value / step);
@@ -350,13 +422,18 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
     }
 
     private static double[][] getBlock(Image ll, int br, int bc) {
+        return getBlockAt(ll, br * BLOCK, bc * BLOCK);
+    }
+
+    /** Reads an 8x8 block whose top-left corner is at LL pixel ({@code originY}, {@code originX}). */
+    private static double[][] getBlockAt(Image ll, int originY, int originX) {
         int width = ll.getWidth();
         double[] data = ll.getData();
         double[][] blk = new double[BLOCK][BLOCK];
         for (int i = 0; i < BLOCK; i++) {
-            int y = br * BLOCK + i;
+            int y = originY + i;
             for (int j = 0; j < BLOCK; j++) {
-                int x = bc * BLOCK + j;
+                int x = originX + j;
                 blk[i][j] = data[y * width + x];
             }
         }
