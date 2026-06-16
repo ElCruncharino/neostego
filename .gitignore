@@ -12,6 +12,9 @@ build/
 # Kotlin compiler daemon scratch / error logs
 .kotlin/
 
+# JVM heap dumps (OOM diagnostics) — never commit these
+*.hprof
+
 # Android release signing secrets — never commit these
 android/keystore.properties
 *.jks
