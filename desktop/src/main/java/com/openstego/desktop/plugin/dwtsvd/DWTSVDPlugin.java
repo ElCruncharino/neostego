@@ -70,11 +70,16 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
     private static final int DEFAULT_PARITY_BYTES = 8;
 
     /**
-     * Default QIM step. Chosen so that {@code step/2} comfortably exceeds the ~16-unit perturbation that a YUV
-     * round-trip plus JPEG re-compression induces in a block's largest singular value, while keeping the watermark
-     * imperceptible (~40 dB PSNR). May be overridden via the {@code dwtsvd.strength} system property for tuning.
+     * Default <em>relative</em> QIM step. The actual quantization step for a block is this value times a global
+     * reference &mu; (the mean largest-singular-value over all blocks). Making the step proportional to a gain-linear
+     * reference rather than an absolute constant is what gives the watermark robustness to global brightness/contrast
+     * (valumetric) scaling: a global gain multiplies every singular value <em>and</em> &mu; by the same factor, so the
+     * quantizer bins scale with the signal and the embedded parity is preserved (Rational Dither Modulation idea).
+     * Chosen so that the effective step (&mu; is typically a few hundred) keeps {@code step/2} well above the ~16-unit
+     * round-trip/JPEG perturbation while staying imperceptible (~40 dB PSNR). May be overridden via the
+     * {@code dwtsvd.strength} system property for tuning.
      */
-    private static final double DEFAULT_STRENGTH = 64.0;
+    private static final double DEFAULT_STRENGTH = 0.035;
 
     /**
      * Default constructor
@@ -141,18 +146,28 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
             throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
         }
 
+        // Decompose every block once and derive the global reference mu = mean(S0). The QIM step is scaled by mu so
+        // that a global brightness/contrast gain (which multiplies every S0 and mu alike) leaves the parity intact.
+        Svd[] svds = new Svd[numBlocks];
+        double sum = 0.0;
+        for (int block = 0; block < numBlocks; block++) {
+            svds[block] = new Svd(getBlock(ll, block / blocksW, block % blocksW));
+            sum += svds[block].getSingularValue(0);
+        }
+        double mu = sum / numBlocks;
+        if (mu < 1e-6) {
+            throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
+        }
+        double step = sig.strength * mu;
+
         int[] perm = blockPermutation(sig.seed, numBlocks);
         for (int rank = 0; rank < numBlocks; rank++) {
             int block = perm[rank];
             int bit = codeBits[rank % codeBits.length];
-            int br = block / blocksW;
-            int bc = block % blocksW;
-
-            double[][] blk = getBlock(ll, br, bc);
-            Svd svd = new Svd(blk);
-            double newS0 = quantize(svd.getSingularValue(0), sig.strength, bit);
+            Svd svd = svds[block];
+            double newS0 = quantize(svd.getSingularValue(0), step, bit);
             svd.setSingularValue(0, newS0);
-            putBlock(ll, br, bc, svd.reconstruct());
+            putBlock(ll, block / blocksW, block % blocksW, svd.reconstruct());
         }
     }
 
@@ -181,15 +196,22 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
             throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
         }
 
+        // Recompute the global reference mu from the received image. Under a global gain it tracks the gain, so the
+        // mu-relative step matches the one used at embed time and the QIM decision bins line up.
+        double[] s0 = new double[numBlocks];
+        double sum = 0.0;
+        for (int block = 0; block < numBlocks; block++) {
+            s0[block] = new Svd(getBlock(ll, block / blocksW, block % blocksW)).getSingularValue(0);
+            sum += s0[block];
+        }
+        double mu = sum / numBlocks;
+        double step = sig.strength * mu;
+
         int[] votesFor1 = new int[codeLen];
         int[] votesFor0 = new int[codeLen];
         int[] perm = blockPermutation(sig.seed, numBlocks);
         for (int rank = 0; rank < numBlocks; rank++) {
-            int block = perm[rank];
-            int br = block / blocksW;
-            int bc = block % blocksW;
-            double s0 = new Svd(getBlock(ll, br, bc)).getSingularValue(0);
-            int bit = decodeBit(s0, sig.strength);
+            int bit = decodeBit(s0[perm[rank]], step);
             int idx = rank % codeLen;
             if (bit == 1) {
                 votesFor1[idx]++;
