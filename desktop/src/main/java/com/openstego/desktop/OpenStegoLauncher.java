@@ -46,10 +46,11 @@ public class OpenStegoLauncher {
                 // Apply the modern FlatLaf look-and-feel using the saved theme preference
                 UITheme.install(UITheme.current());
                 // Determine default DH and WM plugins. The DH default is the content-adaptive
-                // (HILL+STC) plugin, the most secure spatial algorithm; the user can switch to any
-                // other data-hiding plugin from the embed screen's Algorithm dropdown.
+                // (HILL+STC) plugin, the most secure spatial algorithm, switchable from the embed
+                // screen's Algorithm dropdown. The watermarking tab uses a single plugin: the robust
+                // blind DWT-SVD watermark (other WM plugins remain available via the command line).
                 OpenStegoPlugin<?> dhPlugin = PluginManager.getPluginByName("Adaptive");
-                OpenStegoPlugin<?> wmPlugin = PluginManager.getPluginByName("DWTDugad");
+                OpenStegoPlugin<?> wmPlugin = PluginManager.getPluginByName("DWTSVD");
                 new OpenStegoUI(dhPlugin, wmPlugin).setVisible(true);
             } else {
                 OpenStegoCmd.execute(args);
