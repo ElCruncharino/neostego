@@ -142,7 +142,7 @@ jobs:
           path: dist
 
       - name: Publish release (draft pre-release)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           name: NeoStego ${{ github.ref_name }}
           draft: true
