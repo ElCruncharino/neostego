@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="desktop/src/main/resources/images/NeoStegoIcon.png" width="120" alt="NeoStego logo">
+<img src="desktop/src/main/resources/images/NeoStego.svg" width="120" alt="NeoStego logo">
 
 # NeoStego
 
