@@ -51,6 +51,17 @@ Changes in this fork:
   **contrast** changes are only partially handled (contrast is an around-the-mean affine shift that
   &mu;-normalisation does not fully cancel) and larger geometric desynchronisation (big crops, crop
   **plus** rescale, large rotation/scaling to a different size) remains out of scope.
+- **Audio data hiding.** A new `WavLSB` algorithm hides data in the least-significant bit of each
+  integer PCM sample of an uncompressed **WAV** cover (upstream issue&nbsp;#5). The output is a
+  same-format WAV that still plays normally, and compression/encryption work just like the image
+  algorithms. Lossy/compressed audio (MP3, AAC, Ogg) cannot carry LSB data, by nature.
+- **More cover formats and fidelity.** **WebP** covers can be read (upstream issue&nbsp;#63; output
+  stays a lossless PNG). The cover's embedded **ICC colour profile** is now carried through to the
+  output for both data hiding and watermarking (upstream issue&nbsp;#62), alpha images watermarked to
+  JPEG are flattened instead of erroring (issue&nbsp;#58), JPEG output quality is selectable
+  (`--quality` / a slider; issue&nbsp;#24), and a single filename may contain the `;` list delimiter
+  (issue&nbsp;#60). Oversized payloads fail with a clear capacity/heap message rather than an
+  `OutOfMemoryError` (issue&nbsp;#67).
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
@@ -101,10 +112,14 @@ gradlew clean dist           (Windows)
 ```
 
 ## Limitations
-- **Save and share losslessly.** Hidden data lives in the least-significant bits of the image, so
-  the output must stay in a lossless format (PNG). Re-encoding a stego image as JPEG &mdash; or any
-  other lossy format, including the automatic recompression some chat apps apply when sending a
-  "photo" &mdash; destroys the hidden data. Share the PNG as a file/document, not as a photo.
+- **Save and share losslessly.** Hidden data lives in the least-significant bits of the carrier, so
+  the output must stay in a lossless format &mdash; PNG for images, uncompressed WAV for audio.
+  Re-encoding a stego file as JPEG, MP3 &mdash; or any other lossy format, including the automatic
+  recompression some chat apps apply when sending a "photo" &mdash; destroys the hidden data. Share
+  the file as a document, not as a photo.
+- **Capacity needs a proportionally large cover.** Data hiding stores the payload in the carrier's
+  samples (roughly one payload byte per ~3 image pixels, or per 8 audio samples), so a large file
+  needs a large cover; an oversized payload fails fast with a clear message rather than crashing.
 - **Transparency is preserved, not used.** Images with an alpha channel keep it through the
   embed/extract round-trip; data is hidden only in the RGB channels, never in alpha. Fully
   transparent pixels still carry data in their (invisible) colour values.
