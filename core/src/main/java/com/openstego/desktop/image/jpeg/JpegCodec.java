@@ -74,7 +74,7 @@ public final class JpegCodec {
         int maxV = 1;
         int mcuCols = 0;
         int mcuRows = 0;
-        int[][][] coeff = null;
+        short[][][] coeff = null;
 
         int pos = 2;
         int len = jpeg.length;
@@ -132,11 +132,11 @@ public final class JpegCodec {
                     }
                     mcuCols = ceilDiv(width, 8 * maxH);
                     mcuRows = ceilDiv(height, 8 * maxV);
-                    coeff = new int[nf][][];
+                    coeff = new short[nf][][];
                     for (int i = 0; i < nf; i++) {
                         comps[i].blocksWide = mcuCols * comps[i].hSamp;
                         comps[i].blocksHigh = mcuRows * comps[i].vSamp;
-                        coeff[i] = new int[comps[i].blocksWide * comps[i].blocksHigh][64];
+                        coeff[i] = new short[comps[i].blocksWide * comps[i].blocksHigh][64];
                     }
                     break;
                 }
@@ -201,7 +201,7 @@ public final class JpegCodec {
             throw new IOException("Corrupt JPEG: no frame header");
         }
         return new JpegImage(width, height, comps, quantTables, maxH, maxV, mcuCols, mcuRows,
-                coeff, null, null);
+                coeff, null, false);
     }
 
     private static void parseDqt(byte[] d, int pos, int end, int[][] quantTables) {
@@ -249,7 +249,7 @@ public final class JpegCodec {
     }
 
     private static void decodeScan(byte[] d, int start, int end, JpegImage.Component[] comps,
-            int[][][] coeff, HuffTable[] dc, HuffTable[] ac, int[] frameIdx, int[] dcSel,
+            short[][][] coeff, HuffTable[] dc, HuffTable[] ac, int[] frameIdx, int[] dcSel,
             int[] acSel, int mcuCols, int mcuRows, int restartInterval) throws IOException {
         BitReader in = new BitReader(d, start, end);
         int[] pred = new int[comps.length];
@@ -270,7 +270,7 @@ public final class JpegCodec {
                         for (int bx = 0; bx < c.hSamp; bx++) {
                             int br = my * c.vSamp + by;
                             int bc = mx * c.hSamp + bx;
-                            int[] block = coeff[fc][br * c.blocksWide + bc];
+                            short[] block = coeff[fc][br * c.blocksWide + bc];
                             decodeBlock(in, dcT, acT, block, pred, fc);
                         }
                     }
@@ -280,12 +280,12 @@ public final class JpegCodec {
         }
     }
 
-    private static void decodeBlock(BitReader in, HuffTable dcT, HuffTable acT, int[] block,
+    private static void decodeBlock(BitReader in, HuffTable dcT, HuffTable acT, short[] block,
             int[] pred, int fc) throws IOException {
         int s = dcT.decode(in);
         int diff = (s == 0) ? 0 : extend(in.readBits(s), s);
         pred[fc] += diff;
-        block[0] = pred[fc];
+        block[0] = (short) pred[fc];
         int zz = 1;
         while (zz < 64) {
             int rs = acT.decode(in);
@@ -302,7 +302,7 @@ public final class JpegCodec {
             if (zz > 63) {
                 break;
             }
-            block[ZZ[zz]] = extend(in.readBits(sz), sz);
+            block[ZZ[zz]] = (short) extend(in.readBits(sz), sz);
             zz++;
         }
     }
@@ -454,7 +454,7 @@ public final class JpegCodec {
                     JpegImage.Component c = comps[si];
                     HuffTable dcT = (si == 0) ? ENC_DC_LUMA : ENC_DC_CHROMA;
                     HuffTable acT = (si == 0) ? ENC_AC_LUMA : ENC_AC_CHROMA;
-                    int[][] blocks = img.coeff(si);
+                    short[][] blocks = img.coeff(si);
                     for (int by = 0; by < c.vSamp; by++) {
                         for (int bx = 0; bx < c.hSamp; bx++) {
                             int br = my * c.vSamp + by;
@@ -468,7 +468,7 @@ public final class JpegCodec {
         bw.pad();
     }
 
-    private static void encodeBlock(BitWriter bw, HuffTable dcT, HuffTable acT, int[] block,
+    private static void encodeBlock(BitWriter bw, HuffTable dcT, HuffTable acT, short[] block,
             int[] pred, int si) {
         int diff = block[0] - pred[si];
         pred[si] = block[0];
@@ -526,22 +526,6 @@ public final class JpegCodec {
         int w = image.getWidth();
         int h = image.getHeight();
 
-        // Full-resolution YCbCr planes (BT.601).
-        double[][] yP = new double[h][w];
-        double[][] cbP = new double[h][w];
-        double[][] crP = new double[h][w];
-        for (int y = 0; y < h; y++) {
-            for (int x = 0; x < w; x++) {
-                int rgb = image.getRGB(x, y);
-                int r = (rgb >> 16) & 0xFF;
-                int g = (rgb >> 8) & 0xFF;
-                int b = rgb & 0xFF;
-                yP[y][x] = 0.299 * r + 0.587 * g + 0.114 * b;
-                cbP[y][x] = -0.168736 * r - 0.331264 * g + 0.5 * b + 128.0;
-                crP[y][x] = 0.5 * r - 0.418688 * g - 0.081312 * b + 128.0;
-            }
-        }
-
         int[] lumaQ = JpegTables.scaleQuant(JpegTables.STD_LUMA_QUANT, quality);
         int[] chromaQ = JpegTables.scaleQuant(JpegTables.STD_CHROMA_QUANT, quality);
         int[][] quantTables = new int[4][];
@@ -572,86 +556,161 @@ public final class JpegCodec {
             comps[i].blocksHigh = mcuRows * comps[i].vSamp;
         }
 
-        int[][][] coeff = new int[3][][];
-        double[][][] rounding = new double[3][][];
+        // Build the resident quantized coefficients one block-row at a time, so the working set is
+        // O(planeWidth) rather than O(image): the full-resolution YCbCr planes and rounding errors are
+        // never all held at once. The rounding-error side information is recomputed on demand, per band,
+        // by {@link JpegImage#roundingStrip} from the precover this image retains a reference to.
+        short[][][] coeff = new short[3][][];
+        for (int c = 0; c < 3; c++) {
+            int bw = comps[c].blocksWide;
+            int bh = comps[c].blocksHigh;
+            coeff[c] = new short[bw * bh][64];
+            int[] quant = (c == 0) ? lumaQ : chromaQ;
+            transformBlockRows(image, c, subsample, 0, bh, bw, quant, coeff[c], null);
+        }
 
-        // Chroma plane dimensions (downsampled if subsampling).
-        int cw = subsample ? ceilDiv(w, 2) : w;
-        int ch = subsample ? ceilDiv(h, 2) : h;
-        double[][] cb = subsample ? downsample(cbP, w, h, cw, ch) : cbP;
-        double[][] cr = subsample ? downsample(crP, w, h, cw, ch) : crP;
-
-        coeff[0] = transformPlane(yP, h, w, comps[0].blocksWide, comps[0].blocksHigh, lumaQ,
-                rounding, 0);
-        coeff[1] = transformPlane(cb, ch, cw, comps[1].blocksWide, comps[1].blocksHigh, chromaQ,
-                rounding, 1);
-        coeff[2] = transformPlane(cr, ch, cw, comps[2].blocksWide, comps[2].blocksHigh, chromaQ,
-                rounding, 2);
-
-        // Retain the spatial sample planes (luma full-size, chroma at its own resolution) as side
-        // information for cost models that need the uncompressed cover.
-        double[][][] planes = {yP, cb, cr};
-
-        return new JpegImage(w, h, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, rounding,
-                planes);
+        return new JpegImage(w, h, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, image,
+                subsample);
     }
 
-    /** Averages a plane down by 2x2 (with edge clamping) to {@code cw x ch}. */
-    private static double[][] downsample(double[][] src, int w, int h, int cw, int ch) {
-        double[][] out = new double[ch][cw];
-        for (int cy = 0; cy < ch; cy++) {
-            for (int cx = 0; cx < cw; cx++) {
-                int x0 = Math.min(2 * cx, w - 1);
-                int x1 = Math.min(2 * cx + 1, w - 1);
-                int y0 = Math.min(2 * cy, h - 1);
-                int y1 = Math.min(2 * cy + 1, h - 1);
-                out[cy][cx] = (src[y0][x0] + src[y0][x1] + src[y1][x0] + src[y1][x1]) / 4.0;
-            }
-        }
-        return out;
+    // ------------------------------------------------- precover side-info helpers
+    //
+    // The color transform, chroma downsample and forward-DCT/quantize below are the single source of
+    // the precover-derived spatial samples and rounding errors. Both the coefficient build (above) and
+    // the lazy per-band recompute in {@link JpegImage} call them, so a band's recomputed side info is
+    // bit-identical to what a full-image build would have produced.
+
+    /** BT.601 luma of a packed {@code 0xRRGGBB} pixel. */
+    static double lumaOf(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return 0.299 * r + 0.587 * g + 0.114 * b;
+    }
+
+    /** BT.601 Cb (blue-difference, +128 level shift) of a packed pixel. */
+    static double cbOf(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return -0.168736 * r - 0.331264 * g + 0.5 * b + 128.0;
+    }
+
+    /** BT.601 Cr (red-difference, +128 level shift) of a packed pixel. */
+    static double crOf(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+        return 0.5 * r - 0.418688 * g - 0.081312 * b + 128.0;
+    }
+
+    /** @return the spatial-sample plane width of a component (luma full-size, chroma sub-sampled). */
+    static int planeWidth(int comp, int width, boolean subsample) {
+        return (comp == 0 || !subsample) ? width : ceilDiv(width, 2);
+    }
+
+    /** @return the spatial-sample plane height of a component. */
+    static int planeHeight(int comp, int height, boolean subsample) {
+        return (comp == 0 || !subsample) ? height : ceilDiv(height, 2);
     }
 
     /**
-     * Forward-DCT-and-quantize every block of a sample plane, writing the rounding errors into
-     * {@code rounding[compIdx]}.
+     * Fills {@code out} (length {@link #planeWidth}) with component {@code comp}'s spatial samples for
+     * plane row {@code py}. Luma is the per-pixel BT.601 value; chroma is the 2x2-averaged (edge
+     * clamped) Cb/Cr when sub-sampling, else the per-pixel value &mdash; identical to the planes the
+     * old full-image build retained.
      */
-    private static int[][] transformPlane(double[][] plane, int planeH, int planeW, int blocksWide,
-            int blocksHigh, int[] quant, double[][][] rounding, int compIdx) {
-        int nBlocks = blocksWide * blocksHigh;
-        int[][] coeff = new int[nBlocks][64];
-        double[][] err = new double[nBlocks][64];
-        double[] samples = new double[64];
-        double[] u = new double[64];
-        for (int br = 0; br < blocksHigh; br++) {
-            for (int bc = 0; bc < blocksWide; bc++) {
-                for (int yy = 0; yy < 8; yy++) {
-                    int sy = Math.min(br * 8 + yy, planeH - 1);
-                    for (int xx = 0; xx < 8; xx++) {
-                        int sx = Math.min(bc * 8 + xx, planeW - 1);
-                        samples[yy * 8 + xx] = plane[sy][sx];
-                    }
-                }
-                Dct8x8.forward(samples, u);
-                int idx = br * blocksWide + bc;
-                int[] q = coeff[idx];
-                double[] e = err[idx];
-                for (int k = 0; k < 64; k++) {
-                    double uq = u[k] / quant[k];
-                    int rounded = (int) Math.floor(uq + 0.5);
-                    double ek = uq - rounded; // in [-0.5, 0.5)
-                    if (k > 0 && (rounded > AC_LIMIT || rounded < -AC_LIMIT)) {
-                        // Saturated AC: clamp into representable range and drop the (now meaningless)
-                        // side information so cost modulation stays neutral for this coefficient.
-                        rounded = rounded > AC_LIMIT ? AC_LIMIT : -AC_LIMIT;
-                        ek = 0.0;
-                    }
-                    q[k] = rounded;
-                    e[k] = ek;
-                }
+    static void planeRow(PixelImage img, int comp, boolean subsample, int py, double[] out) {
+        int w = img.getWidth();
+        int h = img.getHeight();
+        if (comp == 0) {
+            for (int x = 0; x < w; x++) {
+                out[x] = lumaOf(img.getRGB(x, py));
+            }
+            return;
+        }
+        boolean isCb = (comp == 1);
+        if (subsample) {
+            int cw = ceilDiv(w, 2);
+            int y0 = Math.min(2 * py, h - 1);
+            int y1 = Math.min(2 * py + 1, h - 1);
+            for (int cx = 0; cx < cw; cx++) {
+                int x0 = Math.min(2 * cx, w - 1);
+                int x1 = Math.min(2 * cx + 1, w - 1);
+                int p00 = img.getRGB(x0, y0);
+                int p01 = img.getRGB(x1, y0);
+                int p10 = img.getRGB(x0, y1);
+                int p11 = img.getRGB(x1, y1);
+                out[cx] = isCb
+                        ? (cbOf(p00) + cbOf(p01) + cbOf(p10) + cbOf(p11)) / 4.0
+                        : (crOf(p00) + crOf(p01) + crOf(p10) + crOf(p11)) / 4.0;
+            }
+        } else {
+            for (int x = 0; x < w; x++) {
+                int p = img.getRGB(x, py);
+                out[x] = isCb ? cbOf(p) : crOf(p);
             }
         }
-        rounding[compIdx] = err;
-        return coeff;
+    }
+
+    /**
+     * Forward-DCT-and-quantize one 8x8 block. Writes the quantized coefficients into {@code qOut} and,
+     * when {@code eOut != null}, the rounding errors {@code e = U/q - rounded} in (&minus;0.5, 0.5]
+     * (saturated ACs clamped, their side info dropped to 0). {@code u} is caller scratch (length 64).
+     */
+    private static void quantizeBlock(double[] samples, int[] quant, double[] u, short[] qOut,
+            double[] eOut) {
+        Dct8x8.forward(samples, u);
+        for (int k = 0; k < 64; k++) {
+            double uq = u[k] / quant[k];
+            int rounded = (int) Math.floor(uq + 0.5);
+            double ek = uq - rounded; // in [-0.5, 0.5)
+            if (k > 0 && (rounded > AC_LIMIT || rounded < -AC_LIMIT)) {
+                // Saturated AC: clamp into representable range and drop the (now meaningless) side
+                // information so cost modulation stays neutral for this coefficient.
+                rounded = rounded > AC_LIMIT ? AC_LIMIT : -AC_LIMIT;
+                ek = 0.0;
+            }
+            qOut[k] = (short) rounded;
+            if (eOut != null) {
+                eOut[k] = ek;
+            }
+        }
+    }
+
+    /**
+     * Forward-DCT-and-quantize component {@code comp}'s block-rows {@code [br0, br1)}, holding at most
+     * eight plane rows at a time so memory stays O(planeWidth) regardless of image size. Fills
+     * {@code coeffOut} and/or {@code errOut} (either may be {@code null}), each indexed by band-local
+     * block {@code (br - br0) * blocksWide + bc}.
+     */
+    static void transformBlockRows(PixelImage img, int comp, boolean subsample, int br0, int br1,
+            int blocksWide, int[] quant, short[][] coeffOut, double[][] errOut) {
+        int planeW = planeWidth(comp, img.getWidth(), subsample);
+        int planeH = planeHeight(comp, img.getHeight(), subsample);
+        double[][] rows = new double[8][planeW];
+        double[] samples = new double[64];
+        double[] u = new double[64];
+        short[] qScratch = (coeffOut == null) ? new short[64] : null;
+        for (int br = br0; br < br1; br++) {
+            for (int yy = 0; yy < 8; yy++) {
+                int sy = Math.min(br * 8 + yy, planeH - 1);
+                planeRow(img, comp, subsample, sy, rows[yy]);
+            }
+            for (int bc = 0; bc < blocksWide; bc++) {
+                for (int yy = 0; yy < 8; yy++) {
+                    double[] row = rows[yy];
+                    for (int xx = 0; xx < 8; xx++) {
+                        int sx = Math.min(bc * 8 + xx, planeW - 1);
+                        samples[yy * 8 + xx] = row[sx];
+                    }
+                }
+                int local = (br - br0) * blocksWide + bc;
+                short[] q = (coeffOut != null) ? coeffOut[local] : qScratch;
+                double[] e = (errOut != null) ? errOut[local] : null;
+                quantizeBlock(samples, quant, u, q, e);
+            }
+        }
     }
 
     // ------------------------------------------------------------------ helpers

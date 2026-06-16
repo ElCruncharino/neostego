@@ -6,6 +6,8 @@
 
 package com.openstego.desktop.image.jpeg;
 
+import com.openstego.desktop.image.PixelImage;
+
 /**
  * In-memory representation of a baseline JPEG as <em>quantized</em> DCT coefficients &mdash; the
  * level at which steganographic embedding happens. Coefficients are kept in natural (row-major) 8x8
@@ -42,16 +44,25 @@ public final class JpegImage {
     private final int maxV;
     private final int mcuCols;
     private final int mcuRows;
-    /** [component][blockIndex][64] quantized coefficients, natural order. */
-    private final int[][][] coeff;
-    /** [component][blockIndex][64] rounding errors, or {@code null} after a plain decode. */
-    private final double[][][] rounding;
-    /** [component] spatial sample plane (precover only), or {@code null} after a plain decode. */
-    private final double[][][] planes;
+    /**
+     * [component][blockIndex][64] quantized coefficients, natural order. Stored as {@code short}: AC
+     * coefficients are clamped to magnitude category 10 (|value| &le; 1023) and the DC term fits a
+     * {@code short} with wide margin, so this halves the resident coefficient footprint versus
+     * {@code int} &mdash; the dominant whole-image array for a large cover.
+     */
+    private final short[][][] coeff;
+    /**
+     * The uncompressed precover, retained on the {@link JpegCodec#fromPrecover} path so the spatial
+     * sample planes and per-coefficient rounding errors can be recomputed on demand, one band at a
+     * time, instead of being held full-resolution. {@code null} after a plain decode (no side info).
+     */
+    private final PixelImage precover;
+    /** Whether chroma is 4:2:0 sub-sampled; only meaningful when {@link #precover} is non-null. */
+    private final boolean subsample;
 
     JpegImage(int width, int height, Component[] components, int[][] quantTables,
             int maxH, int maxV, int mcuCols, int mcuRows,
-            int[][][] coeff, double[][][] rounding, double[][][] planes) {
+            short[][][] coeff, PixelImage precover, boolean subsample) {
         this.width = width;
         this.height = height;
         this.components = components;
@@ -61,8 +72,8 @@ public final class JpegImage {
         this.mcuCols = mcuCols;
         this.mcuRows = mcuRows;
         this.coeff = coeff;
-        this.rounding = rounding;
-        this.planes = planes;
+        this.precover = precover;
+        this.subsample = subsample;
     }
 
     /** @return image width in pixels. */
@@ -99,19 +110,22 @@ public final class JpegImage {
      * @param blockCol block column within the component
      * @return live coefficient array (index 0 = DC)
      */
-    public int[] getBlock(int comp, int blockRow, int blockCol) {
+    public short[] getBlock(int comp, int blockRow, int blockCol) {
         return this.coeff[comp][blockRow * this.components[comp].blocksWide + blockCol];
     }
 
     /**
-     * Returns the rounding-error array for a block, or {@code null} if no side information is
-     * available (plain decode). Indexed like {@link #getBlock}.
+     * Returns the rounding-error array for a single block, recomputed from the retained precover, or
+     * {@code null} if no side information is available (plain decode). Indexed like {@link #getBlock}.
+     * <p>
+     * This recomputes the block-row's transform on each call; side-informed embedding should instead
+     * fetch a whole band's errors once via {@link #roundingStrip}.
      */
     public double[] getRounding(int comp, int blockRow, int blockCol) {
-        if (this.rounding == null) {
+        if (this.precover == null) {
             return null;
         }
-        return this.rounding[comp][blockRow * this.components[comp].blocksWide + blockCol];
+        return roundingStrip(comp, blockRow, blockRow + 1)[blockCol];
     }
 
     /** @return the quantization table (natural order, 64 entries) used by a component. */
@@ -121,22 +135,78 @@ public final class JpegImage {
 
     /** @return whether per-coefficient rounding-error side information is present. */
     public boolean hasSideInfo() {
-        return this.rounding != null;
+        return this.precover != null;
+    }
+
+    /** @return component {@code comp}'s spatial-sample plane width (luma full-size, chroma sub-sampled). */
+    public int getPlaneWidth(int comp) {
+        return JpegCodec.planeWidth(comp, this.width, this.subsample);
+    }
+
+    /** @return component {@code comp}'s spatial-sample plane height. */
+    public int getPlaneHeight(int comp) {
+        return JpegCodec.planeHeight(comp, this.height, this.subsample);
     }
 
     /**
-     * Returns the spatial sample plane for a component (precover only), as {@code [row][col]} doubles
-     * in the component's own resolution (luma full-size, chroma sub-sampled). Used by side-informed
-     * cost models that need the uncompressed cover. {@code null} after a plain decode.
+     * Recomputes a strip of component {@code comp}'s spatial sample plane &mdash; plane rows
+     * {@code [row0, row1)}, clamped to the plane &mdash; from the retained precover, as
+     * {@code [rows][planeWidth]} doubles. Bounded to the requested rows, so a band's cost can be
+     * computed without ever materialising the whole plane. {@code null} after a plain decode.
+     *
+     * @param comp component index
+     * @param row0 first plane row (inclusive)
+     * @param row1 last plane row (exclusive)
+     * @return the clamped sample strip, or {@code null} if no side information is available
+     */
+    public double[][] planeStrip(int comp, int row0, int row1) {
+        if (this.precover == null) {
+            return null;
+        }
+        int pw = getPlaneWidth(comp);
+        int ph = getPlaneHeight(comp);
+        int a = Math.max(0, row0);
+        int b = Math.min(ph, row1);
+        int n = Math.max(0, b - a);
+        double[][] out = new double[n][pw];
+        for (int i = 0; i < n; i++) {
+            JpegCodec.planeRow(this.precover, comp, this.subsample, a + i, out[i]);
+        }
+        return out;
+    }
+
+    /**
+     * Recomputes the per-coefficient rounding errors for component {@code comp}'s block-rows
+     * {@code [blockRow0, blockRow1)} from the retained precover, as {@code [(rows)*blocksWide][64]}
+     * indexed by band-local block {@code (br - blockRow0) * blocksWide + bc}. Bit-identical to the
+     * full-image build; bounded to the band so side-informed embedding stays O(band). {@code null}
+     * after a plain decode.
+     */
+    public double[][] roundingStrip(int comp, int blockRow0, int blockRow1) {
+        if (this.precover == null) {
+            return null;
+        }
+        int bw = this.components[comp].blocksWide;
+        int n = Math.max(0, (blockRow1 - blockRow0) * bw);
+        double[][] err = new double[n][64];
+        JpegCodec.transformBlockRows(this.precover, comp, this.subsample, blockRow0, blockRow1, bw,
+                getQuantTable(comp), null, err);
+        return err;
+    }
+
+    /**
+     * Returns the full spatial sample plane for a component (precover only), as {@code [row][col]}
+     * doubles in the component's own resolution. Convenience for analysis tooling; the memory-bounded
+     * embed path uses {@link #planeStrip} instead. {@code null} after a plain decode.
      *
      * @param comp component index
      * @return spatial plane, or {@code null} if no side information is available
      */
     public double[][] getPlane(int comp) {
-        if (this.planes == null) {
+        if (this.precover == null) {
             return null;
         }
-        return this.planes[comp];
+        return planeStrip(comp, 0, getPlaneHeight(comp));
     }
 
     /**
@@ -148,7 +218,7 @@ public final class JpegImage {
     public long nonZeroAcCount() {
         long n = 0;
         for (int c = 0; c < this.components.length; c++) {
-            for (int[] block : this.coeff[c]) {
+            for (short[] block : this.coeff[c]) {
                 for (int k = 1; k < 64; k++) {
                     if (block[k] != 0) {
                         n++;
@@ -185,7 +255,7 @@ public final class JpegImage {
         return this.mcuRows;
     }
 
-    int[][] coeff(int comp) {
+    short[][] coeff(int comp) {
         return this.coeff[comp];
     }
 }
