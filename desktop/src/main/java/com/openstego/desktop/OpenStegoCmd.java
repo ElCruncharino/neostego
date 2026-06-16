@@ -172,6 +172,10 @@ public class OpenStegoCmd {
             System.err.println();
             System.err.println(labelUtil.getString("cmd.label.bulkerror.header"));
             System.err.println(sb);
+        } catch (OutOfMemoryError oome) {
+            // A payload too large for the cover/heap manifests as an OOM; give the same actionable guidance
+            // as the GUI rather than a raw stack trace (upstream issue #67).
+            System.err.println(labelUtil.getString("err.memory.full"));
         } catch (Exception ex) {
             logger.log(Level.SEVERE, ex.getMessage(), ex);
         } finally {

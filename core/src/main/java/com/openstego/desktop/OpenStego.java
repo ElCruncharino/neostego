@@ -11,7 +11,6 @@ import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
@@ -127,18 +126,23 @@ public class OpenStego {
     public byte[] embedData(File msgFile, File coverFile, String stegoFileName) throws OpenStegoException {
         String filename = null;
 
-        // If no message file is provided, then read the data from stdin
-        try (InputStream is = (msgFile == null ? System.in : Files.newInputStream(msgFile.toPath()))) {
-            if (msgFile != null) {
-                filename = msgFile.getName();
+        // From a file, read in one exact-size allocation (fileToBytes); only stdin needs the growing buffer.
+        // This keeps the peak memory of large payloads down (upstream issue #67).
+        byte[] msg;
+        if (msgFile == null) {
+            try (InputStream is = System.in) {
+                msg = CommonUtil.streamToBytes(is);
+            } catch (IOException ioEx) {
+                throw new OpenStegoException(ioEx);
             }
-
-            return embedData(CommonUtil.streamToBytes(is), filename,
-                    coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
-                    coverFile == null ? null : coverFile.getName(), stegoFileName);
-        } catch (IOException ioEx) {
-            throw new OpenStegoException(ioEx);
+        } else {
+            filename = msgFile.getName();
+            msg = CommonUtil.fileToBytes(msgFile);
         }
+
+        return embedData(msg, filename,
+                coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
+                coverFile == null ? null : coverFile.getName(), stegoFileName);
     }
 
     /**
@@ -179,17 +183,21 @@ public class OpenStego {
     public byte[] embedMark(File sigFile, File coverFile, String stegoFileName) throws OpenStegoException {
         String filename = null;
 
-        // If no signature file is provided, then read the data from stdin
-        try (InputStream is = (sigFile == null ? System.in : Files.newInputStream(sigFile.toPath()))) {
-            if (sigFile != null) {
-                filename = sigFile.getName();
+        // From a file, read in one exact-size allocation; only stdin needs the growing buffer.
+        byte[] sig;
+        if (sigFile == null) {
+            try (InputStream is = System.in) {
+                sig = CommonUtil.streamToBytes(is);
+            } catch (IOException ioEx) {
+                throw new OpenStegoException(ioEx);
             }
-
-            return embedMark(CommonUtil.streamToBytes(is), filename, coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
-                    coverFile == null ? null : coverFile.getName(), stegoFileName);
-        } catch (IOException ioEx) {
-            throw new OpenStegoException(ioEx);
+        } else {
+            filename = sigFile.getName();
+            sig = CommonUtil.fileToBytes(sigFile);
         }
+
+        return embedMark(sig, filename, coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
+                coverFile == null ? null : coverFile.getName(), stegoFileName);
     }
 
     /**

@@ -57,8 +57,11 @@ public class CommonUtil {
      * @throws OpenStegoException Processing issues
      */
     public static byte[] fileToBytes(File file) throws OpenStegoException {
-        try (InputStream is = new FileInputStream(file)) {
-            return streamToBytes(is);
+        // Read in a single exact-size allocation rather than a doubling ByteArrayOutputStream: the latter
+        // can transiently hold ~2-3x the file in memory (old buffer + grown buffer + final copy), which is
+        // a big factor in OutOfMemoryError on large inputs (upstream issue #67).
+        try {
+            return java.nio.file.Files.readAllBytes(file.toPath());
         } catch (IOException ioEx) {
             throw new OpenStegoException(ioEx);
         }
