@@ -130,6 +130,16 @@ public class DWTSVDPluginTest {
 
     private static byte[] recompressJpeg(byte[] pngData, float quality) throws Exception {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(pngData));
+        // The shared codec normalizes covers to TYPE_INT_ARGB, so the stego PNG carries an (opaque) alpha
+        // channel. The baseline JPEG writer cannot encode alpha, so flatten to RGB first - this mirrors what
+        // production JPEG export does (ImageUtil.flattenAlpha, issue #58).
+        if (img.getColorModel().hasAlpha()) {
+            BufferedImage rgb = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_RGB);
+            java.awt.Graphics2D g = rgb.createGraphics();
+            g.drawImage(img, 0, 0, null);
+            g.dispose();
+            img = rgb;
+        }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         javax.imageio.ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
         javax.imageio.ImageWriteParam param = writer.getDefaultWriteParam();

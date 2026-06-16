@@ -40,6 +40,7 @@ public class EmbedPanel extends JPanel {
     private JComboBox<String> encryptionAlgoComboBox;
     private JPasswordField passwordTextField;
     private JPasswordField confPasswordTextField;
+    private JCheckBox splitCheckBox;
     private JButton runEmbedButton;
 
     /**
@@ -347,6 +348,20 @@ public class EmbedPanel extends JPanel {
     }
 
     /**
+     * Get method for the "Split across covers" check box. When selected, one message is spread across
+     * all the given cover files (upstream issue #67) instead of being embedded into each separately.
+     *
+     * @return splitCheckBox
+     */
+    public JCheckBox getSplitCheckBox() {
+        if (this.splitCheckBox == null) {
+            this.splitCheckBox = new JCheckBox(labelUtil.getString("gui.label.dhEmbed.split"));
+            this.splitCheckBox.setToolTipText(labelUtil.getString("gui.tooltip.dhEmbed.split"));
+        }
+        return this.splitCheckBox;
+    }
+
+    /**
      * Get method for Embed "OK" button
      *
      * @return runEmbedButton
@@ -456,6 +471,17 @@ public class EmbedPanel extends JPanel {
         gridBagConstraints.weightx = 0.0;
         gridBagConstraints.weighty = 0.0;
         add(getCoverFileButton(), gridBagConstraints);
+
+        // "Split across covers" toggle, sat next to the cover-file label
+        gridBagConstraints = new GridBagConstraints();
+        gridBagConstraints.anchor = GridBagConstraints.WEST;
+        gridBagConstraints.fill = GridBagConstraints.NONE;
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.insets = new Insets(5, 0, 0, 5);
+        gridBagConstraints.weightx = 0.0;
+        gridBagConstraints.weighty = 0.0;
+        add(getSplitCheckBox(), gridBagConstraints);
 
         // Trailing controls for the output-stego row: the extension chip/dropdown sits directly
         // before the browse button so the implied output format is always visible.

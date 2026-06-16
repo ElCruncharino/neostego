@@ -56,7 +56,11 @@ public class AwtImageCodec implements ImageCodec {
         BufferedImagePixelImage pixelImage = (BufferedImagePixelImage) image;
         ImageHolder holder = new ImageHolder(pixelImage.getBufferedImage(), null);
         holder.setIccProfile(pixelImage.getIccProfile());
-        return ImageUtil.imageToByteArray(holder, fileName, getWritableFormats());
+        // Validate against everything we can physically write (which includes lossy JPEG), not just the
+        // lossless formats advertised for data hiding: watermarking legitimately outputs JPEG. The
+        // lossless-only policy for data hiding is enforced by the data-hiding plugins advertising only
+        // lossless extensions, so they never request a lossy output here.
+        return ImageUtil.imageToByteArray(holder, fileName, getEncodableFormats());
     }
 
     @Override
@@ -109,6 +113,22 @@ public class AwtImageCodec implements ImageCodec {
 
         writeFormats = formats;
         return writeFormats;
+    }
+
+    /**
+     * Formats this codec can physically write, including lossy ones (e.g. JPEG) used by watermarking. This is
+     * broader than {@link #getWritableFormats()} (which is the lossless-only set advertised for data hiding):
+     * it only drops formats with color-model issues that ImageIO cannot reliably encode.
+     *
+     * @return list of encodable format suffixes
+     */
+    private static List<String> getEncodableFormats() {
+        List<String> formats = collectFormats(ImageIO.getWriterFormatNames());
+        formats.remove("gif");
+        formats.remove("wbmp");
+        formats.remove("tif");
+        formats.remove("tiff");
+        return formats;
     }
 
     private static List<String> collectFormats(String[] formats) {

@@ -6,8 +6,6 @@
 
 package com.openstego.desktop.util.dwt;
 
-import com.openstego.desktop.util.ImageUtil;
-
 import java.util.Map;
 
 /**
@@ -116,8 +114,18 @@ public class DWT {
 
         for (int i = 0; i < this.rows; i++) {
             for (int j = 0; j < this.cols; j++) {
-                pixels[i][j] = ImageUtil.pixelRange((int) (DWTUtil.getPixel(image, j, i) + 0.5));
+                pixels[i][j] = pixelRange((int) (DWTUtil.getPixel(image, j, i) + 0.5));
             }
         }
+    }
+
+    /**
+     * Clamp a pixel value to the valid 8-bit range [0, 255].
+     *
+     * @param p Pixel value
+     * @return the value clamped to [0, 255]
+     */
+    private static int pixelRange(int p) {
+        return (p > 255) ? 255 : Math.max(p, 0);
     }
 }
