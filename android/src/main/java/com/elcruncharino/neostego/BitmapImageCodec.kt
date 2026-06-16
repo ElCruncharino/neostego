@@ -9,11 +9,13 @@ package com.elcruncharino.neostego
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ColorSpace
+import android.graphics.Matrix
 import com.openstego.desktop.OpenStego
 import com.openstego.desktop.OpenStegoErrors
 import com.openstego.desktop.OpenStegoException
 import com.openstego.desktop.image.ImageCodec
 import com.openstego.desktop.image.PixelImage
+import com.openstego.desktop.util.ExifUtil
 import java.io.ByteArrayOutputStream
 import java.security.SecureRandom
 
@@ -37,12 +39,38 @@ class BitmapImageCodec : ImageCodec {
         }
         var bitmap = BitmapFactory.decodeByteArray(data, 0, data.size, options)
             ?: throw OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_FILE_INVALID, fileName)
+        // BitmapFactory ignores the Exif orientation tag, so a portrait photo stored landscape-with-orientation
+        // would embed sideways and the stego output would look rotated relative to the original (pixels
+        // otherwise identical). Rotate upright here; the transform is an exact 90°/flip remap (filter = false),
+        // so no interpolation touches the pixels. Our own PNG output carries no orientation tag, so extract
+        // re-decodes it as orientation 1 — a no-op — keeping embed and extract in agreement.
+        val orientation = ExifUtil.readExifOrientation(data)
+        if (orientation != 1) {
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, orientationMatrix(orientation), false)
+            if (rotated != bitmap) {
+                bitmap.recycle()
+                bitmap = rotated
+            }
+        }
         if (bitmap.config != Bitmap.Config.ARGB_8888 || !bitmap.isMutable) {
             val converted = bitmap.copy(Bitmap.Config.ARGB_8888, true)
             bitmap.recycle()
             bitmap = converted
         }
         return BitmapPixelImage(bitmap)
+    }
+
+    /** Build the affine transform that rotates/flips a bitmap upright for the given Exif orientation (2-8). */
+    private fun orientationMatrix(orientation: Int): Matrix = Matrix().apply {
+        when (orientation) {
+            2 -> setScale(-1f, 1f)                       // mirror horizontal
+            3 -> setRotate(180f)                         // rotate 180
+            4 -> setScale(1f, -1f)                       // mirror vertical
+            5 -> { setRotate(90f); postScale(-1f, 1f) }  // transpose
+            6 -> setRotate(90f)                          // rotate 90 CW
+            7 -> { setRotate(-90f); postScale(-1f, 1f) } // transverse
+            8 -> setRotate(-90f)                         // rotate 90 CCW
+        }
     }
 
     override fun encode(image: PixelImage, fileName: String?): ByteArray {

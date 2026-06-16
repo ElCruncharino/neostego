@@ -1257,8 +1257,11 @@ public class OpenStegoUI extends OpenStegoFrame {
                 break;
             case ActionCommands.BROWSE_DH_EXT_STGFILE:
                 title = labelUtil.getString("gui.filer.title.dhExtract.stegoFile");
-                filterDesc = labelUtil.getString("gui.filer.filter.stegoFiles", getExtensionsString(plugin, WRITE_EXTENSIONS));
-                allowedExts = getExtensionsList(plugin, WRITE_EXTENSIONS);
+                // Extraction auto-detects the plugin (see extractWithAutoDetect), so the filter must
+                // accept every stego format any data-hiding plugin can produce, not just the one
+                // currently selected on the embed tab.
+                filterDesc = labelUtil.getString("gui.filer.filter.stegoFiles", allStegoWritableExtensionsString());
+                allowedExts = allStegoWritableExtensions();
                 textField = getExtractPanel().getInputStegoFileTextField();
                 break;
             case ActionCommands.BROWSE_DH_EXT_OUTDIR:
@@ -1487,6 +1490,44 @@ public class OpenStegoUI extends OpenStegoFrame {
             output.add("." + s);
         }
         return output;
+    }
+
+    /**
+     * Returns the union of every data-hiding plugin's writable extensions (dot-prefixed, de-duplicated,
+     * insertion order preserved). Used by the extract-tab file filter, since extraction auto-detects
+     * the plugin and so must accept any stego format produced by any plugin.
+     *
+     * @return combined list of stego extensions (e.g. {@code .png}, {@code .bmp}, {@code .jpg}, {@code .jpeg})
+     * @throws OpenStegoException Processing issues
+     */
+    private List<String> allStegoWritableExtensions() throws OpenStegoException {
+        List<String> output = new ArrayList<>();
+        for (OpenStegoPlugin<?> p : this.dhPlugins) {
+            for (String ext : getExtensionsList(p, WRITE_EXTENSIONS)) {
+                if (!output.contains(ext)) {
+                    output.add(ext);
+                }
+            }
+        }
+        return output;
+    }
+
+    /**
+     * Comma-separated, {@code *}-globbed form of {@link #allStegoWritableExtensions()} for filter labels.
+     *
+     * @return e.g. {@code *.png, *.bmp, *.jpg, *.jpeg}
+     * @throws OpenStegoException Processing issues
+     */
+    private String allStegoWritableExtensionsString() throws OpenStegoException {
+        StringBuilder output = new StringBuilder();
+        List<String> list = allStegoWritableExtensions();
+        for (int i = 0; i < list.size(); i++) {
+            if (i > 0) {
+                output.append(", ");
+            }
+            output.append("*").append(list.get(i));
+        }
+        return output.toString();
     }
 
     /**
