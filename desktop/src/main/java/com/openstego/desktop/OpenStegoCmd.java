@@ -63,12 +63,13 @@ public class OpenStegoCmd {
      *
      * @param args Command line arguments
      */
-    public static void execute(String[] args) {
+    public static int execute(String[] args) {
         OpenStego stego = null;
+        int exitCode = 0;
         try {
             if (args.length == 0) {
                 displayUsage();
-                return;
+                return 2;
             }
 
             // The first argument is the command (an optional "--" prefix is accepted)
@@ -78,7 +79,7 @@ public class OpenStegoCmd {
             }
             if (!COMMANDS.contains(command)) {
                 displayUsage();
-                return;
+                return 2;
             }
             String[] optionArgs = Arrays.copyOfRange(args, 1, args.length);
 
@@ -92,7 +93,7 @@ public class OpenStegoCmd {
             } catch (ParameterException pe) {
                 System.err.println(pe.getMessage());
                 displayUsage();
-                return;
+                return 2;
             }
 
             Map<String, String> opt = collectStringOptions(parseResult);
@@ -108,7 +109,7 @@ public class OpenStegoCmd {
                     com.openstego.desktop.util.ImageUtil.setJpegQuality(pct / 100.0f);
                 } catch (NumberFormatException nfe) {
                     System.err.println("Invalid --quality value (expected 0-100): " + opt.get("-q"));
-                    return;
+                    return 2;
                 }
             }
 
@@ -167,6 +168,7 @@ public class OpenStegoCmd {
             } else {
                 System.err.println(osEx.getMessage());
             }
+            exitCode = 1;
         } catch (OpenStegoBulkException bulkEx) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < bulkEx.getExceptions().size(); i++) {
@@ -176,17 +178,21 @@ public class OpenStegoCmd {
             System.err.println();
             System.err.println(labelUtil.getString("cmd.label.bulkerror.header"));
             System.err.println(sb);
+            exitCode = 1;
         } catch (OutOfMemoryError oome) {
             // A payload too large for the cover/heap manifests as an OOM; give the same actionable guidance
             // as the GUI rather than a raw stack trace (upstream issue #67).
             System.err.println(labelUtil.getString("err.memory.full"));
+            exitCode = 1;
         } catch (Exception ex) {
             logger.log(Level.SEVERE, ex.getMessage(), ex);
+            exitCode = 1;
         } finally {
             if (stego != null) {
                 stego.getConfig().clearPassword();
             }
         }
+        return exitCode;
     }
 
     /**
@@ -362,7 +368,7 @@ public class OpenStegoCmd {
 
         // Check if we need to prompt for password
         if (stego.getConfig().isUseEncryption() && stego.getConfig().getPassword() == null) {
-            stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
+            stego.getConfig().setPassword(PasswordInput.acquirePassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
         }
 
         File msgFile = (msgFileName == null || msgFileName.equals("-")) ? null : new File(msgFileName);
@@ -540,27 +546,31 @@ public class OpenStegoCmd {
                 return; // invalid password already reported
             }
         } else {
+            // Read the stego image from stdin ("-sf -") or a file. Reading to bytes up front lets us
+            // retry decryption with a password without having to re-read a (non-seekable) stdin stream.
+            byte[] stegoBytes;
+            String stegoName;
+            if ("-".equals(stegoFileName)) {
+                try (java.io.InputStream is = System.in) {
+                    stegoBytes = CommonUtil.streamToBytes(is);
+                } catch (java.io.IOException ioEx) {
+                    throw new OpenStegoException(ioEx);
+                }
+                stegoName = "stdin";
+            } else {
+                File stegoFile = new File(stegoFileName);
+                stegoBytes = CommonUtil.fileToBytes(stegoFile);
+                stegoName = stegoFile.getName();
+            }
             try {
-                msgData = stego.extractData(new File(stegoFileName));
+                msgData = stego.extractData(stegoBytes, stegoName);
             } catch (OpenStegoException osEx) {
-                if (osEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD || osEx.getErrorCode() == OpenStegoErrors.NO_VALID_PLUGIN) {
-                    if (stego.getConfig().getPassword() == null) {
-                        stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
-
-                        try {
-                            msgData = stego.extractData(new File(stegoFileName));
-                        } catch (OpenStegoException inEx) {
-                            if (inEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
-                                System.err.println(inEx.getMessage());
-                                return;
-                            } else {
-                                throw inEx;
-                            }
-                        }
-                    } else {
-                        System.err.println(osEx.getMessage());
-                        return;
-                    }
+                if ((osEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD || osEx.getErrorCode() == OpenStegoErrors.NO_VALID_PLUGIN)
+                        && stego.getConfig().getPassword() == null) {
+                    // Encrypted data with no password supplied yet: acquire one (env var or terminal)
+                    // and retry once. A still-wrong password then propagates and exits non-zero.
+                    stego.getConfig().setPassword(PasswordInput.acquirePassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
+                    msgData = stego.extractData(stegoBytes, stegoName);
                 } else {
                     throw osEx;
                 }
@@ -568,6 +578,12 @@ public class OpenStegoCmd {
         }
 
         extractFileName = opt.get("-xf");
+        // "-xf -" streams the extracted payload to stdout (symmetric with "-sf -" on embed), so it
+        // can be piped, e.g. neostego extract -sf img.png -p secret -xf - | tar xz
+        if ("-".equals(extractFileName)) {
+            CommonUtil.writeFile((byte[]) msgData.get(1), (String) null);
+            return;
+        }
         if (extractFileName == null) {
             extractFileName = (String) msgData.get(0);
             if (extractFileName == null || extractFileName.equals("")) {
@@ -584,10 +600,10 @@ public class OpenStegoCmd {
     }
 
     /**
-     * Reassembles a split payload from the {@code ;}-separated list of stego files, prompting once for
-     * a password if the data turns out to be encrypted and none was supplied.
+     * Reassembles a split payload from the {@code ;}-separated list of stego files, acquiring a
+     * password (env var or terminal) once if the data turns out to be encrypted and none was supplied.
      *
-     * @return The extracted [filename, bytes] list, or {@code null} if an invalid password was reported
+     * @return The extracted [filename, bytes] list
      */
     private static List<?> extractSplitWithPrompt(String stegoFileNames, OpenStego stego, DHImagePluginTemplate<?> plugin)
             throws OpenStegoException {
@@ -607,16 +623,8 @@ public class OpenStegoCmd {
             return MultiCoverPayloadSplitter.extractSplit(images, names, stego.getConfig(), plugin);
         } catch (OpenStegoException osEx) {
             if (osEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD && stego.getConfig().getPassword() == null) {
-                stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
-                try {
-                    return MultiCoverPayloadSplitter.extractSplit(images, names, stego.getConfig(), plugin);
-                } catch (OpenStegoException inEx) {
-                    if (inEx.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
-                        System.err.println(inEx.getMessage());
-                        return null;
-                    }
-                    throw inEx;
-                }
+                stego.getConfig().setPassword(PasswordInput.acquirePassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
+                return MultiCoverPayloadSplitter.extractSplit(images, names, stego.getConfig(), plugin);
             }
             throw osEx;
         }
@@ -663,7 +671,7 @@ public class OpenStegoCmd {
     private static void executeGenSig(Map<String, String> opt, OpenStego stego) throws OpenStegoException {
         // Check if we need to prompt for password
         if (stego.getConfig().getPassword() == null) {
-            stego.getConfig().setPassword(PasswordInput.readPassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
+            stego.getConfig().setPassword(PasswordInput.acquirePassword(labelUtil.getString("cmd.msg.enterPassword") + " "));
         }
 
         String signatureFileName = opt.get("-gf");

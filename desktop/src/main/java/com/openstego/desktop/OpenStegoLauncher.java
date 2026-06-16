@@ -35,6 +35,10 @@ public class OpenStegoLauncher {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
+        // In command-line mode (any args) a failure must exit non-zero so that shell scripts,
+        // pipelines and CI can detect it. The GUI path (no args) must never call System.exit here,
+        // because the Swing UI keeps running on the event-dispatch thread after main() returns.
+        boolean cli = args.length > 0;
         try {
             // Ensure core label namespaces and error codes are registered before anything else
             OpenStego.init();
@@ -43,7 +47,7 @@ public class OpenStegoLauncher {
             // Initialize preferences
             UserPreferences.init();
 
-            if (args.length == 0) { // Start GUI
+            if (!cli) { // Start GUI
                 // Apply the modern FlatLaf look-and-feel using the saved theme preference
                 UITheme.install(UITheme.current());
                 // Determine default DH and WM plugins. The DH default is the content-adaptive
@@ -54,7 +58,10 @@ public class OpenStegoLauncher {
                 OpenStegoPlugin<?> wmPlugin = PluginManager.getPluginByName("DWTSVD");
                 new OpenStegoUI(dhPlugin, wmPlugin).setVisible(true);
             } else {
-                OpenStegoCmd.execute(args);
+                int code = OpenStegoCmd.execute(args);
+                if (code != 0) {
+                    System.exit(code);
+                }
             }
         } catch (OpenStegoException osEx) {
             if (osEx.getErrorCode() == OpenStegoException.UNHANDLED_EXCEPTION) {
@@ -62,8 +69,14 @@ public class OpenStegoLauncher {
             } else {
                 System.err.println(osEx.getMessage());
             }
+            if (cli) {
+                System.exit(1);
+            }
         } catch (Exception ex) {
             logger.log(Level.SEVERE, ex.getMessage(), ex);
+            if (cli) {
+                System.exit(1);
+            }
         }
     }
 }
