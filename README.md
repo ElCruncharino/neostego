@@ -29,6 +29,20 @@ Changes in this fork:
   BOSSbase&nbsp;1.01 images at ~0.4&nbsp;bpp, StegExpose flagged 0.3% of `Adaptive` stego images &mdash;
   identical to the clean-cover control, versus 99.5% for plain LSB replacement. This raises the bar
   against modern (including CNN-based) steganalysis; it does not make embedding undetectable.
+- A modern, robust watermarking algorithm: `DWTSVD` is the default for digital watermarking. Unlike
+  the legacy spread-spectrum DWT plugins (Dugad/Kim/Xie), which only *detect* the presence of a
+  password-keyed pattern via correlation, `DWTSVD` embeds an actual multi-bit payload that is
+  recovered **blindly** (no original image needed) and survives common processing. It quantizes
+  (QIM) the largest singular value of 8&times;8 blocks of the level-1 DWT approximation (LL) sub-band
+  of the luminance, protects the payload with Reed&ndash;Solomon error correction, and scrambles and
+  repetition-tiles the code bits with a password-derived key. At its default strength it embeds at
+  ~40&nbsp;dB PSNR and recovers the watermark cleanly through JPEG re-compression (down to Q50),
+  additive noise, blurring and resampling (a 6-cover run detects 100% with zero bit errors across all
+  of those). The legacy DWT plugins remain available via the command line. A reproducible robustness
+  benchmark lives in [`benchmark/watermark`](benchmark/watermark). Like other non-neural blind
+  schemes, it does not survive global valumetric changes (large brightness/contrast scaling, which
+  shifts the quantizer bins) or geometric desynchronisation (cropping, large rotation/scaling to a
+  different size); those are out of scope.
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
@@ -103,4 +117,4 @@ are retained, files changed in this fork carry modification notices, and the com
 source code for the fork is the contents of this repository.
 
 ## Acknowledgement
-The digital watermarking code in this product is based on the code provided by Peter Meerwald. Refer to his excellent thesis on [watermarking](http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/): Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
+The legacy spread-spectrum DWT watermarking plugins (Dugad/Kim/Xie) in this product are based on the code provided by Peter Meerwald. Refer to his excellent thesis on [watermarking](http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/): Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001. The default `DWTSVD` watermark is a hybrid DWT&ndash;SVD scheme with QIM on the largest singular value, a well-established robust, blind approach (see e.g. Kang, Zhao, Lin &amp; Chen, *Multimedia Tools and Applications* 77, 2018, and subsequent DWT&ndash;SVD&ndash;QIM evaluations).
