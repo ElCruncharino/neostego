@@ -1,8 +1,8 @@
 name: Release
 
-# Build runtime-bundled native installers on each OS and attach them to a GitHub Release.
-# Push a tag like v1.0.0 to cut a release; or run manually (workflow_dispatch) to test the
-# build and inspect artifacts without publishing a release.
+# Build runtime-bundled native installers (and a signed Android APK) on each OS and attach
+# them to a GitHub Release. Push a tag like v1.0.0 to cut a release; or run manually
+# (workflow_dispatch) to test the desktop build without publishing.
 
 on:
   push:
@@ -74,22 +74,76 @@ jobs:
           path: ${{ matrix.artifacts }}
           if-no-files-found: error
 
+  android:
+    name: android-apk
+    runs-on: ubuntu-latest
+    # Only build the APK for real releases (needs signing secrets); skip on dispatch dry-runs.
+    if: github.ref_type == 'tag'
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Check for signing key
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret set; skipping APK (an unsigned APK cannot be installed)."
+          fi
+
+      - name: Materialize keystore
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        env:
+          SP: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/release.keystore
+          printf 'storeFile=release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$SP" "$KA" "$KP" > android/keystore.properties
+
+      - name: Build signed APK
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          ./gradlew :android:assembleRelease -Pversion=${GITHUB_REF_NAME#v} --no-daemon --console=plain
+          cp android/build/outputs/apk/release/app-release.apk "NeoStego-${GITHUB_REF_NAME#v}.apk"
+
+      - name: Upload APK
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: NeoStego-*.apk
+          if-no-files-found: error
+
   release:
     name: Publish GitHub Release
-    needs: build
+    needs: [build, android]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-      - name: Download all installers
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
 
-      - name: Publish release (draft)
+      - name: Publish release (draft pre-release)
         uses: softprops/action-gh-release@v2
         with:
-          # Draft so you can verify every asset before it goes public; flip in the GitHub UI,
-          # or set draft: false here once you trust the pipeline.
+          name: NeoStego ${{ github.ref_name }}
           draft: true
+          prerelease: true
           generate_release_notes: true
           files: dist/**/*
