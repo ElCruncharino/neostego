@@ -112,6 +112,11 @@ public class UserPreferences {
      * @return value
      */
     public static String getString(String key) {
+        // Preferences may not have been initialized (e.g. headless library use or unit tests); treat that
+        // the same as "no value set" so callers fall back to their defaults instead of throwing.
+        if (prefs == null) {
+            return null;
+        }
         String val = prefs.getProperty(key);
         if (val == null) {
             return null;

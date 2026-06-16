@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 public class ImageHolder {
     private BufferedImage image;
     private IIOMetadata metadata;
+    private byte[] iccProfile;
 
     /**
      * Default constructor
@@ -24,6 +25,25 @@ public class ImageHolder {
     public ImageHolder(BufferedImage image, IIOMetadata metadata) {
         this.image = image;
         this.metadata = metadata;
+    }
+
+    /**
+     * Raw ICC colour profile bytes carried from the source image so that they can be re-embedded into the
+     * output (see {@link ImageUtil#tagWithProfile}). Null when the source carried no embedded profile.
+     *
+     * @return ICC profile bytes, or null
+     */
+    public byte[] getIccProfile() {
+        return this.iccProfile;
+    }
+
+    /**
+     * Setter for the ICC colour profile bytes.
+     *
+     * @param iccProfile ICC profile bytes (may be null)
+     */
+    public void setIccProfile(byte[] iccProfile) {
+        this.iccProfile = iccProfile;
     }
 
     /**

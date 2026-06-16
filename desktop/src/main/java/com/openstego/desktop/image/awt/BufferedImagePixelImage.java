@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
  */
 public class BufferedImagePixelImage implements PixelImage {
     private final BufferedImage image;
+    private byte[] iccProfile;
 
     /**
      * @param image Backing image (expected to be of type {@link BufferedImage#TYPE_INT_ARGB} so that
@@ -29,6 +30,21 @@ public class BufferedImagePixelImage implements PixelImage {
      */
     public BufferedImage getBufferedImage() {
         return this.image;
+    }
+
+    /**
+     * @return Raw ICC profile bytes captured from the cover, carried through so the stego output keeps the
+     *         cover's colour profile (upstream issue #62). Null when the cover had no embedded profile.
+     */
+    public byte[] getIccProfile() {
+        return this.iccProfile;
+    }
+
+    /**
+     * @param iccProfile ICC profile bytes captured from the cover (may be null)
+     */
+    public void setIccProfile(byte[] iccProfile) {
+        this.iccProfile = iccProfile;
     }
 
     @Override
