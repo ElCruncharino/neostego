@@ -7,6 +7,7 @@
 
 package com.openstego.desktop.ui;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.LabelUtil;
@@ -17,7 +18,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.Locale;
-import java.util.Objects;
 
 /**
  * Frame class to build the Swing UI for OpenStego. This class includes only graphics rendering
@@ -306,6 +306,29 @@ public class OpenStegoFrame extends JFrame {
     }
 
     /**
+     * Size (px) at which the navigation SVG icons are rendered. {@link FlatSVGIcon} re-rasterizes
+     * crisply at the active display scale, so this stays sharp on HiDPI screens.
+     */
+    private static final int NAV_ICON_SIZE = 24;
+
+    /**
+     * Builds a navigation icon from an SVG resource that follows the current theme. The icon's
+     * drawing color is mapped to the button foreground at paint time, so it re-tints automatically
+     * when the light/dark theme is switched (FlatLaf invalidates the icon cache on LAF change).
+     *
+     * @param resource SVG resource path (relative to the classpath root)
+     * @return Theme-adaptive icon
+     */
+    private static FlatSVGIcon navIcon(String resource) {
+        FlatSVGIcon icon = new FlatSVGIcon(resource, NAV_ICON_SIZE, NAV_ICON_SIZE);
+        icon.setColorFilter(new FlatSVGIcon.ColorFilter(color -> {
+            Color fg = UIManager.getColor("Button.foreground");
+            return fg != null ? fg : color;
+        }));
+        return icon;
+    }
+
+    /**
      * Getter method for embedButton
      *
      * @return embedButton
@@ -313,7 +336,7 @@ public class OpenStegoFrame extends JFrame {
     public JToggleButton getEmbedButton() {
         if (this.embedButton == null) {
             this.embedButton = new JToggleButton(labelUtil.getString("gui.label.tab.dhEmbed"),
-                    new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/EmbedIcon.png"))), true);
+                    navIcon("images/embed.svg"), true);
             this.embedButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.embedButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.embedButton.setFocusable(false);
@@ -330,7 +353,7 @@ public class OpenStegoFrame extends JFrame {
     public JToggleButton getExtractButton() {
         if (this.extractButton == null) {
             this.extractButton = new JToggleButton(labelUtil.getString("gui.label.tab.dhExtract"),
-                    new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/ExtractIcon.png"))));
+                    navIcon("images/extract.svg"));
             this.extractButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.extractButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.extractButton.setFocusable(false);
@@ -347,7 +370,7 @@ public class OpenStegoFrame extends JFrame {
     public JToggleButton getGenSigButton() {
         if (this.genSigButton == null) {
             this.genSigButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmGenSig"),
-                    new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/EmbedIcon.png")))); // TODO
+                    navIcon("images/gensig.svg"));
             this.genSigButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.genSigButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.genSigButton.setFocusable(false);
@@ -364,7 +387,7 @@ public class OpenStegoFrame extends JFrame {
     public JToggleButton getSignWmButton() {
         if (this.signWmButton == null) {
             this.signWmButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmEmbed"),
-                    new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/EmbedIcon.png")))); // TODO
+                    navIcon("images/watermark-embed.svg"));
             this.signWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.signWmButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.signWmButton.setFocusable(false);
@@ -381,7 +404,7 @@ public class OpenStegoFrame extends JFrame {
     public JToggleButton getVerifyWmButton() {
         if (this.verifyWmButton == null) {
             this.verifyWmButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmVerify"),
-                    new ImageIcon(Objects.requireNonNull(getClass().getResource("/images/ExtractIcon.png")))); // TODO
+                    navIcon("images/watermark-verify.svg"));
             this.verifyWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);
             this.verifyWmButton.setHorizontalTextPosition(SwingConstants.CENTER);
             this.verifyWmButton.setFocusable(false);

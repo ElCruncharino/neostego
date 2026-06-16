@@ -35,6 +35,7 @@ public class EmbedPanel extends JPanel {
     private JTextField coverFileTextField;
     private JButton coverFileButton;
     private JTextField stegoFileTextField;
+    private JComboBox<String> stegoExtComboBox;
     private JButton stegoFileButton;
     private JComboBox<String> encryptionAlgoComboBox;
     private JPasswordField passwordTextField;
@@ -275,6 +276,21 @@ public class EmbedPanel extends JPanel {
     }
 
     /**
+     * Get method for the output-stego file-extension chip. Shows the extension implied by the
+     * selected algorithm (e.g. {@code .png}); becomes a selectable dropdown when the algorithm
+     * supports multiple output formats. Populated and driven by {@link OpenStegoUI}.
+     *
+     * @return stegoExtComboBox
+     */
+    public JComboBox<String> getStegoExtComboBox() {
+        if (this.stegoExtComboBox == null) {
+            this.stegoExtComboBox = new JComboBox<>();
+            this.stegoExtComboBox.setToolTipText(labelUtil.getString("gui.tooltip.dhEmbed.stegoExt"));
+        }
+        return this.stegoExtComboBox;
+    }
+
+    /**
      * Get method for "Stego File" browse file button
      *
      * @return stegoFileButton
@@ -441,6 +457,11 @@ public class EmbedPanel extends JPanel {
         gridBagConstraints.weighty = 0.0;
         add(getCoverFileButton(), gridBagConstraints);
 
+        // Trailing controls for the output-stego row: the extension chip/dropdown sits directly
+        // before the browse button so the implied output format is always visible.
+        JPanel stegoTrailing = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        stegoTrailing.add(getStegoExtComboBox());
+        stegoTrailing.add(getStegoFileButton());
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.fill = GridBagConstraints.NONE;
@@ -449,7 +470,7 @@ public class EmbedPanel extends JPanel {
         gridBagConstraints.insets = new Insets(0, 0, 5, 5);
         gridBagConstraints.weightx = 0.0;
         gridBagConstraints.weighty = 0.0;
-        add(getStegoFileButton(), gridBagConstraints);
+        add(stegoTrailing, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.fill = GridBagConstraints.BOTH;

@@ -6,6 +6,7 @@
  */
 package com.openstego.desktop.ui;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.openstego.desktop.*;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
@@ -23,7 +24,6 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URL;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -69,6 +69,12 @@ public class OpenStegoUI extends OpenStegoFrame {
     private final OpenStegoPlugin<?> wmPlugin;
 
     /**
+     * Guards programmatic updates of the output-stego extension chip so that repopulating it does
+     * not fire the user-driven change listener.
+     */
+    private boolean syncingStegoExt = false;
+
+    /**
      * Default constructor
      */
     public OpenStegoUI(OpenStegoPlugin<?> dhPlugin, OpenStegoPlugin<?> wmPlugin) {
@@ -79,9 +85,16 @@ public class OpenStegoUI extends OpenStegoFrame {
         populateAlgorithmComboBox();
         resetGUI();
 
-        URL iconURL = getClass().getResource("/images/NeoStegoIcon.png");
-        if (iconURL != null) {
-            this.setIconImage(new ImageIcon(iconURL).getImage());
+        // Render the brand mark from SVG at several sizes so the title-bar / taskbar icon stays crisp
+        // on HiDPI displays (the OS picks the best-matching size).
+        try {
+            java.util.List<Image> icons = new ArrayList<>();
+            for (int size : new int[]{16, 24, 32, 48, 64, 128}) {
+                icons.add(new FlatSVGIcon("images/NeoStego.svg", size, size).getImage());
+            }
+            setIconImages(icons);
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "Could not load application icon", ex);
         }
 
         Listener listener = new Listener();
@@ -130,6 +143,11 @@ public class OpenStegoUI extends OpenStegoFrame {
         installFileDrop(getVerifyWmPanel().getInputFileTextField(), true);
         installFileDrop(getVerifyWmPanel().getSignatureFileTextField(), false);
 
+        // Auto-suggest an output file name from the chosen cover/input (browse, drop or typing),
+        // only filling the field while it is still empty so the user's own input is never clobbered.
+        getEmbedPanel().getCoverFileTextField().getDocument().addDocumentListener(onDocumentChange(this::maybeSuggestStegoOutput));
+        getEmbedWmPanel().getFileForWmTextField().getDocument().addDocumentListener(onDocumentChange(this::maybeSuggestWmOutput));
+
         loadSettings();
 
         pack();
@@ -154,9 +172,40 @@ public class OpenStegoUI extends OpenStegoFrame {
                 selectedIndex = i;
             }
         }
+
+        // Per-item hover tooltips: each row in the open dropdown shows that algorithm's detailed
+        // description, so the trade-offs are visible before selecting.
+        ListCellRenderer<? super String> base = combo.getRenderer();
+        combo.setRenderer((list, value, index, isSelected, cellHasFocus) -> {
+            Component c = base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (c instanceof JComponent && index >= 0 && index < this.dhPlugins.size()) {
+                ((JComponent) c).setToolTipText(getAlgorithmDescription(this.dhPlugins.get(index)));
+            }
+            return c;
+        });
+
         combo.setSelectedIndex(selectedIndex);
+        updateAlgorithmTooltip();
         // Show the options panel for the initially selected plugin
         getEmbedPanel().setPluginOptionPanel(EmbedOptionsUIFactory.create(this.dhPlugin.getName(), this));
+
+        // Populate the output-format chip and keep the output extension in sync when the user changes
+        // the format (only meaningful for algorithms with more than one writable extension).
+        refreshStegoExtensions();
+        getEmbedPanel().getStegoExtComboBox().addActionListener(e -> {
+            if (syncingStegoExt) {
+                return;
+            }
+            String fileName = getEmbedPanel().getStegoFileTextField().getText();
+            if (fileName == null || fileName.trim().isEmpty()) {
+                return;
+            }
+            try {
+                getEmbedPanel().getStegoFileTextField().setText(applyWritableExtension(fileName, this.dhPlugin, selectedStegoExt()));
+            } catch (OpenStegoException ex) {
+                handleException(ex);
+            }
+        });
 
         combo.addActionListener(e -> {
             int idx = combo.getSelectedIndex();
@@ -168,11 +217,29 @@ public class OpenStegoUI extends OpenStegoFrame {
                 return;
             }
             this.dhPlugin = selected;
+            updateAlgorithmTooltip();
             getEmbedPanel().setPluginOptionPanel(EmbedOptionsUIFactory.create(selected.getName(), this));
-            // Reset the embed fields (the writable extensions differ between algorithms) and sync the
-            // new plugin's default config into its options panel
-            resetGUI();
+            // Sync the new plugin's default config into its options panel, but preserve the user's
+            // file selections; the output extension is rewritten to match the new algorithm.
+            try {
+                this.dhPlugin.resetConfig();
+                if (getEmbedPanel().getPluginOptionPanel() != null) {
+                    getEmbedPanel().getPluginOptionPanel().setGUIFromConfig(this.dhPlugin.getConfig());
+                }
+            } catch (OpenStegoException ex) {
+                handleException(ex);
+            }
+            refreshStegoExtensions();
+            pack();
         });
+    }
+
+    /**
+     * Sets the Algorithm dropdown's own tooltip to the currently selected algorithm's description,
+     * so hovering the closed combo box explains the active choice.
+     */
+    private void updateAlgorithmTooltip() {
+        getEmbedPanel().getAlgorithmComboBox().setToolTipText(getAlgorithmDescription(this.dhPlugin));
     }
 
     /**
@@ -192,6 +259,224 @@ public class OpenStegoUI extends OpenStegoFrame {
             // No label defined for this plugin; fall through to the internal name
         }
         return plugin.getName();
+    }
+
+    /**
+     * Returns the detailed, localized HTML description for a data-hiding plugin (shown as a hover
+     * tooltip on the Algorithm dropdown), or {@code null} when no description is defined.
+     *
+     * @param plugin Plugin
+     * @return HTML description, or {@code null}
+     */
+    private String getAlgorithmDescription(OpenStegoPlugin<?> plugin) {
+        try {
+            String desc = labelUtil.getString("gui.tooltip.dhEmbed.algo." + plugin.getName());
+            if (desc != null && !desc.trim().isEmpty() && !desc.startsWith("!")) {
+                return desc;
+            }
+        } catch (Exception ignored) {
+            // No description defined for this plugin
+        }
+        return null;
+    }
+
+    /**
+     * Returns the lowercase extension of a file name (without the dot), or an empty string if it has
+     * none. Only the last path segment is considered.
+     */
+    private static String extensionOf(String fileName) {
+        if (fileName == null) {
+            return "";
+        }
+        int dotPos = fileName.lastIndexOf('.');
+        int sepPos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
+        return (dotPos > sepPos && dotPos >= 0) ? fileName.substring(dotPos + 1).toLowerCase() : "";
+    }
+
+    /**
+     * Ensures {@code fileName} ends with an output extension that is valid for {@code plugin}. When
+     * {@code chosenExt} is supplied and supported it is forced; otherwise an already-valid extension
+     * is kept and anything else is replaced with the plugin's default (first) writable extension, so
+     * e.g. {@code photo.txt} becomes {@code photo.png} rather than {@code photo.txt.png}.
+     *
+     * @param fileName  Candidate output file name (may be {@code null}/blank)
+     * @param plugin    Plugin whose writable extensions apply
+     * @param chosenExt Preferred extension (without dot), or {@code null} to auto-select
+     * @return File name with a valid output extension
+     * @throws OpenStegoException Plugin error while querying writable extensions
+     */
+    private static String applyWritableExtension(String fileName, OpenStegoPlugin<?> plugin, String chosenExt) throws OpenStegoException {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return fileName;
+        }
+        List<String> exts = plugin.getWritableFileExtensions();
+        if (exts.isEmpty()) {
+            return fileName;
+        }
+        String current = extensionOf(fileName);
+        String target;
+        if (chosenExt != null && exts.contains(chosenExt.toLowerCase())) {
+            target = chosenExt.toLowerCase();
+        } else if (exts.contains(current)) {
+            return fileName;
+        } else {
+            target = exts.get(0);
+        }
+        int dotPos = fileName.lastIndexOf('.');
+        int sepPos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
+        String base = (dotPos > sepPos && dotPos >= 0) ? fileName.substring(0, dotPos) : fileName;
+        return base + "." + target;
+    }
+
+    /**
+     * Returns the extension (without dot) currently selected in the output-stego chip, falling back
+     * to the data-hiding plugin's default writable extension.
+     */
+    private String selectedStegoExt() throws OpenStegoException {
+        Object sel = getEmbedPanel().getStegoExtComboBox().getSelectedItem();
+        if (sel != null) {
+            String s = sel.toString();
+            return s.startsWith(".") ? s.substring(1).toLowerCase() : s.toLowerCase();
+        }
+        List<String> exts = dhPlugin.getWritableFileExtensions();
+        return exts.isEmpty() ? null : exts.get(0);
+    }
+
+    /**
+     * Repopulates the output-stego extension chip from the current algorithm's writable extensions,
+     * selecting the one matching the current output field (or the default), and rewrites the output
+     * field's extension to stay consistent with the algorithm. The chip is enabled only when the
+     * algorithm offers more than one output format.
+     */
+    private void refreshStegoExtensions() {
+        JComboBox<String> extCombo = getEmbedPanel().getStegoExtComboBox();
+        List<String> exts;
+        try {
+            exts = dhPlugin.getWritableFileExtensions();
+        } catch (OpenStegoException e) {
+            handleException(e);
+            return;
+        }
+
+        syncingStegoExt = true;
+        extCombo.removeAllItems();
+        for (String ext : exts) {
+            extCombo.addItem("." + ext);
+        }
+        String fileName = getEmbedPanel().getStegoFileTextField().getText();
+        int sel = exts.indexOf(extensionOf(fileName));
+        if (sel < 0) {
+            sel = 0;
+        }
+        if (extCombo.getItemCount() > 0) {
+            extCombo.setSelectedIndex(sel);
+        }
+        extCombo.setEnabled(exts.size() > 1);
+        syncingStegoExt = false;
+
+        // Keep an existing output name consistent with the selected algorithm/format
+        if (fileName != null && !fileName.trim().isEmpty()) {
+            try {
+                getEmbedPanel().getStegoFileTextField().setText(applyWritableExtension(fileName, dhPlugin, selectedStegoExt()));
+            } catch (OpenStegoException e) {
+                handleException(e);
+            }
+        }
+    }
+
+    /**
+     * Suggests an output-stego file name derived from a single chosen cover file
+     * (e.g. {@code photo.png} &rarr; {@code photo-stego.png}) when the output field is still empty.
+     * No-op for multi-cover selections (where the output is a directory) or when the user has
+     * already entered an output name.
+     */
+    private void maybeSuggestStegoOutput() {
+        JTextField stegoField = getEmbedPanel().getStegoFileTextField();
+        if (!stegoField.getText().trim().isEmpty()) {
+            return;
+        }
+        String cover = getEmbedPanel().getCoverFileTextField().getText().trim();
+        if (cover.isEmpty()) {
+            return;
+        }
+        List<File> covers = CommonUtil.parseFileList(cover, ";");
+        if (covers.size() != 1) {
+            return;
+        }
+        File c = covers.get(0);
+        if (c.isDirectory()) {
+            return;
+        }
+        try {
+            stegoField.setText(deriveOutputName(c, "-stego", selectedStegoExt()));
+        } catch (Exception ignored) {
+            // Non-fatal: skip the suggestion
+        }
+    }
+
+    /**
+     * Builds an output file path next to {@code source}, appending {@code suffix} to its base name
+     * and using {@code ext} as the extension.
+     */
+    private static String deriveOutputName(File source, String suffix, String ext) {
+        String name = source.getName();
+        int dot = name.lastIndexOf('.');
+        String baseNoExt = (dot > 0) ? name.substring(0, dot) : name;
+        String fileName = baseNoExt + suffix + (ext != null && !ext.isEmpty() ? "." + ext : "");
+        File parent = source.getAbsoluteFile().getParentFile();
+        return (parent != null) ? new File(parent, fileName).getAbsolutePath() : fileName;
+    }
+
+    /**
+     * Suggests an output watermarked-file name derived from a single chosen input file
+     * (e.g. {@code photo.png} &rarr; {@code photo-wm.png}) when the output field is still empty.
+     */
+    private void maybeSuggestWmOutput() {
+        JTextField outField = getEmbedWmPanel().getOutputWmFileTextField();
+        if (!outField.getText().trim().isEmpty()) {
+            return;
+        }
+        String input = getEmbedWmPanel().getFileForWmTextField().getText().trim();
+        if (input.isEmpty()) {
+            return;
+        }
+        List<File> inputs = CommonUtil.parseFileList(input, ";");
+        if (inputs.size() != 1) {
+            return;
+        }
+        File f = inputs.get(0);
+        if (f.isDirectory()) {
+            return;
+        }
+        try {
+            String ext = wmPlugin.getWritableFileExtensions().isEmpty() ? extensionOf(f.getName())
+                    : wmPlugin.getWritableFileExtensions().get(0);
+            outField.setText(deriveOutputName(f, "-wm", ext));
+        } catch (Exception ignored) {
+            // Non-fatal: skip the suggestion
+        }
+    }
+
+    /**
+     * Creates a {@link javax.swing.event.DocumentListener} that runs the given action on any change.
+     */
+    private static javax.swing.event.DocumentListener onDocumentChange(Runnable action) {
+        return new javax.swing.event.DocumentListener() {
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                action.run();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                action.run();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                action.run();
+            }
+        };
     }
 
     /**
@@ -411,11 +696,9 @@ public class OpenStegoUI extends OpenStegoFrame {
                         outputFileName = outputFile.getPath() + File.separator + (cvrFile == null ? "Output" : cvrFile.getName());
                     }
 
-                    // If the output filename extension is not supported for writing, then change the same
-                    if (!dhPlugin.getWritableFileExtensions()
-                            .contains(outputFileName.substring(outputFileName.lastIndexOf('.') + 1).toLowerCase())) {
-                        outputFileName = outputFileName + "." + dhPlugin.getWritableFileExtensions().get(0);
-                    }
+                    // If the output filename extension is not supported for writing, change it to the
+                    // format chosen in the extension chip (falling back to the plugin's default)
+                    outputFileName = applyWritableExtension(outputFileName, dhPlugin, selectedStegoExt());
 
                     if ((new File(outputFileName)).exists()) {
                         if (JOptionPane.showConfirmDialog(this.parent, labelUtil.getString("gui.msg.warn.fileExists", outputFileName),
@@ -1034,19 +1317,12 @@ public class OpenStegoUI extends OpenStegoFrame {
                 || action.equals(ActionCommands.BROWSE_WM_GSG_SIGFILE);
         fileName = browser.getFileName(this, title, filterDesc, allowedExts, allowFileDir, multiSelect, saveDialog);
         if (fileName != null) {
-            // Check for valid extension for output file
-            if ((action.equals(OpenStegoFrame.ActionCommands.BROWSE_DH_EMB_STGFILE) && (coverFileListSize <= 1))
-                    || (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_EMB_OUTFILE) && (wmInputFileListSize <= 1))) {
-                if (!plugin.getWritableFileExtensions().contains(fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase())) {
-                    // Replace an existing (unsupported) extension instead of appending a second one,
-                    // so that e.g. "photo.txt" becomes "photo.png" rather than "photo.txt.png"
-                    int dotPos = fileName.lastIndexOf('.');
-                    int sepPos = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
-                    if (dotPos > sepPos) {
-                        fileName = fileName.substring(0, dotPos);
-                    }
-                    fileName = fileName + "." + plugin.getWritableFileExtensions().get(0);
-                }
+            // Check for valid extension for output file. For the data-hiding stego file, honor the
+            // format currently chosen in the extension chip; otherwise apply the plugin's default.
+            if (action.equals(OpenStegoFrame.ActionCommands.BROWSE_DH_EMB_STGFILE) && (coverFileListSize <= 1)) {
+                fileName = applyWritableExtension(fileName, plugin, selectedStegoExt());
+            } else if (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_EMB_OUTFILE) && (wmInputFileListSize <= 1)) {
+                fileName = applyWritableExtension(fileName, plugin, null);
             }
             // Check for valid extension for signature file
             if (action.equals(OpenStegoFrame.ActionCommands.BROWSE_WM_GSG_SIGFILE)) {
