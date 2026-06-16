@@ -31,9 +31,12 @@ except ImportError as exc:  # pragma: no cover - environment guidance
 HIGH_THRESHOLD = 0.5  # matches DWTSVDPlugin.getHighWatermarkLevel()
 
 
+JVM_PROPS = []  # extra -D options, populated from CLI args
+
+
 def run_cli(jar, args):
     """Invoke the NeoStego CLI and return stdout (text)."""
-    proc = subprocess.run(["java", "-jar", jar] + args,
+    proc = subprocess.run(["java"] + JVM_PROPS + ["-jar", jar] + args,
                           capture_output=True, text=True)
     if proc.returncode != 0:
         raise RuntimeError("CLI failed: %s\n%s" % (" ".join(args), proc.stderr))
@@ -149,7 +152,12 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--limit", type=int, default=12)
     ap.add_argument("--password", default="benchmark-key")
+    ap.add_argument("--strength", type=float, default=None,
+                    help="override the relative QIM step (dwtsvd.strength) for tuning")
     args = ap.parse_args()
+
+    if args.strength is not None:
+        JVM_PROPS.append("-Ddwtsvd.strength=%s" % args.strength)
 
     os.makedirs(args.out, exist_ok=True)
     sig = os.path.join(args.out, "key.sig")

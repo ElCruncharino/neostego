@@ -88,6 +88,22 @@ public class DWTSVDPluginTest {
     }
 
     @Test
+    public void survivesGlobalBrightnessScaling() throws Exception {
+        OpenStego stego = newStego("watermark-key");
+        byte[] sig = stego.generateSignature();
+        byte[] wm = stego.embedMark(sig, "key.sig", coverBytes, "cover.png", "stego.png");
+
+        // A global brightness gain multiplies every pixel (and hence every singular value); the mu-normalized
+        // quantizer step scales with it, so the watermark must survive. This is the valumetric case the absolute-step
+        // scheme failed on.
+        for (double gain : new double[]{0.85, 1.15}) {
+            byte[] scaled = scaleBrightness(wm, gain);
+            double corr = stego.checkMark(scaled, "stego.png", sig);
+            assertTrue(corr > 0.7, "brightness x" + gain + " correlation should stay high, got " + corr);
+        }
+    }
+
+    @Test
     public void wrongSignatureReadsAsAbsent() throws Exception {
         OpenStego stego = newStego("watermark-key");
         byte[] sig = stego.generateSignature();
@@ -136,6 +152,22 @@ public class DWTSVDPluginTest {
                 int r = clamp(((rgb >> 16) & 0xff) + (int) Math.round(rnd.nextGaussian() * sigma));
                 int g = clamp(((rgb >> 8) & 0xff) + (int) Math.round(rnd.nextGaussian() * sigma));
                 int b = clamp((rgb & 0xff) + (int) Math.round(rnd.nextGaussian() * sigma));
+                img.setRGB(x, y, (r << 16) | (g << 8) | b);
+            }
+        }
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(img, "png", baos);
+        return baos.toByteArray();
+    }
+
+    private static byte[] scaleBrightness(byte[] pngData, double gain) throws Exception {
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(pngData));
+        for (int y = 0; y < img.getHeight(); y++) {
+            for (int x = 0; x < img.getWidth(); x++) {
+                int rgb = img.getRGB(x, y);
+                int r = clamp((int) Math.round(((rgb >> 16) & 0xff) * gain));
+                int g = clamp((int) Math.round(((rgb >> 8) & 0xff) * gain));
+                int b = clamp((int) Math.round((rgb & 0xff) * gain));
                 img.setRGB(x, y, (r << 16) | (g << 8) | b);
             }
         }

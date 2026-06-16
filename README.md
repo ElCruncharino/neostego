@@ -35,14 +35,18 @@ Changes in this fork:
   recovered **blindly** (no original image needed) and survives common processing. It quantizes
   (QIM) the largest singular value of 8&times;8 blocks of the level-1 DWT approximation (LL) sub-band
   of the luminance, protects the payload with Reed&ndash;Solomon error correction, and scrambles and
-  repetition-tiles the code bits with a password-derived key. At its default strength it embeds at
+  repetition-tiles the code bits with a password-derived key. The QIM step is made proportional to a
+  global gain-linear reference (the mean singular value &mu; across blocks) &mdash; a Rational Dither
+  Modulation idea &mdash; so a global **brightness/exposure** change scales the signal and the
+  quantizer bins together and the watermark is preserved. At its default strength it embeds at
   ~40&nbsp;dB PSNR and recovers the watermark cleanly through JPEG re-compression (down to Q50),
-  additive noise, blurring and resampling (a 6-cover run detects 100% with zero bit errors across all
-  of those). The legacy DWT plugins remain available via the command line. A reproducible robustness
-  benchmark lives in [`benchmark/watermark`](benchmark/watermark). Like other non-neural blind
-  schemes, it does not survive global valumetric changes (large brightness/contrast scaling, which
-  shifts the quantizer bins) or geometric desynchronisation (cropping, large rotation/scaling to a
-  different size); those are out of scope.
+  additive noise, blurring, resampling and global brightness scaling (a benchmark over 7 covers
+  detects 100% with zero bit errors across all of those). The legacy DWT plugins remain available via
+  the command line. A reproducible robustness benchmark lives in
+  [`benchmark/watermark`](benchmark/watermark). As for other non-neural blind schemes, large
+  **contrast** changes are only partially handled (contrast is an around-the-mean affine shift that
+  &mu;-normalisation does not fully cancel) and geometric desynchronisation (cropping, large
+  rotation/scaling to a different size) is out of scope.
 - Command-line parsing handled by [picocli](https://picocli.info/); the plugin SPI no longer depends
   on any command-line types.
 - Build and runtime updated to Java 21, with Gradle, dependencies and CI refreshed and no Gradle
