@@ -9,6 +9,9 @@
 build/
 /local.properties
 
+# Kotlin compiler daemon scratch / error logs
+.kotlin/
+
 # Android release signing secrets — never commit these
 android/keystore.properties
 *.jks
