@@ -22,8 +22,8 @@ jobs:
         include:
           - name: windows-x64
             os: windows-latest
-            tasks: ':desktop:jpackageExe'
-            artifacts: desktop/build/jpackage/out/*.exe
+            tasks: ':desktop:jpackageMsi'
+            artifacts: desktop/build/jpackage/out/*.msi
           - name: macos-arm64
             os: macos-latest
             tasks: ':desktop:jpackageDmg'
@@ -45,9 +45,11 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Install Inno Setup (Windows .exe)
+      - name: Install WiX Toolset (Windows .msi)
         if: runner.os == 'Windows'
-        run: choco install innosetup --no-progress -y
+        # The 'wixtoolset' Chocolatey package is the WiX 3.x line that jpackage requires
+        # (jpackage uses candle.exe/light.exe; it does not support WiX 4/5).
+        run: choco install wixtoolset --no-progress -y
 
       - name: Install rpm/deb tooling (Linux)
         if: runner.os == 'Linux'
