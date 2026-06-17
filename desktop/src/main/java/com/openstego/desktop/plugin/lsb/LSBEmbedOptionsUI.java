@@ -151,7 +151,9 @@ public class LSBEmbedOptionsUI extends PluginEmbedOptionsUI {
      */
     private static void setEnabled(JTextField textField, boolean enabled) {
         textField.setEnabled(enabled);
-        textField.setBackground(enabled ? java.awt.Color.WHITE : javax.swing.UIManager.getColor("Panel.background"));
+        // Use the look-and-feel's own field colors rather than a hardcoded white, so the field stays
+        // correct under the dark theme too (hardcoding Color.WHITE rendered as a glaring white box).
+        textField.setBackground(UIManager.getColor(enabled ? "TextField.background" : "TextField.disabledBackground"));
     }
 
     /**

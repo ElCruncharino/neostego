@@ -1645,10 +1645,16 @@ public class OpenStegoUI extends OpenStegoFrame {
             return ex.getExceptions().get(0);
         }
 
-        String prefix = "<html><head><style type='text/css'>" + "table, th, td { border: 1px solid #333; }"
+        // Derive the gridline colour from the look-and-feel so the table reads correctly under both
+        // light and dark themes; cells inherit the component foreground/background (no hardcoded
+        // white, which previously rendered as unreadable light-on-white text on the dark theme).
+        Color borderColor = UIManager.getColor("Component.borderColor");
+        String borderHex = borderColor != null
+                ? String.format("#%02x%02x%02x", borderColor.getRed(), borderColor.getGreen(), borderColor.getBlue())
+                : "#888888";
+        String prefix = "<html><head><style type='text/css'>" + "table, th, td { border: 1px solid " + borderHex + "; }"
                 + "table { border-width: 0 0 1px 1px }"
                 + "th, td { border-width: 1px 1px 0 0 }"
-                + "td { background-color: white }"
                 + "</style></head><body><table border='0' cellspacing='0' cellpadding='5'>";
         StringBuilder sb = new StringBuilder(prefix)
                 .append("<tr><th>")

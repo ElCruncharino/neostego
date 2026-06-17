@@ -37,7 +37,7 @@ public class HelpAboutDialog extends JDialog {
     public JEditorPane getContent() {
         if (this.content == null) {
             String buf = "<html>" + "  <table width=100% cellspacing=0 cellpadding=0 style='font:serif;'>"
-                    + "    <tr style='background-color:white'>"
+                    + "    <tr>"
                     + "      <td align=left style='padding-left:8px'>"
                     + "        <span style='font-size:24px; font-weight:bold'>"
                     + "          "

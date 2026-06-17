@@ -13,10 +13,7 @@ import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.LabelUtil;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Enumeration;
-import java.util.Locale;
 import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
 
 /**
  * Frame class to build the Swing UI for OpenStego. This class includes only graphics rendering
@@ -80,7 +77,6 @@ public class OpenStegoFrame extends JFrame {
         this.dhPlugin = dhPlugin;
         initialize();
         setActionCommands();
-        setupUI();
     }
 
     /**
@@ -540,26 +536,6 @@ public class OpenStegoFrame extends JFrame {
             this.verifyWmPanel = new VerifyWatermarkPanel();
         }
         return this.verifyWmPanel;
-    }
-
-    /**
-     * This method initializes the UI resources like fonts, size, etc.
-     */
-    private void setupUI() {
-        // Special handling to ensure that Japanese fonts are readable
-        if (Locale.getDefault().getLanguage().equals(Locale.JAPANESE.getLanguage())) {
-            Object key;
-            Object value;
-            Enumeration<?> keys = UIManager.getDefaults().keys();
-            while (keys.hasMoreElements()) {
-                key = keys.nextElement();
-                value = UIManager.get(key);
-                if (value instanceof FontUIResource) {
-                    UIManager.put(key, ((FontUIResource) value).deriveFont(12.0f));
-                }
-            }
-            getMainContentPane().setFont(new Font("Japanese", Font.PLAIN, 12));
-        }
     }
 
     /**
