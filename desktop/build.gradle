@@ -331,18 +331,21 @@ def commonJpackageArgs = {
     ]
 }
 
-tasks.register('jpackageExe', Exec) {
+tasks.register('jpackageMsi', Exec) {
     group = 'distribution'
-    description = 'Build a runtime-bundled Windows .exe installer (Inno Setup).'
+    description = 'Build a runtime-bundled Windows .msi installer (WiX).'
     dependsOn jpackageInput
     onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
     doFirst { jpackageOutDir.get().asFile.mkdirs() }
     executable jpackageBin()
     argumentProviders.add({
         commonJpackageArgs() + [
-                '--type', 'exe',
+                '--type', 'msi',
                 '--icon', file('src/main/dist/neostego.ico').absolutePath,
-                '--win-menu', '--win-shortcut', '--win-dir-chooser', '--win-per-user-install'
+                '--win-menu', '--win-shortcut', '--win-per-user-install',
+                // Stable UpgradeCode so future versions upgrade in place (jpackage otherwise
+                // generates a random one per build, which would break upgrades and winget tracking).
+                '--win-upgrade-uuid', 'b4fc0612-03d7-498f-8331-8d8cc780f728'
         ]
     } as CommandLineArgumentProvider)
 }
@@ -396,7 +399,7 @@ tasks.register('jpackageRpm', Exec) {
 tasks.register('jpackage') {
     group = 'distribution'
     description = 'Build the native runtime-bundled installer(s) for the current OS.'
-    dependsOn jpackageExe, jpackageDmg, jpackageDeb, jpackageRpm
+    dependsOn jpackageMsi, jpackageDmg, jpackageDeb, jpackageRpm
 }
 
 // Benchmark helper: batch-embed a directory of covers with one algorithm in a single JVM.

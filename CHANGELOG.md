@@ -30,6 +30,9 @@ on-disk steganography format or algorithms.
   dark), independent of the dynamic Material You palette.
 
 ### Build & tooling
+- The Windows installer is now an **MSI** (built with WiX) instead of an Inno
+  Setup EXE: silent-installable by default (better for winget and unattended
+  deployment) with a stable upgrade code so versions upgrade in place.
 - Upgraded to Gradle 9.5, Android Gradle Plugin 9.1 (built-in Kotlin) and
   Nebula ospackage 12.3; cleared all build deprecation warnings.
 - Added Spotless formatting (palantir-java-format + ktlint), enforced via
