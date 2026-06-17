@@ -144,7 +144,7 @@ public final class ReedSolomon {
     private static int[] buildGenerator(int nsym) {
         int[] g = {1};
         for (int i = 0; i < nsym; i++) {
-            g = polyMul(g, new int[]{1, EXP[i]});
+            g = polyMul(g, new int[] {1, EXP[i]});
         }
         return g;
     }
@@ -367,7 +367,7 @@ public final class ReedSolomon {
     private static int[] errataLocator(int[] coefPos) {
         int[] eLoc = {1};
         for (int p : coefPos) {
-            eLoc = polyMul(eLoc, polyAdd(new int[]{1}, new int[]{EXP[p], 0}));
+            eLoc = polyMul(eLoc, polyAdd(new int[] {1}, new int[] {EXP[p], 0}));
         }
         return eLoc;
     }

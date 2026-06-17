@@ -16,7 +16,6 @@ import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.DWT;
 import com.openstego.desktop.util.dwt.DWTUtil;
 import com.openstego.desktop.util.dwt.ImageTree;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -42,7 +41,7 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "DWTXIE";
+    public static final String NAMESPACE = "DWTXIE";
 
     /**
      * Default constructor
@@ -85,7 +84,8 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         PixelImage image;
         List<int[][]> yuv;
         DWT dwt;
@@ -152,7 +152,11 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
                 }
 
                 // Apply watermarking transformation (modify median pixel)
-                temp = wmTransform(sig.embeddingStrength, pixel1.value, pixel2.value, pixel3.value,
+                temp = wmTransform(
+                        sig.embeddingStrength,
+                        pixel1.value,
+                        pixel2.value,
+                        pixel3.value,
                         getWatermarkBit(sig.watermark, n % (sig.watermarkLength * 8)));
 
                 // Write modified pixel
@@ -513,10 +517,8 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
          * @throws OpenStegoException Processing issues
          */
         public byte[] getSigData() throws OpenStegoException {
-            try (
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(baos)
-            ) {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.write(this.sig);
                 oos.writeInt(this.watermarkLength);
                 oos.writeDouble(this.embeddingStrength);
@@ -552,5 +554,4 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
             this.value = value;
         }
     }
-
 }

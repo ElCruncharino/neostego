@@ -11,13 +11,12 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.Locale;
+import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 
 /**
  * Frame class to build the Swing UI for OpenStego. This class includes only graphics rendering
@@ -216,7 +215,7 @@ public class OpenStegoFrame extends JFrame {
             this.mainContentPane.add(getAccordionPane(), BorderLayout.LINE_START);
 
             JPanel rightPane = new JPanel();
-            rightPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
+            rightPane.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, borderColor()));
             rightPane.setLayout(new BorderLayout());
             this.mainContentPane.add(rightPane, BorderLayout.CENTER);
 
@@ -290,8 +289,9 @@ public class OpenStegoFrame extends JFrame {
     }
 
     private Component createAccordionHeader(String name) {
-        GradientPanel panel = new GradientPanel((new JPanel()).getBackground(), (new JPanel()).getBackground().darker());
-        panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, Color.DARK_GRAY));
+        GradientPanel panel = new GradientPanel(
+                (new JPanel()).getBackground(), (new JPanel()).getBackground().darker());
+        panel.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, borderColor()));
         panel.setLayout(new GridLayout(1, 1));
 
         JButton button = new JButton(name);
@@ -329,17 +329,45 @@ public class OpenStegoFrame extends JFrame {
     }
 
     /**
+     * Border color that follows the active theme, so separator borders keep adequate contrast in
+     * both light and dark themes (the previous hardcoded {@code Color.DARK_GRAY} washed out / lost
+     * contrast on dark backgrounds). Falls back to {@link Color#GRAY} if the LAF exposes no value.
+     *
+     * @return Theme-aware border color
+     */
+    private static Color borderColor() {
+        Color c = UIManager.getColor("Component.borderColor");
+        return c != null ? c : Color.GRAY;
+    }
+
+    /**
+     * Applies the shared look and accessibility wiring for a navigation toggle button: icon-over-text
+     * layout, a keyboard mnemonic (Alt+key), and a screen-reader description taken from the matching
+     * panel-header label. The buttons are intentionally left focusable (they form a
+     * {@link ButtonGroup}, so arrow keys traverse the group) — this is the primary feature switcher
+     * and must be reachable without a mouse.
+     *
+     * @param button   The toggle button to configure
+     * @param descKey  Label key for the accessible description
+     * @param mnemonic {@link KeyEvent} virtual-key code for the Alt mnemonic
+     */
+    private static void configureNavButton(AbstractButton button, String descKey, int mnemonic) {
+        button.setVerticalTextPosition(SwingConstants.BOTTOM);
+        button.setHorizontalTextPosition(SwingConstants.CENTER);
+        button.setMnemonic(mnemonic);
+        button.getAccessibleContext().setAccessibleDescription(labelUtil.getString(descKey));
+    }
+
+    /**
      * Getter method for embedButton
      *
      * @return embedButton
      */
     public JToggleButton getEmbedButton() {
         if (this.embedButton == null) {
-            this.embedButton = new JToggleButton(labelUtil.getString("gui.label.tab.dhEmbed"),
-                    navIcon("images/embed.svg"), true);
-            this.embedButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-            this.embedButton.setHorizontalTextPosition(SwingConstants.CENTER);
-            this.embedButton.setFocusable(false);
+            this.embedButton =
+                    new JToggleButton(labelUtil.getString("gui.label.tab.dhEmbed"), navIcon("images/embed.svg"), true);
+            configureNavButton(this.embedButton, "gui.label.panelHeader.dhEmbed", KeyEvent.VK_D);
             this.actionButtonGroup.add(this.embedButton);
         }
         return this.embedButton;
@@ -352,11 +380,9 @@ public class OpenStegoFrame extends JFrame {
      */
     public JToggleButton getExtractButton() {
         if (this.extractButton == null) {
-            this.extractButton = new JToggleButton(labelUtil.getString("gui.label.tab.dhExtract"),
-                    navIcon("images/extract.svg"));
-            this.extractButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-            this.extractButton.setHorizontalTextPosition(SwingConstants.CENTER);
-            this.extractButton.setFocusable(false);
+            this.extractButton =
+                    new JToggleButton(labelUtil.getString("gui.label.tab.dhExtract"), navIcon("images/extract.svg"));
+            configureNavButton(this.extractButton, "gui.label.panelHeader.dhExtract", KeyEvent.VK_T);
             this.actionButtonGroup.add(this.extractButton);
         }
         return this.extractButton;
@@ -369,11 +395,9 @@ public class OpenStegoFrame extends JFrame {
      */
     public JToggleButton getGenSigButton() {
         if (this.genSigButton == null) {
-            this.genSigButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmGenSig"),
-                    navIcon("images/gensig.svg"));
-            this.genSigButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-            this.genSigButton.setHorizontalTextPosition(SwingConstants.CENTER);
-            this.genSigButton.setFocusable(false);
+            this.genSigButton =
+                    new JToggleButton(labelUtil.getString("gui.label.tab.wmGenSig"), navIcon("images/gensig.svg"));
+            configureNavButton(this.genSigButton, "gui.label.panelHeader.wmGenSig", KeyEvent.VK_G);
             this.actionButtonGroup.add(this.genSigButton);
         }
         return this.genSigButton;
@@ -386,11 +410,9 @@ public class OpenStegoFrame extends JFrame {
      */
     public JToggleButton getSignWmButton() {
         if (this.signWmButton == null) {
-            this.signWmButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmEmbed"),
-                    navIcon("images/watermark-embed.svg"));
-            this.signWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-            this.signWmButton.setHorizontalTextPosition(SwingConstants.CENTER);
-            this.signWmButton.setFocusable(false);
+            this.signWmButton = new JToggleButton(
+                    labelUtil.getString("gui.label.tab.wmEmbed"), navIcon("images/watermark-embed.svg"));
+            configureNavButton(this.signWmButton, "gui.label.panelHeader.wmEmbed", KeyEvent.VK_W);
             this.actionButtonGroup.add(this.signWmButton);
         }
         return this.signWmButton;
@@ -403,11 +425,9 @@ public class OpenStegoFrame extends JFrame {
      */
     public JToggleButton getVerifyWmButton() {
         if (this.verifyWmButton == null) {
-            this.verifyWmButton = new JToggleButton(labelUtil.getString("gui.label.tab.wmVerify"),
-                    navIcon("images/watermark-verify.svg"));
-            this.verifyWmButton.setVerticalTextPosition(SwingConstants.BOTTOM);
-            this.verifyWmButton.setHorizontalTextPosition(SwingConstants.CENTER);
-            this.verifyWmButton.setFocusable(false);
+            this.verifyWmButton = new JToggleButton(
+                    labelUtil.getString("gui.label.tab.wmVerify"), navIcon("images/watermark-verify.svg"));
+            configureNavButton(this.verifyWmButton, "gui.label.panelHeader.wmVerify", KeyEvent.VK_Y);
             this.actionButtonGroup.add(this.verifyWmButton);
         }
         return this.verifyWmButton;
@@ -422,7 +442,7 @@ public class OpenStegoFrame extends JFrame {
         if (this.headerPanel == null) {
             this.headerPanel = new JPanel();
             this.headerPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(0, 0, 1, 0, Color.DARK_GRAY),
+                    BorderFactory.createMatteBorder(0, 0, 1, 0, borderColor()),
                     BorderFactory.createEmptyBorder(5, 5, 5, 5)));
             this.headerPanel.setLayout(new GridLayout());
             this.headerPanel.add(getHeader());
@@ -438,7 +458,9 @@ public class OpenStegoFrame extends JFrame {
     public JLabel getHeader() {
         if (this.header == null) {
             this.header = new JLabel();
-            this.header.setFont(this.header.getFont().deriveFont(Font.BOLD, this.header.getFont().getSize2D() + 3f));
+            this.header.setFont(this.header
+                    .getFont()
+                    .deriveFont(Font.BOLD, this.header.getFont().getSize2D() + 3f));
         }
         return this.header;
     }

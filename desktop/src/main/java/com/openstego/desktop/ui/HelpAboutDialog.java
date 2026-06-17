@@ -7,14 +7,13 @@ package com.openstego.desktop.ui;
 
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.net.URI;
 import java.util.Objects;
+import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 
 /**
  * Dialog to show Help - About information
@@ -37,31 +36,32 @@ public class HelpAboutDialog extends JDialog {
      */
     public JEditorPane getContent() {
         if (this.content == null) {
-            String buf = "<html>" +
-                    "  <table width=100% cellspacing=0 cellpadding=0 style='font:serif;'>" +
-                    "    <tr style='background-color:white'>" +
-                    "      <td align=left style='padding-left:8px'>" +
-                    "        <span style='font-size:24px; font-weight:bold'>" +
-                    "          " + labelUtil.getString("appName") + "</span>" +
-                    "        <p style='font-size:10px; margin-top:6px'>" +
-                    "          " + labelUtil.getString("appVersion") + "</p>" +
-                    "      </td>" +
-                    "      <td align=right>" +
-                    "        <img src='" + Objects.requireNonNull(getClass().getResource("/images/About.png")) + "'/>" +
-                    "      </td>" +
-                    "    </tr>" +
-                    "    <tr>" +
-                    "      <td colspan=2 style='padding:5px;font-size:10px'>" +
-                    "        <p>" + labelUtil.getString("copyright") + "</p><br/>" +
-                    "        <p>" + labelUtil.getString("gui.label.help.credit") + "</p><br/>" +
-                    "        <p><b>" + labelUtil.getString("gui.label.help.ackHeader") + "</b></p>" +
-                    "        <ol style='margin-left:10px; margin-top:2px;'>" +
-                    "          <li>" + labelUtil.getString("gui.label.help.acknowledgement") + "</li>" +
-                    "        </ol>" +
-                    "      </td>" +
-                    "    </tr>" +
-                    "  </table>" +
-                    "</html>";
+            String buf = "<html>" + "  <table width=100% cellspacing=0 cellpadding=0 style='font:serif;'>"
+                    + "    <tr style='background-color:white'>"
+                    + "      <td align=left style='padding-left:8px'>"
+                    + "        <span style='font-size:24px; font-weight:bold'>"
+                    + "          "
+                    + labelUtil.getString("appName") + "</span>" + "        <p style='font-size:10px; margin-top:6px'>"
+                    + "          "
+                    + labelUtil.getString("appVersion") + "</p>" + "      </td>"
+                    + "      <td align=right>"
+                    + "        <img alt='"
+                    + labelUtil.getString("appName") + " logo' src='"
+                    + Objects.requireNonNull(getClass().getResource("/images/About.png")) + "'/>" + "      </td>"
+                    + "    </tr>"
+                    + "    <tr>"
+                    + "      <td colspan=2 style='padding:5px;font-size:10px'>"
+                    + "        <p>"
+                    + labelUtil.getString("copyright") + "</p><br/>" + "        <p>"
+                    + labelUtil.getString("gui.label.help.credit") + "</p><br/>" + "        <p><b>"
+                    + labelUtil.getString("gui.label.help.ackHeader") + "</b></p>"
+                    + "        <ol style='margin-left:10px; margin-top:2px;'>"
+                    + "          <li>"
+                    + labelUtil.getString("gui.label.help.acknowledgement") + "</li>" + "        </ol>"
+                    + "      </td>"
+                    + "    </tr>"
+                    + "  </table>"
+                    + "</html>";
             this.content = new JEditorPane("text/html", buf);
             this.content.setEditable(false);
             this.content.setBorder(BorderFactory.createEmptyBorder());
@@ -135,7 +135,8 @@ public class HelpAboutDialog extends JDialog {
         pack();
         setResizable(false);
         Dimension parentSize = parent.getSize();
-        setLocation(parent.getLocation().x + parentSize.width / 2 - (getWidth() / 2),
+        setLocation(
+                parent.getLocation().x + parentSize.width / 2 - (getWidth() / 2),
                 parent.getLocation().y + parentSize.height / 2 - (getHeight() / 2));
     }
 
@@ -143,7 +144,8 @@ public class HelpAboutDialog extends JDialog {
         try {
             Desktop.getDesktop().browse(URI.create(url));
         } catch (Exception ignore) {
-            JOptionPane.showMessageDialog(parent,
+            JOptionPane.showMessageDialog(
+                    parent,
                     labelUtil.getString("gui.msg.err.browserLaunch"),
                     labelUtil.getString("gui.msg.title.err"),
                     JOptionPane.ERROR_MESSAGE);

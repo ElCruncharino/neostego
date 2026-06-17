@@ -12,7 +12,6 @@ import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
-
 import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -84,6 +83,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
 
     /** 8-neighbour offsets (same channel) used to measure the local modification trend for CMD. */
     private static final int[] NB_DX = {-1, 0, 1, -1, 1, -1, 0, 1};
+
     private static final int[] NB_DY = {-1, -1, -1, 0, 0, 1, 1, 1};
 
     private static final LabelUtil labelUtil = LabelUtil.getInstance(NAMESPACE);
@@ -176,8 +176,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
                 int[] seg = Arrays.copyOfRange(message, off, off + bits);
 
                 if (mode == MODE_CMD) {
-                    embedCmdBand(image, width, start, y0, y1, perm, bodyStart, seg, cost,
-                            this.config.getCmdMu());
+                    embedCmdBand(image, width, start, y0, y1, perm, bodyStart, seg, cost, this.config.getCmdMu());
                 } else {
                     embedPlainBand(image, width, start, perm, bodyStart, seg, cost, dir);
                 }
@@ -344,8 +343,16 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     // ---------------- per-band embedding ----------------
 
     /** Plain mode: a single binary STC over the band's body elements. */
-    private static void embedPlainBand(PixelImage image, int width, int start, int[] perm, int bodyStart,
-                                       int[] seg, double[] cost, SecureRandom dir) throws OpenStegoException {
+    private static void embedPlainBand(
+            PixelImage image,
+            int width,
+            int start,
+            int[] perm,
+            int bodyStart,
+            int[] seg,
+            double[] cost,
+            SecureRandom dir)
+            throws OpenStegoException {
         int bits = seg.length;
         int bodyCap = perm.length - bodyStart;
         int w = bodyCap / bits;
@@ -366,8 +373,17 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     }
 
     /** Plain mode extraction: re-derive width and {@link Stc#extract} the band's body. */
-    private static void extractPlainBand(PixelImage image, int width, int start, int[] perm, int bodyStart,
-                                         int bodyCap, int bits, int[] outBits, int outOff) throws OpenStegoException {
+    private static void extractPlainBand(
+            PixelImage image,
+            int width,
+            int start,
+            int[] perm,
+            int bodyStart,
+            int bodyCap,
+            int bits,
+            int[] outBits,
+            int outOff)
+            throws OpenStegoException {
         int w = bodyCap / bits;
         int used = bits * w;
         int[] y = new int[used];
@@ -388,8 +404,18 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
      *
      * @param mu alignment cost-reduction factor (&ge;1; 1 disables the selection bias)
      */
-    private static void embedCmdBand(PixelImage image, int width, int start, int y0, int y1, int[] perm,
-                                     int bodyStart, int[] seg, double[] cost, double mu) throws OpenStegoException {
+    private static void embedCmdBand(
+            PixelImage image,
+            int width,
+            int start,
+            int y0,
+            int y1,
+            int[] perm,
+            int bodyStart,
+            int[] seg,
+            double[] cost,
+            double mu)
+            throws OpenStegoException {
         byte[] dirMap = new byte[perm.length];
         int[][] lattice = subLatticesBand(perm, bodyStart, start, width);
         int[] segLen = segLengths(seg.length);
@@ -454,8 +480,9 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
     }
 
     /** CMD extraction within one band: re-partition identically and {@link Stc#extract} each sub-lattice. */
-    private static void extractCmdBand(PixelImage image, int width, int start, int[] perm, int bodyStart,
-                                       int bits, int[] outBits, int outOff) throws OpenStegoException {
+    private static void extractCmdBand(
+            PixelImage image, int width, int start, int[] perm, int bodyStart, int bits, int[] outBits, int outOff)
+            throws OpenStegoException {
         int[][] lattice = subLatticesBand(perm, bodyStart, start, width);
         int[] segLen = segLengths(bits);
         int off = 0;

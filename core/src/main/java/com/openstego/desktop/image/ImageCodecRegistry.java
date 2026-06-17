@@ -18,8 +18,7 @@ import java.util.ServiceLoader;
 public final class ImageCodecRegistry {
     private static ImageCodec codec;
 
-    private ImageCodecRegistry() {
-    }
+    private ImageCodecRegistry() {}
 
     /**
      * Returns the active image codec, discovering one via {@link ServiceLoader} on first use.

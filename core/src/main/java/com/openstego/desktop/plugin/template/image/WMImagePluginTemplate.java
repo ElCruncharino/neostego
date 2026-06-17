@@ -14,7 +14,6 @@ import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.WatermarkingPlugin;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +38,8 @@ public abstract class WMImagePluginTemplate extends WatermarkingPlugin<OpenStego
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public final byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
+    public final byte[] getDiff(
+            byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
             throws OpenStegoException {
         PixelImage stegoImage = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
         PixelImage coverImage = ImageCodecRegistry.get().decode(coverData, coverFileName);

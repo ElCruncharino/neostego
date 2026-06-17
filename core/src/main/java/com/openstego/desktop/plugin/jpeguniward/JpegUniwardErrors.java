@@ -25,8 +25,8 @@ public class JpegUniwardErrors {
      * Registers the error-code to message-key mappings.
      */
     public static void init() {
-        OpenStegoException.addErrorCode(JpegUniwardPlugin.NAMESPACE, IMAGE_SIZE_INSUFFICIENT,
-                "err.image.insufficientSize");
+        OpenStegoException.addErrorCode(
+                JpegUniwardPlugin.NAMESPACE, IMAGE_SIZE_INSUFFICIENT, "err.image.insufficientSize");
         OpenStegoException.addErrorCode(JpegUniwardPlugin.NAMESPACE, ERR_IMAGE_DATA_READ, "err.image.read");
         OpenStegoException.addErrorCode(JpegUniwardPlugin.NAMESPACE, ERR_JPEG, "err.jpeg.invalid");
     }

@@ -5,22 +5,21 @@
 
 package com.openstego.desktop;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Tests for the command-line interface ({@link OpenStegoCmd}). These guard the picocli-based parsing
@@ -38,7 +37,7 @@ public class CLITest {
 
     @Test
     public void testAlgorithmsListsPlugins() {
-        String out = captureStdout(() -> OpenStegoCmd.execute(new String[]{"algorithms"}));
+        String out = captureStdout(() -> OpenStegoCmd.execute(new String[] {"algorithms"}));
         assertTrue(out.contains("RandomLSB"), "'algorithms' output should list the RandomLSB plugin");
     }
 
@@ -52,12 +51,13 @@ public class CLITest {
         Path outDir = dir.resolve("out");
         Files.createDirectories(outDir);
 
-        OpenStegoCmd.execute(new String[]{
-                "embed", "-a", "RandomLSB", "-mf", msg.toString(), "-cf", cover.toString(), "-sf", stego.toString()});
+        OpenStegoCmd.execute(new String[] {
+            "embed", "-a", "RandomLSB", "-mf", msg.toString(), "-cf", cover.toString(), "-sf", stego.toString()
+        });
         assertTrue(Files.exists(stego), "Stego file should be created by embed");
 
-        OpenStegoCmd.execute(new String[]{
-                "extract", "-a", "RandomLSB", "-sf", stego.toString(), "-xd", outDir.toString()});
+        OpenStegoCmd.execute(
+                new String[] {"extract", "-a", "RandomLSB", "-sf", stego.toString(), "-xd", outDir.toString()});
 
         byte[] extracted = Files.readAllBytes(outDir.resolve("msg.txt"));
         assertArrayEquals(message, extracted, "Extracted bytes should match the embedded message");
@@ -73,13 +73,29 @@ public class CLITest {
         Path outDir = dir.resolve("out");
         Files.createDirectories(outDir);
 
-        OpenStegoCmd.execute(new String[]{
-                "embed", "-a", "RandomLSB", "-mf", msg.toString(), "-cf", cover.toString(), "-sf", stego.toString(),
-                "-b", "2", "-e", "-p", "s3cret", "-A", "AES256"});
+        OpenStegoCmd.execute(new String[] {
+            "embed",
+            "-a",
+            "RandomLSB",
+            "-mf",
+            msg.toString(),
+            "-cf",
+            cover.toString(),
+            "-sf",
+            stego.toString(),
+            "-b",
+            "2",
+            "-e",
+            "-p",
+            "s3cret",
+            "-A",
+            "AES256"
+        });
         assertTrue(Files.exists(stego), "Stego file should be created by embed");
 
-        OpenStegoCmd.execute(new String[]{
-                "extract", "-a", "RandomLSB", "-sf", stego.toString(), "-xd", outDir.toString(), "-p", "s3cret"});
+        OpenStegoCmd.execute(new String[] {
+            "extract", "-a", "RandomLSB", "-sf", stego.toString(), "-xd", outDir.toString(), "-p", "s3cret"
+        });
 
         byte[] extracted = Files.readAllBytes(outDir.resolve("msg.txt"));
         assertArrayEquals(message, extracted, "Extracted bytes should match for AES256 + 2 bits per channel");
@@ -99,17 +115,18 @@ public class CLITest {
         Files.createDirectories(outDir);
 
         String covers = String.join(";", c0.toString(), c1.toString(), c2.toString());
-        OpenStegoCmd.execute(new String[]{
-                "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", covers, "-sf", stegoDir.toString()});
+        OpenStegoCmd.execute(new String[] {
+            "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", covers, "-sf", stegoDir.toString()
+        });
 
         Path s0 = stegoDir.resolve("c0.png");
         Path s1 = stegoDir.resolve("c1.png");
         Path s2 = stegoDir.resolve("c2.png");
-        assertTrue(Files.exists(s0) && Files.exists(s1) && Files.exists(s2), "One stego file per cover should be written");
+        assertTrue(
+                Files.exists(s0) && Files.exists(s1) && Files.exists(s2), "One stego file per cover should be written");
 
         String parts = String.join(";", s0.toString(), s1.toString(), s2.toString());
-        OpenStegoCmd.execute(new String[]{
-                "extract", "-a", "RandomLSB", "-S", "-sf", parts, "-xd", outDir.toString()});
+        OpenStegoCmd.execute(new String[] {"extract", "-a", "RandomLSB", "-S", "-sf", parts, "-xd", outDir.toString()});
 
         byte[] extracted = Files.readAllBytes(outDir.resolve("msg.txt"));
         assertArrayEquals(message, extracted, "Split payload should reassemble to the original message");
@@ -123,8 +140,9 @@ public class CLITest {
         Path stegoDir = dir.resolve("stego");
         Files.createDirectories(stegoDir);
 
-        String err = captureStderr(() -> OpenStegoCmd.execute(new String[]{
-                "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", cover.toString(), "-sf", stegoDir.toString()}));
+        String err = captureStderr(() -> OpenStegoCmd.execute(new String[] {
+            "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", cover.toString(), "-sf", stegoDir.toString()
+        }));
         assertTrue(err.contains("at least 2 cover"), "Split with one cover should be rejected; got: " + err);
     }
 
@@ -137,8 +155,9 @@ public class CLITest {
         Path stegoFile = dir.resolve("stego.png"); // a file, not a directory
 
         String covers = String.join(";", c0.toString(), c1.toString());
-        String err = captureStderr(() -> OpenStegoCmd.execute(new String[]{
-                "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", covers, "-sf", stegoFile.toString()}));
+        String err = captureStderr(() -> OpenStegoCmd.execute(new String[] {
+            "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", covers, "-sf", stegoFile.toString()
+        }));
         assertTrue(err.contains("directory"), "Split embed to a non-directory output should be rejected; got: " + err);
     }
 

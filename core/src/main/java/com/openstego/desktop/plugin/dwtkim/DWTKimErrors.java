@@ -37,7 +37,8 @@ public class DWTKimErrors {
      */
     public static void init() {
         OpenStegoException.addErrorCode(DWTKimPlugin.NAMESPACE, ERR_NO_COVER_FILE, "err.cover.missing");
-        OpenStegoException.addErrorCode(DWTKimPlugin.NAMESPACE, ERR_DECOMP_LEVEL_NOT_ENOUGH, "err.image.decompLevel.notEnough");
+        OpenStegoException.addErrorCode(
+                DWTKimPlugin.NAMESPACE, ERR_DECOMP_LEVEL_NOT_ENOUGH, "err.image.decompLevel.notEnough");
         OpenStegoException.addErrorCode(DWTKimPlugin.NAMESPACE, ERR_SIG_NOT_VALID, "err.signature.invalid");
     }
 }

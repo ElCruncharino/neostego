@@ -11,10 +11,9 @@ import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
-
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 
 /**
  * GUI class for the LSB Plugin

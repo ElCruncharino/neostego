@@ -11,7 +11,6 @@ import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.LabelUtil;
-
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -88,7 +87,8 @@ public class LSBOutputStream extends OutputStream {
      * @param config     Configuration data to use while writing
      * @throws OpenStegoException Processing issues
      */
-    public LSBOutputStream(PixelImage image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
+    public LSBOutputStream(PixelImage image, int dataLength, String fileName, OpenStegoConfig config)
+            throws OpenStegoException {
         if (image == null) {
             throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.NULL_IMAGE_ARGUMENT);
         }

@@ -7,13 +7,12 @@ package com.openstego.desktop.util.ui;
 
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
 
 /**
  * Helper class to execute tasks asynchronously
@@ -187,27 +186,21 @@ public abstract class WorkerTask extends SwingWorker<Object, Void> {
         }
 
         @Override
-        public void focusGained(FocusEvent fe) {
-        }
+        public void focusGained(FocusEvent fe) {}
 
         @Override
-        public void mouseClicked(MouseEvent arg0) {
-        }
+        public void mouseClicked(MouseEvent arg0) {}
 
         @Override
-        public void mouseEntered(MouseEvent arg0) {
-        }
+        public void mouseEntered(MouseEvent arg0) {}
 
         @Override
-        public void mouseExited(MouseEvent arg0) {
-        }
+        public void mouseExited(MouseEvent arg0) {}
 
         @Override
-        public void mousePressed(MouseEvent arg0) {
-        }
+        public void mousePressed(MouseEvent arg0) {}
 
         @Override
-        public void mouseReleased(MouseEvent arg0) {
-        }
+        public void mouseReleased(MouseEvent arg0) {}
     }
 }

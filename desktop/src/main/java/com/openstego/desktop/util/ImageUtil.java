@@ -11,19 +11,11 @@ import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
-import org.w3c.dom.Node;
-
-import javax.imageio.*;
-import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageOutputStream;
 import java.awt.Graphics2D;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
 import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DirectColorModel;
 import java.awt.image.Raster;
@@ -32,6 +24,12 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.imageio.*;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.plugins.jpeg.JPEGImageWriteParam;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
+import org.w3c.dom.Node;
 
 /**
  * Image utilities
@@ -41,8 +39,7 @@ public class ImageUtil {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private ImageUtil() {
-    }
+    private ImageUtil() {}
 
     /**
      * Default image type in case not provided
@@ -93,9 +90,12 @@ public class ImageUtil {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
                 random.nextBytes(rgbValue);
-                image.setRGB(x, y, CommonUtil.byteToInt(rgbValue[0]) +
-                        (CommonUtil.byteToInt(rgbValue[1]) << 8) +
-                        (CommonUtil.byteToInt(rgbValue[2]) << 16));
+                image.setRGB(
+                        x,
+                        y,
+                        CommonUtil.byteToInt(rgbValue[0])
+                                + (CommonUtil.byteToInt(rgbValue[1]) << 8)
+                                + (CommonUtil.byteToInt(rgbValue[2]) << 16));
             }
         }
 
@@ -111,7 +111,8 @@ public class ImageUtil {
      * @return Image data as byte array
      * @throws OpenStegoException Processing issues
      */
-    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, OpenStegoPlugin<?> plugin) throws OpenStegoException {
+    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, OpenStegoPlugin<?> plugin)
+            throws OpenStegoException {
         return imageToByteArray(image, imageFileName, plugin.getWritableFileExtensions());
     }
 
@@ -124,12 +125,14 @@ public class ImageUtil {
      * @return Image data as byte array
      * @throws OpenStegoException Processing issues
      */
-    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, List<String> writableFormats) throws OpenStegoException {
+    public static byte[] imageToByteArray(ImageHolder image, String imageFileName, List<String> writableFormats)
+            throws OpenStegoException {
         ByteArrayOutputStream barrOS = new ByteArrayOutputStream(32 * 1024);
         String imageType;
 
         if (imageFileName != null) {
-            imageType = imageFileName.substring(imageFileName.lastIndexOf('.') + 1).toLowerCase();
+            imageType =
+                    imageFileName.substring(imageFileName.lastIndexOf('.') + 1).toLowerCase();
             if (!writableFormats.contains(imageType)) {
                 throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.IMAGE_TYPE_INVALID, imageType);
             }
@@ -198,14 +201,38 @@ public class ImageUtil {
                 int dx;
                 int dy;
                 switch (orientation) {
-                    case 2: dx = w - 1 - x; dy = y;             break; // mirror horizontal
-                    case 3: dx = w - 1 - x; dy = h - 1 - y;     break; // rotate 180
-                    case 4: dx = x;         dy = h - 1 - y;     break; // mirror vertical
-                    case 5: dx = y;         dy = x;             break; // transpose
-                    case 6: dx = h - 1 - y; dy = x;             break; // rotate 90 CW
-                    case 7: dx = h - 1 - y; dy = w - 1 - x;     break; // transverse
-                    case 8: dx = y;         dy = w - 1 - x;     break; // rotate 90 CCW
-                    default: dx = x;        dy = y;             break; // 1 = normal
+                    case 2:
+                        dx = w - 1 - x;
+                        dy = y;
+                        break; // mirror horizontal
+                    case 3:
+                        dx = w - 1 - x;
+                        dy = h - 1 - y;
+                        break; // rotate 180
+                    case 4:
+                        dx = x;
+                        dy = h - 1 - y;
+                        break; // mirror vertical
+                    case 5:
+                        dx = y;
+                        dy = x;
+                        break; // transpose
+                    case 6:
+                        dx = h - 1 - y;
+                        dy = x;
+                        break; // rotate 90 CW
+                    case 7:
+                        dx = h - 1 - y;
+                        dy = w - 1 - x;
+                        break; // transverse
+                    case 8:
+                        dx = y;
+                        dy = w - 1 - x;
+                        break; // rotate 90 CCW
+                    default:
+                        dx = x;
+                        dy = y;
+                        break; // 1 = normal
                 }
                 dst.setRGB(dx, dy, rgb);
             }
@@ -470,7 +497,8 @@ public class ImageUtil {
 
         for (int i = 0; i < leftW; i++) {
             for (int j = 0; j < leftH; j++) {
-                diff = Math.abs(leftImage.getImage().getRGB(i, j) - rightImage.getImage().getRGB(i, j));
+                diff = Math.abs(leftImage.getImage().getRGB(i, j)
+                        - rightImage.getImage().getRGB(i, j));
                 // error += diff * diff;
                 if (diff < min) {
                     min = diff;
@@ -483,7 +511,8 @@ public class ImageUtil {
 
         for (int i = 0; i < leftW; i++) {
             for (int j = 0; j < leftH; j++) {
-                diff = Math.abs(leftImage.getImage().getRGB(i, j) - rightImage.getImage().getRGB(i, j));
+                diff = Math.abs(leftImage.getImage().getRGB(i, j)
+                        - rightImage.getImage().getRGB(i, j));
                 diffImage.setRGB(i, j, pixelRange((double) (diff - min) / (double) (max - min) * Math.pow(2, 32)));
                 // TODO
             }
@@ -553,8 +582,8 @@ public class ImageUtil {
         int bits = hasAlpha ? 32 : 24;
         int alphaMask = hasAlpha ? 0xFF000000 : 0;
         try {
-            DirectColorModel dcm = new DirectColorModel(cs, bits, 0xFF0000, 0xFF00, 0xFF, alphaMask, false,
-                    DataBuffer.TYPE_INT);
+            DirectColorModel dcm =
+                    new DirectColorModel(cs, bits, 0xFF0000, 0xFF00, 0xFF, alphaMask, false, DataBuffer.TYPE_INT);
             Raster raster = image.getRaster();
             if (!dcm.isCompatibleRaster(raster)) {
                 return image; // Unexpected raster layout - don't risk it
@@ -664,7 +693,8 @@ public class ImageUtil {
                 // (e.g. a PNG watermarked out to JPEG) carries metadata in a different native format that
                 // cannot be merged into a JPEG metadata tree, so skip it and use the defaults.
                 if (image.getMetadata() != null
-                        && "javax_imageio_jpeg_image_1.0".equals(image.getMetadata().getNativeMetadataFormatName())) {
+                        && "javax_imageio_jpeg_image_1.0"
+                                .equals(image.getMetadata().getNativeMetadataFormatName())) {
                     String metadataFormatName = image.getMetadata().getNativeMetadataFormatName();
                     Node mdRoot = image.getMetadata().getAsTree(metadataFormatName);
                     Node mdNode = mdRoot.getFirstChild();
@@ -675,7 +705,10 @@ public class ImageUtil {
                                 Node next = marker.getNextSibling();
                                 // Remove all markers other than EXIF (225)
                                 if (marker.getAttributes().getNamedItem("MarkerTag") == null
-                                        || !"225".equals(marker.getAttributes().getNamedItem("MarkerTag").getNodeValue())) {
+                                        || !"225"
+                                                .equals(marker.getAttributes()
+                                                        .getNamedItem("MarkerTag")
+                                                        .getNodeValue())) {
                                     mdNode.removeChild(marker);
                                 }
                                 marker = next;
@@ -726,5 +759,4 @@ public class ImageUtil {
             throw new OpenStegoException(e);
         }
     }
-
 }

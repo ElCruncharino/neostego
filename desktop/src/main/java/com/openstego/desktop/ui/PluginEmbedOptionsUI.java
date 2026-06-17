@@ -7,7 +7,6 @@
 package com.openstego.desktop.ui;
 
 import com.openstego.desktop.OpenStegoConfig;
-
 import javax.swing.*;
 
 /**

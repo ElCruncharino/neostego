@@ -15,7 +15,6 @@ import com.openstego.desktop.image.jpeg.JpegImage;
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -121,8 +120,8 @@ public final class BenchJpeg {
             }
         }
         long secs = (System.currentTimeMillis() - start) / 1000;
-        System.out.println(mode + "/" + algo + " q" + quality + ": done=" + done + " skipped=" + skipped
-                + " (" + secs + "s) -> " + outDir);
+        System.out.println(mode + "/" + algo + " q" + quality + ": done=" + done + " skipped=" + skipped + " (" + secs
+                + "s) -> " + outDir);
     }
 
     /**
@@ -164,7 +163,8 @@ public final class BenchJpeg {
             done++;
         }
         double bpnz = (double) payloadBytes * 8 * done / Math.max(1, sumNz);
-        System.out.printf("ideal q%d payload=%dB: done=%d  mean changes=%.0f  bpnzAC=%.4f -> %s%n",
+        System.out.printf(
+                "ideal q%d payload=%dB: done=%d  mean changes=%.0f  bpnzAC=%.4f -> %s%n",
                 quality, payloadBytes, done, (double) sumChg / done, bpnz, outDir);
     }
 
@@ -174,8 +174,8 @@ public final class BenchJpeg {
      * changes, and the change breakdown (zeros driven to +/-1 vs non-zeros nudged). Flooding zeros is
      * the most DCTR-detectable failure mode, so the zero->nonzero share is the headline number.
      */
-    private static void diag(File coverDir, File outDir, int quality, int payloadBytes, String algo,
-            String password) throws Exception {
+    private static void diag(File coverDir, File outDir, int quality, int payloadBytes, String algo, String password)
+            throws Exception {
         int limit = outDir != null ? safeParseLimit(outDir.getName()) : 60;
         File[] covers = coverDir.listFiles((d, n) -> {
             String l = n.toLowerCase();
@@ -264,14 +264,15 @@ public final class BenchJpeg {
         double effBitsPerChange = (double) sumMsgBits / Math.max(1, sumChanges);
         System.out.printf("=== diag %s q%d payload=%dB  (n=%d images) ===%n", algo, quality, payloadBytes, n);
         System.out.printf("mean total AC slots : %.0f%n", (double) sumTotalAc / n);
-        System.out.printf("mean non-zero AC    : %.0f  (%.1f%% of AC)%n",
-                (double) sumNzAc / n, 100.0 * sumNzAc / sumTotalAc);
+        System.out.printf(
+                "mean non-zero AC    : %.0f  (%.1f%% of AC)%n", (double) sumNzAc / n, 100.0 * sumNzAc / sumTotalAc);
         System.out.printf("payload             : %.4f bpnzAC   |  %.4f bpAC%n", bpnzac, bpac);
-        System.out.printf("mean changes        : %.0f  (%.4f per nzAC, %.2f efficiency bits/change)%n",
+        System.out.printf(
+                "mean changes        : %.0f  (%.4f per nzAC, %.2f efficiency bits/change)%n",
                 (double) sumChanges / n, changeRateNz, effBitsPerChange);
-        System.out.printf("change breakdown    : zero->+-1 %.1f%%   nz->zero %.1f%%   nz->nz %.1f%%%n",
-                100.0 * sumZeroToNz / sumChanges, 100.0 * sumNzToZero / sumChanges,
-                100.0 * sumNzToNz / sumChanges);
+        System.out.printf(
+                "change breakdown    : zero->+-1 %.1f%%   nz->zero %.1f%%   nz->nz %.1f%%%n",
+                100.0 * sumZeroToNz / sumChanges, 100.0 * sumNzToZero / sumChanges, 100.0 * sumNzToNz / sumChanges);
     }
 
     private static int safeParseLimit(String s) {

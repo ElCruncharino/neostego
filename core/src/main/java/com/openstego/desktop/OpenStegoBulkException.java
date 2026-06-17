@@ -56,5 +56,4 @@ public class OpenStegoBulkException extends Exception {
             throw this;
         }
     }
-
 }

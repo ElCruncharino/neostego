@@ -9,7 +9,6 @@ package com.openstego.desktop;
 
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.LabelUtil;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +80,8 @@ public class OpenStego {
      * @return Stego data containing the embedded message
      * @throws OpenStegoException Processing issues
      */
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.DATA_HIDING)) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_DH);
         }
@@ -89,7 +89,8 @@ public class OpenStego {
         try {
             // Compress data, if requested
             if (this.config.isUseCompression()) {
-                try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); GZIPOutputStream zos = new GZIPOutputStream(bos)) {
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        GZIPOutputStream zos = new GZIPOutputStream(bos)) {
                     zos.write(msg);
                     zos.finish();
                     zos.flush();
@@ -99,7 +100,9 @@ public class OpenStego {
 
             // Encrypt data, if requested
             if (this.config.isUseEncryption()) {
-                OpenStegoCrypto crypto = new OpenStegoCrypto(this.config.getPassword(), this.config.getEncryptionAlgorithm(),
+                OpenStegoCrypto crypto = new OpenStegoCrypto(
+                        this.config.getPassword(),
+                        this.config.getEncryptionAlgorithm(),
                         this.config.isUseStrongEncryption());
                 msg = crypto.encrypt(msg);
             }
@@ -140,9 +143,12 @@ public class OpenStego {
             msg = CommonUtil.fileToBytes(msgFile);
         }
 
-        return embedData(msg, filename,
+        return embedData(
+                msg,
+                filename,
                 coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
-                coverFile == null ? null : coverFile.getName(), stegoFileName);
+                coverFile == null ? null : coverFile.getName(),
+                stegoFileName);
     }
 
     /**
@@ -156,7 +162,8 @@ public class OpenStego {
      * @return Stego data containing the embedded signature
      * @throws OpenStegoException Processing issues
      */
-    public byte[] embedMark(byte[] sig, String sigFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedMark(byte[] sig, String sigFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.WATERMARKING)) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_WM);
         }
@@ -196,8 +203,12 @@ public class OpenStego {
             sig = CommonUtil.fileToBytes(sigFile);
         }
 
-        return embedMark(sig, filename, coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
-                coverFile == null ? null : coverFile.getName(), stegoFileName);
+        return embedMark(
+                sig,
+                filename,
+                coverFile == null ? null : CommonUtil.fileToBytes(coverFile),
+                coverFile == null ? null : coverFile.getName(),
+                stegoFileName);
     }
 
     /**
@@ -223,13 +234,15 @@ public class OpenStego {
 
             // Decrypt data, if required
             if (this.config.isUseEncryption()) {
-                OpenStegoCrypto crypto = new OpenStegoCrypto(this.config.getPassword(), this.config.getEncryptionAlgorithm());
+                OpenStegoCrypto crypto =
+                        new OpenStegoCrypto(this.config.getPassword(), this.config.getEncryptionAlgorithm());
                 msg = crypto.decrypt(msg);
             }
 
             // Decompress data, if required
             if (this.config.isUseCompression()) {
-                try (ByteArrayInputStream bis = new ByteArrayInputStream(msg); GZIPInputStream zis = new GZIPInputStream(bis)) {
+                try (ByteArrayInputStream bis = new ByteArrayInputStream(msg);
+                        GZIPInputStream zis = new GZIPInputStream(bis)) {
                     msg = CommonUtil.streamToBytes(zis);
                 } catch (IOException ioEx) {
                     throw new OpenStegoException(ioEx, OpenStego.NAMESPACE, OpenStegoErrors.CORRUPT_DATA);
@@ -320,7 +333,8 @@ public class OpenStego {
      * @return Difference data
      * @throws OpenStegoException Processing issues
      */
-    public byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
+    public byte[] getDiff(
+            byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
             throws OpenStegoException {
         return this.plugin.getDiff(stegoData, stegoFileName, coverData, coverFileName, diffFileName);
     }
@@ -335,7 +349,12 @@ public class OpenStego {
      * @throws OpenStegoException Processing issues
      */
     public byte[] getDiff(File stegoFile, File coverFile, String diffFileName) throws OpenStegoException {
-        return getDiff(CommonUtil.fileToBytes(stegoFile), stegoFile.getName(), CommonUtil.fileToBytes(coverFile), coverFile.getName(), diffFileName);
+        return getDiff(
+                CommonUtil.fileToBytes(stegoFile),
+                stegoFile.getName(),
+                CommonUtil.fileToBytes(coverFile),
+                coverFile.getName(),
+                diffFileName);
     }
 
     /**
@@ -346,5 +365,4 @@ public class OpenStego {
     public OpenStegoConfig getConfig() {
         return this.config;
     }
-
 }

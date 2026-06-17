@@ -5,11 +5,11 @@
 
 package com.openstego.desktop.ui;
 
-import javax.swing.JTextField;
-import javax.swing.TransferHandler;
 import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.util.List;
+import javax.swing.JTextField;
+import javax.swing.TransferHandler;
 
 /**
  * Transfer handler that lets the user drag-and-drop files onto a text field. Dropped file paths are
@@ -41,7 +41,8 @@ class FileDropTransferHandler extends TransferHandler {
         }
         try {
             if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                List<File> files = (List<File>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                List<File> files =
+                        (List<File>) support.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
                 if (files == null || files.isEmpty()) {
                     return false;
                 }

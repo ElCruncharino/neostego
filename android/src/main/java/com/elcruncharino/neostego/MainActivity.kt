@@ -23,6 +23,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,12 +31,17 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -43,6 +49,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -75,9 +82,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -105,7 +115,7 @@ data class LaunchTarget(
     val payloadUri: Uri? = null,
     val stegoUri: Uri? = null,
     val splitCoverUris: List<Uri> = emptyList(),
-    val wavCover: Boolean = false
+    val wavCover: Boolean = false,
 )
 
 class MainActivity : ComponentActivity() {
@@ -170,13 +180,19 @@ class MainActivity : ComponentActivity() {
 
 @Suppress("DEPRECATION")
 private inline fun <reified T : android.os.Parcelable> Intent.parcelableExtra(name: String): T? =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getParcelableExtra(name, T::class.java)
-    else getParcelableExtra(name) as? T
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        getParcelableExtra(name, T::class.java)
+    } else {
+        getParcelableExtra(name) as? T
+    }
 
 @Suppress("DEPRECATION")
 private inline fun <reified T : android.os.Parcelable> Intent.parcelableArrayListExtra(name: String): ArrayList<T>? =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) getParcelableArrayListExtra(name, T::class.java)
-    else getParcelableArrayListExtra(name)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        getParcelableArrayListExtra(name, T::class.java)
+    } else {
+        getParcelableArrayListExtra(name)
+    }
 
 private fun readBytes(context: Context, uri: Uri): ByteArray =
     context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
@@ -311,7 +327,10 @@ fun StegoApp(target: LaunchTarget) {
         }
     }
     // A produced result belongs to the screen that made it; drop it when navigating away.
-    LaunchedEffect(dest) { result?.bytes?.fill(0); result = null }
+    LaunchedEffect(dest) {
+        result?.bytes?.fill(0)
+        result = null
+    }
 
     val splitEligible = algorithm == StegoEngine.Algorithm.ADAPTIVE || algorithm == StegoEngine.Algorithm.MATCHING
     if (!splitEligible && splitMode) splitMode = false
@@ -320,10 +339,13 @@ fun StegoApp(target: LaunchTarget) {
 
     LaunchedEffect(coverUri, algorithm, lsbBits, jpegQuality, splitMode) {
         val uri = coverUri
-        capacity = if (uri == null || !StegoEngine.isImageAlgorithm(algorithm) || splitMode) null
-        else withContext(Dispatchers.IO) {
-            imageDimensions(context, uri)?.let { (w, h) ->
-                runCatching { StegoEngine.capacityBytes(algorithm, w, h, options) }.getOrNull()
+        capacity = if (uri == null || !StegoEngine.isImageAlgorithm(algorithm) || splitMode) {
+            null
+        } else {
+            withContext(Dispatchers.IO) {
+                imageDimensions(context, uri)?.let { (w, h) ->
+                    runCatching { StegoEngine.capacityBytes(algorithm, w, h, options) }.getOrNull()
+                }
             }
         }
     }
@@ -354,7 +376,10 @@ fun StegoApp(target: LaunchTarget) {
     val openStegoDoc = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { stegoUri = it ?: stegoUri }
     val openMessage = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { messageUri = it ?: messageUri }
     val pickCovers = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
-        if (uris.isNotEmpty()) { splitCovers.clear(); splitCovers.addAll(uris) }
+        if (uris.isNotEmpty()) {
+            splitCovers.clear()
+            splitCovers.addAll(uris)
+        }
     }
 
     val saveOutput = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
@@ -409,8 +434,14 @@ fun StegoApp(target: LaunchTarget) {
 
     fun runHideSplit() {
         val message = messageUri
-        if (splitCovers.size < 2) { toast("Choose at least two cover images to split across"); return }
-        if (message == null) { toast("Choose a file to hide first"); return }
+        if (splitCovers.size < 2) {
+            toast("Choose at least two cover images to split across")
+            return
+        }
+        if (message == null) {
+            toast("Choose a file to hide first")
+            return
+        }
         val pw = readPasswordChars(passwordView)
         busy = true
         scope.launch {
@@ -418,10 +449,14 @@ fun StegoApp(target: LaunchTarget) {
                 val covers = splitCovers.toList()
                 val parts = withContext(Dispatchers.IO) {
                     StegoEngine.embedSplit(
-                        algorithm, embedFileName,
-                        readBytes(context, message), displayName(context, message),
-                        covers.map { readBytes(context, it) }, covers.map { displayName(context, it) },
-                        pw, options
+                        algorithm,
+                        embedFileName,
+                        readBytes(context, message),
+                        displayName(context, message),
+                        covers.map { readBytes(context, it) },
+                        covers.map { displayName(context, it) },
+                        pw,
+                        options,
                     )
                 }
                 splitParts = parts
@@ -436,23 +471,41 @@ fun StegoApp(target: LaunchTarget) {
     }
 
     fun runHide() {
-        if (splitMode) { runHideSplit(); return }
+        if (splitMode) {
+            runHideSplit()
+            return
+        }
         val cover = coverUri
         val message = messageUri
         val coverKind = if (algorithm == StegoEngine.Algorithm.WAV) "audio file" else "image"
-        if (cover == null) { toast("Choose a cover $coverKind first"); return }
-        if (message == null) { toast("Choose a file to hide first"); return }
-        if (StegoEngine.isImageAlgorithm(algorithm)) oversizeWarning(context, cover)?.let { toast(it); return }
+        if (cover == null) {
+            toast("Choose a cover $coverKind first")
+            return
+        }
+        if (message == null) {
+            toast("Choose a file to hide first")
+            return
+        }
+        if (StegoEngine.isImageAlgorithm(algorithm)) {
+            oversizeWarning(context, cover)?.let {
+                toast(it)
+                return
+            }
+        }
         val pw = readPasswordChars(passwordView)
         busy = true
         scope.launch {
             try {
                 val bytes = withContext(Dispatchers.IO) {
                     StegoEngine.embed(
-                        algorithm, embedFileName,
-                        readBytes(context, message), displayName(context, message),
-                        readBytes(context, cover), displayName(context, cover),
-                        pw, options
+                        algorithm,
+                        embedFileName,
+                        readBytes(context, message),
+                        displayName(context, message),
+                        readBytes(context, cover),
+                        displayName(context, cover),
+                        pw,
+                        options,
                     )
                 }
                 val name = StegoEngine.outputName(algorithm)
@@ -468,8 +521,14 @@ fun StegoApp(target: LaunchTarget) {
 
     fun runReveal() {
         val stego = stegoUri
-        if (stego == null) { toast("Choose a stego file first"); return }
-        oversizeWarning(context, stego)?.let { toast(it); return }
+        if (stego == null) {
+            toast("Choose a stego file first")
+            return
+        }
+        oversizeWarning(context, stego)?.let {
+            toast(it)
+            return
+        }
         val pw = readPasswordChars(passwordView)
         busy = true
         scope.launch {
@@ -500,10 +559,13 @@ fun StegoApp(target: LaunchTarget) {
                         DropdownMenuItem(
                             text = { Text("About") },
                             leadingIcon = { Icon(Icons.Filled.Info, contentDescription = null) },
-                            onClick = { showOverflow = false; showAbout = true }
+                            onClick = {
+                                showOverflow = false
+                                showAbout = true
+                            },
                         )
                     }
-                }
+                },
             )
         },
         bottomBar = {
@@ -512,23 +574,23 @@ fun StegoApp(target: LaunchTarget) {
                     selected = dest == DEST_HIDE,
                     onClick = { dest = DEST_HIDE },
                     icon = { Icon(Icons.Filled.Lock, contentDescription = null) },
-                    label = { Text("Hide") }
+                    label = { Text("Hide") },
                 )
                 NavigationBarItem(
                     selected = dest == DEST_REVEAL,
                     onClick = { dest = DEST_REVEAL },
                     icon = { Icon(Icons.Filled.LockOpen, contentDescription = null) },
-                    label = { Text("Reveal") }
+                    label = { Text("Reveal") },
                 )
                 NavigationBarItem(
                     selected = dest == DEST_WATERMARK,
                     onClick = { dest = DEST_WATERMARK },
                     icon = { Icon(Icons.Filled.Verified, contentDescription = null) },
-                    label = { Text("Watermark") }
+                    label = { Text("Watermark") },
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) }
+        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         if (showAbout) AboutDialog(onDismiss = { showAbout = false })
 
@@ -539,7 +601,7 @@ fun StegoApp(target: LaunchTarget) {
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 WatermarkSection(snackbar)
             }
@@ -552,12 +614,12 @@ fun StegoApp(target: LaunchTarget) {
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
                 if (dest == DEST_HIDE) "Hide a file inside a cover" else "Reveal a hidden file from a cover",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             if (dest == DEST_HIDE) {
@@ -567,7 +629,7 @@ fun StegoApp(target: LaunchTarget) {
                         label = "Cover images (split)",
                         chosen = if (splitCovers.isEmpty()) null else "${splitCovers.size} images selected",
                         hint = "Pick two or more images; the file is spread across them",
-                        onPick = { pickCovers.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                        onPick = { pickCovers.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                     )
                 } else {
                     FilePickCard(
@@ -575,15 +637,18 @@ fun StegoApp(target: LaunchTarget) {
                         chosen = coverUri?.let { displayName(context, it) },
                         hint = if (isWav) "An uncompressed PCM WAV file" else "The image the data will be hidden in",
                         onPick = {
-                            if (isWav) openCoverAudio.launch(arrayOf("audio/x-wav", "audio/wav", "audio/*"))
-                            else pickCover.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }
+                            if (isWav) {
+                                openCoverAudio.launch(arrayOf("audio/x-wav", "audio/wav", "audio/*"))
+                            } else {
+                                pickCover.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
+                        },
                     )
                     capacity?.let {
                         Text(
                             "Can hide up to about ${humanBytes(it)} in this image",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -591,51 +656,51 @@ fun StegoApp(target: LaunchTarget) {
                     label = "File to hide",
                     chosen = messageUri?.let { displayName(context, it) },
                     hint = "Any file (document, photo, etc.)",
-                    onPick = { openMessage.launch(arrayOf("*/*")) }
+                    onPick = { openMessage.launch(arrayOf("*/*")) },
                 )
             } else {
                 FilePickCard(
                     label = "Stego file",
                     chosen = stegoUri?.let { displayName(context, it) },
                     hint = "An image or WAV that has data hidden in it",
-                    onPick = { openStegoDoc.launch(arrayOf("image/*", "audio/*")) }
+                    onPick = { openStegoDoc.launch(arrayOf("image/*", "audio/*")) },
                 )
             }
 
             SecurePasswordField(
                 show = showPassword,
                 onToggleShow = { showPassword = !showPassword },
-                onViewCreated = { passwordView = it }
+                onViewCreated = { passwordView = it },
             )
 
             if (dest == DEST_HIDE) {
                 Card {
-                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(16.dp).selectableGroup()) {
                         Text("Hiding method", fontWeight = FontWeight.SemiBold)
                         Spacer(Modifier.height(8.dp))
                         AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.SI_UNIWARD,
                             title = "SI-UNIWARD (JPEG)",
                             subtitle = "Side-informed JPEG steganography. Saves a JPEG and is the strongest choice at low embedding rates against modern detectors.",
-                            onClick = { algorithm = StegoEngine.Algorithm.SI_UNIWARD }
+                            onClick = { algorithm = StegoEngine.Algorithm.SI_UNIWARD },
                         )
                         AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.ADAPTIVE,
                             title = "Adaptive (PNG)",
                             subtitle = "HILL + STC: hides changes in textured areas to resist both statistical and AI steganalysis. Lossless PNG, lower capacity.",
-                            onClick = { algorithm = StegoEngine.Algorithm.ADAPTIVE }
+                            onClick = { algorithm = StegoEngine.Algorithm.ADAPTIVE },
                         )
                         AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.MATCHING,
                             title = "LSB matching (PNG)",
                             subtitle = "Higher capacity and faster; resists classical steganalysis. Lossless PNG.",
-                            onClick = { algorithm = StegoEngine.Algorithm.MATCHING }
+                            onClick = { algorithm = StegoEngine.Algorithm.MATCHING },
                         )
                         AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.WAV,
                             title = "Audio (WAV)",
                             subtitle = "Hides data in the samples of an uncompressed PCM WAV file. Output is a WAV; pick an audio cover above.",
-                            onClick = { algorithm = StegoEngine.Algorithm.WAV }
+                            onClick = { algorithm = StegoEngine.Algorithm.WAV },
                         )
 
                         if (algorithm == StegoEngine.Algorithm.SI_UNIWARD) {
@@ -644,12 +709,12 @@ fun StegoApp(target: LaunchTarget) {
                             Slider(
                                 value = jpegQuality.toFloat(),
                                 onValueChange = { jpegQuality = it.toInt() },
-                                valueRange = 50f..100f
+                                valueRange = 50f..100f,
                             )
                             Text(
                                 "Higher quality keeps the image crisper but enlarges the file; 90 is a good default.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
 
@@ -663,14 +728,14 @@ fun StegoApp(target: LaunchTarget) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                                     ) {
                                         Column(modifier = Modifier.weight(1f)) {
                                             Text("Cluster changes (CMD)", fontWeight = FontWeight.SemiBold)
                                             Text(
                                                 "Synchronizes neighbouring edits for slightly better resistance. Leave on unless reproducing legacy output.",
                                                 style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             )
                                         }
                                         Switch(checked = adaptiveCmd, onCheckedChange = { adaptiveCmd = it })
@@ -682,7 +747,7 @@ fun StegoApp(target: LaunchTarget) {
                                             value = adaptiveCmdMu.toFloat(),
                                             onValueChange = { adaptiveCmdMu = it.toDouble() },
                                             valueRange = 1f..9f,
-                                            steps = 7
+                                            steps = 7,
                                         )
                                     }
                                 } else { // LSB matching
@@ -692,12 +757,12 @@ fun StegoApp(target: LaunchTarget) {
                                         value = lsbBits.toFloat(),
                                         onValueChange = { lsbBits = it.toInt() },
                                         valueRange = 1f..8f,
-                                        steps = 6
+                                        steps = 6,
                                     )
                                     Text(
                                         "More bits store more data but are easier to detect; 3 balances the two.",
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }
@@ -710,14 +775,14 @@ fun StegoApp(target: LaunchTarget) {
                             title = "Compress payload",
                             subtitle = "GZIP the data before hiding. Usually shrinks it; turn off for already-compressed files.",
                             checked = useCompression,
-                            onCheckedChange = { useCompression = it }
+                            onCheckedChange = { useCompression = it },
                         )
                         Spacer(Modifier.height(8.dp))
                         ToggleRow(
                             title = "Use AES-256",
                             subtitle = "Stronger key size than the default AES-128. Only applies when a password is set.",
                             checked = useAes256,
-                            onCheckedChange = { useAes256 = it }
+                            onCheckedChange = { useAes256 = it },
                         )
                     }
                 }
@@ -729,7 +794,7 @@ fun StegoApp(target: LaunchTarget) {
                                 subtitle = "Spread one file across several images (pick 2+ above). Each image holds one part; " +
                                     "keep all of them to reveal.",
                                 checked = splitMode,
-                                onCheckedChange = { splitMode = it }
+                                onCheckedChange = { splitMode = it },
                             )
                         }
                     }
@@ -738,7 +803,7 @@ fun StegoApp(target: LaunchTarget) {
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text("Store original file name", fontWeight = FontWeight.SemiBold)
@@ -746,7 +811,7 @@ fun StegoApp(target: LaunchTarget) {
                                 "The name is saved unencrypted. Leave off to keep it private; " +
                                     "the file is revealed with a generic name.",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Switch(checked = embedFileName, onCheckedChange = { embedFileName = it })
@@ -762,20 +827,20 @@ fun StegoApp(target: LaunchTarget) {
                             "Keep the saved PNG as-is to share. Re-saving or sending it as JPEG (or any other lossy format) destroys the hidden data."
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
             Button(
                 onClick = { if (dest == DEST_HIDE) runHide() else runReveal() },
                 enabled = !busy,
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+                modifier = Modifier.fillMaxWidth().height(52.dp),
             ) {
                 if (busy) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimary
+                        color = MaterialTheme.colorScheme.onPrimary,
                     )
                     Spacer(Modifier.size(12.dp))
                     Text("Working...")
@@ -788,7 +853,7 @@ fun StegoApp(target: LaunchTarget) {
                 OutputResultCard(
                     name = r.name,
                     onSave = { saveOutput.launch(r.name) },
-                    onShare = { shareResult() }
+                    onShare = { shareResult() },
                 )
             }
         }
@@ -833,15 +898,15 @@ private fun AboutDialog(onDismiss: () -> Unit) {
                 Text(
                     "Hide files inside images or audio, and embed/verify robust watermarks. All processing " +
                         "happens on-device.",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
                     "Based on OpenStego by Samir Vaidya. Licensed under the GNU General Public License v2.",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
+        },
     )
 }
 
@@ -851,14 +916,14 @@ private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onCheck
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.SemiBold)
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Switch(checked = checked, onCheckedChange = onCheckedChange)
@@ -891,7 +956,10 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
     var result by remember { mutableStateOf<OutputResult?>(null) }
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
-    fun setResult(r: OutputResult?) { result?.bytes?.fill(0); result = r }
+    fun setResult(r: OutputResult?) {
+        result?.bytes?.fill(0)
+        result = r
+    }
 
     val openSig = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { sigUri = it ?: sigUri }
     val pickCover = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { coverUri = it ?: coverUri }
@@ -923,11 +991,17 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
         }
     }
 
-    LaunchedEffect(mode) { verdict = null; setResult(null) }
+    LaunchedEffect(mode) {
+        verdict = null
+        setResult(null)
+    }
 
     fun runGenerate() {
         val pw = readPasswordChars(passwordView)
-        if (pw == null) { toast("Enter a password to key the signature"); return }
+        if (pw == null) {
+            toast("Enter a password to key the signature")
+            return
+        }
         busy = true
         scope.launch {
             try {
@@ -945,15 +1019,25 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
     fun runEmbed() {
         val cover = coverUri
         val sig = sigUri
-        if (cover == null) { toast("Choose an image to watermark"); return }
-        if (sig == null) { toast("Choose the signature file"); return }
+        if (cover == null) {
+            toast("Choose an image to watermark")
+            return
+        }
+        if (sig == null) {
+            toast("Choose the signature file")
+            return
+        }
         busy = true
         scope.launch {
             try {
                 val bytes = withContext(Dispatchers.IO) {
                     StegoEngine.embedMark(
-                        algo, readBytes(context, sig), readBytes(context, cover),
-                        displayName(context, cover), outputJpeg, jpegQuality
+                        algo,
+                        readBytes(context, sig),
+                        readBytes(context, cover),
+                        displayName(context, cover),
+                        outputJpeg,
+                        jpegQuality,
                     )
                 }
                 val name = StegoEngine.markOutputName(outputJpeg)
@@ -969,8 +1053,14 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
     fun runVerify() {
         val marked = markedUri
         val sig = sigUri
-        if (marked == null) { toast("Choose the image to check"); return }
-        if (sig == null) { toast("Choose the signature file"); return }
+        if (marked == null) {
+            toast("Choose the image to check")
+            return
+        }
+        if (sig == null) {
+            toast("Choose the signature file")
+            return
+        }
         busy = true
         verdict = null
         scope.launch {
@@ -1000,30 +1090,30 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
             else -> "Check whether an image carries a watermark"
         },
         style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
     Card {
-        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp).selectableGroup()) {
             Text("Algorithm", fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.height(8.dp))
             AlgorithmOption(
                 selected = algo == StegoEngine.WmAlgorithm.DWT_SVD,
                 title = "DWT-SVD (recommended)",
                 subtitle = "Modern blind, multi-bit watermark. Survives JPEG re-compression, noise, blur and small crops.",
-                onClick = { algo = StegoEngine.WmAlgorithm.DWT_SVD }
+                onClick = { algo = StegoEngine.WmAlgorithm.DWT_SVD },
             )
             AlgorithmOption(
                 selected = algo == StegoEngine.WmAlgorithm.DUGAD,
                 title = "DWT-Dugad",
                 subtitle = "Classic wavelet spread-spectrum watermark detected by correlation.",
-                onClick = { algo = StegoEngine.WmAlgorithm.DUGAD }
+                onClick = { algo = StegoEngine.WmAlgorithm.DUGAD },
             )
             AlgorithmOption(
                 selected = algo == StegoEngine.WmAlgorithm.XIE,
                 title = "DWT-Xie",
                 subtitle = "Wavelet watermark embedded in the approximation sub-band.",
-                onClick = { algo = StegoEngine.WmAlgorithm.XIE }
+                onClick = { algo = StegoEngine.WmAlgorithm.XIE },
             )
         }
     }
@@ -1033,13 +1123,13 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
             SecurePasswordField(
                 show = showPassword,
                 onToggleShow = { showPassword = !showPassword },
-                onViewCreated = { passwordView = it }
+                onViewCreated = { passwordView = it },
             )
             Text(
                 "The same password always produces the same signature. Save the .sig file - you need it to " +
                     "embed and to verify.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         1 -> {
@@ -1047,13 +1137,13 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
                 label = "Image to watermark",
                 chosen = coverUri?.let { displayName(context, it) },
                 hint = "The image the watermark is embedded into",
-                onPick = { pickCover.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                onPick = { pickCover.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             )
             FilePickCard(
                 label = "Signature file",
                 chosen = sigUri?.let { displayName(context, it) },
                 hint = "The .sig produced by Generate",
-                onPick = { openSig.launch(arrayOf("*/*")) }
+                onPick = { openSig.launch(arrayOf("*/*")) },
             )
             Card {
                 Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
@@ -1061,7 +1151,7 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
                         title = "Output JPEG",
                         subtitle = "Robust watermarks survive JPEG, so a smaller JPEG is fine. Off saves a lossless PNG.",
                         checked = outputJpeg,
-                        onCheckedChange = { outputJpeg = it }
+                        onCheckedChange = { outputJpeg = it },
                     )
                     if (outputJpeg) {
                         Spacer(Modifier.height(8.dp))
@@ -1069,7 +1159,7 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
                         Slider(
                             value = jpegQuality.toFloat(),
                             onValueChange = { jpegQuality = it.toInt() },
-                            valueRange = 50f..100f
+                            valueRange = 50f..100f,
                         )
                     }
                 }
@@ -1080,33 +1170,45 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
                 label = "Image to check",
                 chosen = markedUri?.let { displayName(context, it) },
                 hint = "The image you want to test for a watermark",
-                onPick = { pickMarked.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                onPick = { pickMarked.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             )
             FilePickCard(
                 label = "Signature file",
                 chosen = sigUri?.let { displayName(context, it) },
                 hint = "The .sig the image should carry",
-                onPick = { openSig.launch(arrayOf("*/*")) }
+                onPick = { openSig.launch(arrayOf("*/*")) },
             )
             verdict?.let { WatermarkVerdictCard(it) }
         }
     }
 
     Button(
-        onClick = { when (mode) { 0 -> runGenerate(); 1 -> runEmbed(); else -> runVerify() } },
+        onClick = {
+            when (mode) {
+                0 -> runGenerate()
+                1 -> runEmbed()
+                else -> runVerify()
+            }
+        },
         enabled = !busy,
-        modifier = Modifier.fillMaxWidth().height(52.dp)
+        modifier = Modifier.fillMaxWidth().height(52.dp),
     ) {
         if (busy) {
             CircularProgressIndicator(
                 modifier = Modifier.size(20.dp),
                 strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onPrimary
+                color = MaterialTheme.colorScheme.onPrimary,
             )
             Spacer(Modifier.size(12.dp))
             Text("Working...")
         } else {
-            Text(when (mode) { 0 -> "Generate"; 1 -> "Embed"; else -> "Verify" })
+            Text(
+                when (mode) {
+                    0 -> "Generate"
+                    1 -> "Embed"
+                    else -> "Verify"
+                },
+            )
         }
     }
 
@@ -1115,7 +1217,7 @@ private fun WatermarkSection(snackbar: SnackbarHostState) {
             OutputResultCard(
                 name = r.name,
                 onSave = { saveOutput.launch(r.name) },
-                onShare = { shareResult() }
+                onShare = { shareResult() },
             )
         }
     }
@@ -1133,18 +1235,35 @@ private fun WatermarkModeButton(label: String, selected: Boolean, modifier: Modi
 /** Renders a watermark verification result with a colour-coded verdict. */
 @Composable
 private fun WatermarkVerdictCard(verdict: StegoEngine.WmVerdict) {
-    val (label, color) = when {
-        verdict.present -> "Watermark present" to Color(0xFF2E7D32)
-        verdict.weak -> "Weak / uncertain watermark" to Color(0xFFE65100)
-        else -> "No watermark detected" to Color(0xFFC62828)
+    // Pair every verdict with a distinct icon as well as a colour, so the result is not conveyed
+    // by colour alone (colour-blind / low-vision users) and reads correctly under TalkBack.
+    val (label, level, icon) = when {
+        verdict.present -> Triple("Watermark present", VerdictLevel.PRESENT, Icons.Filled.CheckCircle)
+        verdict.weak -> Triple("Weak / uncertain watermark", VerdictLevel.WEAK, Icons.Filled.Warning)
+        else -> Triple("No watermark detected", VerdictLevel.ABSENT, Icons.Filled.Cancel)
     }
+    // Render the verdict on its own contrast-checked container (see verdictColors) rather than on the
+    // dynamic surfaceVariant, so the AA contrast holds regardless of the Material You palette/theme.
+    val status = verdictColors(level)
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Text(label, fontWeight = FontWeight.SemiBold, color = color)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(status.container)
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Icon(icon, contentDescription = null, tint = status.content)
+                Text(label, fontWeight = FontWeight.SemiBold, color = status.content)
+            }
+            Spacer(Modifier.height(8.dp))
             Text(
                 "Correlation %.2f (strong ≥ %.2f, weak ≥ %.2f)".format(verdict.correlation, verdict.high, verdict.low),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -1155,17 +1274,21 @@ private fun AlgorithmOption(selected: Boolean, title: String, subtitle: String, 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .heightIn(min = 48.dp)
+            // The whole row is the selectable target (≥48dp); it owns the click and exposes the
+            // RadioButton role + selected state to TalkBack, so the inner button takes onClick=null.
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
             .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        RadioButton(selected = selected, onClick = onClick)
+        RadioButton(selected = selected, onClick = null)
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontWeight = FontWeight.SemiBold)
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -1175,19 +1298,30 @@ private fun AlgorithmOption(selected: Boolean, title: String, subtitle: String, 
 private fun FilePickCard(label: String, chosen: String?, hint: String, onPick: () -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+                // Merge the label + current selection so TalkBack announces the card as one unit
+                .semantics(mergeDescendants = true) {
+                    contentDescription = "$label. ${chosen ?: hint}"
+                },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(label, fontWeight = FontWeight.SemiBold)
                 Text(
                     chosen ?: hint,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            OutlinedButton(onClick = onPick) { Text(if (chosen == null) "Choose" else "Change") }
+            OutlinedButton(
+                onClick = onPick,
+                modifier = Modifier.semantics {
+                    contentDescription = (if (chosen == null) "Choose " else "Change ") + label
+                },
+            ) { Text(if (chosen == null) "Choose" else "Change") }
         }
     }
 }
@@ -1215,7 +1349,7 @@ private fun readPasswordChars(editText: EditText?): CharArray? {
 private fun SecurePasswordField(
     show: Boolean,
     onToggleShow: () -> Unit,
-    onViewCreated: (EditText) -> Unit
+    onViewCreated: (EditText) -> Unit,
 ) {
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
@@ -1224,19 +1358,25 @@ private fun SecurePasswordField(
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text("Password (optional)", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 TextButton(onClick = onToggleShow) { Text(if (show) "Hide" else "Show") }
             }
             AndroidView(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .semantics { contentDescription = "Password, optional" },
                 factory = { ctx ->
                     EditText(ctx).apply {
                         setSingleLine(true)
                         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                         imeOptions = imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
                         transformationMethod = PasswordTransformationMethod.getInstance()
+                        // Label the native field for TalkBack; the visual "Password (optional)"
+                        // header above is a separate composable and is not otherwise associated.
+                        hint = "Password (optional)"
+                        contentDescription = "Password, optional"
                         onViewCreated(this)
                     }
                 },
@@ -1246,7 +1386,7 @@ private fun SecurePasswordField(
                     et.highlightColor = accentColor
                     et.transformationMethod = if (show) null else PasswordTransformationMethod.getInstance()
                     et.setSelection(et.text.length)
-                }
+                },
             )
         }
     }

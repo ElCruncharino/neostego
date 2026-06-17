@@ -27,6 +27,7 @@ public class DCTErrors {
      */
     public static void init() {
         OpenStegoException.addErrorCode(DCTPluginTemplate.NAMESPACE, INVALID_STEGO_HEADER, "err.invalidHeaderStamp");
-        OpenStegoException.addErrorCode(DCTPluginTemplate.NAMESPACE, INVALID_HEADER_VERSION, "err.invalidHeaderVersion");
+        OpenStegoException.addErrorCode(
+                DCTPluginTemplate.NAMESPACE, INVALID_HEADER_VERSION, "err.invalidHeaderVersion");
     }
 }

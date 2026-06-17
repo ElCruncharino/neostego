@@ -9,6 +9,32 @@ The on-disk steganography format is unchanged: files produced by older
 OpenStego versions remain readable, and unencrypted NeoStego output stays
 compatible with upstream OpenStego (enforced by regression tests).
 
+## [1.0.1] — 2026-06-16
+
+Accessibility, contrast, and build-toolchain release. No changes to the
+on-disk steganography format or algorithms.
+
+### Accessibility
+- **Desktop:** the data-hiding / watermarking navigation buttons are keyboard-
+  focusable again (with Alt mnemonics and screen-reader descriptions); all
+  icon-only browse buttons and the JPEG-quality slider have accessible names;
+  added the missing label/field associations on the Extract panel; the About
+  image has alt text.
+- **Android:** the password field, file-picker cards, and algorithm radio rows
+  expose proper TalkBack semantics, roles, and ≥48dp touch targets; the
+  watermark verdict is conveyed by an icon as well as colour.
+
+### Contrast (WCAG)
+- Replaced hardcoded UI colours with theme-aware values. The watermark verdict
+  now renders on its own contrast-checked container (AA-compliant in light and
+  dark), independent of the dynamic Material You palette.
+
+### Build & tooling
+- Upgraded to Gradle 9.5, Android Gradle Plugin 9.1 (built-in Kotlin) and
+  Nebula ospackage 12.3; cleared all build deprecation warnings.
+- Added Spotless formatting (palantir-java-format + ktlint), enforced via
+  `check`.
+
 ## [1.0.0] — 2026
 
 First NeoStego release. Forked from OpenStego at `upstream/master`.

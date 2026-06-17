@@ -16,7 +16,6 @@ import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.DWT;
 import com.openstego.desktop.util.dwt.DWTUtil;
 import com.openstego.desktop.util.dwt.ImageTree;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -41,7 +40,7 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "DWTKIM";
+    public static final String NAMESPACE = "DWTKIM";
 
     /**
      * Default constructor
@@ -84,7 +83,8 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         PixelImage image;
         List<int[][]> yuv;
         DWT dwt;
@@ -155,7 +155,13 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
         }
 
         // Mark approximation image using calculated significance threshold and embedding strength
-        markSubBand(p, sig.alphaForApproxSubBand, sig.watermark, calcLevelThreshold(findSubBandMaxCoeff(p)), w, sig.watermarkLength);
+        markSubBand(
+                p,
+                sig.alphaForApproxSubBand,
+                sig.watermark,
+                calcLevelThreshold(findSubBandMaxCoeff(p)),
+                w,
+                sig.watermarkLength);
 
         dwt.inverseDWT(dwtTree, luminance);
         yuv.set(0, luminance);
@@ -422,10 +428,8 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
          * @throws OpenStegoException Processing issues
          */
         public byte[] getSigData() throws OpenStegoException {
-            try (
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(baos)
-            ) {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.write(this.sig);
                 oos.writeInt(this.watermarkLength);
                 oos.writeDouble(this.alphaForDetailSubBand);
@@ -445,5 +449,4 @@ public class DWTKimPlugin extends WMImagePluginTemplate {
             }
         }
     }
-
 }

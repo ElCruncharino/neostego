@@ -7,6 +7,11 @@
 
 package com.openstego.desktop;
 
+import java.security.AlgorithmParameters;
+import java.security.SecureRandom;
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
+import java.util.logging.Logger;
 import javax.crypto.AEADBadTagException;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -17,12 +22,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.AlgorithmParameters;
-import java.security.SecureRandom;
-import java.security.spec.AlgorithmParameterSpec;
-import java.security.spec.KeySpec;
-import java.util.Arrays;
-import java.util.logging.Logger;
 
 /**
  * This is the class for providing cryptography support to OpenStego.
@@ -62,7 +61,9 @@ public class OpenStegoCrypto {
     /**
      * 8-byte Salt for legacy password-based cryptography
      */
-    private final byte[] SALT = {(byte) 0x28, (byte) 0x5F, (byte) 0x71, (byte) 0xC9, (byte) 0x1E, (byte) 0x35, (byte) 0x0A, (byte) 0x62};
+    private final byte[] SALT = {
+        (byte) 0x28, (byte) 0x5F, (byte) 0x71, (byte) 0xC9, (byte) 0x1E, (byte) 0x35, (byte) 0x0A, (byte) 0x62
+    };
 
     /**
      * Iteration count for legacy password-based cryptography
@@ -217,8 +218,11 @@ public class OpenStegoCrypto {
     }
 
     private static boolean isV3(byte[] input) {
-        return input != null && input.length >= 3 && input[0] == V3_MARKER
-                && input[1] == V3_MAGIC[0] && input[2] == V3_MAGIC[1];
+        return input != null
+                && input.length >= 3
+                && input[0] == V3_MARKER
+                && input[1] == V3_MAGIC[0]
+                && input[2] == V3_MAGIC[1];
     }
 
     // ------------- v2 (legacy) implementation - unchanged on the wire -------------
@@ -294,7 +298,9 @@ public class OpenStegoCrypto {
         PBEKeySpec spec = new PBEKeySpec(this.password, salt, iterations, keyBits);
         byte[] keyBytes;
         try {
-            keyBytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
+            keyBytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+                    .generateSecret(spec)
+                    .getEncoded();
         } finally {
             spec.clearPassword();
         }
@@ -352,10 +358,13 @@ public class OpenStegoCrypto {
             int idx = 1 + V3_MAGIC.length; // skip marker + magic
             byte version = input[idx++];
             if (version != V3_FORMAT_VERSION) {
-                throw new OpenStegoException(new IllegalArgumentException("Unsupported v3 crypto format version: " + version));
+                throw new OpenStegoException(
+                        new IllegalArgumentException("Unsupported v3 crypto format version: " + version));
             }
-            int iterations = ((input[idx++] & 0xFF) << 24) | ((input[idx++] & 0xFF) << 16)
-                    | ((input[idx++] & 0xFF) << 8) | (input[idx++] & 0xFF);
+            int iterations = ((input[idx++] & 0xFF) << 24)
+                    | ((input[idx++] & 0xFF) << 16)
+                    | ((input[idx++] & 0xFF) << 8)
+                    | (input[idx++] & 0xFF);
             int keyBytes = input[idx++] & 0xFF;
             int saltLen = input[idx++] & 0xFF;
             byte[] salt = new byte[saltLen];

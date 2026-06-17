@@ -9,13 +9,12 @@ package com.openstego.desktop.plugin.randlsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.plugin.lsb.LSBConfig;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.lsb.LSBErrors;
 import com.openstego.desktop.plugin.lsb.LSBPlugin;
-import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.StringUtil;
-
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Random;
@@ -79,7 +78,8 @@ public class RandomLSBOutputStream extends OutputStream {
      * @param config     Configuration data to use while writing
      * @throws OpenStegoException Processing issues
      */
-    public RandomLSBOutputStream(PixelImage image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
+    public RandomLSBOutputStream(PixelImage image, int dataLength, String fileName, OpenStegoConfig config)
+            throws OpenStegoException {
         if (image == null) {
             throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.NULL_IMAGE_ARGUMENT);
         }

@@ -6,7 +6,6 @@
 package com.openstego.desktop.image.awt;
 
 import com.openstego.desktop.image.PixelImage;
-
 import java.awt.image.BufferedImage;
 
 /**

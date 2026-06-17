@@ -13,7 +13,6 @@ import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dct.DCT;
-
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -104,7 +103,8 @@ public class DctLSBOutputStream extends OutputStream {
      * @param config     Configuration data to use while writing
      * @throws OpenStegoException Processing issues
      */
-    public DctLSBOutputStream(ImageHolder image, int dataLength, String fileName, OpenStegoConfig config) throws OpenStegoException {
+    public DctLSBOutputStream(ImageHolder image, int dataLength, String fileName, OpenStegoConfig config)
+            throws OpenStegoException {
         List<int[][]> yuv;
 
         if (image == null) {
@@ -155,7 +155,8 @@ public class DctLSBOutputStream extends OutputStream {
         try {
             header = new DCTDataHeader(this.dataLength, this.fileName, this.config);
 
-            if (((header.getHeaderSize() + this.dataLength) * 8) > (this.imgWidth * this.imgHeight / (DCT.NJPEG * DCT.NJPEG))) {
+            if (((header.getHeaderSize() + this.dataLength) * 8)
+                    > (this.imgWidth * this.imgHeight / (DCT.NJPEG * DCT.NJPEG))) {
                 throw new OpenStegoException(null, DctLSBPlugin.NAMESPACE, DctLSBErrors.IMAGE_SIZE_INSUFFICIENT);
             }
             this.coord = new Coordinates((header.getHeaderSize() + this.dataLength) * 8);

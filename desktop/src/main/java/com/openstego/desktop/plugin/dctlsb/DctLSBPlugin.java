@@ -15,7 +15,6 @@ import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.dct.DCT;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -31,7 +30,7 @@ public class DctLSBPlugin extends WMImagePluginTemplate {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "DCTLSB";
+    public static final String NAMESPACE = "DCTLSB";
 
     /**
      * Default constructor
@@ -74,14 +73,16 @@ public class DctLSBPlugin extends WMImagePluginTemplate {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         ImageHolder image;
         int imgType;
 
         try {
             // Generate random image, if input image is not provided
             if (cover == null) {
-                image = ImageUtil.generateRandomImage((DCTDataHeader.getMaxHeaderSize() + msg.length) * 8 * DCT.NJPEG * DCT.NJPEG);
+                image = ImageUtil.generateRandomImage(
+                        (DCTDataHeader.getMaxHeaderSize() + msg.length) * 8 * DCT.NJPEG * DCT.NJPEG);
             } else {
                 image = ImageUtil.byteArrayToImage(cover, coverFileName);
             }

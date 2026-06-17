@@ -10,7 +10,6 @@ import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -75,8 +74,8 @@ public final class BenchEmbed {
             }
         }
         long secs = (System.currentTimeMillis() - start) / 1000;
-        System.out.println(algorithm + ": embedded=" + embedded + " skipped=" + skipped
-                + " (" + secs + "s) -> " + outDir);
+        System.out.println(
+                algorithm + ": embedded=" + embedded + " skipped=" + skipped + " (" + secs + "s) -> " + outDir);
     }
 
     private static OpenStego newStego(String algorithm, String password) throws OpenStegoException {

@@ -17,8 +17,7 @@ package com.openstego.desktop.util;
  */
 public final class ExifUtil {
 
-    private ExifUtil() {
-    }
+    private ExifUtil() {}
 
     /**
      * Read the Exif orientation tag from a JPEG or PNG byte stream.
@@ -50,10 +49,14 @@ public final class ExifUtil {
                     int segStart = pos + 4;
                     int segEnd = pos + 2 + length;
                     // Exif APP1 payload begins with "Exif\0\0"; the TIFF block follows.
-                    if (marker == 0xE1 && segEnd - segStart >= 6
-                            && data[segStart] == 'E' && data[segStart + 1] == 'x'
-                            && data[segStart + 2] == 'i' && data[segStart + 3] == 'f'
-                            && data[segStart + 4] == 0 && data[segStart + 5] == 0) {
+                    if (marker == 0xE1
+                            && segEnd - segStart >= 6
+                            && data[segStart] == 'E'
+                            && data[segStart + 1] == 'x'
+                            && data[segStart + 2] == 'i'
+                            && data[segStart + 3] == 'f'
+                            && data[segStart + 4] == 0
+                            && data[segStart + 5] == 0) {
                         return parseTiffOrientation(data, segStart + 6, segEnd);
                     }
                     pos = segEnd;
@@ -64,8 +67,10 @@ public final class ExifUtil {
             if ((data[0] & 0xFF) == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G') {
                 int pos = 8;
                 while (pos + 8 <= data.length) {
-                    int len = ((data[pos] & 0xFF) << 24) | ((data[pos + 1] & 0xFF) << 16)
-                            | ((data[pos + 2] & 0xFF) << 8) | (data[pos + 3] & 0xFF);
+                    int len = ((data[pos] & 0xFF) << 24)
+                            | ((data[pos + 1] & 0xFF) << 16)
+                            | ((data[pos + 2] & 0xFF) << 8)
+                            | (data[pos + 3] & 0xFF);
                     if (len < 0 || pos + 12 + (long) len > data.length) {
                         break;
                     }
@@ -111,8 +116,7 @@ public final class ExifUtil {
     }
 
     private static int readShort(byte[] d, int p, boolean little) {
-        return little ? (d[p] & 0xFF) | ((d[p + 1] & 0xFF) << 8)
-                : ((d[p] & 0xFF) << 8) | (d[p + 1] & 0xFF);
+        return little ? (d[p] & 0xFF) | ((d[p + 1] & 0xFF) << 8) : ((d[p] & 0xFF) << 8) | (d[p + 1] & 0xFF);
     }
 
     private static int readInt(byte[] d, int p, boolean little) {

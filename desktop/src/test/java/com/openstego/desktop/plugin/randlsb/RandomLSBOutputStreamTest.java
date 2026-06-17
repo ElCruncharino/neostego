@@ -7,6 +7,8 @@
 
 package com.openstego.desktop.plugin.randlsb;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.image.awt.BufferedImagePixelImage;
@@ -14,13 +16,10 @@ import com.openstego.desktop.plugin.lsb.LSBConfig;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.lsb.LSBErrors;
 import com.openstego.desktop.plugin.lsb.LSBPlugin;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit test class for {@link com.openstego.desktop.plugin.randlsb.RandomLSBOutputStream}
@@ -107,5 +106,4 @@ public class RandomLSBOutputStreamTest {
             assertEquals(LSBErrors.IMAGE_SIZE_INSUFFICIENT, oe.getErrorCode());
         }
     }
-
 }

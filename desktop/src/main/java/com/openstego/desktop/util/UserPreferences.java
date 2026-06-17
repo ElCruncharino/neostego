@@ -6,10 +6,11 @@
  */
 package com.openstego.desktop.util;
 
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -18,8 +19,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Properties;
-
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 /**
  * User preferences manager
@@ -99,9 +98,7 @@ public class UserPreferences {
         }
 
         String xdg = System.getenv("XDG_CONFIG_HOME");
-        Path base = (xdg != null && !xdg.trim().isEmpty())
-                ? Paths.get(xdg)
-                : Paths.get(userHome, ".config");
+        Path base = (xdg != null && !xdg.trim().isEmpty()) ? Paths.get(xdg) : Paths.get(userHome, ".config");
         return base.resolve("neostego");
     }
 

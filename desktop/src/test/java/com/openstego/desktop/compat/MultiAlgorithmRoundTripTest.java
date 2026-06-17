@@ -5,24 +5,23 @@
 
 package com.openstego.desktop.compat;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Round-trip regression test for the desktop GUI's multi-algorithm embed/extract contract.
@@ -37,7 +36,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 public class MultiAlgorithmRoundTripTest {
 
     private static final String MSG_FILE_NAME = "secret.txt";
-    private static final byte[] SECRET = "round-trip across the suite".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    private static final byte[] SECRET =
+            "round-trip across the suite".getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
     private static byte[] cover;
 
@@ -68,7 +68,8 @@ public class MultiAlgorithmRoundTripTest {
     @Test
     public void testJpegUniwardRoundTripViaAutoDetect() throws Exception {
         byte[] stego = embed("JpegUniward", "stego.jpg");
-        assertTrue(stego.length > 2 && (stego[0] & 0xFF) == 0xFF && (stego[1] & 0xFF) == 0xD8,
+        assertTrue(
+                stego.length > 2 && (stego[0] & 0xFF) == 0xFF && (stego[1] & 0xFF) == 0xD8,
                 "SI-UNIWARD output must be a JPEG (starts with FF D8)");
         List<?> output = extractWithAutoDetect(stego, "stego.jpg", null);
         assertEquals(MSG_FILE_NAME, output.get(0));
@@ -100,7 +101,8 @@ public class MultiAlgorithmRoundTripTest {
      * Mirrors {@code OpenStegoUI.extractWithAutoDetect}: try each data-hiding plugin until one
      * decodes the file, JPEG plugin first for {@code .jpg}/{@code .jpeg} inputs.
      */
-    private List<?> extractWithAutoDetect(byte[] stegoData, String stegoFileName, char[] password) throws OpenStegoException {
+    private List<?> extractWithAutoDetect(byte[] stegoData, String stegoFileName, char[] password)
+            throws OpenStegoException {
         OpenStegoException last = null;
         for (OpenStegoPlugin<?> plugin : orderPluginsForExtract(stegoFileName)) {
             plugin.resetConfig();

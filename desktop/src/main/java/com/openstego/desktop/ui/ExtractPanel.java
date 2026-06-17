@@ -8,9 +8,8 @@ package com.openstego.desktop.ui;
 
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * Panel for "Extract"
@@ -62,6 +61,9 @@ public class ExtractPanel extends JPanel {
         if (this.inputStegoFileButton == null) {
             this.inputStegoFileButton = new JButton();
             this.inputStegoFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.extStegoFile");
+            this.inputStegoFileButton.setToolTipText(acc);
+            this.inputStegoFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.inputStegoFileButton;
     }
@@ -103,6 +105,9 @@ public class ExtractPanel extends JPanel {
         if (this.outputFolderButton == null) {
             this.outputFolderButton = new JButton();
             this.outputFolderButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.outputDir");
+            this.outputFolderButton.setToolTipText(acc);
+            this.outputFolderButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.outputFolderButton;
     }
@@ -143,7 +148,9 @@ public class ExtractPanel extends JPanel {
         if (this.extractPwdPanel == null) {
             this.extractPwdPanel = new JPanel();
             ((FlowLayout) this.extractPwdPanel.getLayout()).setAlignment(FlowLayout.LEFT);
-            this.extractPwdPanel.add(new JLabel(labelUtil.getString("gui.label.dhEmbed.option.password")));
+            JLabel pwdLabel = new JLabel(labelUtil.getString("gui.label.dhEmbed.option.password"));
+            pwdLabel.setLabelFor(getExtractPwdTextField());
+            this.extractPwdPanel.add(pwdLabel);
             this.extractPwdPanel.add(getExtractPwdTextField());
         }
         return this.extractPwdPanel;
@@ -159,7 +166,9 @@ public class ExtractPanel extends JPanel {
         gridBagConstraints.insets = new Insets(5, 5, 0, 5);
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 0.0;
-        add(new JLabel(labelUtil.getString("gui.label.dhExtract.stegoFile")), gridBagConstraints);
+        JLabel stegoFileLabel = new JLabel(labelUtil.getString("gui.label.dhExtract.stegoFile"));
+        stegoFileLabel.setLabelFor(getInputStegoFileTextField());
+        add(stegoFileLabel, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.EAST;
@@ -177,7 +186,9 @@ public class ExtractPanel extends JPanel {
         gridBagConstraints.insets = new Insets(5, 5, 0, 5);
         gridBagConstraints.weightx = 1.0;
         gridBagConstraints.weighty = 0.0;
-        add(new JLabel(labelUtil.getString("gui.label.dhExtract.outputDir")), gridBagConstraints);
+        JLabel outputDirLabel = new JLabel(labelUtil.getString("gui.label.dhExtract.outputDir"));
+        outputDirLabel.setLabelFor(getOutputFolderTextField());
+        add(outputDirLabel, gridBagConstraints);
 
         gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;

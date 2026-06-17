@@ -44,13 +44,13 @@ public final class HillCost {
                 residual[y][x] = Math.abs(residual[y][x]);
             }
         }
-        double[][] smoothed = boxBlur(residual, 1);   // L1: 3x3 average
+        double[][] smoothed = boxBlur(residual, 1); // L1: 3x3 average
         for (int y = 0; y < rows; y++) {
             for (int x = 0; x < cols; x++) {
                 smoothed[y][x] = 1.0 / (smoothed[y][x] + EPS);
             }
         }
-        return boxBlur(smoothed, 7);                  // L2: 15x15 average
+        return boxBlur(smoothed, 7); // L2: 15x15 average
     }
 
     /** Convolves a channel with the 3x3 KB high-pass filter using mirror-reflected borders. */

@@ -5,13 +5,12 @@
 
 package com.openstego.desktop.plugin.adaptive;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Random;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Random;
+import org.junit.jupiter.api.Test;
 
 /**
  * Exhaustive correctness tests for {@link Stc}. The critical property is recoverability:
@@ -28,7 +27,7 @@ class StcTest {
         Random seed = new Random(12345);
         for (int trial = 0; trial < 5000; trial++) {
             Random r = new Random(seed.nextLong());
-            int w = 1 + r.nextInt(8);          // payload denominator 1..8
+            int w = 1 + r.nextInt(8); // payload denominator 1..8
             int messageLen = 1 + r.nextInt(256);
             int n = messageLen * w;
 
@@ -36,7 +35,7 @@ class StcTest {
             double[] rho = new double[n];
             for (int i = 0; i < n; i++) {
                 x[i] = r.nextInt(2);
-                rho[i] = 0.01 + r.nextDouble();  // strictly positive cost
+                rho[i] = 0.01 + r.nextDouble(); // strictly positive cost
             }
             int[] message = new int[messageLen];
             for (int i = 0; i < messageLen; i++) {
@@ -49,8 +48,7 @@ class StcTest {
                 assertTrue(v == 0 || v == 1, "stego is binary");
             }
             int[] recovered = Stc.extract(y, messageLen, w, H);
-            assertArrayEquals(message, recovered,
-                    "round-trip failed: w=" + w + " messageLen=" + messageLen);
+            assertArrayEquals(message, recovered, "round-trip failed: w=" + w + " messageLen=" + messageLen);
         }
     }
 
@@ -95,7 +93,9 @@ class StcTest {
                 message[i] = r.nextInt(2);
             }
             int[] y = Stc.embed(x, rho, message, w, H);
-            assertArrayEquals(message, Stc.extract(y, messageLen, w, H),
+            assertArrayEquals(
+                    message,
+                    Stc.extract(y, messageLen, w, H),
                     "edge case failed: messageLen=" + messageLen + " w=" + w);
         }
     }
@@ -187,7 +187,8 @@ class StcTest {
             }
             avgCost /= n;
             double trivialBound = messageLen * avgCost;
-            assertTrue(stcCost <= trivialBound + 1e-9,
+            assertTrue(
+                    stcCost <= trivialBound + 1e-9,
                     "STC distortion " + stcCost + " exceeds trivial bound " + trivialBound);
             assertTrue(changes <= n, "more changes than elements");
         }
@@ -195,9 +196,9 @@ class StcTest {
 
     @Test
     void chooseWidth() {
-        assertEquals(4, Stc.chooseWidth(400, 100));   // 4 cover bits per message bit
-        assertEquals(1, Stc.chooseWidth(100, 100));   // full payload
-        assertEquals(0, Stc.chooseWidth(50, 100));    // message too big -> capacity exceeded
-        assertEquals(1, Stc.chooseWidth(100, 0));     // empty message
+        assertEquals(4, Stc.chooseWidth(400, 100)); // 4 cover bits per message bit
+        assertEquals(1, Stc.chooseWidth(100, 100)); // full payload
+        assertEquals(0, Stc.chooseWidth(50, 100)); // message too big -> capacity exceeded
+        assertEquals(1, Stc.chooseWidth(100, 0)); // empty message
     }
 }

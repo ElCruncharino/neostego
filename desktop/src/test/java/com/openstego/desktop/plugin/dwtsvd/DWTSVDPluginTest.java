@@ -5,25 +5,21 @@
 
 package com.openstego.desktop.plugin.dwtsvd;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.OpenStego;
-import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.CommonUtil;
-import com.openstego.desktop.util.ImageHolder;
-import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Random;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * End-to-end tests for the robust DWT-SVD watermarking plugin. The decisive properties are: a clean PNG round-trip
@@ -68,7 +64,7 @@ public class DWTSVDPluginTest {
         byte[] sig = stego.generateSignature();
         byte[] wm = stego.embedMark(sig, "key.sig", coverBytes, "cover.png", "stego.png");
 
-        for (float quality : new float[]{0.9f, 0.75f, 0.6f}) {
+        for (float quality : new float[] {0.9f, 0.75f, 0.6f}) {
             byte[] jpeg = recompressJpeg(wm, quality);
             double corr = stego.checkMark(jpeg, "stego.jpg", sig);
             assertTrue(corr > 0.7, "JPEG Q" + (int) (quality * 100) + " correlation should stay high, got " + corr);
@@ -95,7 +91,7 @@ public class DWTSVDPluginTest {
         // A global brightness gain multiplies every pixel (and hence every singular value); the mu-normalized
         // quantizer step scales with it, so the watermark must survive. This is the valumetric case the absolute-step
         // scheme failed on.
-        for (double gain : new double[]{0.85, 1.15}) {
+        for (double gain : new double[] {0.85, 1.15}) {
             byte[] scaled = scaleBrightness(wm, gain);
             double corr = stego.checkMark(scaled, "stego.png", sig);
             assertTrue(corr > 0.7, "brightness x" + gain + " correlation should stay high, got " + corr);
@@ -140,7 +136,8 @@ public class DWTSVDPluginTest {
             img = rgb;
         }
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        javax.imageio.ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+        javax.imageio.ImageWriter writer =
+                ImageIO.getImageWritersByFormatName("jpeg").next();
         javax.imageio.ImageWriteParam param = writer.getDefaultWriteParam();
         param.setCompressionMode(javax.imageio.ImageWriteParam.MODE_EXPLICIT);
         param.setCompressionQuality(quality);

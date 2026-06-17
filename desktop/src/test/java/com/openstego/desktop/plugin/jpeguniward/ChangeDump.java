@@ -13,7 +13,6 @@ import com.openstego.desktop.image.jpeg.JpegCodec;
 import com.openstego.desktop.image.jpeg.JpegImage;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -61,11 +60,14 @@ public final class ChangeDump {
 
         int nb = bw * bh;
         try (DataOutputStream o = new DataOutputStream(new FileOutputStream(out))) {
-            o.writeInt(H); o.writeInt(W);
+            o.writeInt(H);
+            o.writeInt(W);
             for (int r = 0; r < H; r++) for (int cc = 0; cc < W; cc++) o.writeDouble(plane[r][cc]);
             o.writeInt(64);
             for (int k = 0; k < 64; k++) o.writeDouble(quant[k]);
-            o.writeInt(nb); o.writeInt(bw); o.writeInt(bh);
+            o.writeInt(nb);
+            o.writeInt(bw);
+            o.writeInt(bh);
             long changed = 0, z2nz = 0;
             for (int br = 0; br < bh; br++) {
                 for (int bc = 0; bc < bw; bc++) {
@@ -76,15 +78,18 @@ public final class ChangeDump {
                     for (int k = 0; k < 64; k++) {
                         double costSi = (k == 0) ? 0.0 : base[bi][k] * (1.0 - 2.0 * Math.abs(e[k]));
                         int chg = (k >= 1 && a[k] != b[k]) ? 1 : 0;
-                        if (chg == 1) { changed++; if (a[k] == 0) z2nz++; }
+                        if (chg == 1) {
+                            changed++;
+                            if (a[k] == 0) z2nz++;
+                        }
                         o.writeDouble(costSi);
                         o.writeDouble(e[k]);
                         o.writeDouble(chg);
                     }
                 }
             }
-            System.out.printf("dumped luma %dx%d blocks=%dx%d changes=%d (z2nz=%d) -> %s%n",
-                    H, W, bw, bh, changed, z2nz, out);
+            System.out.printf(
+                    "dumped luma %dx%d blocks=%dx%d changes=%d (z2nz=%d) -> %s%n", H, W, bw, bh, changed, z2nz, out);
         }
     }
 }

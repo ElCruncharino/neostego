@@ -5,12 +5,11 @@
 
 package com.openstego.desktop.plugin.adaptive;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Random;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Random;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link HillCost}: dimensions are preserved, costs are strictly positive and finite, a
@@ -56,7 +55,8 @@ class HillCostTest {
 
         double flatAvg = blockAverage(rho, 8, rows - 8, 8, cols / 2 - 8);
         double textAvg = blockAverage(rho, 8, rows - 8, cols / 2 + 8, cols - 8);
-        assertTrue(flatAvg > textAvg * 10,
+        assertTrue(
+                flatAvg > textAvg * 10,
                 "flat region (" + flatAvg + ") should cost far more than texture (" + textAvg + ")");
     }
 
@@ -71,14 +71,15 @@ class HillCostTest {
         for (int y = 0; y < rows; y++) {
             for (int x = 0; x < cols; x++) {
                 img[y][x] = (x < cols / 2)
-                        ? 128 + r.nextInt(11) - 5       // mild texture (+-5)
-                        : 128 + r.nextInt(201) - 100;   // strong texture (+-100)
+                        ? 128 + r.nextInt(11) - 5 // mild texture (+-5)
+                        : 128 + r.nextInt(201) - 100; // strong texture (+-100)
             }
         }
         double[][] rho = HillCost.cost(img);
         double mildAvg = blockAverage(rho, 8, rows - 8, 8, cols / 2 - 8);
         double strongAvg = blockAverage(rho, 8, rows - 8, cols / 2 + 8, cols - 8);
-        assertTrue(strongAvg < mildAvg,
+        assertTrue(
+                strongAvg < mildAvg,
                 "stronger texture (" + strongAvg + ") should cost less than mild texture (" + mildAvg + ")");
     }
 

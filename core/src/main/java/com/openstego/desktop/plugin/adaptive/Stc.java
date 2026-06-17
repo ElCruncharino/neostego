@@ -57,7 +57,7 @@ public final class Stc {
         for (int c = 0; c < w; c++) {
             hh[c] = 1 + r.nextInt(range); // non-zero h-bit value
         }
-        hh[0] |= 1;            // odd -> toggles the syndrome LSB -> every block is prunable
+        hh[0] |= 1; // odd -> toggles the syndrome LSB -> every block is prunable
         hh[0] |= (1 << (h - 1)); // top bit -> band reaches full height
         return hh;
     }
@@ -118,7 +118,7 @@ public final class Stc {
             int xp = x[p];
             double cost = rho[p];
             for (int k = 0; k < nstates; k++) {
-                double w0 = wght[k] + (xp == 1 ? cost : 0.0);      // choose y=0 (differs from x if x=1)
+                double w0 = wght[k] + (xp == 1 ? cost : 0.0); // choose y=0 (differs from x if x=1)
                 double w1 = wght[k ^ col] + (xp == 0 ? cost : 0.0); // choose y=1 (differs from x if x=0)
                 if (w1 < w0) {
                     next[k] = w1;

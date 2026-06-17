@@ -11,9 +11,8 @@ import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * GUI options panel for the SI-UNIWARD (JpegUniward) plugin.
@@ -69,7 +68,8 @@ public class JpegUniwardEmbedOptionsUI extends PluginEmbedOptionsUI {
         this.qualitySlider.setMajorTickSpacing(10);
         this.qualitySlider.setPaintTicks(true);
         this.qualityValueLabel = new JLabel(String.valueOf(this.qualitySlider.getValue()));
-        this.qualitySlider.addChangeListener(e -> this.qualityValueLabel.setText(String.valueOf(this.qualitySlider.getValue())));
+        this.qualitySlider.addChangeListener(
+                e -> this.qualityValueLabel.setText(String.valueOf(this.qualitySlider.getValue())));
 
         gridBagConstraints.gridx = 1;
         gridBagConstraints.weightx = 1.0;

@@ -5,16 +5,15 @@
 
 package com.openstego.desktop.util;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Covers {@link CommonUtil#parseFileList(String, String)}. Regression guard for upstream issue #60:
@@ -47,7 +46,8 @@ class CommonUtilTest {
         Files.writeString(a.toPath(), "a");
         Files.writeString(b.toPath(), "b");
 
-        List<File> result = CommonUtil.parseFileList(path(tmp.toFile(), "a.png") + ";" + path(tmp.toFile(), "b.png"), ";");
+        List<File> result =
+                CommonUtil.parseFileList(path(tmp.toFile(), "a.png") + ";" + path(tmp.toFile(), "b.png"), ";");
 
         assertEquals(2, result.size());
     }

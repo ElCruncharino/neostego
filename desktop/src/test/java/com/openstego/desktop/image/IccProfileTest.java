@@ -5,17 +5,16 @@
 
 package com.openstego.desktop.image;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
 import java.awt.color.ColorSpace;
 import java.awt.color.ICC_ColorSpace;
-import java.awt.color.ICC_Profile;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.DirectColorModel;
@@ -24,10 +23,9 @@ import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Regression coverage for upstream issues #62 ("icc profile is removed after embedding watermark") and the
@@ -57,7 +55,8 @@ public class IccProfileTest {
         ICC_ColorSpace cs = (ICC_ColorSpace) ColorSpace.getInstance(ColorSpace.CS_sRGB);
         int bits = alpha ? 32 : 24;
         int aMask = alpha ? 0xFF000000 : 0;
-        DirectColorModel dcm = new DirectColorModel(cs, bits, 0xFF0000, 0xFF00, 0xFF, aMask, false, DataBuffer.TYPE_INT);
+        DirectColorModel dcm =
+                new DirectColorModel(cs, bits, 0xFF0000, 0xFF00, 0xFF, aMask, false, DataBuffer.TYPE_INT);
         BufferedImage tagged = new BufferedImage(dcm, base.getRaster(), false, null);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -71,7 +70,9 @@ public class IccProfileTest {
     private static byte[] profileOf(byte[] imageBytes) throws Exception {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
         ColorSpace cs = img.getColorModel().getColorSpace();
-        return (cs instanceof ICC_ColorSpace) ? ((ICC_ColorSpace) cs).getProfile().getData() : null;
+        return (cs instanceof ICC_ColorSpace)
+                ? ((ICC_ColorSpace) cs).getProfile().getData()
+                : null;
     }
 
     private static OpenStego newStego(String algorithm) throws OpenStegoException {

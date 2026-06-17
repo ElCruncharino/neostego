@@ -6,7 +6,6 @@
 package com.openstego.desktop.image;
 
 import com.openstego.desktop.OpenStegoException;
-
 import java.util.List;
 
 /**

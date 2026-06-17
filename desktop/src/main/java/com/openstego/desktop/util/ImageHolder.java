@@ -5,8 +5,8 @@
  */
 package com.openstego.desktop.util;
 
-import javax.imageio.metadata.IIOMetadata;
 import java.awt.image.BufferedImage;
+import javax.imageio.metadata.IIOMetadata;
 
 /**
  * Class to hold image and its metadata

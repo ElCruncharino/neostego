@@ -5,16 +5,15 @@
 
 package com.openstego.desktop.util.ecc;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import org.junit.jupiter.api.Test;
 
 /**
  * Correctness tests for the {@link ReedSolomon} GF(256) codec. The decisive property is that any error pattern of up to
@@ -60,10 +59,8 @@ class ReedSolomonTest {
                 corrupted[p] = (byte) ((corrupted[p] & 0xff) ^ delta);
             }
 
-            assertTrue(rs.isCorrectable(corrupted),
-                    "should correct " + numErrors + " errors with t=" + t);
-            assertArrayEquals(data, rs.decode(corrupted),
-                    "decoded mismatch with " + numErrors + " errors, t=" + t);
+            assertTrue(rs.isCorrectable(corrupted), "should correct " + numErrors + " errors with t=" + t);
+            assertArrayEquals(data, rs.decode(corrupted), "decoded mismatch with " + numErrors + " errors, t=" + t);
         }
     }
 

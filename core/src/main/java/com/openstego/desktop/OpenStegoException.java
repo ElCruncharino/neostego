@@ -7,7 +7,6 @@
 package com.openstego.desktop;
 
 import com.openstego.desktop.util.LabelUtil;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,7 +65,7 @@ public class OpenStegoException extends Exception {
      * @param param     Parameter for exception message
      */
     public OpenStegoException(Throwable cause, String namespace, int errorCode, String param) {
-        this(cause, namespace, errorCode, new Object[]{param});
+        this(cause, namespace, errorCode, new Object[] {param});
     }
 
     /**
@@ -78,8 +77,11 @@ public class OpenStegoException extends Exception {
      * @param params    Parameters for exception message
      */
     public OpenStegoException(Throwable cause, String namespace, int errorCode, Object... params) {
-        super((OpenStego.NAMESPACE.equals(namespace) && errorCode == UNHANDLED_EXCEPTION) ? cause.toString()
-                : LabelUtil.getInstance(namespace).getString(errMsgKeyMap.get(namespace + errorCode), params), cause);
+        super(
+                (OpenStego.NAMESPACE.equals(namespace) && errorCode == UNHANDLED_EXCEPTION)
+                        ? cause.toString()
+                        : LabelUtil.getInstance(namespace).getString(errMsgKeyMap.get(namespace + errorCode), params),
+                cause);
 
         this.namespace = namespace;
         this.errorCode = errorCode;

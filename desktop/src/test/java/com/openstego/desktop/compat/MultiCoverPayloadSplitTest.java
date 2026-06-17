@@ -5,6 +5,11 @@
 
 package com.openstego.desktop.compat;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoErrors;
@@ -15,18 +20,12 @@ import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter;
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Round-trip and failure-mode tests for splitting one payload across several cover images
@@ -87,8 +86,8 @@ public class MultiCoverPayloadSplitTest {
         config.setUseEncryption(false);
 
         byte[] payload = randomPayload(6000, 1);
-        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
         assertEquals(3, stego.size(), "one stego image per cover");
 
         List<?> out = MultiCoverPayloadSplitter.extractSplit(stego, names(3, "stego"), plugin.getConfig(), plugin);
@@ -104,8 +103,8 @@ public class MultiCoverPayloadSplitTest {
         config.setUseEncryption(false);
 
         byte[] payload = randomPayload(6000, 2);
-        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
 
         List<byte[]> shuffled = new ArrayList<>(Arrays.asList(stego.get(2), stego.get(0), stego.get(1)));
         List<?> out = MultiCoverPayloadSplitter.extractSplit(shuffled, names(3, "stego"), plugin.getConfig(), plugin);
@@ -122,8 +121,8 @@ public class MultiCoverPayloadSplitTest {
         config.setPassword("hunter2".toCharArray());
 
         byte[] payload = randomPayload(5000, 3);
-        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
 
         plugin.resetConfig();
         OpenStegoConfig extractConfig = plugin.getConfig();
@@ -143,8 +142,8 @@ public class MultiCoverPayloadSplitTest {
         // Highly compressible payload so the compressed blob is comfortably small.
         byte[] payload = new byte[20000];
         Arrays.fill(payload, (byte) 'A');
-        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                covers(2, 8000), names(2, "cover"), names(2, "stego"), config, plugin);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(2, 8000), names(2, "cover"), names(2, "stego"), config, plugin);
 
         List<?> out = MultiCoverPayloadSplitter.extractSplit(stego, names(2, "stego"), plugin.getConfig(), plugin);
         assertArrayEquals(payload, (byte[]) out.get(1));
@@ -158,11 +157,12 @@ public class MultiCoverPayloadSplitTest {
         config.setUseEncryption(false);
 
         byte[] payload = randomPayload(6000, 4);
-        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
 
         List<byte[]> partial = new ArrayList<>(Arrays.asList(stego.get(0), stego.get(1)));
-        OpenStegoException ex = assertThrows(OpenStegoException.class,
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class,
                 () -> MultiCoverPayloadSplitter.extractSplit(partial, names(2, "stego"), plugin.getConfig(), plugin));
         assertEquals(OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, ex.getErrorCode());
     }
@@ -175,11 +175,12 @@ public class MultiCoverPayloadSplitTest {
         config.setUseEncryption(false);
 
         byte[] payload = randomPayload(2000, 5);
-        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                covers(2, 4000), names(2, "cover"), names(2, "stego"), config, plugin);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(2, 4000), names(2, "cover"), names(2, "stego"), config, plugin);
 
         List<byte[]> dup = new ArrayList<>(Arrays.asList(stego.get(0), stego.get(0)));
-        OpenStegoException ex = assertThrows(OpenStegoException.class,
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class,
                 () -> MultiCoverPayloadSplitter.extractSplit(dup, names(2, "stego"), plugin.getConfig(), plugin));
         assertEquals(OpenStegoErrors.SPLIT_MANIFEST_CORRUPT, ex.getErrorCode());
     }
@@ -191,18 +192,31 @@ public class MultiCoverPayloadSplitTest {
         config.setUseCompression(false);
         config.setUseEncryption(false);
 
-        List<byte[]> stegoA = MultiCoverPayloadSplitter.embedSplit(randomPayload(6000, 6), MSG_FILE_NAME,
-                covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
+        List<byte[]> stegoA = MultiCoverPayloadSplitter.embedSplit(
+                randomPayload(6000, 6),
+                MSG_FILE_NAME,
+                covers(3, 8000),
+                names(3, "cover"),
+                names(3, "stego"),
+                config,
+                plugin);
         plugin.resetConfig();
         OpenStegoConfig config2 = plugin.getConfig();
         config2.setUseCompression(false);
         config2.setUseEncryption(false);
-        List<byte[]> stegoB = MultiCoverPayloadSplitter.embedSplit(randomPayload(6000, 7), MSG_FILE_NAME,
-                covers(3, 8000), names(3, "cover"), names(3, "stego"), config2, plugin);
+        List<byte[]> stegoB = MultiCoverPayloadSplitter.embedSplit(
+                randomPayload(6000, 7),
+                MSG_FILE_NAME,
+                covers(3, 8000),
+                names(3, "cover"),
+                names(3, "stego"),
+                config2,
+                plugin);
 
         // Mix parts from two different splits.
         List<byte[]> mixed = new ArrayList<>(Arrays.asList(stegoA.get(0), stegoA.get(1), stegoB.get(2)));
-        OpenStegoException ex = assertThrows(OpenStegoException.class,
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class,
                 () -> MultiCoverPayloadSplitter.extractSplit(mixed, names(3, "stego"), plugin.getConfig(), plugin));
         assertEquals(OpenStegoErrors.SPLIT_MANIFEST_MISMATCH, ex.getErrorCode());
     }
@@ -215,9 +229,10 @@ public class MultiCoverPayloadSplitTest {
         config.setUseEncryption(false);
 
         byte[] payload = randomPayload(4000, 8);
-        OpenStegoException ex = assertThrows(OpenStegoException.class,
-                () -> MultiCoverPayloadSplitter.embedSplit(payload, MSG_FILE_NAME,
-                        covers(2, 800), names(2, "cover"), names(2, "stego"), config, plugin));
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class,
+                () -> MultiCoverPayloadSplitter.embedSplit(
+                        payload, MSG_FILE_NAME, covers(2, 800), names(2, "cover"), names(2, "stego"), config, plugin));
         assertEquals(OpenStegoErrors.SPLIT_INSUFFICIENT_CAPACITY, ex.getErrorCode());
     }
 
@@ -230,7 +245,8 @@ public class MultiCoverPayloadSplitTest {
         config.setUseEncryption(false);
 
         byte[] payload = randomPayload(500, 9);
-        byte[] stego = new OpenStego(plugin, config).embedData(payload, MSG_FILE_NAME, cover(8000), "cover.png", "stego.png");
+        byte[] stego =
+                new OpenStego(plugin, config).embedData(payload, MSG_FILE_NAME, cover(8000), "cover.png", "stego.png");
 
         plugin.resetConfig();
         List<?> out = new OpenStego(plugin, plugin.getConfig()).extractData(stego, "stego.png");

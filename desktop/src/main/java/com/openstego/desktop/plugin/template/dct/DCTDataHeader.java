@@ -9,7 +9,6 @@ package com.openstego.desktop.plugin.template.dct;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.util.CommonUtil;
-
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -27,7 +26,7 @@ public class DCTDataHeader {
      * Header version to distinguish between various versions of data embedding. This should be changed to next
      * version, in case the structure of the header is changed.
      */
-    public static final byte[] HEADER_VERSION = new byte[]{(byte) 1};
+    public static final byte[] HEADER_VERSION = new byte[] {(byte) 1};
 
     /**
      * Length of the fixed portion of the header
@@ -104,7 +103,9 @@ public class DCTDataHeader {
             if (n < FIXED_HEADER_LENGTH) {
                 throw new OpenStegoException(null, DCTPluginTemplate.NAMESPACE, DCTErrors.INVALID_STEGO_HEADER);
             }
-            this.dataLength = (CommonUtil.byteToInt(header[0]) + (CommonUtil.byteToInt(header[1]) << 8) + (CommonUtil.byteToInt(header[2]) << 16)
+            this.dataLength = (CommonUtil.byteToInt(header[0])
+                    + (CommonUtil.byteToInt(header[1]) << 8)
+                    + (CommonUtil.byteToInt(header[2]) << 16)
                     + (CommonUtil.byteToInt(header[3]) << 24));
             fileNameLen = header[4];
             config.setUseCompression(header[5] == 1);
@@ -159,7 +160,7 @@ public class DCTDataHeader {
 
         if (this.fileName.length > 0) {
             System.arraycopy(this.fileName, 0, out, currIndex, this.fileName.length);
-            //currIndex += this.fileName.length;
+            // currIndex += this.fileName.length;
         }
 
         return out;

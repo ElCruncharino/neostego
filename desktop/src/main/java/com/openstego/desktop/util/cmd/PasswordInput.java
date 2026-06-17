@@ -10,7 +10,6 @@ package com.openstego.desktop.util.cmd;
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
-
 import java.io.BufferedReader;
 import java.io.Console;
 import java.io.IOException;
@@ -23,8 +22,7 @@ public class PasswordInput {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private PasswordInput() {
-    }
+    private PasswordInput() {}
 
     /**
      * Acquires a password in a pipe- and script-safe way. Resolution order:
