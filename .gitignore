@@ -19,3 +19,7 @@ build/
 android/keystore.properties
 *.jks
 *.keystore
+
+# Flatpak build artifacts
+flatpak/build-dir/
+flatpak/.flatpak-builder/
