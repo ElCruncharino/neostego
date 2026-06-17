@@ -160,7 +160,6 @@ public class DCTDataHeader {
 
         if (this.fileName.length > 0) {
             System.arraycopy(this.fileName, 0, out, currIndex, this.fileName.length);
-            // currIndex += this.fileName.length;
         }
 
         return out;
