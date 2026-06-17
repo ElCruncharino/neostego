@@ -23,6 +23,12 @@ It's a modernized fork of [OpenStego](https://www.openstego.com) by Samir Vaidya
 authenticated encryption, detection-resistant algorithms, runtime-bundled native installers, and a
 new Android app — while staying [format-compatible](#compatibility-with-openstego) with OpenStego.
 
+<p align="center">
+  <img src="docs/screenshots/hide-data-light.png" alt="NeoStego hiding data inside an image" width="820">
+  <br>
+  <sub>The desktop app (light theme; a dark theme is also included).</sub>
+</p>
+
 ## Download
 
 Installers **bundle their own Java runtime** — there's nothing else to install.
