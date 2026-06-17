@@ -16,7 +16,6 @@ import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.DWT;
 import com.openstego.desktop.util.dwt.Image;
 import com.openstego.desktop.util.dwt.ImageTree;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -41,7 +40,7 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "DWTDUGAD";
+    public static final String NAMESPACE = "DWTDUGAD";
 
     private static final String SIG_MARKER = "DGSG";
     private static final String WM_MARKER = "DGWM";
@@ -87,7 +86,8 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         PixelImage image;
         List<int[][]> yuv;
         DWT dwt;
@@ -122,7 +122,8 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
             if (s.getHorizontal() == null || s.getVertical() == null || s.getDiagonal() == null) {
                 throw new OpenStegoException(null, NAMESPACE, DWTDugadErrors.ERR_FILE_TOO_SMALL);
             }
-            wmSubBand(s.getHorizontal().getImage(), sig.watermark, sig.watermarkLength, sig.alpha, sig.castingThreshold);
+            wmSubBand(
+                    s.getHorizontal().getImage(), sig.watermark, sig.watermarkLength, sig.alpha, sig.castingThreshold);
             wmSubBand(s.getVertical().getImage(), sig.watermark, sig.watermarkLength, sig.alpha, sig.castingThreshold);
             wmSubBand(s.getDiagonal().getImage(), sig.watermark, sig.watermarkLength, sig.alpha, sig.castingThreshold);
             s = s.getCoarse();
@@ -168,26 +169,27 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
         dwtTree = dwt.forwardDWT(luminance);
         s = dwtTree;
 
-        try (
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(baos)
-        ) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             oos.writeBytes(WM_MARKER);
             oos.writeInt(sig.decompositionLevel);
             oos.writeDouble(sig.alpha);
 
             for (int i = 0; i < sig.decompositionLevel; i++) {
-                vals = invWmSubBand(s.getHorizontal().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
+                vals = invWmSubBand(
+                        s.getHorizontal().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
                 oos.writeInt((Integer) vals[0]);
                 oos.writeDouble((Double) vals[1]);
                 oos.writeDouble((Double) vals[2]);
 
-                vals = invWmSubBand(s.getVertical().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
+                vals = invWmSubBand(
+                        s.getVertical().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
                 oos.writeInt((Integer) vals[0]);
                 oos.writeDouble((Double) vals[1]);
                 oos.writeDouble((Double) vals[2]);
 
-                vals = invWmSubBand(s.getDiagonal().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
+                vals = invWmSubBand(
+                        s.getDiagonal().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
                 oos.writeInt((Integer) vals[0]);
                 oos.writeDouble((Double) vals[1]);
                 oos.writeDouble((Double) vals[2]);
@@ -329,7 +331,7 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
             }
         }
 
-        return new Object[]{m, z, v};
+        return new Object[] {m, z, v};
     }
 
     /**
@@ -447,10 +449,8 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
          * @throws OpenStegoException Processing issues
          */
         public byte[] getSigData() throws OpenStegoException {
-            try (
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(baos)
-            ) {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.write(this.sig);
                 oos.writeInt(this.watermarkLength);
                 oos.writeInt(this.waveletFilterMethod);
@@ -471,5 +471,4 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
             }
         }
     }
-
 }

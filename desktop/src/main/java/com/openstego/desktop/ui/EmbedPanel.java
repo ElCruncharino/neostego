@@ -9,13 +9,12 @@ package com.openstego.desktop.ui;
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoCrypto;
 import com.openstego.desktop.util.LabelUtil;
-
+import java.awt.*;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
-import java.awt.*;
 
 /**
  * Panel for "Embed"
@@ -70,7 +69,8 @@ public class EmbedPanel extends JPanel {
         if (this.optionPanel == null) {
             JLabel label;
             this.optionPanel = new JPanel();
-            this.optionPanel.setBorder(new TitledBorder(new CompoundBorder(new EmptyBorder(new java.awt.Insets(5, 5, 5, 5)), new EtchedBorder()),
+            this.optionPanel.setBorder(new TitledBorder(
+                    new CompoundBorder(new EmptyBorder(new java.awt.Insets(5, 5, 5, 5)), new EtchedBorder()),
                     " " + labelUtil.getString("gui.label.dhEmbed.option.title") + " "));
             this.optionPanel.setLayout(new GridBagLayout());
 
@@ -233,6 +233,9 @@ public class EmbedPanel extends JPanel {
         if (this.msgFileButton == null) {
             this.msgFileButton = new JButton();
             this.msgFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.msgFile");
+            this.msgFileButton.setToolTipText(acc);
+            this.msgFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.msgFileButton;
     }
@@ -259,6 +262,9 @@ public class EmbedPanel extends JPanel {
         if (this.coverFileButton == null) {
             this.coverFileButton = new JButton();
             this.coverFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.coverFile");
+            this.coverFileButton.setToolTipText(acc);
+            this.coverFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.coverFileButton;
     }
@@ -300,6 +306,9 @@ public class EmbedPanel extends JPanel {
         if (this.stegoFileButton == null) {
             this.stegoFileButton = new JButton();
             this.stegoFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.stegoFile");
+            this.stegoFileButton.setToolTipText(acc);
+            this.stegoFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.stegoFileButton;
     }
@@ -311,10 +320,8 @@ public class EmbedPanel extends JPanel {
      */
     public JComboBox<String> getEncryptionAlgoComboBox() {
         if (this.encryptionAlgoComboBox == null) {
-            this.encryptionAlgoComboBox = new JComboBox<>(new String[]{
-                    OpenStegoCrypto.ALGO_AES128,
-                    OpenStegoCrypto.ALGO_AES256
-            });
+            this.encryptionAlgoComboBox =
+                    new JComboBox<>(new String[] {OpenStegoCrypto.ALGO_AES128, OpenStegoCrypto.ALGO_AES256});
         }
         return this.encryptionAlgoComboBox;
     }

@@ -8,7 +8,6 @@ package com.openstego.desktop.util;
 
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
-
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,8 +22,7 @@ public class PluginManager {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private PluginManager() {
-    }
+    private PluginManager() {}
 
     /**
      * Static variable to hold the list of available plugins
@@ -47,7 +45,7 @@ public class PluginManager {
 
         // Load internal plugins
         try (InputStream is = PluginManager.class.getResourceAsStream("/OpenStegoPlugins.internal");
-             InputStream isExt = PluginManager.class.getResourceAsStream("/OpenStegoPlugins.external")) {
+                InputStream isExt = PluginManager.class.getResourceAsStream("/OpenStegoPlugins.external")) {
 
             if (is != null) {
                 pluginList.addAll(StringUtil.getStringLines(new String(CommonUtil.streamToBytes(is))));
@@ -59,7 +57,8 @@ public class PluginManager {
             }
 
             for (String pluginClass : pluginList) {
-                plugin = (OpenStegoPlugin<?>) Class.forName(pluginClass).getDeclaredConstructor().newInstance();
+                plugin = (OpenStegoPlugin<?>)
+                        Class.forName(pluginClass).getDeclaredConstructor().newInstance();
                 plugins.add(plugin);
                 pluginsMap.put(plugin.getName().toUpperCase(), plugin);
             }

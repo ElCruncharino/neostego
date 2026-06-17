@@ -7,19 +7,18 @@
 
 package com.openstego.desktop.util.dwt;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 /**
  * Class to read the Filters XML and generate corresponding Java Objects
@@ -33,8 +32,7 @@ public class FilterXMLReader {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private FilterXMLReader() {
-    }
+    private FilterXMLReader() {}
 
     /**
      * This method parses the given XML file into the list of objects

@@ -5,23 +5,22 @@
 
 package com.openstego.desktop.plugin.dwtsvd;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoCmd;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * End-to-end command-line tests for the DWT-SVD watermark, driving the real {@code gensig}, {@code embedmark} and
@@ -42,16 +41,16 @@ public class DWTSVDCmdTest {
         Path sig = dir.resolve("key.sig");
         Path stego = dir.resolve("stego.png");
 
-        OpenStegoCmd.execute(new String[]{
-                "gensig", "-a", "DWTSVD", "-p", "cli-watermark-key", "-gf", sig.toString()});
+        OpenStegoCmd.execute(new String[] {"gensig", "-a", "DWTSVD", "-p", "cli-watermark-key", "-gf", sig.toString()});
         assertTrue(Files.exists(sig), "gensig should create the signature file");
 
-        OpenStegoCmd.execute(new String[]{
-                "embedmark", "-a", "DWTSVD", "-gf", sig.toString(), "-cf", cover.toString(), "-sf", stego.toString()});
+        OpenStegoCmd.execute(new String[] {
+            "embedmark", "-a", "DWTSVD", "-gf", sig.toString(), "-cf", cover.toString(), "-sf", stego.toString()
+        });
         assertTrue(Files.exists(stego), "embedmark should create the watermarked image");
 
-        double corr = parseDouble(captureStdout(() -> OpenStegoCmd.execute(new String[]{
-                "checkmark", "-a", "DWTSVD", "-gf", sig.toString(), "-sf", stego.toString()})));
+        double corr = parseDouble(captureStdout(() -> OpenStegoCmd.execute(
+                new String[] {"checkmark", "-a", "DWTSVD", "-gf", sig.toString(), "-sf", stego.toString()})));
         assertTrue(corr > 0.999, "checkmark on the embedded image should be ~1.0, got " + corr);
     }
 
@@ -62,13 +61,14 @@ public class DWTSVDCmdTest {
         Path otherSig = dir.resolve("other.sig");
         Path stego = dir.resolve("stego.png");
 
-        OpenStegoCmd.execute(new String[]{"gensig", "-a", "DWTSVD", "-p", "key-one", "-gf", sig.toString()});
-        OpenStegoCmd.execute(new String[]{"gensig", "-a", "DWTSVD", "-p", "key-two", "-gf", otherSig.toString()});
-        OpenStegoCmd.execute(new String[]{
-                "embedmark", "-a", "DWTSVD", "-gf", sig.toString(), "-cf", cover.toString(), "-sf", stego.toString()});
+        OpenStegoCmd.execute(new String[] {"gensig", "-a", "DWTSVD", "-p", "key-one", "-gf", sig.toString()});
+        OpenStegoCmd.execute(new String[] {"gensig", "-a", "DWTSVD", "-p", "key-two", "-gf", otherSig.toString()});
+        OpenStegoCmd.execute(new String[] {
+            "embedmark", "-a", "DWTSVD", "-gf", sig.toString(), "-cf", cover.toString(), "-sf", stego.toString()
+        });
 
-        double corr = parseDouble(captureStdout(() -> OpenStegoCmd.execute(new String[]{
-                "checkmark", "-a", "DWTSVD", "-gf", otherSig.toString(), "-sf", stego.toString()})));
+        double corr = parseDouble(captureStdout(() -> OpenStegoCmd.execute(
+                new String[] {"checkmark", "-a", "DWTSVD", "-gf", otherSig.toString(), "-sf", stego.toString()})));
         assertTrue(corr < 0.2, "an unrelated signature must read as absent, got " + corr);
     }
 

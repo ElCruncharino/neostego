@@ -39,6 +39,7 @@ public final class JpegImage {
     private final Component[] components;
     /** Up to 4 quantization tables, natural order; entries may be {@code null}. */
     private final int[][] quantTables;
+
     private final int maxH;
     private final int maxV;
     private final int mcuCols;
@@ -59,9 +60,18 @@ public final class JpegImage {
     /** Whether chroma is 4:2:0 sub-sampled; only meaningful when {@link #precover} is non-null. */
     private final boolean subsample;
 
-    JpegImage(int width, int height, Component[] components, int[][] quantTables,
-            int maxH, int maxV, int mcuCols, int mcuRows,
-            short[][][] coeff, PixelImage precover, boolean subsample) {
+    JpegImage(
+            int width,
+            int height,
+            Component[] components,
+            int[][] quantTables,
+            int maxH,
+            int maxV,
+            int mcuCols,
+            int mcuRows,
+            short[][][] coeff,
+            PixelImage precover,
+            boolean subsample) {
         this.width = width;
         this.height = height;
         this.components = components;
@@ -188,8 +198,8 @@ public final class JpegImage {
         int bw = this.components[comp].blocksWide;
         int n = Math.max(0, (blockRow1 - blockRow0) * bw);
         double[][] err = new double[n][64];
-        JpegCodec.transformBlockRows(this.precover, comp, this.subsample, blockRow0, blockRow1, bw,
-                getQuantTable(comp), null, err);
+        JpegCodec.transformBlockRows(
+                this.precover, comp, this.subsample, blockRow0, blockRow1, bw, getQuantTable(comp), null, err);
         return err;
     }
 

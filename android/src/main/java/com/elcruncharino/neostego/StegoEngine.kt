@@ -49,7 +49,7 @@ object StegoEngine {
         /** Whether to GZIP-compress the payload before embedding (desktop parity: user-toggleable). */
         val useCompression: Boolean = true,
         /** Use AES-256 instead of the default AES-128 when a password is supplied. */
-        val encryptionAes256: Boolean = false
+        val encryptionAes256: Boolean = false,
     )
 
     /** True if [data] begins with the JPEG SOI marker (so it must be handled by the JPEG plugin). */
@@ -120,7 +120,7 @@ object StegoEngine {
         cover: ByteArray,
         coverName: String,
         password: CharArray?,
-        options: Options = Options()
+        options: Options = Options(),
     ): ByteArray {
         val plugin = newPlugin(algorithm)
         plugin.resetConfig()
@@ -153,7 +153,7 @@ object StegoEngine {
         algorithm: Algorithm,
         width: Int,
         height: Int,
-        options: Options = Options()
+        options: Options = Options(),
     ): Int {
         val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
         plugin.resetConfig()
@@ -236,7 +236,7 @@ object StegoEngine {
         cover: ByteArray,
         coverName: String,
         outputJpeg: Boolean = false,
-        jpegQuality: Int = 90
+        jpegQuality: Int = 90,
     ): ByteArray {
         val plugin = newWatermarkPlugin(algorithm)
         plugin.resetConfig()
@@ -255,6 +255,7 @@ object StegoEngine {
     data class WmVerdict(val correlation: Double, val high: Double, val low: Double) {
         /** True when the watermark is clearly present. */
         val present: Boolean get() = correlation >= high
+
         /** True when a weak/uncertain watermark is detected. */
         val weak: Boolean get() = correlation in low..high
     }
@@ -292,7 +293,7 @@ object StegoEngine {
         covers: List<ByteArray>,
         coverNames: List<String>,
         password: CharArray?,
-        options: Options = Options()
+        options: Options = Options(),
     ): List<ByteArray> {
         val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
         plugin.resetConfig()
@@ -323,7 +324,7 @@ object StegoEngine {
         algorithm: Algorithm,
         stegoImages: List<ByteArray>,
         stegoNames: List<String>,
-        password: CharArray?
+        password: CharArray?,
     ): Extracted {
         val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
         plugin.resetConfig()

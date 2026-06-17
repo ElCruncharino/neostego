@@ -15,7 +15,6 @@ import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
-
 import java.util.List;
 
 /**
@@ -36,7 +35,8 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public final byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
+    public final byte[] getDiff(
+            byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
             throws OpenStegoException {
         PixelImage stegoImage = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
         PixelImage coverImage = ImageCodecRegistry.get().decode(coverData, coverFileName);
@@ -111,5 +111,4 @@ public abstract class DHImagePluginTemplate<C extends OpenStegoConfig> extends D
         int headerSize = new LSBDataHeader(0, 1, null, getConfig()).getHeaderSize();
         return Math.max(0, samples / 8 - headerSize);
     }
-
 }

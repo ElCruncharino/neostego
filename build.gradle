@@ -5,4 +5,32 @@
  * Root project for the multi-module build:
  *   :core    - platform-independent steganography + crypto (no AWT), reusable on Android
  *   :desktop - Swing desktop application and command-line interface
+ *   :android - Android application built on :core
  */
+
+plugins {
+    // Code formatting, enforced via `check` in CI. palantir-java-format keeps the existing 4-space
+    // Java style (swap to googleJavaFormat() for 2-space Google style); ktlint formats the Kotlin in
+    // :android. Run `./gradlew spotlessApply` to fix, `./gradlew spotlessCheck` to verify.
+    id 'com.diffplug.spotless' version '7.0.2'
+}
+
+allprojects {
+    apply plugin: 'com.diffplug.spotless'
+
+    // Spotless resolves the formatter binaries (palantir-java-format, ktlint) from here. The root
+    // project otherwise declares no repositories.
+    repositories {
+        mavenCentral()
+    }
+
+    spotless {
+        java {
+            target 'src/**/*.java'
+            palantirJavaFormat()
+            removeUnusedImports()
+            trimTrailingWhitespace()
+            endWithNewline()
+        }
+    }
+}

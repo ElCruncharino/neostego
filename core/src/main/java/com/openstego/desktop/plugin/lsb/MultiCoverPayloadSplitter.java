@@ -14,7 +14,6 @@ import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.CommonUtil;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,8 +43,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public final class MultiCoverPayloadSplitter {
 
-    private MultiCoverPayloadSplitter() {
-    }
+    private MultiCoverPayloadSplitter() {}
 
     /**
      * Splits a payload across the given covers, producing one stego image per cover.
@@ -60,9 +58,15 @@ public final class MultiCoverPayloadSplitter {
      * @return One stego image (byte array) per cover, in the same order as {@code covers}
      * @throws OpenStegoException If inputs are inconsistent or the covers cannot hold the payload
      */
-    public static List<byte[]> embedSplit(byte[] payload, String msgFileName, List<byte[]> covers,
-                                          List<String> coverFileNames, List<String> stegoFileNames,
-                                          OpenStegoConfig config, DHImagePluginTemplate<?> plugin) throws OpenStegoException {
+    public static List<byte[]> embedSplit(
+            byte[] payload,
+            String msgFileName,
+            List<byte[]> covers,
+            List<String> coverFileNames,
+            List<String> stegoFileNames,
+            OpenStegoConfig config,
+            DHImagePluginTemplate<?> plugin)
+            throws OpenStegoException {
         OpenStego.init(); // ensure the core label namespace and error codes are registered
         int n = covers.size();
         if (n < 2 || coverFileNames.size() != n || stegoFileNames.size() != n) {
@@ -78,7 +82,8 @@ public final class MultiCoverPayloadSplitter {
         byte[] processed = payload;
         try {
             if (useCompression) {
-                try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); GZIPOutputStream zos = new GZIPOutputStream(bos)) {
+                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                        GZIPOutputStream zos = new GZIPOutputStream(bos)) {
                     zos.write(processed);
                     zos.finish();
                     zos.flush();
@@ -86,7 +91,8 @@ public final class MultiCoverPayloadSplitter {
                 }
             }
             if (useEncryption) {
-                OpenStegoCrypto crypto = new OpenStegoCrypto(config.getPassword(), algo, config.isUseStrongEncryption());
+                OpenStegoCrypto crypto =
+                        new OpenStegoCrypto(config.getPassword(), algo, config.isUseStrongEncryption());
                 processed = crypto.encrypt(processed);
             }
         } catch (OpenStegoException osEx) {
@@ -106,7 +112,8 @@ public final class MultiCoverPayloadSplitter {
             int max = plugin.getMaxDataLength(image);
             if (max < manifestSize) {
                 // The cover is too small to hold even the per-part metadata.
-                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_INSUFFICIENT_CAPACITY, totalLength);
+                throw new OpenStegoException(
+                        null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_INSUFFICIENT_CAPACITY, totalLength);
             }
             capacity[i] = max - manifestSize;
         }
@@ -120,7 +127,8 @@ public final class MultiCoverPayloadSplitter {
             remaining -= take;
         }
         if (remaining > 0) {
-            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_INSUFFICIENT_CAPACITY, totalLength);
+            throw new OpenStegoException(
+                    null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_INSUFFICIENT_CAPACITY, totalLength);
         }
 
         // 4) Embed each part. The data is already processed, so the per-image LSB header must record
@@ -133,15 +141,24 @@ public final class MultiCoverPayloadSplitter {
             config.setUseEncryption(false);
             int offset = 0;
             for (int i = 0; i < n; i++) {
-                MultiPartSplitManifest manifest = new MultiPartSplitManifest(sessionId, i, n, totalLength, chunkLen[i],
-                        useCompression, useEncryption, algo, (i == 0) ? fileName : null);
+                MultiPartSplitManifest manifest = new MultiPartSplitManifest(
+                        sessionId,
+                        i,
+                        n,
+                        totalLength,
+                        chunkLen[i],
+                        useCompression,
+                        useEncryption,
+                        algo,
+                        (i == 0) ? fileName : null);
                 byte[] manifestBytes = manifest.toBytes();
                 byte[] partPayload = new byte[manifestBytes.length + chunkLen[i]];
                 System.arraycopy(manifestBytes, 0, partPayload, 0, manifestBytes.length);
                 System.arraycopy(processed, offset, partPayload, manifestBytes.length, chunkLen[i]);
                 offset += chunkLen[i];
 
-                result.add(plugin.embedData(partPayload, null, covers.get(i), coverFileNames.get(i), stegoFileNames.get(i)));
+                result.add(plugin.embedData(
+                        partPayload, null, covers.get(i), coverFileNames.get(i), stegoFileNames.get(i)));
             }
         } finally {
             config.setUseCompression(savedComp);
@@ -160,8 +177,12 @@ public final class MultiCoverPayloadSplitter {
      * @return A two-element list: the original file name and the reassembled message bytes
      * @throws OpenStegoException If parts are missing, duplicated, corrupt, or from different splits
      */
-    public static List<?> extractSplit(List<byte[]> stegoImages, List<String> stegoFileNames,
-                                       OpenStegoConfig config, DHImagePluginTemplate<?> plugin) throws OpenStegoException {
+    public static List<?> extractSplit(
+            List<byte[]> stegoImages,
+            List<String> stegoFileNames,
+            OpenStegoConfig config,
+            DHImagePluginTemplate<?> plugin)
+            throws OpenStegoException {
         OpenStego.init(); // ensure the core label namespace and error codes are registered
         int n = stegoImages.size();
         if (n < 2 || stegoFileNames.size() != n) {
@@ -185,7 +206,8 @@ public final class MultiCoverPayloadSplitter {
                 sessionId = manifest.getSessionId();
                 totalParts = manifest.getTotalParts();
                 if (n != totalParts) {
-                    throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, totalParts, n);
+                    throw new OpenStegoException(
+                            null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, totalParts, n);
                 }
                 ordered = new MultiPartSplitManifest[totalParts];
                 chunks = new byte[totalParts][];
@@ -195,7 +217,10 @@ public final class MultiCoverPayloadSplitter {
 
             int idx = manifest.getPartIndex();
             if (ordered[idx] != null) {
-                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_CORRUPT,
+                throw new OpenStegoException(
+                        null,
+                        OpenStego.NAMESPACE,
+                        OpenStegoErrors.SPLIT_MANIFEST_CORRUPT,
                         "duplicate part index " + idx);
             }
             ordered[idx] = manifest;
@@ -209,14 +234,20 @@ public final class MultiCoverPayloadSplitter {
         for (int i = 0; i < totalParts; i++) {
             byte[] chunk = chunks[i];
             if (offset + chunk.length > totalLength) {
-                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_CORRUPT,
+                throw new OpenStegoException(
+                        null,
+                        OpenStego.NAMESPACE,
+                        OpenStegoErrors.SPLIT_MANIFEST_CORRUPT,
                         "reassembled length exceeds declared total");
             }
             System.arraycopy(chunk, 0, processed, offset, chunk.length);
             offset += chunk.length;
         }
         if (offset != totalLength) {
-            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_CORRUPT,
+            throw new OpenStegoException(
+                    null,
+                    OpenStego.NAMESPACE,
+                    OpenStegoErrors.SPLIT_MANIFEST_CORRUPT,
                     "reassembled length does not match declared total");
         }
 
@@ -229,7 +260,8 @@ public final class MultiCoverPayloadSplitter {
                 msg = crypto.decrypt(msg);
             }
             if (first.isUseCompression()) {
-                try (ByteArrayInputStream bis = new ByteArrayInputStream(msg); GZIPInputStream zis = new GZIPInputStream(bis)) {
+                try (ByteArrayInputStream bis = new ByteArrayInputStream(msg);
+                        GZIPInputStream zis = new GZIPInputStream(bis)) {
                     msg = CommonUtil.streamToBytes(zis);
                 } catch (IOException ioEx) {
                     throw new OpenStegoException(ioEx, OpenStego.NAMESPACE, OpenStegoErrors.CORRUPT_DATA);

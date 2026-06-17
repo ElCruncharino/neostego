@@ -7,16 +7,12 @@
 
 package com.openstego.desktop.plugin.template.dct;
 
-import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
-import com.openstego.desktop.ui.OpenStegoFrame;
-import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.imageio.ImageIO;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.imageio.ImageIO;
 
 /**
  * Template plugin for OpenStego which implements the DCT based steganography for images (transfer domain)
@@ -25,7 +21,7 @@ public abstract class DCTPluginTemplate extends OpenStegoPlugin<DCTConfig> {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "DCTTEMPLATE";
+    public static final String NAMESPACE = "DCTTEMPLATE";
 
     /**
      * Static list of supported read formats

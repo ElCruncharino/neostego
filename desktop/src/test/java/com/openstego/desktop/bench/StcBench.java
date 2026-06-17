@@ -6,7 +6,6 @@
 package com.openstego.desktop.bench;
 
 import com.openstego.desktop.plugin.adaptive.Stc;
-
 import java.util.Random;
 
 /**
@@ -30,13 +29,13 @@ public final class StcBench {
         int[] hs = args.length > 2 ? parseInts(args[2]) : new int[] {7, 10, 12, 14};
 
         System.out.printf("STC efficiency probe  (messageLen=%d)%n", messageLen);
-        System.out.printf("%6s %8s %6s %10s %10s %10s %8s%n",
-                "w", "alpha", "h", "changes", "bits/chg", "bound b/c", "loss%");
+        System.out.printf(
+                "%6s %8s %6s %10s %10s %10s %8s%n", "w", "alpha", "h", "changes", "bits/chg", "bound b/c", "loss%");
         for (int w : ws) {
             int n = messageLen * w;
             double alpha = 1.0 / w;
-            double boundBeta = invH(alpha);                 // optimal change rate for this payload
-            double boundEff = alpha / boundBeta;            // optimal bits per change
+            double boundBeta = invH(alpha); // optimal change rate for this payload
+            double boundEff = alpha / boundBeta; // optimal bits per change
             for (int h : hs) {
                 int[] x = new int[n];
                 double[] rho = new double[n];
@@ -44,7 +43,7 @@ public final class StcBench {
                 Random r = new Random(12345L + 7L * w + h);
                 for (int i = 0; i < n; i++) {
                     x[i] = r.nextInt(2);
-                    rho[i] = r.nextDouble() + 1e-3;          // uniform positive costs
+                    rho[i] = r.nextDouble() + 1e-3; // uniform positive costs
                 }
                 for (int i = 0; i < messageLen; i++) {
                     msg[i] = r.nextInt(2);
@@ -66,7 +65,8 @@ public final class StcBench {
                 }
                 double eff = (double) messageLen / Math.max(1, changes);
                 double loss = 100.0 * (boundEff - eff) / boundEff;
-                System.out.printf("%6d %8.4f %6d %10d %10.2f %10.2f %7.1f%s%n",
+                System.out.printf(
+                        "%6d %8.4f %6d %10d %10.2f %10.2f %7.1f%s%n",
                         w, alpha, h, changes, eff, boundEff, loss, ok ? "" : "  EXTRACT-FAIL");
             }
         }
@@ -116,8 +116,8 @@ public final class StcBench {
                 }
             }
             boolean match = Math.abs(stcCost - bruteCost) < 1e-9;
-            System.out.printf("%4d %4d %4d %10.2f %10.2f %8s%n", w, mlen, h, stcCost, bruteCost,
-                    match ? "OK" : "SUBOPT");
+            System.out.printf(
+                    "%4d %4d %4d %10.2f %10.2f %8s%n", w, mlen, h, stcCost, bruteCost, match ? "OK" : "SUBOPT");
         }
     }
 

@@ -8,7 +8,6 @@
 package com.openstego.desktop;
 
 import com.openstego.desktop.util.LabelUtil;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +102,8 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      * @return Stego data containing the message
      * @throws OpenStegoException Processing issues
      */
-    public abstract byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+    public abstract byte[] embedData(
+            byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
             throws OpenStegoException;
 
     /**
@@ -125,7 +125,8 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      * @return Extracted message
      * @throws OpenStegoException Processing issues
      */
-    public abstract byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException;
+    public abstract byte[] extractData(byte[] stegoData, String stegoFileName, byte[] origSigData)
+            throws OpenStegoException;
 
     /**
      * Method to generate the signature data. This method needs to be implemented only if the purpose of the plugin is
@@ -186,7 +187,8 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      * @return Difference data
      * @throws OpenStegoException Processing issues
      */
-    public abstract byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
+    public abstract byte[] getDiff(
+            byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
             throws OpenStegoException;
 
     /**
@@ -227,7 +229,8 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      * @param parsedValues Parsed command-line values keyed by option name (e.g. "-b")
      * @throws OpenStegoException Processing issues
      */
-    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues) throws OpenStegoException {
+    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues)
+            throws OpenStegoException {
         // No plugin-specific options by default
     }
 

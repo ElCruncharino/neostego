@@ -9,12 +9,11 @@ package com.openstego.desktop.plugin.randlsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.lsb.LSBErrors;
 import com.openstego.desktop.plugin.lsb.LSBPlugin;
-import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.StringUtil;
-
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Random;
@@ -125,8 +124,14 @@ public class RandomLSBInputStream extends InputStream {
             bitSet[i] = (byte) getPixelBit(x, y, channel, bit);
         }
 
-        return ((bitSet[0] << 7) + (bitSet[1] << 6) + (bitSet[2] << 5) + (bitSet[3] << 4) + (bitSet[4] << 3)
-                + (bitSet[5] << 2) + (bitSet[6] << 1) + bitSet[7]);
+        return ((bitSet[0] << 7)
+                + (bitSet[1] << 6)
+                + (bitSet[2] << 5)
+                + (bitSet[3] << 4)
+                + (bitSet[4] << 3)
+                + (bitSet[5] << 2)
+                + (bitSet[6] << 1)
+                + bitSet[7]);
     }
 
     /**

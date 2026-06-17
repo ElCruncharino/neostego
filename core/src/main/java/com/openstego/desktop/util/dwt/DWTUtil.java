@@ -21,8 +21,7 @@ public class DWTUtil {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private DWTUtil() {
-    }
+    private DWTUtil() {}
 
     /**
      * Method to perform the wavelet transform
@@ -81,7 +80,15 @@ public class DWTUtil {
             verticalImg = new Image(width, height);
             diagonalImg = new Image(width, height);
 
-            decomposition(tempImg, coarseImg, horizontalImg, verticalImg, diagonalImg, filterGHList[i].getG(), filterGHList[i].getH(), method);
+            decomposition(
+                    tempImg,
+                    coarseImg,
+                    horizontalImg,
+                    verticalImg,
+                    diagonalImg,
+                    filterGHList[i].getG(),
+                    filterGHList[i].getH(),
+                    method);
 
             tempTree.setCoarse(new ImageTree());
             tempTree.setHorizontal(new ImageTree());
@@ -122,8 +129,15 @@ public class DWTUtil {
      * @param filterH       H filter
      * @param method        Wavelet filtering method
      */
-    public static void decomposition(Image inputImg, Image coarseImg, Image horizontalImg, Image verticalImg, Image diagonalImg, Filter filterG,
-                                     Filter filterH, int method) {
+    public static void decomposition(
+            Image inputImg,
+            Image coarseImg,
+            Image horizontalImg,
+            Image verticalImg,
+            Image diagonalImg,
+            Filter filterG,
+            Filter filterH,
+            int method) {
         Image tempImg;
 
         // Coarse
@@ -155,33 +169,81 @@ public class DWTUtil {
         for (int i = 0; i < inputImg.getHeight(); i++) {
             switch (method) {
                 case Filter.METHOD_CUTOFF:
-                    filterCutOff(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i, outputImg.getWidth(),
-                            1, filter);
+                    filterCutOff(
+                            inputImg,
+                            inputImg.getWidth() * i,
+                            inputImg.getWidth(),
+                            1,
+                            outputImg,
+                            outputImg.getWidth() * i,
+                            outputImg.getWidth(),
+                            1,
+                            filter);
                     break;
 
                 case Filter.METHOD_INVCUTOFF:
-                    filterInvCutOff(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,
-                            outputImg.getWidth(), 1, filter);
+                    filterInvCutOff(
+                            inputImg,
+                            inputImg.getWidth() * i,
+                            inputImg.getWidth(),
+                            1,
+                            outputImg,
+                            outputImg.getWidth() * i,
+                            outputImg.getWidth(),
+                            1,
+                            filter);
                     break;
 
                 case Filter.METHOD_PERIODICAL:
-                    filterPeriodical(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,
-                            outputImg.getWidth(), 1, filter);
+                    filterPeriodical(
+                            inputImg,
+                            inputImg.getWidth() * i,
+                            inputImg.getWidth(),
+                            1,
+                            outputImg,
+                            outputImg.getWidth() * i,
+                            outputImg.getWidth(),
+                            1,
+                            filter);
                     break;
 
                 case Filter.METHOD_INVPERIODICAL:
-                    filterInvPeriodical(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,
-                            outputImg.getWidth(), 1, filter);
+                    filterInvPeriodical(
+                            inputImg,
+                            inputImg.getWidth() * i,
+                            inputImg.getWidth(),
+                            1,
+                            outputImg,
+                            outputImg.getWidth() * i,
+                            outputImg.getWidth(),
+                            1,
+                            filter);
                     break;
 
                 case Filter.METHOD_MIRROR:
-                    filterMirror(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i, outputImg.getWidth(),
-                            1, filter);
+                    filterMirror(
+                            inputImg,
+                            inputImg.getWidth() * i,
+                            inputImg.getWidth(),
+                            1,
+                            outputImg,
+                            outputImg.getWidth() * i,
+                            outputImg.getWidth(),
+                            1,
+                            filter);
                     break;
 
                 case Filter.METHOD_INVMIRROR:
-                    filterInvMirror(inputImg, inputImg.getWidth() * i, inputImg.getWidth(), 1, outputImg, outputImg.getWidth() * i,
-                            outputImg.getWidth(), 1, filter);
+                    filterInvMirror(
+                            inputImg,
+                            inputImg.getWidth() * i,
+                            inputImg.getWidth(),
+                            1,
+                            outputImg,
+                            outputImg.getWidth() * i,
+                            outputImg.getWidth(),
+                            1,
+                            filter);
                     break;
             }
         }
@@ -199,32 +261,80 @@ public class DWTUtil {
         for (int i = 0; i < inputImg.getWidth(); i++) {
             switch (method) {
                 case Filter.METHOD_CUTOFF:
-                    filterCutOff(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),
+                    filterCutOff(
+                            inputImg,
+                            i,
+                            inputImg.getHeight(),
+                            inputImg.getWidth(),
+                            outputImg,
+                            i,
+                            outputImg.getHeight(),
+                            outputImg.getWidth(),
                             filter);
                     break;
 
                 case Filter.METHOD_INVCUTOFF:
-                    filterInvCutOff(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),
+                    filterInvCutOff(
+                            inputImg,
+                            i,
+                            inputImg.getHeight(),
+                            inputImg.getWidth(),
+                            outputImg,
+                            i,
+                            outputImg.getHeight(),
+                            outputImg.getWidth(),
                             filter);
                     break;
 
                 case Filter.METHOD_PERIODICAL:
-                    filterPeriodical(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(),
-                            outputImg.getWidth(), filter);
+                    filterPeriodical(
+                            inputImg,
+                            i,
+                            inputImg.getHeight(),
+                            inputImg.getWidth(),
+                            outputImg,
+                            i,
+                            outputImg.getHeight(),
+                            outputImg.getWidth(),
+                            filter);
                     break;
 
                 case Filter.METHOD_INVPERIODICAL:
-                    filterInvPeriodical(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(),
-                            outputImg.getWidth(), filter);
+                    filterInvPeriodical(
+                            inputImg,
+                            i,
+                            inputImg.getHeight(),
+                            inputImg.getWidth(),
+                            outputImg,
+                            i,
+                            outputImg.getHeight(),
+                            outputImg.getWidth(),
+                            filter);
                     break;
 
                 case Filter.METHOD_MIRROR:
-                    filterMirror(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),
+                    filterMirror(
+                            inputImg,
+                            i,
+                            inputImg.getHeight(),
+                            inputImg.getWidth(),
+                            outputImg,
+                            i,
+                            outputImg.getHeight(),
+                            outputImg.getWidth(),
                             filter);
                     break;
 
                 case Filter.METHOD_INVMIRROR:
-                    filterInvMirror(inputImg, i, inputImg.getHeight(), inputImg.getWidth(), outputImg, i, outputImg.getHeight(), outputImg.getWidth(),
+                    filterInvMirror(
+                            inputImg,
+                            i,
+                            inputImg.getHeight(),
+                            inputImg.getWidth(),
+                            outputImg,
+                            i,
+                            outputImg.getHeight(),
+                            outputImg.getWidth(),
                             filter);
                     break;
             }
@@ -244,8 +354,16 @@ public class DWTUtil {
      * @param outStep   Step for loop for output image
      * @param filter    Filter
      */
-    public static void filterCutOff(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
-                                    Filter filter) {
+    public static void filterCutOff(
+            Image inputImg,
+            int inStart,
+            int inLen,
+            int inStep,
+            Image outputImg,
+            int outStart,
+            int outLen,
+            int outStep,
+            Filter filter) {
         int fStart;
         int fEnd;
 
@@ -254,8 +372,8 @@ public class DWTUtil {
             fEnd = Math.min((2 * i), filter.getEnd());
 
             for (int j = fStart; j <= fEnd; j++) {
-                outputImg.getData()[outStart + i * outStep] += filter.getData()[j - filter.getStart()]
-                        * inputImg.getData()[inStart + ((2 * i) - j) * inStep];
+                outputImg.getData()[outStart + i * outStep] +=
+                        filter.getData()[j - filter.getStart()] * inputImg.getData()[inStart + ((2 * i) - j) * inStep];
             }
         }
     }
@@ -273,8 +391,16 @@ public class DWTUtil {
      * @param outStep   Step for loop for output image
      * @param filter    Filter
      */
-    public static void filterInvCutOff(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
-                                       Filter filter) {
+    public static void filterInvCutOff(
+            Image inputImg,
+            int inStart,
+            int inLen,
+            int inStep,
+            Image outputImg,
+            int outStart,
+            int outLen,
+            int outStep,
+            Filter filter) {
         int fStart;
         int fEnd;
 
@@ -283,8 +409,8 @@ public class DWTUtil {
             fEnd = Math.min(CommonUtil.floorHalf(filter.getEnd() + i), inLen - 1);
 
             for (int j = fStart; j <= fEnd; j++) {
-                outputImg.getData()[outStart + i * outStep] += filter.getData()[(2 * j) - i - filter.getStart()]
-                        * inputImg.getData()[inStart + j * inStep];
+                outputImg.getData()[outStart + i * outStep] +=
+                        filter.getData()[(2 * j) - i - filter.getStart()] * inputImg.getData()[inStart + j * inStep];
             }
         }
     }
@@ -302,8 +428,16 @@ public class DWTUtil {
      * @param outStep   Step for loop for output image
      * @param filter    Filter
      */
-    public static void filterPeriodical(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
-                                        Filter filter) {
+    public static void filterPeriodical(
+            Image inputImg,
+            int inStart,
+            int inLen,
+            int inStep,
+            Image outputImg,
+            int outStart,
+            int outLen,
+            int outStep,
+            Filter filter) {
         int fStart;
         int fEnd;
         int iStart;
@@ -314,7 +448,8 @@ public class DWTUtil {
             iStart = CommonUtil.mod(((2 * i) - fStart), inLen);
 
             for (int j = fStart; j <= fEnd; j++) {
-                outputImg.getData()[outStart + i * outStep] += filter.getData()[j - fStart] * inputImg.getData()[inStart + iStart * inStep];
+                outputImg.getData()[outStart + i * outStep] +=
+                        filter.getData()[j - fStart] * inputImg.getData()[inStart + iStart * inStep];
                 iStart--;
                 if (iStart < 0) {
                     iStart += inLen;
@@ -336,8 +471,16 @@ public class DWTUtil {
      * @param outStep   Step for loop for output image
      * @param filter    Filter
      */
-    public static void filterInvPeriodical(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
-                                           Filter filter) {
+    public static void filterInvPeriodical(
+            Image inputImg,
+            int inStart,
+            int inLen,
+            int inStep,
+            Image outputImg,
+            int outStart,
+            int outLen,
+            int outStep,
+            Filter filter) {
         int fStart;
         int fEnd;
         int iStart;
@@ -371,8 +514,16 @@ public class DWTUtil {
      * @param outStep   Step for loop for output image
      * @param filter    Filter
      */
-    public static void filterMirror(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
-                                    Filter filter) {
+    public static void filterMirror(
+            Image inputImg,
+            int inStart,
+            int inLen,
+            int inStep,
+            Image outputImg,
+            int outStart,
+            int outLen,
+            int outStep,
+            Filter filter) {
         int fStart;
         int fEnd;
         int inPos;
@@ -395,7 +546,8 @@ public class DWTUtil {
                         continue;
                     }
                 }
-                outputImg.getData()[outStart + i * outStep] += filter.getData()[j - fStart] * inputImg.getData()[inStart + inPos * inStep];
+                outputImg.getData()[outStart + i * outStep] +=
+                        filter.getData()[j - fStart] * inputImg.getData()[inStart + inPos * inStep];
             }
         }
     }
@@ -413,8 +565,16 @@ public class DWTUtil {
      * @param outStep   Step for loop for output image
      * @param filter    Filter
      */
-    public static void filterInvMirror(Image inputImg, int inStart, int inLen, int inStep, Image outputImg, int outStart, int outLen, int outStep,
-                                       Filter filter) {
+    public static void filterInvMirror(
+            Image inputImg,
+            int inStart,
+            int inLen,
+            int inStep,
+            Image outputImg,
+            int outStart,
+            int outLen,
+            int outStep,
+            Filter filter) {
         int fStart;
         int fEnd;
         int inPos;
@@ -445,8 +605,8 @@ public class DWTUtil {
                         continue;
                     }
                 }
-                outputImg.getData()[outStart + i * outStep] += filter.getData()[2 * j - i - filter.getStart()]
-                        * inputImg.getData()[inStart + inPos * inStep];
+                outputImg.getData()[outStart + i * outStep] +=
+                        filter.getData()[2 * j - i - filter.getStart()] * inputImg.getData()[inStart + inPos * inStep];
             }
         }
     }
@@ -481,7 +641,14 @@ public class DWTUtil {
 
             if (tree.getFlag() == 0) // If flag is set it is a doubletree tiling
             {
-                invDecomposition(retImg, coarseImg, horizontalImg, verticalImg, diagonalImg, filterGHList[tree.getLevel()], method);
+                invDecomposition(
+                        retImg,
+                        coarseImg,
+                        horizontalImg,
+                        verticalImg,
+                        diagonalImg,
+                        filterGHList[tree.getLevel()],
+                        method);
             } else {
                 copyIntoImage(retImg, coarseImg, 0, 0);
                 copyIntoImage(retImg, horizontalImg, coarseImg.getWidth(), 0);
@@ -505,8 +672,14 @@ public class DWTUtil {
      * @param filterGH      Filter
      * @param method        Wavelet filter method
      */
-    public static void invDecomposition(Image sumImg, Image coarseImg, Image horizontalImg, Image verticalImg, Image diagonalImg, FilterGH filterGH,
-                                        int method) {
+    public static void invDecomposition(
+            Image sumImg,
+            Image coarseImg,
+            Image horizontalImg,
+            Image verticalImg,
+            Image diagonalImg,
+            FilterGH filterGH,
+            int method) {
         Image tempImg;
         Filter filterG;
         Filter filterH;

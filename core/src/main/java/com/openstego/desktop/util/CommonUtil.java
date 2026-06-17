@@ -8,7 +8,6 @@
 package com.openstego.desktop.util;
 
 import com.openstego.desktop.OpenStegoException;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,8 +20,7 @@ public class CommonUtil {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private CommonUtil() {
-    }
+    private CommonUtil() {}
 
     /**
      * Method to get byte array data from given InputStream

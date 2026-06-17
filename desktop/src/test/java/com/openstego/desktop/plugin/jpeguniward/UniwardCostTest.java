@@ -5,12 +5,11 @@
 
 package com.openstego.desktop.plugin.jpeguniward;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Random;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Random;
+import org.junit.jupiter.api.Test;
 
 /**
  * Pins the correctness of {@link UniwardCost}'s fast separable cost against an independent
@@ -28,13 +27,26 @@ public class UniwardCostTest {
 
     /** db8 high-pass decomposition filter (16 taps) &mdash; must match {@link UniwardCost}. */
     private static final double[] HPDF = {
-            -0.0544158422, 0.3128715909, -0.6756307363, 0.5853546837,
-            0.0158291053, -0.2840155430, -0.0004724846, 0.1287474266,
-            0.0173693010, -0.0440882539, -0.0139810279, 0.0087460940,
-            0.0048703530, -0.0003917404, -0.0006754494, -0.0001174768
+        -0.0544158422,
+        0.3128715909,
+        -0.6756307363,
+        0.5853546837,
+        0.0158291053,
+        -0.2840155430,
+        -0.0004724846,
+        0.1287474266,
+        0.0173693010,
+        -0.0440882539,
+        -0.0139810279,
+        0.0087460940,
+        0.0048703530,
+        -0.0003917404,
+        -0.0006754494,
+        -0.0001174768
     };
+
     private static final int LF = HPDF.length; // 16
-    private static final int CENTER = LF / 2;  // 8
+    private static final int CENTER = LF / 2; // 8
     private static final double SIGMA = 1.0 / 64.0;
 
     private static double[] lpdf() {
@@ -156,8 +168,7 @@ public class UniwardCostTest {
                 }
 
                 double got = fastBlock[i * 8 + j];
-                assertEquals(rho, got, 1e-6 * (1.0 + Math.abs(rho)),
-                        "mode (" + i + "," + j + ") cost mismatch");
+                assertEquals(rho, got, 1e-6 * (1.0 + Math.abs(rho)), "mode (" + i + "," + j + ") cost mismatch");
                 assertTrue(got > 0.0, "AC cost must be positive for mode (" + i + "," + j + ")");
             }
         }

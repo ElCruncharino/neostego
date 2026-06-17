@@ -45,7 +45,7 @@ class BitmapImageCodec : ImageCodec {
         val options = BitmapFactory.Options().apply {
             inPreferredConfig = Bitmap.Config.ARGB_8888
             inScaled = false
-            inDither = false
+            // (inDither is deprecated and ignored; dithering is already off for an ARGB_8888 decode)
             inMutable = true
             inPremultiplied = false
             inPreferredColorSpace = ColorSpace.get(ColorSpace.Named.SRGB)
@@ -76,13 +76,19 @@ class BitmapImageCodec : ImageCodec {
     /** Build the affine transform that rotates/flips a bitmap upright for the given Exif orientation (2-8). */
     private fun orientationMatrix(orientation: Int): Matrix = Matrix().apply {
         when (orientation) {
-            2 -> setScale(-1f, 1f)                       // mirror horizontal
-            3 -> setRotate(180f)                         // rotate 180
-            4 -> setScale(1f, -1f)                       // mirror vertical
-            5 -> { setRotate(90f); postScale(-1f, 1f) }  // transpose
-            6 -> setRotate(90f)                          // rotate 90 CW
-            7 -> { setRotate(-90f); postScale(-1f, 1f) } // transverse
-            8 -> setRotate(-90f)                         // rotate 90 CCW
+            2 -> setScale(-1f, 1f) // mirror horizontal
+            3 -> setRotate(180f) // rotate 180
+            4 -> setScale(1f, -1f) // mirror vertical
+            5 -> {
+                setRotate(90f)
+                postScale(-1f, 1f)
+            } // transpose
+            6 -> setRotate(90f) // rotate 90 CW
+            7 -> {
+                setRotate(-90f)
+                postScale(-1f, 1f)
+            } // transverse
+            8 -> setRotate(-90f) // rotate 90 CCW
         }
     }
 

@@ -6,7 +6,6 @@
 package com.openstego.desktop.plugin.jpeguniward;
 
 import com.openstego.desktop.image.jpeg.JpegImage;
-
 import java.util.Random;
 
 /**
@@ -21,8 +20,7 @@ public final class IdealSim {
 
     private static final int AC_LIMIT = 1023;
 
-    private IdealSim() {
-    }
+    private IdealSim() {}
 
     public static long[] embed(JpegImage jpg, int payloadBytes, long seed) {
         return embed(jpg, payloadBytes, seed, 0);
@@ -50,8 +48,7 @@ public final class IdealSim {
             double[][] plane = jpg.getPlane(c);
             int bw = jpg.getBlocksWide(c);
             int bh = jpg.getBlocksHigh(c);
-            double[][] base = UniwardCost.compute(plane, plane.length, plane[0].length, bw, bh,
-                    jpg.getQuantTable(c));
+            double[][] base = UniwardCost.compute(plane, plane.length, plane[0].length, bw, bh, jpg.getQuantTable(c));
             for (int br = 0; br < bh; br++) {
                 for (int bc = 0; bc < bw; bc++) {
                     int bi = br * bw + bc;

@@ -15,7 +15,6 @@ import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -276,10 +275,8 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             if (segBits == 0) {
                 continue;
             }
-            Elements el = (b == 0) ? el0
-                    : enumerateBand(jpg, bands[b][0], bands[b][1], bands[b][2], null, null);
-            int[] perm = (b == 0) ? perm0
-                    : bandPermutation(el.count, this.config.getPassword(), b);
+            Elements el = (b == 0) ? el0 : enumerateBand(jpg, bands[b][0], bands[b][1], bands[b][2], null, null);
+            int[] perm = (b == 0) ? perm0 : bandPermutation(el.count, this.config.getPassword(), b);
             int w = caps[b] / segBits;
             int bodyStart = (b == 0) ? reserve : 0;
             if (w < 1 || (long) bodyStart + (long) segBits * w > el.count) {
@@ -370,8 +367,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
      * {@code cost} and {@code rounding} are indexed by band-local block
      * {@code (br - r0) * blocksWide + bc}. On extract both are {@code null}.
      */
-    private static Elements enumerateBand(JpegImage jpg, int c, int r0, int r1, double[][] cost,
-            double[][] rounding) {
+    private static Elements enumerateBand(JpegImage jpg, int c, int r0, int r1, double[][] cost, double[][] rounding) {
         int bw = jpg.getBlocksWide(c);
         int count = (r1 - r0) * bw * 63;
         short[][] block = new short[count][];
@@ -451,7 +447,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             int bh = jpg.getBlocksHigh(c);
             int rowsPerBand = Math.max(1, BAND_ELEMS / (bw * 63));
             for (int r0 = 0; r0 < bh; r0 += rowsPerBand) {
-                list.add(new int[]{c, r0, Math.min(bh, r0 + rowsPerBand)});
+                list.add(new int[] {c, r0, Math.min(bh, r0 + rowsPerBand)});
             }
         }
         return list.toArray(new int[0][]);

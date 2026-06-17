@@ -5,10 +5,9 @@
 
 package com.openstego.desktop.image.jpeg;
 
+import com.openstego.desktop.image.PixelImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-
-import com.openstego.desktop.image.PixelImage;
 
 /**
  * A pure-Java baseline (sequential Huffman) JPEG coefficient codec. It reads a JPEG into quantized
@@ -34,10 +33,8 @@ public final class JpegCodec {
     private static final int AC_LIMIT = 1023;
 
     // Standard Huffman tables used for writing.
-    private static final HuffTable ENC_DC_LUMA =
-            new HuffTable(JpegTables.STD_DC_LUMA_BITS, JpegTables.STD_DC_LUMA_VAL);
-    private static final HuffTable ENC_AC_LUMA =
-            new HuffTable(JpegTables.STD_AC_LUMA_BITS, JpegTables.STD_AC_LUMA_VAL);
+    private static final HuffTable ENC_DC_LUMA = new HuffTable(JpegTables.STD_DC_LUMA_BITS, JpegTables.STD_DC_LUMA_VAL);
+    private static final HuffTable ENC_AC_LUMA = new HuffTable(JpegTables.STD_AC_LUMA_BITS, JpegTables.STD_AC_LUMA_VAL);
     private static final HuffTable ENC_DC_CHROMA =
             new HuffTable(JpegTables.STD_DC_CHROMA_BITS, JpegTables.STD_DC_CHROMA_VAL);
     private static final HuffTable ENC_AC_CHROMA =
@@ -151,8 +148,8 @@ public final class JpegCodec {
                 case 0xCD:
                 case 0xCE:
                 case 0xCF:
-                    throw new IOException("Unsupported JPEG mode (only baseline supported): marker 0x"
-                            + Integer.toHexString(marker));
+                    throw new IOException(
+                            "Unsupported JPEG mode (only baseline supported): marker 0x" + Integer.toHexString(marker));
                 case 0xDA: { // SOS
                     if (comps == null) {
                         throw new IOException("Corrupt JPEG: SOS before SOF");
@@ -185,8 +182,20 @@ public final class JpegCodec {
                     }
                     int entropyStart = segEnd;
                     int entropyEnd = findScanEnd(jpeg, entropyStart);
-                    decodeScan(jpeg, entropyStart, entropyEnd, comps, coeff, dc, ac,
-                            frameIdx, dcSel, acSel, mcuCols, mcuRows, restartInterval);
+                    decodeScan(
+                            jpeg,
+                            entropyStart,
+                            entropyEnd,
+                            comps,
+                            coeff,
+                            dc,
+                            ac,
+                            frameIdx,
+                            dcSel,
+                            acSel,
+                            mcuCols,
+                            mcuRows,
+                            restartInterval);
                     pos = entropyEnd;
                     continue; // pos already advanced past entropy data
                 }
@@ -199,8 +208,7 @@ public final class JpegCodec {
         if (comps == null || coeff == null) {
             throw new IOException("Corrupt JPEG: no frame header");
         }
-        return new JpegImage(width, height, comps, quantTables, maxH, maxV, mcuCols, mcuRows,
-                coeff, null, false);
+        return new JpegImage(width, height, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, null, false);
     }
 
     private static void parseDqt(byte[] d, int pos, int end, int[][] quantTables) {
@@ -247,9 +255,21 @@ public final class JpegCodec {
         }
     }
 
-    private static void decodeScan(byte[] d, int start, int end, JpegImage.Component[] comps,
-            short[][][] coeff, HuffTable[] dc, HuffTable[] ac, int[] frameIdx, int[] dcSel,
-            int[] acSel, int mcuCols, int mcuRows, int restartInterval) throws IOException {
+    private static void decodeScan(
+            byte[] d,
+            int start,
+            int end,
+            JpegImage.Component[] comps,
+            short[][][] coeff,
+            HuffTable[] dc,
+            HuffTable[] ac,
+            int[] frameIdx,
+            int[] dcSel,
+            int[] acSel,
+            int mcuCols,
+            int mcuRows,
+            int restartInterval)
+            throws IOException {
         BitReader in = new BitReader(d, start, end);
         int[] pred = new int[comps.length];
         int ns = frameIdx.length;
@@ -279,8 +299,8 @@ public final class JpegCodec {
         }
     }
 
-    private static void decodeBlock(BitReader in, HuffTable dcT, HuffTable acT, short[] block,
-            int[] pred, int fc) throws IOException {
+    private static void decodeBlock(BitReader in, HuffTable dcT, HuffTable acT, short[] block, int[] pred, int fc)
+            throws IOException {
         int s = dcT.decode(in);
         int diff = (s == 0) ? 0 : extend(in.readBits(s), s);
         pred[fc] += diff;
@@ -467,8 +487,7 @@ public final class JpegCodec {
         bw.pad();
     }
 
-    private static void encodeBlock(BitWriter bw, HuffTable dcT, HuffTable acT, short[] block,
-            int[] pred, int si) {
+    private static void encodeBlock(BitWriter bw, HuffTable dcT, HuffTable acT, short[] block, int[] pred, int si) {
         int diff = block[0] - pred[si];
         pred[si] = block[0];
         int s = category(diff);
@@ -568,8 +587,7 @@ public final class JpegCodec {
             transformBlockRows(image, c, subsample, 0, bh, bw, quant, coeff[c], null);
         }
 
-        return new JpegImage(w, h, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, image,
-                subsample);
+        return new JpegImage(w, h, comps, quantTables, maxH, maxV, mcuCols, mcuRows, coeff, image, subsample);
     }
 
     // ------------------------------------------------- precover side-info helpers
@@ -657,8 +675,7 @@ public final class JpegCodec {
      * when {@code eOut != null}, the rounding errors {@code e = U/q - rounded} in (&minus;0.5, 0.5]
      * (saturated ACs clamped, their side info dropped to 0). {@code u} is caller scratch (length 64).
      */
-    private static void quantizeBlock(double[] samples, int[] quant, double[] u, short[] qOut,
-            double[] eOut) {
+    private static void quantizeBlock(double[] samples, int[] quant, double[] u, short[] qOut, double[] eOut) {
         Dct8x8.forward(samples, u);
         for (int k = 0; k < 64; k++) {
             double uq = u[k] / quant[k];
@@ -683,8 +700,16 @@ public final class JpegCodec {
      * {@code coeffOut} and/or {@code errOut} (either may be {@code null}), each indexed by band-local
      * block {@code (br - br0) * blocksWide + bc}.
      */
-    static void transformBlockRows(PixelImage img, int comp, boolean subsample, int br0, int br1,
-            int blocksWide, int[] quant, short[][] coeffOut, double[][] errOut) {
+    static void transformBlockRows(
+            PixelImage img,
+            int comp,
+            boolean subsample,
+            int br0,
+            int br1,
+            int blocksWide,
+            int[] quant,
+            short[][] coeffOut,
+            double[][] errOut) {
         int planeW = planeWidth(comp, img.getWidth(), subsample);
         int planeH = planeHeight(comp, img.getHeight(), subsample);
         double[][] rows = new double[8][planeW];

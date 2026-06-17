@@ -41,17 +41,30 @@ final class UniwardCost {
 
     /** db8 high-pass decomposition filter (16 taps), as used by the UNIWARD reference. */
     private static final double[] HPDF = {
-            -0.0544158422, 0.3128715909, -0.6756307363, 0.5853546837,
-            0.0158291053, -0.2840155430, -0.0004724846, 0.1287474266,
-            0.0173693010, -0.0440882539, -0.0139810279, 0.0087460940,
-            0.0048703530, -0.0003917404, -0.0006754494, -0.0001174768
+        -0.0544158422,
+        0.3128715909,
+        -0.6756307363,
+        0.5853546837,
+        0.0158291053,
+        -0.2840155430,
+        -0.0004724846,
+        0.1287474266,
+        0.0173693010,
+        -0.0440882539,
+        -0.0139810279,
+        0.0087460940,
+        0.0048703530,
+        -0.0003917404,
+        -0.0006754494,
+        -0.0001174768
     };
 
     /** Filter length and derived padding/pattern geometry. */
-    private static final int LF = HPDF.length;          // 16
-    private static final int CENTER = LF / 2;           // 8
-    private static final int PAT = 8 + LF - 1;          // 23 (full 1D response of an 8-tap basis)
-    private static final int OFF = LF - 1;              // 15 : A-index = s' + a - OFF
+    private static final int LF = HPDF.length; // 16
+
+    private static final int CENTER = LF / 2; // 8
+    private static final int PAT = 8 + LF - 1; // 23 (full 1D response of an 8-tap basis)
+    private static final int OFF = LF - 1; // 15 : A-index = s' + a - OFF
 
     private UniwardCost() {
         // Static utility.
@@ -69,8 +82,7 @@ final class UniwardCost {
      * @return {@code cost[blockIndex][64]} with {@code blockIndex = br*blocksWide + bc}; the DC entry
      *         (index 0) is left at 0 and is not embeddable
      */
-    static double[][] compute(double[][] plane, int planeH, int planeW, int blocksWide,
-            int blocksHigh, int[] quant) {
+    static double[][] compute(double[][] plane, int planeH, int planeW, int blocksWide, int blocksHigh, int[] quant) {
         // Low-pass decomposition filter from db8 high-pass via the QMF relation. Only relative signs
         // matter (costs use absolute values), so a global sign is irrelevant.
         double[] lpdf = new double[LF];
@@ -108,10 +120,9 @@ final class UniwardCost {
                             continue; // DC is not embeddable
                         }
                         double q = quant[i * 8 + j];
-                        double rho =
-                                accumulate(absRespL[i], absRespH[j], inv1, r0, c0, gh, gw)
-                              + accumulate(absRespH[i], absRespL[j], inv2, r0, c0, gh, gw)
-                              + accumulate(absRespH[i], absRespH[j], inv3, r0, c0, gh, gw);
+                        double rho = accumulate(absRespL[i], absRespH[j], inv1, r0, c0, gh, gw)
+                                + accumulate(absRespH[i], absRespL[j], inv2, r0, c0, gh, gw)
+                                + accumulate(absRespH[i], absRespH[j], inv3, r0, c0, gh, gw);
                         block[i * 8 + j] = q * rho;
                     }
                 }
@@ -124,8 +135,7 @@ final class UniwardCost {
      * Accumulates one directional subband's contribution for a block/mode:
      * {@code sum_{s',t'} absRow[s']*absCol[t'] * inv[r0+s'-7][c0+t'-7]} (replicate-clamped indices).
      */
-    private static double accumulate(double[] absRow, double[] absCol, double[][] inv, int r0, int c0,
-            int gh, int gw) {
+    private static double accumulate(double[] absRow, double[] absCol, double[][] inv, int r0, int c0, int gh, int gw) {
         double sum = 0.0;
         for (int s = 0; s < PAT; s++) {
             double rw = absRow[s];
@@ -174,8 +184,8 @@ final class UniwardCost {
      * the separable centered correlation with {@code rowFilter} (down columns of the grid, i.e. the
      * vertical/row direction) and {@code colFilter} (across the row), using replicate padding.
      */
-    private static double[][] invResidual(double[][] plane, int planeH, int planeW, int gh, int gw,
-            double[] rowFilter, double[] colFilter) {
+    private static double[][] invResidual(
+            double[][] plane, int planeH, int planeW, int gh, int gw, double[] rowFilter, double[] colFilter) {
         // First filter horizontally (colFilter across columns), then vertically (rowFilter down
         // rows). Sample access clamps to the plane, so grid cells past the image replicate the edge.
         double[][] tmp = new double[gh][gw];

@@ -10,7 +10,6 @@ package com.openstego.desktop.plugin.lsb;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.PixelImage;
-
 import java.io.InputStream;
 
 /**
@@ -133,8 +132,14 @@ public class LSBInputStream extends InputStream {
                 }
             }
         }
-        return ((bitSet[0] << 7) + (bitSet[1] << 6) + (bitSet[2] << 5) + (bitSet[3] << 4) + (bitSet[4] << 3)
-                + (bitSet[5] << 2) + (bitSet[6] << 1) + bitSet[7]);
+        return ((bitSet[0] << 7)
+                + (bitSet[1] << 6)
+                + (bitSet[2] << 5)
+                + (bitSet[3] << 4)
+                + (bitSet[4] << 3)
+                + (bitSet[5] << 2)
+                + (bitSet[6] << 1)
+                + bitSet[7]);
     }
 
     /**

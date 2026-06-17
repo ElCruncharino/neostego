@@ -7,9 +7,8 @@ package com.openstego.desktop.ui;
 
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * Panel for "Generate Signature"
@@ -69,6 +68,9 @@ public class GenerateSignaturePanel extends JPanel {
         if (this.signatureFileButton == null) {
             this.signatureFileButton = new JButton();
             this.signatureFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.genSigFile");
+            this.signatureFileButton.setToolTipText(acc);
+            this.signatureFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.signatureFileButton;
     }

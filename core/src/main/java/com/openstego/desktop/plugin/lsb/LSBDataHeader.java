@@ -10,7 +10,6 @@ package com.openstego.desktop.plugin.lsb;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.util.CommonUtil;
-
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -29,7 +28,7 @@ public class LSBDataHeader {
      * Header version to distinguish between various versions of data embedding. This should be changed to next
      * version, in case the logic of embedding data is changed.
      */
-    public static final byte[] HEADER_VERSION = new byte[]{(byte) 2};
+    public static final byte[] HEADER_VERSION = new byte[] {(byte) 2};
 
     /**
      * Length of the fixed portion of the header
@@ -121,7 +120,9 @@ public class LSBDataHeader {
             if (n < FIXED_HEADER_LENGTH) {
                 throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_STEGO_HEADER);
             }
-            this.dataLength = (CommonUtil.byteToInt(header[0]) + (CommonUtil.byteToInt(header[1]) << 8) + (CommonUtil.byteToInt(header[2]) << 16)
+            this.dataLength = (CommonUtil.byteToInt(header[0])
+                    + (CommonUtil.byteToInt(header[1]) << 8)
+                    + (CommonUtil.byteToInt(header[2]) << 16)
                     + (CommonUtil.byteToInt(header[3]) << 24));
             channelBits = header[4];
             // Read filename length as an unsigned byte so that names of 128-255 bytes are handled correctly
@@ -192,7 +193,7 @@ public class LSBDataHeader {
 
         if (this.fileName.length > 0) {
             System.arraycopy(this.fileName, 0, out, currIndex, this.fileName.length);
-            //currIndex += this.fileName.length;
+            // currIndex += this.fileName.length;
         }
 
         return out;
@@ -243,7 +244,11 @@ public class LSBDataHeader {
      * @return Header size
      */
     public int getHeaderSize() {
-        return DATA_STAMP.length + HEADER_VERSION.length + FIXED_HEADER_LENGTH + CRYPT_ALGO_LENGTH + this.fileName.length;
+        return DATA_STAMP.length
+                + HEADER_VERSION.length
+                + FIXED_HEADER_LENGTH
+                + CRYPT_ALGO_LENGTH
+                + this.fileName.length;
     }
 
     /**

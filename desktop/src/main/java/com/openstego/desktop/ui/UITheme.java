@@ -9,7 +9,6 @@ import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatLightLaf;
 import com.openstego.desktop.util.UserPreferences;
-
 import javax.swing.UIManager;
 
 /**

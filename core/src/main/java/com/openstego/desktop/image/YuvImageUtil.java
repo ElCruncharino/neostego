@@ -19,8 +19,7 @@ import java.util.List;
  */
 public final class YuvImageUtil {
 
-    private YuvImageUtil() {
-    }
+    private YuvImageUtil() {}
 
     /**
      * Split an image into Y, U, V and alpha planes.

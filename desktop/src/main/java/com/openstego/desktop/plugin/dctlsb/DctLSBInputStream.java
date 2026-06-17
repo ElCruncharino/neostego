@@ -13,7 +13,6 @@ import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dct.DCT;
-
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
 import java.util.Random;

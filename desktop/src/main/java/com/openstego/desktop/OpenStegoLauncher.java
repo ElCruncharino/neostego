@@ -11,7 +11,6 @@ import com.openstego.desktop.ui.OpenStegoUI;
 import com.openstego.desktop.ui.UITheme;
 import com.openstego.desktop.util.PluginManager;
 import com.openstego.desktop.util.UserPreferences;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,8 +25,7 @@ public class OpenStegoLauncher {
      */
     private static final Logger logger = Logger.getLogger(OpenStegoLauncher.class.getName());
 
-    private OpenStegoLauncher() {
-    }
+    private OpenStegoLauncher() {}
 
     /**
      * Main method for launching OpenStego from the command line / desktop.

@@ -11,9 +11,8 @@ import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.ui.OpenStegoFrame;
 import com.openstego.desktop.ui.PluginEmbedOptionsUI;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * GUI options panel for the content-adaptive (HILL+STC) plugin.

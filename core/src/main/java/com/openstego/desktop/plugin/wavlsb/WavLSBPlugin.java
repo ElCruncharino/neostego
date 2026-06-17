@@ -10,7 +10,6 @@ import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.util.LabelUtil;
-
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
@@ -115,7 +114,8 @@ public class WavLSBPlugin extends DataHidingPlugin<OpenStegoConfig> {
     }
 
     @Override
-    public byte[] getDiff(byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
+    public byte[] getDiff(
+            byte[] stegoData, String stegoFileName, byte[] coverData, String coverFileName, String diffFileName)
             throws OpenStegoException {
         WavCodec cover = WavCodec.parse(coverData);
         WavCodec stego = WavCodec.parse(stegoData);

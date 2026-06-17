@@ -5,14 +5,11 @@
 
 package com.openstego.desktop.image.awt;
 
-import com.openstego.desktop.OpenStego;
-import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.ImageCodec;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
-
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;

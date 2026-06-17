@@ -7,9 +7,8 @@ package com.openstego.desktop.ui;
 
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * Panel for "Verify Watermark"
@@ -58,6 +57,9 @@ public class VerifyWatermarkPanel extends JPanel {
         if (this.inputFileButton == null) {
             this.inputFileButton = new JButton();
             this.inputFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.wmVerInputFile");
+            this.inputFileButton.setToolTipText(acc);
+            this.inputFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.inputFileButton;
     }
@@ -84,6 +86,9 @@ public class VerifyWatermarkPanel extends JPanel {
         if (this.signatureFileButton == null) {
             this.signatureFileButton = new JButton();
             this.signatureFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.wmVerSigFile");
+            this.signatureFileButton.setToolTipText(acc);
+            this.signatureFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.signatureFileButton;
     }

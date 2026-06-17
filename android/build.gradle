@@ -7,34 +7,32 @@
  */
 
 plugins {
-    id 'com.android.application' version '8.9.1'
-    id 'org.jetbrains.kotlin.android' version '2.4.0'
-    id 'org.jetbrains.kotlin.plugin.compose' version '2.4.0'
+    id 'com.android.application' version '9.1.0'
+    // AGP 9 compiles Kotlin via built-in Kotlin support, so the standalone 'kotlin.android' plugin
+    // is no longer applied. The Compose compiler plugin is still required and is version-aligned by
+    // AGP's built-in Kotlin (no explicit version).
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
 }
 
 android {
-    namespace 'com.elcruncharino.neostego'
-    compileSdk 36
+    namespace = 'com.elcruncharino.neostego'
+    compileSdk = 36
 
     defaultConfig {
-        applicationId 'com.elcruncharino.neostego'
-        minSdk 26
-        targetSdk 35
-        versionCode 1
-        versionName project.version.toString()
+        applicationId = 'com.elcruncharino.neostego'
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 2
+        versionName = project.version.toString()
     }
 
     buildFeatures {
-        compose true
+        compose = true
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = '17'
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     // Release signing is read from a gitignored keystore.properties (see keystore.properties.example).
@@ -56,11 +54,11 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled = true
+            shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (file('keystore.properties').exists()) {
-                signingConfig signingConfigs.release
+                signingConfig = signingConfigs.release
             }
         }
     }
@@ -69,6 +67,16 @@ android {
 repositories {
     google()
     mavenCentral()
+}
+
+// Kotlin formatting for this module (the Java config is inherited from the root spotless block).
+spotless {
+    kotlin {
+        target 'src/**/*.kt'
+        ktlint('1.2.1')
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
 
 dependencies {

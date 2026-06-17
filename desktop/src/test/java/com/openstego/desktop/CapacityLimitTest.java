@@ -5,17 +5,16 @@
 
 package com.openstego.desktop;
 
-import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.openstego.desktop.util.PluginManager;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Regression coverage for upstream issue #67. A payload that does not fit the cover's capacity must fail
@@ -54,11 +53,13 @@ public class CapacityLimitTest {
         // 32x32 RGB holds ~ (32*32*3)/8 = 384 bytes minus the header; 64 KB cannot possibly fit.
         byte[] huge = new byte[64 * 1024];
 
-        OpenStegoException ex = assertThrows(OpenStegoException.class,
-                () -> newStego().embedData(huge, "big.bin", cover, "cover.png", "stego.png"));
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class, () -> newStego().embedData(huge, "big.bin", cover, "cover.png", "stego.png"));
         // Must be the capacity error, not some opaque failure.
-        assertTrue(ex.getMessage() != null && ex.getMessage().toLowerCase().contains("insufficient")
-                        || ex.getMessage().toLowerCase().contains("size") || ex.getMessage().toLowerCase().contains("large"),
+        assertTrue(
+                ex.getMessage() != null && ex.getMessage().toLowerCase().contains("insufficient")
+                        || ex.getMessage().toLowerCase().contains("size")
+                        || ex.getMessage().toLowerCase().contains("large"),
                 "expected a capacity-related message, got: " + ex.getMessage());
     }
 }

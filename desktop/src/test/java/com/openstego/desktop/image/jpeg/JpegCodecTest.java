@@ -5,20 +5,18 @@
 
 package com.openstego.desktop.image.jpeg;
 
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.Random;
-
-import com.openstego.desktop.image.awt.BufferedImagePixelImage;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.openstego.desktop.image.awt.BufferedImagePixelImage;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Random;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Test;
 
 /**
  * Gate tests for the pure-Java JPEG coefficient codec. The codec must be byte-exact at the
@@ -79,8 +77,7 @@ class JpegCodecTest {
         assertEquals(a.getHeight(), b.getHeight(), "height");
         for (int y = 0; y < a.getHeight(); y++) {
             for (int x = 0; x < a.getWidth(); x++) {
-                assertEquals(a.getRGB(x, y) & 0xFFFFFF, b.getRGB(x, y) & 0xFFFFFF,
-                        "pixel mismatch at " + x + "," + y);
+                assertEquals(a.getRGB(x, y) & 0xFFFFFF, b.getRGB(x, y) & 0xFFFFFF, "pixel mismatch at " + x + "," + y);
             }
         }
     }
@@ -92,8 +89,8 @@ class JpegCodecTest {
             assertEquals(a.getBlocksHigh(c), b.getBlocksHigh(c), "blocksHigh c" + c);
             for (int br = 0; br < a.getBlocksHigh(c); br++) {
                 for (int bc = 0; bc < a.getBlocksWide(c); bc++) {
-                    assertArrayEquals(a.getBlock(c, br, bc), b.getBlock(c, br, bc),
-                            "block c" + c + " (" + br + "," + bc + ")");
+                    assertArrayEquals(
+                            a.getBlock(c, br, bc), b.getBlock(c, br, bc), "block c" + c + " (" + br + "," + bc + ")");
                 }
             }
         }
@@ -158,14 +155,16 @@ class JpegCodecTest {
             }
         }
         assertEquals(0, diffs, "edited image must re-encode exactly");
-        assertEquals(before[natIdx] + 1, round.getBlock(comp, br, bc)[natIdx],
+        assertEquals(
+                before[natIdx] + 1,
+                round.getBlock(comp, br, bc)[natIdx],
                 "the one edited coefficient must carry through");
     }
 
     /** fromPrecover output must be a valid JPEG and survive our own decode/encode losslessly. */
     @Test
     void fromPrecoverRoundTrips() throws Exception {
-        for (boolean subsample : new boolean[]{true, false}) {
+        for (boolean subsample : new boolean[] {true, false}) {
             BufferedImage src = content(70, 54, 5L);
             JpegImage jpg = JpegCodec.fromPrecover(new BufferedImagePixelImage(src), 90, subsample);
             assertTrue(jpg.hasSideInfo(), "precover must retain side info");

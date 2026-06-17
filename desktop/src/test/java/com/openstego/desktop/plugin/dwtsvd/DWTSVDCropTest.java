@@ -5,22 +5,21 @@
 
 package com.openstego.desktop.plugin.dwtsvd;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Regression coverage for upstream issue #69 ("watermarking not robust"). The reporter cropped a slightly
@@ -69,7 +68,7 @@ public class DWTSVDCropTest {
         assertTrue(newStego().checkMark(wm, "stego.png", sig) > 0.95, "uncropped watermark must verify ~1.0");
 
         // Small pure crops of a few/several pixels per edge must still verify above the high threshold (0.5).
-        for (int inset : new int[]{6, 8, 12, 16}) {
+        for (int inset : new int[] {6, 8, 12, 16}) {
             byte[] cropped = cropEdges(wm, inset);
             double corr = newStego().checkMark(cropped, "stego.png", sig);
             assertTrue(corr > 0.5, "watermark must survive a " + inset + "px edge crop, correlation=" + corr);

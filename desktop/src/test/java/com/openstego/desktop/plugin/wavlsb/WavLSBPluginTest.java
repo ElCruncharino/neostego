@@ -5,23 +5,22 @@
 
 package com.openstego.desktop.plugin.wavlsb;
 
-import com.openstego.desktop.OpenStego;
-import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.OpenStegoPlugin;
-import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Random;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import com.openstego.desktop.OpenStego;
+import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.OpenStegoPlugin;
+import com.openstego.desktop.util.PluginManager;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Random;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * End-to-end tests for the WAV LSB audio plugin (upstream issue #5: audio support). A message hidden in a
@@ -47,12 +46,12 @@ public class WavLSBPluginTest {
         writeTag(o, "WAVE");
         writeTag(o, "fmt ");
         writeLE32(o, 16);
-        writeLE16(o, 1);            // PCM
-        writeLE16(o, 1);            // mono
+        writeLE16(o, 1); // PCM
+        writeLE16(o, 1); // mono
         writeLE32(o, sampleRate);
         writeLE32(o, sampleRate * bytesPerSample);
         writeLE16(o, bytesPerSample);
-        writeLE16(o, 16);           // bits per sample
+        writeLE16(o, 16); // bits per sample
         writeTag(o, "data");
         writeLE32(o, dataLen);
         Random rnd = new Random(42L);
@@ -127,15 +126,15 @@ public class WavLSBPluginTest {
         byte[] cover = makeWav(1_000); // ~125 bytes capacity
         byte[] huge = new byte[10_000];
 
-        assertThrows(OpenStegoException.class,
-                () -> newStego(false, false, null).embedData(huge, "big.bin", cover, "cover.wav", "stego.wav"));
+        assertThrows(OpenStegoException.class, () -> newStego(false, false, null)
+                .embedData(huge, "big.bin", cover, "cover.wav", "stego.wav"));
     }
 
     @Test
     public void nonWavCoverFailsCleanly() throws Exception {
         byte[] notWav = new byte[100];
-        assertThrows(OpenStegoException.class,
-                () -> newStego(false, false, null).embedData(new byte[]{1, 2, 3}, "m", notWav, "cover.wav", "stego.wav"));
+        assertThrows(OpenStegoException.class, () -> newStego(false, false, null)
+                .embedData(new byte[] {1, 2, 3}, "m", notWav, "cover.wav", "stego.wav"));
     }
 
     @Test

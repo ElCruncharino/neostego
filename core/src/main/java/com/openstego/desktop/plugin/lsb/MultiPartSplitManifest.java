@@ -8,7 +8,6 @@ package com.openstego.desktop.plugin.lsb;
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -87,8 +86,16 @@ public class MultiPartSplitManifest {
      * @param encryptionAlgorithm Encryption algorithm name (only meaningful when encrypted)
      * @param fileName            Original file name; should be supplied for part 0 only, may be null
      */
-    public MultiPartSplitManifest(int sessionId, int partIndex, int totalParts, int totalLength, int chunkLength,
-                                  boolean useCompression, boolean useEncryption, String encryptionAlgorithm, String fileName) {
+    public MultiPartSplitManifest(
+            int sessionId,
+            int partIndex,
+            int totalParts,
+            int totalLength,
+            int chunkLength,
+            boolean useCompression,
+            boolean useEncryption,
+            String encryptionAlgorithm,
+            String fileName) {
         this.sessionId = sessionId;
         this.partIndex = partIndex;
         this.totalParts = totalParts;
@@ -100,8 +107,16 @@ public class MultiPartSplitManifest {
         this.fileNameBytes = (fileName == null) ? new byte[0] : fileName.getBytes(StandardCharsets.UTF_8);
     }
 
-    private MultiPartSplitManifest(int sessionId, int partIndex, int totalParts, int totalLength, int chunkLength,
-                                   boolean useCompression, boolean useEncryption, String encryptionAlgorithm, byte[] fileNameBytes) {
+    private MultiPartSplitManifest(
+            int sessionId,
+            int partIndex,
+            int totalParts,
+            int totalLength,
+            int chunkLength,
+            boolean useCompression,
+            boolean useEncryption,
+            String encryptionAlgorithm,
+            byte[] fileNameBytes) {
         this.sessionId = sessionId;
         this.partIndex = partIndex;
         this.totalParts = totalParts;
@@ -203,8 +218,16 @@ public class MultiPartSplitManifest {
             throw corrupt("payload shorter than declared chunk length");
         }
 
-        return new MultiPartSplitManifest(sessionId, partIndex, totalParts, totalLength, chunkLength,
-                useCompression, useEncryption, algo, fileNameBytes);
+        return new MultiPartSplitManifest(
+                sessionId,
+                partIndex,
+                totalParts,
+                totalLength,
+                chunkLength,
+                useCompression,
+                useEncryption,
+                algo,
+                fileNameBytes);
     }
 
     /**
@@ -307,7 +330,10 @@ public class MultiPartSplitManifest {
     }
 
     private static int getInt(byte[] in, int idx) {
-        return ((in[idx] & 0xFF) << 24) | ((in[idx + 1] & 0xFF) << 16) | ((in[idx + 2] & 0xFF) << 8) | (in[idx + 3] & 0xFF);
+        return ((in[idx] & 0xFF) << 24)
+                | ((in[idx + 1] & 0xFF) << 16)
+                | ((in[idx + 2] & 0xFF) << 8)
+                | (in[idx + 3] & 0xFF);
     }
 
     private static int getShort(byte[] in, int idx) {

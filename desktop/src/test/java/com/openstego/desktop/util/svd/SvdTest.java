@@ -5,12 +5,11 @@
 
 package com.openstego.desktop.util.svd;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.Random;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Random;
+import org.junit.jupiter.api.Test;
 
 /**
  * Correctness tests for the one-sided Jacobi {@link Svd}. The properties that matter for watermarking are: faithful

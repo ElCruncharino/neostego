@@ -8,7 +8,6 @@
 package com.openstego.desktop.util;
 
 import com.openstego.desktop.OpenStegoException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -29,8 +28,7 @@ public class StringUtil {
     /**
      * Constructor is private so that this class is not instantiated
      */
-    private StringUtil() {
-    }
+    private StringUtil() {}
 
     /**
      * Method to convert byte array to hexadecimal string

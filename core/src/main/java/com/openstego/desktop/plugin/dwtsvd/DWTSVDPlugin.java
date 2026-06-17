@@ -17,7 +17,6 @@ import com.openstego.desktop.util.dwt.Image;
 import com.openstego.desktop.util.dwt.ImageTree;
 import com.openstego.desktop.util.ecc.ReedSolomon;
 import com.openstego.desktop.util.svd.Svd;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -62,11 +61,13 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
 
     /** DWT configuration (matches the conventions used by the other watermarking plugins). */
     private static final int DWT_FILTER_ID = 1;
+
     private static final int DWT_METHOD = 2;
     private static final int DWT_LEVEL = 1;
 
     /** Defaults for newly generated signatures. */
     private static final int DEFAULT_PAYLOAD_BITS = 64;
+
     private static final int DEFAULT_PARITY_BYTES = 8;
 
     /**
@@ -109,7 +110,8 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
     // ------------------------------------------------------------------
 
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         if (cover == null) {
             throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_NO_COVER_FILE);
         }
@@ -257,7 +259,8 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
             }
             // Only trust a resynchronised alignment if it beats the baseline AND clears the chance floor; this
             // keeps a small crop recoverable without turning the multi-offset search into a false-positive source.
-            if (searchBest != null && searchBestScore > baselineScore
+            if (searchBest != null
+                    && searchBestScore > baselineScore
                     && (double) searchBestScore / codeLen >= SEARCH_ACCEPT_MATCH) {
                 best = searchBest;
             }
@@ -470,7 +473,8 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         /** Generate a fresh signature with a random payload and scrambling seed. */
         Signature(Random rand) {
             // Allow the embedding strength to be overridden (used for benchmarking/tuning); defaults otherwise.
-            this.strength = Double.parseDouble(System.getProperty("dwtsvd.strength", Double.toString(DEFAULT_STRENGTH)));
+            this.strength =
+                    Double.parseDouble(System.getProperty("dwtsvd.strength", Double.toString(DEFAULT_STRENGTH)));
             this.seed = rand.nextLong();
             this.payload = new byte[this.payloadBits / 8];
             rand.nextBytes(this.payload);
@@ -501,10 +505,8 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         }
 
         byte[] getSigData() throws OpenStegoException {
-            try (
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ObjectOutputStream oos = new ObjectOutputStream(baos)
-            ) {
+            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ObjectOutputStream oos = new ObjectOutputStream(baos)) {
                 oos.write(this.sig);
                 oos.writeInt(this.payloadBits);
                 oos.writeInt(this.parityBytes);

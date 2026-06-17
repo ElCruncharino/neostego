@@ -13,7 +13,6 @@ import com.openstego.desktop.image.jpeg.JpegCodec;
 import com.openstego.desktop.image.jpeg.JpegImage;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -64,7 +63,8 @@ public final class CoeffDump {
 
                 int c = 0;
                 int bw = jc.getBlocksWide(c), bh = jc.getBlocksHigh(c);
-                o.writeInt(bh); o.writeInt(bw);
+                o.writeInt(bh);
+                o.writeInt(bw);
                 int[] quant = jc.getQuantTable(c);
                 for (int k = 0; k < 64; k++) o.writeInt(quant[k]);
                 for (int br = 0; br < bh; br++) {

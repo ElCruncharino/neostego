@@ -5,22 +5,21 @@
 
 package com.openstego.desktop.compat;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.plugin.adaptive.AdaptiveConfig;
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Random;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Proves the tiled (banded) embedding of the content-adaptive and SI-UNIWARD plugins handles a
@@ -84,7 +83,9 @@ public class LargeCoverTilingTest {
     private void assertRoundTrip(OpenStego stego, String stegoFileName) throws Exception {
         byte[] out = stego.embedData(msg, MSG_FILE_NAME, cover, "cover.png", stegoFileName);
         List<?> extracted = stego.extractData(out, stegoFileName);
-        assertArrayEquals(msg, (byte[]) extracted.get(1),
+        assertArrayEquals(
+                msg,
+                (byte[]) extracted.get(1),
                 stegoFileName + ": 150 KB payload must round-trip byte-for-byte from a 13.5 MP cover");
     }
 

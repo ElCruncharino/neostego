@@ -5,22 +5,21 @@
 
 package com.openstego.desktop.plugin.randlsb;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.ImageHolder;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.PluginManager;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for the Random LSB matching plugin: round-trip correctness, cross-compatibility with plain
@@ -85,7 +84,8 @@ public class RandomLSBMatchTest {
                 for (int ch = 0; ch < 3; ch++) {
                     int cv = (cp >> (ch * 8)) & 0xFF;
                     int sv = (sp >> (ch * 8)) & 0xFF;
-                    assertTrue(Math.abs(cv - sv) <= 1,
+                    assertTrue(
+                            Math.abs(cv - sv) <= 1,
                             "Each channel must change by at most 1 (matching); got " + cv + " -> " + sv);
                 }
             }

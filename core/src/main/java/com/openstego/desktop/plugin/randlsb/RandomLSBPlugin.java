@@ -8,11 +8,10 @@
 package com.openstego.desktop.plugin.randlsb;
 
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.plugin.lsb.*;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.plugin.lsb.*;
 import com.openstego.desktop.util.LabelUtil;
-
 import java.io.IOException;
 
 /**
@@ -22,7 +21,7 @@ public class RandomLSBPlugin extends LSBPlugin {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "RandomLSB";
+    public static final String NAMESPACE = "RandomLSB";
 
     /**
      * LabelUtil instance to retrieve labels
@@ -69,7 +68,8 @@ public class RandomLSBPlugin extends LSBPlugin {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         int numOfPixels;
         PixelImage image;
 

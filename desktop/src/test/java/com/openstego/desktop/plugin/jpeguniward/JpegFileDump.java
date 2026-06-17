@@ -8,7 +8,6 @@ package com.openstego.desktop.plugin.jpeguniward;
 import com.openstego.desktop.image.jpeg.JpegCodec;
 import com.openstego.desktop.image.jpeg.JpegImage;
 import com.openstego.desktop.util.CommonUtil;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -38,7 +37,8 @@ public final class JpegFileDump {
             for (int f = 0; f < count; f++) {
                 JpegImage j = JpegCodec.decode(CommonUtil.fileToBytes(files[f]));
                 int c = 0, bw = j.getBlocksWide(c), bh = j.getBlocksHigh(c);
-                o.writeInt(bh); o.writeInt(bw);
+                o.writeInt(bh);
+                o.writeInt(bw);
                 int[] quant = j.getQuantTable(c);
                 for (int k = 0; k < 64; k++) o.writeInt(quant[k]);
                 for (int br = 0; br < bh; br++)

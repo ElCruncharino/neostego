@@ -54,8 +54,10 @@ public class LSBErrors {
         OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, ERR_IMAGE_DATA_READ, "err.image.read");
         OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, NULL_IMAGE_ARGUMENT, "err.image.arg.nullValue");
         OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, IMAGE_SIZE_INSUFFICIENT, "err.image.insufficientSize");
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, MAX_BITS_NOT_NUMBER, "err.config.maxBitsUsedPerChannel.notNumber");
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, MAX_BITS_NOT_IN_RANGE, "err.config.maxBitsUsedPerChannel.notInRange");
+        OpenStegoException.addErrorCode(
+                LSBPlugin.NAMESPACE, MAX_BITS_NOT_NUMBER, "err.config.maxBitsUsedPerChannel.notNumber");
+        OpenStegoException.addErrorCode(
+                LSBPlugin.NAMESPACE, MAX_BITS_NOT_IN_RANGE, "err.config.maxBitsUsedPerChannel.notInRange");
         OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, INVALID_STEGO_HEADER, "err.invalidHeaderStamp");
         OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, INVALID_HEADER_VERSION, "err.invalidHeaderVersion");
     }

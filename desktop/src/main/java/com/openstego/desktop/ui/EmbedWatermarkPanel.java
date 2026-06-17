@@ -7,9 +7,8 @@ package com.openstego.desktop.ui;
 
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.util.LabelUtil;
-
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 /**
  * Panel for "Embed Watermark"
@@ -61,6 +60,9 @@ public class EmbedWatermarkPanel extends JPanel {
         if (this.fileForWmButton == null) {
             this.fileForWmButton = new JButton();
             this.fileForWmButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.wmFileForWm");
+            this.fileForWmButton.setToolTipText(acc);
+            this.fileForWmButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.fileForWmButton;
     }
@@ -87,6 +89,9 @@ public class EmbedWatermarkPanel extends JPanel {
         if (this.signatureFileButton == null) {
             this.signatureFileButton = new JButton();
             this.signatureFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.wmSigFile");
+            this.signatureFileButton.setToolTipText(acc);
+            this.signatureFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.signatureFileButton;
     }
@@ -113,6 +118,9 @@ public class EmbedWatermarkPanel extends JPanel {
         if (this.outputWmFileButton == null) {
             this.outputWmFileButton = new JButton();
             this.outputWmFileButton.setText("...");
+            String acc = labelUtil.getString("gui.acc.browse.wmOutputFile");
+            this.outputWmFileButton.setToolTipText(acc);
+            this.outputWmFileButton.getAccessibleContext().setAccessibleName(acc);
         }
         return this.outputWmFileButton;
     }
@@ -130,6 +138,9 @@ public class EmbedWatermarkPanel extends JPanel {
             this.jpegQualitySlider.setMinorTickSpacing(5);
             this.jpegQualitySlider.setPaintTicks(true);
             this.jpegQualitySlider.setPaintLabels(true);
+            this.jpegQualitySlider
+                    .getAccessibleContext()
+                    .setAccessibleName(labelUtil.getString("gui.acc.slider.jpegQuality"));
         }
         return this.jpegQualitySlider;
     }

@@ -7,11 +7,10 @@
 
 package com.openstego.desktop;
 
-import com.openstego.desktop.util.CommonUtil;
-import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+import com.openstego.desktop.util.CommonUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -24,9 +23,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 
 /**
  * Test class for {@link OpenStego}
@@ -68,7 +67,9 @@ public class OpenStegoTest extends MockitoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -88,7 +89,9 @@ public class OpenStegoTest extends MockitoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(true);
@@ -99,13 +102,19 @@ public class OpenStegoTest extends MockitoTest {
 
         // Plugin should be called with compressed and encrypted message
         ArgumentCaptor<byte[]> msgCaptor = ArgumentCaptor.forClass(byte[].class);
-        verify(mockPlugin, times(1)).embedData(msgCaptor.capture(), argThat(msgFileName::equals), argThat(cover::equals),
-                argThat(coverFileName::equals), argThat(stegoFileName::equals));
+        verify(mockPlugin, times(1))
+                .embedData(
+                        msgCaptor.capture(),
+                        argThat(msgFileName::equals),
+                        argThat(cover::equals),
+                        argThat(coverFileName::equals),
+                        argThat(stegoFileName::equals));
 
         // Decrypt and decompress message and compare with original
         OpenStegoCrypto crypto = new OpenStegoCrypto(config.getPassword(), config.getEncryptionAlgorithm());
         byte[] outputMsg = crypto.decrypt(msgCaptor.getValue());
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(outputMsg); GZIPInputStream zis = new GZIPInputStream(bis)) {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(outputMsg);
+                GZIPInputStream zis = new GZIPInputStream(bis)) {
             outputMsg = CommonUtil.streamToBytes(zis);
         }
         assertArrayEquals(msg, outputMsg);
@@ -120,14 +129,16 @@ public class OpenStegoTest extends MockitoTest {
         String stegoFileName = "stego.out";
 
         doReturn(
-                Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING),
-                Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)
-        ).when(mockPlugin).getPurposes();
+                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING),
+                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
         doThrow(
-                new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
-                new RuntimeException()
-        ).when(mockPlugin).embedData(any(byte[].class), anyString(), any(byte[].class), anyString(), anyString());
+                        new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
+                        new RuntimeException())
+                .when(mockPlugin)
+                .embedData(any(byte[].class), anyString(), any(byte[].class), anyString(), anyString());
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
@@ -162,7 +173,9 @@ public class OpenStegoTest extends MockitoTest {
         Path coverFilePath = createTempFile("cover", ".in", "cover data");
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -171,13 +184,13 @@ public class OpenStegoTest extends MockitoTest {
 
         try {
             os.embedData(msgFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
-            verify(mockPlugin, times(1)).embedData(
-                    argThat(v -> "message".equals(new String(v, StandardCharsets.UTF_8))),
-                    argThat(v -> v.startsWith("message") && v.endsWith(".txt")),
-                    argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
-                    argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
-                    argThat(stegoFileName::equals)
-            );
+            verify(mockPlugin, times(1))
+                    .embedData(
+                            argThat(v -> "message".equals(new String(v, StandardCharsets.UTF_8))),
+                            argThat(v -> v.startsWith("message") && v.endsWith(".txt")),
+                            argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
+                            argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
+                            argThat(stegoFileName::equals));
         } finally {
             Files.delete(msgFilePath);
             Files.delete(coverFilePath);
@@ -209,7 +222,9 @@ public class OpenStegoTest extends MockitoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
         os.embedMark(sig, sigFileName, cover, coverFileName, stegoFileName);
@@ -227,14 +242,16 @@ public class OpenStegoTest extends MockitoTest {
         String stegoFileName = "stego.out";
 
         doReturn(
-                Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING),
-                Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)
-        ).when(mockPlugin).getPurposes();
+                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING),
+                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
 
         doThrow(
-                new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
-                new RuntimeException()
-        ).when(mockPlugin).embedData(any(byte[].class), anyString(), any(byte[].class), anyString(), anyString());
+                        new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
+                        new RuntimeException())
+                .when(mockPlugin)
+                .embedData(any(byte[].class), anyString(), any(byte[].class), anyString(), anyString());
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
@@ -269,18 +286,20 @@ public class OpenStegoTest extends MockitoTest {
         Path coverFilePath = createTempFile("cover", ".in", "cover data");
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
         try {
             os.embedMark(sigFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
-            verify(mockPlugin, times(1)).embedData(
-                    argThat(v -> "signature".equals(new String(v, StandardCharsets.UTF_8))),
-                    argThat(v -> v.startsWith("general") && v.endsWith(".sig")),
-                    argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
-                    argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
-                    argThat(stegoFileName::equals)
-            );
+            verify(mockPlugin, times(1))
+                    .embedData(
+                            argThat(v -> "signature".equals(new String(v, StandardCharsets.UTF_8))),
+                            argThat(v -> v.startsWith("general") && v.endsWith(".sig")),
+                            argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
+                            argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
+                            argThat(stegoFileName::equals));
         } finally {
             Files.delete(sigFilePath);
             Files.delete(coverFilePath);
@@ -309,7 +328,9 @@ public class OpenStegoTest extends MockitoTest {
         byte[] stegoData = "stego data".getBytes(StandardCharsets.UTF_8);
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -326,7 +347,9 @@ public class OpenStegoTest extends MockitoTest {
         byte[] stegoData = "stego data".getBytes(StandardCharsets.UTF_8);
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(true);
         config.setUseEncryption(true);
@@ -335,14 +358,17 @@ public class OpenStegoTest extends MockitoTest {
         // Encrypt and compress stego data when plugin's extractData method is called
         OpenStegoCrypto crypto = new OpenStegoCrypto(config.getPassword(), config.getEncryptionAlgorithm());
         doAnswer(inv -> {
-            byte[] sd;
-            try (ByteArrayOutputStream bos = new ByteArrayOutputStream(); GZIPOutputStream zos = new GZIPOutputStream(bos)) {
-                zos.write(inv.getArgument(0));
-                zos.finish();
-                sd = bos.toByteArray();
-            }
-            return crypto.encrypt(sd);
-        }).when(mockPlugin).extractData(any(byte[].class), anyString(), nullable(byte[].class));
+                    byte[] sd;
+                    try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                            GZIPOutputStream zos = new GZIPOutputStream(bos)) {
+                        zos.write(inv.getArgument(0));
+                        zos.finish();
+                        sd = bos.toByteArray();
+                    }
+                    return crypto.encrypt(sd);
+                })
+                .when(mockPlugin)
+                .extractData(any(byte[].class), anyString(), nullable(byte[].class));
         doReturn("message.txt").when(mockPlugin).extractMsgFileName(any(byte[].class), anyString());
 
         OpenStego os = new OpenStego(mockPlugin, config);
@@ -363,16 +389,17 @@ public class OpenStegoTest extends MockitoTest {
         String stegoFileName = "stego.out";
 
         doReturn(
-                Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING),
-                Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)
-        ).when(mockPlugin).getPurposes();
+                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING),
+                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
-        doReturn(
-                "corrupt data".getBytes(StandardCharsets.UTF_8)
-        ).doThrow(
-                new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
-                new RuntimeException()
-        ).when(mockPlugin).extractData(any(byte[].class), anyString(), nullable(byte[].class));
+        doReturn("corrupt data".getBytes(StandardCharsets.UTF_8))
+                .doThrow(
+                        new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
+                        new RuntimeException())
+                .when(mockPlugin)
+                .extractData(any(byte[].class), anyString(), nullable(byte[].class));
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
@@ -413,7 +440,9 @@ public class OpenStegoTest extends MockitoTest {
     public void testExtractDataFile() throws OpenStegoException, IOException {
         Path stegoFilePath = createTempFile("stego", ".out", "stego data");
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -422,10 +451,11 @@ public class OpenStegoTest extends MockitoTest {
         os.extractData(stegoFilePath.toFile());
 
         // Plugin should be called with same values
-        verify(mockPlugin, times(1)).extractData(
-                argThat(v -> Arrays.compare(v, "stego data".getBytes(StandardCharsets.UTF_8)) == 0),
-                argThat(v -> v.startsWith("stego") && v.endsWith(".out")),
-                isNull());
+        verify(mockPlugin, times(1))
+                .extractData(
+                        argThat(v -> Arrays.compare(v, "stego data".getBytes(StandardCharsets.UTF_8)) == 0),
+                        argThat(v -> v.startsWith("stego") && v.endsWith(".out")),
+                        isNull());
     }
 
     @Test
@@ -434,7 +464,9 @@ public class OpenStegoTest extends MockitoTest {
         String stegoFileName = "stego.out";
         byte[] sigData = "signature".getBytes(StandardCharsets.UTF_8);
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
         doReturn(0.5, Double.NaN).when(mockPlugin).checkMark(any(byte[].class), anyString(), any(byte[].class));
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
@@ -455,7 +487,9 @@ public class OpenStegoTest extends MockitoTest {
         String stegoFileName = "stego.out";
         byte[] sigData = "signature".getBytes(StandardCharsets.UTF_8);
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+                .when(mockPlugin)
+                .getPurposes();
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
         // Case - plugin does not support watermarking
@@ -472,21 +506,26 @@ public class OpenStegoTest extends MockitoTest {
         Path stegoFilePath = createTempFile("stego", ".out", "stego data");
         Path sigFilePath = createTempFile("general", ".sig", "sig data");
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
         os.checkMark(stegoFilePath.toFile(), sigFilePath.toFile());
 
         // Plugin should be called with same values
-        verify(mockPlugin, times(1)).checkMark(
-                argThat(v -> Arrays.compare(v, "stego data".getBytes(StandardCharsets.UTF_8)) == 0),
-                argThat(v -> v.startsWith("stego") && v.endsWith(".out")),
-                argThat(v -> Arrays.compare(v, "sig data".getBytes(StandardCharsets.UTF_8)) == 0));
+        verify(mockPlugin, times(1))
+                .checkMark(
+                        argThat(v -> Arrays.compare(v, "stego data".getBytes(StandardCharsets.UTF_8)) == 0),
+                        argThat(v -> v.startsWith("stego") && v.endsWith(".out")),
+                        argThat(v -> Arrays.compare(v, "sig data".getBytes(StandardCharsets.UTF_8)) == 0));
     }
 
     @Test
     public void testCGenerateSignature() throws OpenStegoException {
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)).when(mockPlugin).getPurposes();
+        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setPassword("test");
@@ -500,9 +539,10 @@ public class OpenStegoTest extends MockitoTest {
     @Test
     public void testCGenerateSignature_exception() throws OpenStegoException {
         doReturn(
-                Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING),
-                Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING)
-        ).when(mockPlugin).getPurposes();
+                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING),
+                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+                .when(mockPlugin)
+                .getPurposes();
 
         OpenStegoConfig config = new OpenStegoConfig();
         OpenStego os = new OpenStego(mockPlugin, config);
@@ -560,18 +600,21 @@ public class OpenStegoTest extends MockitoTest {
         byte[] diffData = "diff data".getBytes(StandardCharsets.UTF_8);
         String diffFileName = "data.diff";
 
-        doReturn(diffData).when(mockPlugin).getDiff(any(byte[].class), anyString(), any(byte[].class), anyString(), anyString());
+        doReturn(diffData)
+                .when(mockPlugin)
+                .getDiff(any(byte[].class), anyString(), any(byte[].class), anyString(), anyString());
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
         byte[] output = os.getDiff(stegoFilePath.toFile(), coverFilePath.toFile(), diffFileName);
 
         // Plugin should be called with same values
-        verify(mockPlugin, times(1)).getDiff(
-                argThat(v -> Arrays.compare(v, "stego data".getBytes(StandardCharsets.UTF_8)) == 0),
-                argThat(v -> v.startsWith("stego") && v.endsWith(".out")),
-                argThat(v -> Arrays.compare(v, "cover data".getBytes(StandardCharsets.UTF_8)) == 0),
-                argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
-                argThat(v -> v.equals("data.diff")));
+        verify(mockPlugin, times(1))
+                .getDiff(
+                        argThat(v -> Arrays.compare(v, "stego data".getBytes(StandardCharsets.UTF_8)) == 0),
+                        argThat(v -> v.startsWith("stego") && v.endsWith(".out")),
+                        argThat(v -> Arrays.compare(v, "cover data".getBytes(StandardCharsets.UTF_8)) == 0),
+                        argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
+                        argThat(v -> v.equals("data.diff")));
         assertArrayEquals(diffData, output);
     }
 
@@ -583,5 +626,4 @@ public class OpenStegoTest extends MockitoTest {
         Files.writeString(path, content, StandardCharsets.UTF_8);
         return path;
     }
-
 }

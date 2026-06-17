@@ -5,16 +5,15 @@
 
 package com.openstego.desktop;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
-
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.nio.charset.StandardCharsets;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for {@link OpenStegoCrypto}, covering the modern (v3) AES-GCM format and the legacy (v2)
@@ -22,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 public class OpenStegoCryptoTest {
 
-    private static final byte[] PLAIN = "The quick brown fox jumps over the lazy dog. 0123456789".getBytes(StandardCharsets.UTF_8);
+    private static final byte[] PLAIN =
+            "The quick brown fox jumps over the lazy dog. 0123456789".getBytes(StandardCharsets.UTF_8);
     private static final char[] PASSWORD = "correct horse battery staple".toCharArray();
 
     @BeforeAll
@@ -50,7 +50,8 @@ public class OpenStegoCryptoTest {
     @Test
     public void testV3WrongPasswordFails() throws Exception {
         byte[] enc = new OpenStegoCrypto(PASSWORD, OpenStegoCrypto.ALGO_AES256, true).encrypt(PLAIN);
-        OpenStegoCrypto wrong = new OpenStegoCrypto("not the password".toCharArray(), OpenStegoCrypto.ALGO_AES256, true);
+        OpenStegoCrypto wrong =
+                new OpenStegoCrypto("not the password".toCharArray(), OpenStegoCrypto.ALGO_AES256, true);
         OpenStegoException ex = assertThrows(OpenStegoException.class, () -> wrong.decrypt(enc));
         assertEquals(OpenStegoErrors.INVALID_PASSWORD, ex.getErrorCode());
     }

@@ -14,7 +14,7 @@ import java.text.SimpleDateFormat
 plugins {
     id 'java'
     id 'jacoco'
-    id 'com.netflix.nebula.ospackage' version '11.10.0'
+    id 'com.netflix.nebula.ospackage' version '12.3.0'
 }
 
 String projectName = 'NeoStego'

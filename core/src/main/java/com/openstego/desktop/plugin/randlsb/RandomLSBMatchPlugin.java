@@ -7,12 +7,11 @@
 package com.openstego.desktop.plugin.randlsb;
 
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.plugin.lsb.LSBConfig;
-import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.plugin.lsb.LSBConfig;
+import com.openstego.desktop.plugin.lsb.LSBDataHeader;
 import com.openstego.desktop.util.LabelUtil;
-
 import java.io.IOException;
 
 /**
@@ -27,7 +26,7 @@ public class RandomLSBMatchPlugin extends RandomLSBPlugin {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "RandomLSBMatch";
+    public static final String NAMESPACE = "RandomLSBMatch";
 
     /**
      * LabelUtil instance to retrieve labels
@@ -73,7 +72,8 @@ public class RandomLSBMatchPlugin extends RandomLSBPlugin {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         int numOfPixels;
         PixelImage image;
 
@@ -86,7 +86,8 @@ public class RandomLSBMatchPlugin extends RandomLSBPlugin {
             } else {
                 image = ImageCodecRegistry.get().decode(cover, coverFileName);
             }
-            try (RandomLSBMatchOutputStream lsbOS = new RandomLSBMatchOutputStream(image, msg.length, msgFileName, this.config)) {
+            try (RandomLSBMatchOutputStream lsbOS =
+                    new RandomLSBMatchOutputStream(image, msg.length, msgFileName, this.config)) {
                 lsbOS.write(msg);
                 lsbOS.flush();
                 image = lsbOS.getImage();

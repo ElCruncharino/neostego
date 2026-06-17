@@ -9,11 +9,10 @@ package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.PluginCmdLineOption;
-import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
+import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import com.openstego.desktop.util.LabelUtil;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -31,7 +30,7 @@ public class LSBPlugin extends DHImagePluginTemplate<LSBConfig> {
     /**
      * Constant for Namespace to use for this plugin
      */
-    public final static String NAMESPACE = "LSB";
+    public static final String NAMESPACE = "LSB";
 
     /**
      * Default constructor
@@ -74,7 +73,8 @@ public class LSBPlugin extends DHImagePluginTemplate<LSBConfig> {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName) throws OpenStegoException {
+    public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
+            throws OpenStegoException {
         int numOfPixels;
         PixelImage image;
 
@@ -167,7 +167,8 @@ public class LSBPlugin extends DHImagePluginTemplate<LSBConfig> {
      * @throws OpenStegoException Processing issues
      */
     @Override
-    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues) throws OpenStegoException {
+    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues)
+            throws OpenStegoException {
         String maxBits = parsedValues.get("-b");
         if (maxBits != null) {
             try {

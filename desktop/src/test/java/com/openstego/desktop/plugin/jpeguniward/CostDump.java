@@ -11,7 +11,6 @@ import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.image.jpeg.JpegCodec;
 import com.openstego.desktop.image.jpeg.JpegImage;
 import com.openstego.desktop.util.CommonUtil;
-
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,16 +37,20 @@ public final class CostDump {
         double[][] cost = UniwardCost.compute(plane, H, W, bw, bh, quant);
         int nb = bw * bh;
         try (DataOutputStream o = new DataOutputStream(new FileOutputStream(out))) {
-            o.writeInt(H); o.writeInt(W);
+            o.writeInt(H);
+            o.writeInt(W);
             for (int r = 0; r < H; r++) for (int cc = 0; cc < W; cc++) o.writeDouble(plane[r][cc]);
             o.writeInt(64);
             for (int k = 0; k < 64; k++) o.writeDouble(quant[k]);
-            o.writeInt(nb); o.writeInt(bw); o.writeInt(bh);
+            o.writeInt(nb);
+            o.writeInt(bw);
+            o.writeInt(bh);
             for (int b = 0; b < nb; b++) for (int k = 0; k < 64; k++) o.writeDouble(cost[b][k]);
-            for (int br = 0; br < bh; br++) for (int bc = 0; bc < bw; bc++) {
-                double[] e = jpg.getRounding(c, br, bc);
-                for (int k = 0; k < 64; k++) o.writeDouble(e[k]);
-            }
+            for (int br = 0; br < bh; br++)
+                for (int bc = 0; bc < bw; bc++) {
+                    double[] e = jpg.getRounding(c, br, bc);
+                    for (int k = 0; k < 64; k++) o.writeDouble(e[k]);
+                }
         }
         System.out.printf("dumped H=%d W=%d blocks=%dx%d -> %s%n", H, W, bw, bh, out);
     }
