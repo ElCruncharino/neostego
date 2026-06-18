@@ -35,12 +35,12 @@ Installers **bundle their own Java runtime** — there's nothing else to install
 
 | Platform | Get it |
 | --- | --- |
-| **Windows** | `winget install ElCruncharino.NeoStego` ¹ &nbsp;·&nbsp; or the [`.exe` installer](https://github.com/ElCruncharino/neostego/releases/latest) |
-| **macOS** (Apple Silicon) | [`.dmg`](https://github.com/ElCruncharino/neostego/releases/latest) ² |
+| **Windows** | `winget install ElCruncharino.NeoStego` &nbsp;·&nbsp; or the [`.msi` installer](https://github.com/ElCruncharino/neostego/releases/latest) ¹ |
+| **macOS** (Apple Silicon) | [`.dmg`](https://github.com/ElCruncharino/neostego/releases/latest) ¹ |
 | **Linux** | [`.deb`](https://github.com/ElCruncharino/neostego/releases/latest) · [`.rpm`](https://github.com/ElCruncharino/neostego/releases/latest) · [portable `.zip`](https://github.com/ElCruncharino/neostego/releases/latest) |
 | **Android** | [`.apk`](https://github.com/ElCruncharino/neostego/releases/latest) |
 
-<sub>¹ Available once the [winget submission](https://github.com/microsoft/winget-pkgs/pull/389056) is merged. &nbsp; ² Installers are currently unsigned: on macOS right-click → **Open** the first time; on Windows choose **More info → Run anyway** if SmartScreen prompts.</sub>
+<sub>¹ Installers are currently unsigned: on macOS right-click → **Open** the first time; on Windows choose **More info → Run anyway** if SmartScreen prompts.</sub>
 
 ## Features
 
@@ -97,7 +97,7 @@ Requires **JDK 21**. Common tasks:
 ./gradlew test                   # run the test suite
 ```
 
-The desktop installer task uses the OS it runs on (Inno Setup on Windows, `dmg` on macOS, `deb`/`rpm`
+The desktop installer task uses the OS it runs on (an MSI via WiX on Windows, `dmg` on macOS, `deb`/`rpm`
 on Linux); CI builds all of them on a tag. The Android release build signs the APK when an
 `android/keystore.properties` is present, and builds unsigned otherwise.
 
