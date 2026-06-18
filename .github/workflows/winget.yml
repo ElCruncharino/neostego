@@ -24,17 +24,21 @@ jobs:
     name: Publish to winget
     runs-on: ubuntu-latest
     steps:
-      - name: Resolve version (strip leading v)
+      - name: Resolve tag and version
         id: ver
         shell: bash
         run: |
           tag="${{ github.event.inputs.tag || github.event.release.tag_name }}"
-          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"        # git tag, e.g. v1.0.1 (used to fetch assets)
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"  # winget version, e.g. 1.0.1
 
       - name: Submit NeoStego to winget-pkgs
         uses: vedantmgoyal9/winget-releaser@v2
         with:
           identifier: ElCruncharino.NeoStego
+          # release-tag: which GitHub release to pull assets from (the git tag, with the v).
+          # version: the winget package version (no leading v).
+          release-tag: ${{ steps.ver.outputs.tag }}
           version: ${{ steps.ver.outputs.version }}
           # The MSI is the winget installer (silent by default). Match it on the release.
           installers-regex: '\.msi$'
