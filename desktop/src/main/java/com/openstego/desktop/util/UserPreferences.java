@@ -24,8 +24,13 @@ import java.util.Properties;
  * User preferences manager
  */
 public class UserPreferences {
-    private static final String PREF_FILENAME = "neostego.cfg";
-    private static final String DEFAULT_PREF_FILENAME = "neostego.default.cfg";
+    private static final String PREF_FILENAME = "preferences.properties";
+    private static final String DEFAULT_PREF_FILENAME = "preferences.default.properties";
+    // Older versions stored preferences as "neostego.cfg". On Windows that name collides
+    // (case-insensitively) with the jpackage launcher's per-user config probe
+    // (%APPDATA%\NeoStego\NeoStego.cfg), which makes the launcher read this file as its
+    // launch configuration and fail with "Failed to launch JVM". Migrate away from it.
+    private static final String LEGACY_PREF_FILENAME = "neostego.cfg";
     private static Properties prefs = null;
     private static Path prefFilePath = null;
 
@@ -55,9 +60,22 @@ public class UserPreferences {
                 Files.createDirectories(configPath);
             }
 
-            // Create preference file if it does not exist
             Path prefFile = configPath.resolve(PREF_FILENAME);
             prefFilePath = prefFile;
+
+            // One-time migration: remove the legacy "neostego.cfg" file, which on Windows is
+            // mistaken for the jpackage launcher config and prevents the app from starting.
+            // Preserve the user's settings by promoting it to the new filename when possible.
+            Path legacyFile = configPath.resolve(LEGACY_PREF_FILENAME);
+            if (Files.exists(legacyFile)) {
+                if (Files.notExists(prefFile)) {
+                    Files.move(legacyFile, prefFile, REPLACE_EXISTING);
+                } else {
+                    Files.deleteIfExists(legacyFile);
+                }
+            }
+
+            // Create preference file if it does not exist
             if (Files.notExists(prefFile)) {
                 // Seed from the default template bundled with the application
                 try (InputStream tmplIS = UserPreferences.class.getResourceAsStream("/" + DEFAULT_PREF_FILENAME)) {

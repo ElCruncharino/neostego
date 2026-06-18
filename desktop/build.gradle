@@ -78,7 +78,6 @@ jar {
     archiveFileName = 'neostego.jar'
     manifest {
         attributes([
-                'Name'                  : projectName,
                 'Main-Class'            : 'com.openstego.desktop.OpenStegoLauncher',
                 'Implementation-Version': project.version,
                 'Built-By'              : project.author,
@@ -342,7 +341,9 @@ tasks.register('jpackageMsi', Exec) {
         commonJpackageArgs() + [
                 '--type', 'msi',
                 '--icon', file('src/main/dist/neostego.ico').absolutePath,
-                '--win-menu', '--win-shortcut', '--win-per-user-install',
+                // Without --win-menu-group jpackage files the Start Menu shortcut under "Unknown".
+                '--win-menu', '--win-menu-group', projectName,
+                '--win-shortcut', '--win-per-user-install',
                 // Stable UpgradeCode so future versions upgrade in place (jpackage otherwise
                 // generates a random one per build, which would break upgrades and winget tracking).
                 '--win-upgrade-uuid', 'b4fc0612-03d7-498f-8331-8d8cc780f728'
