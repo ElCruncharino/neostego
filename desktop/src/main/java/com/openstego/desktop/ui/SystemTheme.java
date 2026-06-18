@@ -63,9 +63,12 @@ public final class SystemTheme {
 
     private static String detectWindows() {
         // 0 = dark, 1 = light. Absent key => assume light.
-        String out = run("reg", "query",
+        String out = run(
+                "reg",
+                "query",
                 "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-                "/v", "AppsUseLightTheme");
+                "/v",
+                "AppsUseLightTheme");
         if (out != null) {
             for (String line : out.split("\\R")) {
                 line = line.trim();
@@ -96,11 +99,18 @@ public final class SystemTheme {
     private static String detectLinux() {
         // 1. XDG Desktop Portal: the modern cross-desktop standard (KDE Plasma >= 5.24, GNOME, ...).
         //    color-scheme: 0 = no preference, 1 = prefer dark, 2 = prefer light.
-        String portal = run("gdbus", "call", "--session",
-                "--dest", "org.freedesktop.portal.Desktop",
-                "--object-path", "/org/freedesktop/portal/desktop",
-                "--method", "org.freedesktop.portal.Settings.Read",
-                "org.freedesktop.appearance", "color-scheme");
+        String portal = run(
+                "gdbus",
+                "call",
+                "--session",
+                "--dest",
+                "org.freedesktop.portal.Desktop",
+                "--object-path",
+                "/org/freedesktop/portal/desktop",
+                "--method",
+                "org.freedesktop.portal.Settings.Read",
+                "org.freedesktop.appearance",
+                "color-scheme");
         if (portal != null) {
             // Reply looks like: (<<uint32 1>>,)
             String digits = portal.replaceAll("[^0-9]", "");
@@ -140,8 +150,8 @@ public final class SystemTheme {
             process = pb.start();
 
             StringBuilder sb = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader reader =
+                    new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     sb.append(line).append('\n');

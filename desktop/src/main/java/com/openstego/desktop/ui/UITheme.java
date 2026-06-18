@@ -88,7 +88,9 @@ public class UITheme {
     public static void install(String mode) {
         // On macOS, make the window chrome (title bar) follow the OS appearance too.
         try {
-            if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("mac")) {
+            if (System.getProperty("os.name", "")
+                    .toLowerCase(java.util.Locale.ROOT)
+                    .contains("mac")) {
                 System.setProperty("apple.awt.application.appearance", "system");
             }
         } catch (Exception ignore) {
