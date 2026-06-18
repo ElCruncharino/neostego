@@ -40,6 +40,7 @@ public class OpenStegoFrame extends JFrame {
     private JMenu fileMenu;
     private JMenuItem fileExitMenuItem;
     private JMenu viewMenu;
+    private JRadioButtonMenuItem themeSystemMenuItem;
     private JRadioButtonMenuItem themeLightMenuItem;
     private JRadioButtonMenuItem themeDarkMenuItem;
     private JMenu helpMenu;
@@ -133,14 +134,31 @@ public class OpenStegoFrame extends JFrame {
 
             JMenu themeMenu = new JMenu(labelUtil.getString("gui.menu.view.theme"));
             ButtonGroup themeGroup = new ButtonGroup();
+            themeGroup.add(getThemeSystemMenuItem());
             themeGroup.add(getThemeLightMenuItem());
             themeGroup.add(getThemeDarkMenuItem());
+            themeMenu.add(getThemeSystemMenuItem());
+            themeMenu.addSeparator();
             themeMenu.add(getThemeLightMenuItem());
             themeMenu.add(getThemeDarkMenuItem());
 
             this.viewMenu.add(themeMenu);
         }
         return this.viewMenu;
+    }
+
+    /**
+     * Getter method for themeSystemMenuItem
+     *
+     * @return themeSystemMenuItem
+     */
+    public JRadioButtonMenuItem getThemeSystemMenuItem() {
+        if (this.themeSystemMenuItem == null) {
+            this.themeSystemMenuItem = new JRadioButtonMenuItem(labelUtil.getString("gui.menu.view.theme.system"));
+            this.themeSystemMenuItem.setSelected(UITheme.SYSTEM.equals(UITheme.current()));
+            this.themeSystemMenuItem.addActionListener(e -> UITheme.switchTo(UITheme.SYSTEM));
+        }
+        return this.themeSystemMenuItem;
     }
 
     /**
