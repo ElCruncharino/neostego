@@ -16,6 +16,7 @@ import com.openstego.desktop.plugin.adaptive.AdaptiveImagePlugin
 import com.openstego.desktop.plugin.dwtdugad.DWTDugadPlugin
 import com.openstego.desktop.plugin.dwtsvd.DWTSVDPlugin
 import com.openstego.desktop.plugin.dwtxie.DWTXiePlugin
+import com.openstego.desktop.plugin.f5.F5Plugin
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardPlugin
 import com.openstego.desktop.plugin.lsb.LSBConfig
@@ -31,7 +32,7 @@ import com.openstego.desktop.plugin.wavlsb.WavLSBPlugin
 object StegoEngine {
 
     /** Embedding algorithm the user can choose for hiding. */
-    enum class Algorithm { ADAPTIVE, MATCHING, SI_UNIWARD, WAV }
+    enum class Algorithm { ADAPTIVE, MATCHING, SI_UNIWARD, PLAIN_UNIWARD, F5, WAV }
 
     /** Robust watermarking algorithm the user can choose. (DWT-Kim is omitted: its detector is an
      *  upstream stub that never verifies, so it is not exposed.) */
@@ -66,7 +67,7 @@ object StegoEngine {
 
     /** Default output file name (and thus extension) the plugin should produce for [algorithm]. */
     fun outputName(algorithm: Algorithm): String = when (algorithm) {
-        Algorithm.SI_UNIWARD -> "stego.jpg"
+        Algorithm.SI_UNIWARD, Algorithm.PLAIN_UNIWARD, Algorithm.F5 -> "stego.jpg"
         Algorithm.WAV -> "stego.wav"
         else -> "stego.png"
     }
@@ -77,7 +78,8 @@ object StegoEngine {
     private fun newPlugin(algorithm: Algorithm): OpenStegoPlugin<*> = when (algorithm) {
         Algorithm.ADAPTIVE -> AdaptiveImagePlugin()
         Algorithm.MATCHING -> RandomLSBMatchPlugin()
-        Algorithm.SI_UNIWARD -> JpegUniwardPlugin()
+        Algorithm.SI_UNIWARD, Algorithm.PLAIN_UNIWARD -> JpegUniwardPlugin()
+        Algorithm.F5 -> F5Plugin()
         Algorithm.WAV -> WavLSBPlugin()
     }
 
@@ -88,9 +90,14 @@ object StegoEngine {
     }
 
     /** Applies the algorithm-specific [options] onto whichever typed config [plugin] carries. */
-    private fun applyOptions(config: Any?, options: Options) {
+    private fun applyOptions(algorithm: Algorithm, config: Any?, options: Options) {
         when (config) {
-            is JpegUniwardConfig -> config.quality = options.jpegQuality
+            is JpegUniwardConfig -> {
+                config.quality = options.jpegQuality
+                // PLAIN_UNIWARD reuses JpegUniwardPlugin but embeds into an already-compressed JPEG
+                // cover (no side information); SI_UNIWARD takes an uncompressed precover.
+                config.isPlainMode = (algorithm == Algorithm.PLAIN_UNIWARD)
+            }
             is AdaptiveConfig -> {
                 config.isCmd = options.adaptiveCmd
                 config.cmdMu = options.adaptiveCmdMu
@@ -127,7 +134,7 @@ object StegoEngine {
         val config = plugin.config
         // The file name is stored unencrypted, so embedding it is opt-in (defaults to off for privacy)
         config.isEmbedFileName = embedFileName
-        applyOptions(config, options)
+        applyOptions(algorithm, config, options)
         // Clone so this attempt's clearPassword() does not wipe the caller's array
         val pw = password?.copyOf()
         val hasPassword = pw != null && pw.isNotEmpty()
@@ -157,7 +164,7 @@ object StegoEngine {
     ): Int {
         val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
         plugin.resetConfig()
-        applyOptions(plugin.config, options)
+        applyOptions(algorithm, plugin.config, options)
         return plugin.getMaxDataLength(width, height)
     }
 
@@ -165,15 +172,16 @@ object StegoEngine {
     data class Extracted(val fileName: String, val data: ByteArray)
 
     /**
-     * Extracts hidden data from [stegoData]. The algorithm is auto-detected: JPEG input is handled by
-     * the SI-UNIWARD plugin, while PNG/BMP input is tried against the content-adaptive plugin first,
-     * then Random-LSB (which reads both plain and matching embeddings, including data made by older
-     * OpenStego versions). A wrong password or non-stego image fails every attempt.
+     * Extracts hidden data from [stegoData]. The algorithm is auto-detected: JPEG input is tried
+     * against the UNIWARD plugin first (it reads both SI- and plain J-UNIWARD stego, parity-based),
+     * then F5; PNG/BMP input is tried against the content-adaptive plugin first, then Random-LSB
+     * (which reads both plain and matching embeddings, including data made by older OpenStego
+     * versions). A wrong password or non-stego image fails every attempt.
      */
     fun extract(stegoData: ByteArray, stegoName: String, password: CharArray?): Extracted {
         val makePlugins: List<() -> OpenStegoPlugin<*>> =
             when {
-                isJpeg(stegoData) -> listOf({ JpegUniwardPlugin() })
+                isJpeg(stegoData) -> listOf({ JpegUniwardPlugin() }, { F5Plugin() })
                 isWav(stegoData) -> listOf({ WavLSBPlugin() })
                 else -> listOf({ AdaptiveImagePlugin() }, { RandomLSBPlugin() })
             }
@@ -299,7 +307,7 @@ object StegoEngine {
         plugin.resetConfig()
         val config = plugin.config
         config.isEmbedFileName = embedFileName
-        applyOptions(config, options)
+        applyOptions(algorithm, config, options)
         val pw = password?.copyOf()
         val hasPassword = pw != null && pw.isNotEmpty()
         if (hasPassword) {

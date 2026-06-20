@@ -25,10 +25,15 @@ public class JpegUniwardConfig extends OpenStegoConfig {
     /** Configuration key for the JPEG quality factor. */
     public static final String QUALITY = "quality";
 
+    /** Configuration key for plain (non-side-informed) J-UNIWARD mode. */
+    public static final String PLAIN_MODE = "plainMode";
+
     /** Default JPEG quality when neither the environment nor the caller overrides it. */
     private static final int DEFAULT_QUALITY = 90;
 
     private int quality = parseQuality();
+
+    private boolean plainMode = "true".equalsIgnoreCase(System.getenv("NEOSTEGO_PLAIN_MODE"));
 
     private static int parseQuality() {
         String s = System.getenv("NEOSTEGO_JPEG_QUALITY");
@@ -57,6 +62,16 @@ public class JpegUniwardConfig extends OpenStegoConfig {
             }
             return;
         }
+        if (PLAIN_MODE.equals(key)) {
+            if (value != null) {
+                if (value instanceof Boolean) {
+                    setPlainMode((Boolean) value);
+                } else {
+                    setPlainMode(Boolean.parseBoolean(value.toString().trim()));
+                }
+            }
+            return;
+        }
         super.processConfigItem(key, value);
     }
 
@@ -68,5 +83,18 @@ public class JpegUniwardConfig extends OpenStegoConfig {
     /** @param quality the JPEG quality factor; clamped to 1..100. */
     public void setQuality(int quality) {
         this.quality = quality < 1 ? 1 : (quality > 100 ? 100 : quality);
+    }
+
+    /**
+     * @return {@code true} for plain J-UNIWARD on an already-compressed JPEG cover (no side
+     *         information); {@code false} (default) for Side-Informed UNIWARD from a precover.
+     */
+    public boolean isPlainMode() {
+        return this.plainMode;
+    }
+
+    /** @param plainMode whether to embed into an existing JPEG cover without side information. */
+    public void setPlainMode(boolean plainMode) {
+        this.plainMode = plainMode;
     }
 }

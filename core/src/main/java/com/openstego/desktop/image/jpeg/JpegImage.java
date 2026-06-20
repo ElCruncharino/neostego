@@ -185,6 +185,61 @@ public final class JpegImage {
     }
 
     /**
+     * Reconstructs a strip of component {@code comp}'s decompressed spatial sample plane &mdash; plane
+     * rows {@code [row0, row1)}, clamped to the plane &mdash; directly from the stored quantized
+     * coefficients (dequantize then inverse-DCT), as {@code [rows][planeWidth]} doubles. This is the
+     * plain (no-side-information) counterpart of {@link #planeStrip}: it works on an already-compressed
+     * JPEG cover where there is no precover to read samples from, returning the very image a decoder
+     * would show. Whole DCT blocks covering the requested rows are transformed; samples past the plane
+     * edge are dropped (the cost code clamp-replicates them anyway).
+     *
+     * @param comp component index
+     * @param row0 first plane row (inclusive)
+     * @param row1 last plane row (exclusive)
+     * @return the clamped, decompressed sample strip
+     */
+    public double[][] decodedPlaneStrip(int comp, int row0, int row1) {
+        int pw = getPlaneWidth(comp);
+        int ph = getPlaneHeight(comp);
+        int a = Math.max(0, row0);
+        int b = Math.min(ph, row1);
+        int n = Math.max(0, b - a);
+        double[][] out = new double[n][pw];
+        int bw = this.components[comp].blocksWide;
+        int[] quant = getQuantTable(comp);
+        double[] block = new double[64];
+        double[] samples = new double[64];
+        int br0 = a / 8;
+        int br1 = (b + 7) / 8;
+        for (int br = br0; br < br1; br++) {
+            for (int bc = 0; bc < bw; bc++) {
+                short[] q = getBlock(comp, br, bc);
+                for (int k = 0; k < 64; k++) {
+                    block[k] = q[k] * (double) quant[k];
+                }
+                Dct8x8.inverse(block, samples);
+                int baseRow = br * 8;
+                int baseCol = bc * 8;
+                for (int r = 0; r < 8; r++) {
+                    int py = baseRow + r;
+                    if (py < a || py >= b) {
+                        continue;
+                    }
+                    double[] orow = out[py - a];
+                    for (int cc = 0; cc < 8; cc++) {
+                        int px = baseCol + cc;
+                        if (px >= pw) {
+                            break;
+                        }
+                        orow[px] = samples[r * 8 + cc];
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
      * Recomputes the per-coefficient rounding errors for component {@code comp}'s block-rows
      * {@code [blockRow0, blockRow1)} from the retained precover, as {@code [(rows)*blocksWide][64]}
      * indexed by band-local block {@code (br - blockRow0) * blocksWide + bc}. Bit-identical to the
