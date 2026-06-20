@@ -109,26 +109,65 @@ final class UniwardCost {
         double[][] inv3 = invResidual(plane, planeH, planeW, gh, gw, HPDF, HPDF);
 
         double[][] cost = new double[blocksWide * blocksHigh][64];
-        for (int br = 0; br < blocksHigh; br++) {
-            int r0 = br * 8;
-            for (int bc = 0; bc < blocksWide; bc++) {
-                int c0 = bc * 8;
-                double[] block = cost[br * blocksWide + bc];
-                for (int i = 0; i < 8; i++) {
-                    for (int j = 0; j < 8; j++) {
-                        if (i == 0 && j == 0) {
-                            continue; // DC is not embeddable
-                        }
-                        double q = quant[i * 8 + j];
-                        double rho = accumulate(absRespL[i], absRespH[j], inv1, r0, c0, gh, gw)
-                                + accumulate(absRespH[i], absRespL[j], inv2, r0, c0, gh, gw)
-                                + accumulate(absRespH[i], absRespH[j], inv3, r0, c0, gh, gw);
-                        block[i * 8 + j] = q * rho;
-                    }
-                }
+        int nBlocks = blocksWide * blocksHigh;
+        // Each block's cost reads only shared read-only arrays (absRespL/H, inv1/2/3, quant) and writes
+        // its own disjoint cost[] row, so the block loop parallelizes with bit-identical output. Gate on
+        // size so tiny images don't pay fork/join overhead; below the threshold run sequentially.
+        if (nBlocks >= PARALLEL_BLOCK_THRESHOLD) {
+            final double[][] absL = absRespL, absH = absRespH;
+            final double[][] i1 = inv1, i2 = inv2, i3 = inv3;
+            final int bw = blocksWide, ghF = gh, gwF = gw;
+            java.util.stream.IntStream.range(0, nBlocks)
+                    .parallel()
+                    .forEach(idx -> computeBlock(
+                            cost[idx], (idx / bw) * 8, (idx % bw) * 8, absL, absH, i1, i2, i3, quant, ghF, gwF));
+        } else {
+            for (int idx = 0; idx < nBlocks; idx++) {
+                computeBlock(
+                        cost[idx],
+                        (idx / blocksWide) * 8,
+                        (idx % blocksWide) * 8,
+                        absRespL,
+                        absRespH,
+                        inv1,
+                        inv2,
+                        inv3,
+                        quant,
+                        gh,
+                        gw);
             }
         }
         return cost;
+    }
+
+    /** Block counts at or above this fork into the common pool; smaller grids stay single-threaded. */
+    private static final int PARALLEL_BLOCK_THRESHOLD = 256;
+
+    /** Fills one block's 64-entry cost row for the block whose top-left grid sample is {@code (r0,c0)}. */
+    private static void computeBlock(
+            double[] block,
+            int r0,
+            int c0,
+            double[][] absRespL,
+            double[][] absRespH,
+            double[][] inv1,
+            double[][] inv2,
+            double[][] inv3,
+            int[] quant,
+            int gh,
+            int gw) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                if (i == 0 && j == 0) {
+                    continue; // DC is not embeddable
+                }
+                double q = quant[i * 8 + j];
+                double rho = accumulate(absRespL[i], absRespH[j], inv1, r0, c0, gh, gw)
+                        + accumulate(absRespH[i], absRespL[j], inv2, r0, c0, gh, gw)
+                        + accumulate(absRespH[i], absRespH[j], inv3, r0, c0, gh, gw);
+                block[i * 8 + j] = q * rho;
+            }
+        }
     }
 
     /**

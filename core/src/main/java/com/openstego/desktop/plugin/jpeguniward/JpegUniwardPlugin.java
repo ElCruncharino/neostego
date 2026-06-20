@@ -125,8 +125,9 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
 
     @Override
     public List<String> getReadableFileExtensions() {
-        // The cover is an uncompressed precover; JPEG in would discard the side information.
-        return Arrays.asList("png", "bmp");
+        // SI mode needs an uncompressed precover (JPEG in would discard the side information); plain
+        // mode embeds directly into an already-compressed JPEG cover.
+        return this.config.isPlainMode() ? Arrays.asList("jpg", "jpeg") : Arrays.asList("png", "bmp");
     }
 
     @Override
@@ -137,21 +138,30 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
     @Override
     public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
             throws OpenStegoException {
-        PixelImage precover;
-        if (cover == null) {
-            // Carrier bits the embed path consumes: fixed bootstrap, the (over-estimated) variable
-            // header at HEADER_WIDTH, and the body at width 1 (highest payload). ~1.4 AC carriers per
-            // pixel at 4:2:0; one pixel per carrier bit is a safe over-estimate.
-            long carrierBits = (long) BOOT_BYTES * 8 * BOOT_WIDTH
-                    + (long) LSBDataHeader.getMaxHeaderSize() * 8 * HEADER_WIDTH
-                    + (long) msg.length * 8;
-            int numOfPixels = (int) carrierBits + 256;
-            precover = ImageCodecRegistry.get().createRandomImage(numOfPixels);
+        boolean plain = this.config.isPlainMode();
+        JpegImage jpg;
+        if (plain) {
+            // Plain J-UNIWARD: embed directly into the supplied JPEG cover (no side information).
+            if (cover == null) {
+                throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_COVER_REQUIRED);
+            }
+            jpg = decode(cover);
         } else {
-            precover = ImageCodecRegistry.get().decode(cover, coverFileName);
+            PixelImage precover;
+            if (cover == null) {
+                // Carrier bits the embed path consumes: fixed bootstrap, the (over-estimated) variable
+                // header at HEADER_WIDTH, and the body at width 1 (highest payload). ~1.4 AC carriers per
+                // pixel at 4:2:0; one pixel per carrier bit is a safe over-estimate.
+                long carrierBits = (long) BOOT_BYTES * 8 * BOOT_WIDTH
+                        + (long) LSBDataHeader.getMaxHeaderSize() * 8 * HEADER_WIDTH
+                        + (long) msg.length * 8;
+                int numOfPixels = (int) carrierBits + 256;
+                precover = ImageCodecRegistry.get().createRandomImage(numOfPixels);
+            } else {
+                precover = ImageCodecRegistry.get().decode(cover, coverFileName);
+            }
+            jpg = JpegCodec.fromPrecover(precover, this.config.getQuality());
         }
-
-        JpegImage jpg = JpegCodec.fromPrecover(precover, this.config.getQuality());
         int[][] bands = bandList(jpg);
 
         LSBDataHeader header = new LSBDataHeader(msg.length, 1, msgFileName, this.config);
@@ -180,7 +190,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             int c = bands[b][0];
             int r0 = bands[b][1];
             int r1 = bands[b][2];
-            double[][] rounding = jpg.roundingStrip(c, r0, r1);
+            double[][] rounding = plain ? null : jpg.roundingStrip(c, r0, r1);
             double[][] cost = uniwardCostsBand(jpg, c, r0, r1, rounding);
             Elements el = enumerateBand(jpg, c, r0, r1, cost, rounding);
             int[] perm = bandPermutation(el.count, this.config.getPassword(), b);
@@ -379,14 +389,22 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         for (int br = r0; br < r1; br++) {
             for (int bc = 0; bc < bw; bc++) {
                 short[] blk = jpg.getBlock(c, br, bc);
-                double[] err = (cost != null) ? rounding[(br - r0) * bw + bc] : null;
+                // Side information is present only in SI mode; plain J-UNIWARD (JPEG cover) has none.
+                double[] err = (rounding != null) ? rounding[(br - r0) * bw + bc] : null;
                 double[] cc = (cost != null) ? cost[(br - r0) * bw + bc] : null;
                 for (int k = 1; k < 64; k++) {
                     block[idx] = blk;
                     kArr[idx] = k;
                     if (cost != null) {
-                        double e = err[k];
-                        dir[idx] = (e > 0) ? 1 : (e < 0 ? -1 : 1);
+                        // SI: flip toward the unrounded value (sign(e)). Plain: fixed +1; flip() clamps
+                        // to the opposite direction at the AC_LIMIT boundary, and parity-based extraction
+                        // is direction-agnostic, so a constant direction is correct.
+                        if (err != null) {
+                            double e = err[k];
+                            dir[idx] = (e > 0) ? 1 : (e < 0 ? -1 : 1);
+                        } else {
+                            dir[idx] = 1;
+                        }
                         costArr[idx] = cc[k];
                     }
                     idx++;
@@ -414,7 +432,11 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         int sr1 = Math.min(bh, r1 + HALO_BLOCKS);
         int planeTop = sr0 * 8;
         int planeBot = Math.min(ph, sr1 * 8);
-        double[][] strip = jpg.planeStrip(c, planeTop, planeBot);
+        // SI mode reads the exact precover samples; plain mode (no precover) rebuilds the decompressed
+        // cover plane from the stored coefficients (dequantize + inverse-DCT).
+        double[][] strip = jpg.hasSideInfo()
+                ? jpg.planeStrip(c, planeTop, planeBot)
+                : jpg.decodedPlaneStrip(c, planeTop, planeBot);
         int stripH = strip.length;
 
         double[][] base = UniwardCost.compute(strip, stripH, pw, bw, sr1 - sr0, jpg.getQuantTable(c));
@@ -423,9 +445,13 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         for (int br = r0; br < r1; br++) {
             for (int bc = 0; bc < bw; bc++) {
                 double[] rho = base[(br - sr0) * bw + bc];
-                double[] e = rounding[(br - r0) * bw + bc];
-                for (int k = 1; k < 64; k++) {
-                    rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
+                // Plain mode (rounding == null) uses the raw UNIWARD cost; SI mode scales by (1 - 2|e|),
+                // making coefficients near a rounding boundary cheaper to change.
+                if (rounding != null) {
+                    double[] e = rounding[(br - r0) * bw + bc];
+                    for (int k = 1; k < 64; k++) {
+                        rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
+                    }
                 }
                 out[(br - r0) * bw + bc] = rho;
             }

@@ -11,9 +11,11 @@ package com.openstego.desktop.image.jpeg;
  * quantized coefficients). Implemented directly from the spec's separable definition &mdash; no
  * F5-lineage code.
  * <p>
- * Only the forward transform is provided: the codec goes pixels&nbsp;&rarr;&nbsp;coefficients for a
- * precover and never reconstructs pixels from coefficients (edits are made on the quantized
- * coefficients and entropy-coded back verbatim).
+ * The forward transform is the codec's main path (pixels&nbsp;&rarr;&nbsp;coefficients for a
+ * precover); edits are made on the quantized coefficients and entropy-coded back verbatim. The
+ * {@link #inverse} transform is provided only for <em>plain</em> J-UNIWARD on an already-compressed
+ * JPEG cover, where the UNIWARD cost must be computed on the decompressed sample plane rebuilt from
+ * the (dequantized) coefficients &mdash; there is no precover to read the samples from.
  */
 final class Dct8x8 {
 
@@ -65,6 +67,40 @@ final class Dct8x8 {
                     sum += C[i][k] * tmp[k * 8 + j];
                 }
                 output[i * 8 + j] = sum;
+            }
+        }
+    }
+
+    /**
+     * Applies the inverse DCT to one 8&times;8 block of (dequantized) coefficients, reconstructing the
+     * spatial samples. Since {@code C} is orthonormal, {@code C^{-1} = C^T}, so inverting
+     * {@code F = C(block-128)C^T} gives {@code block = C^T F C + 128}. The result is level-shifted back
+     * by &plus;128, rounded to the nearest integer and clamped to {@code 0..255}, matching what a
+     * baseline JPEG decoder produces.
+     *
+     * @param coeff  64 dequantized transform coefficients in row-major (natural) order
+     * @param output 64 reconstructed spatial samples (0..255) in row-major order
+     */
+    static void inverse(double[] coeff, double[] output) {
+        // tmp = C^T * F  ->  then block = tmp * C
+        double[] tmp = new double[64];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < 8; k++) {
+                    sum += CT[i][k] * coeff[k * 8 + j];
+                }
+                tmp[i * 8 + j] = sum;
+            }
+        }
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < 8; k++) {
+                    sum += tmp[i * 8 + k] * C[k][j];
+                }
+                long v = Math.round(sum + 128.0);
+                output[i * 8 + j] = v < 0 ? 0 : (v > 255 ? 255 : v);
             }
         }
     }

@@ -9,6 +9,29 @@ The on-disk steganography format is unchanged: files produced by older
 OpenStego versions remain readable, and unencrypted NeoStego output stays
 compatible with upstream OpenStego (enforced by regression tests).
 
+## [Unreleased]
+
+JPEG-cover steganography additions and a performance improvement, inspired by a
+comparison with Secret Space Encryptor (SSE).
+
+### Added
+- **Plain J-UNIWARD mode** — a new algorithm option that runs the UNIWARD cost
+  model against an *already-compressed* JPEG cover (no uncompressed precover).
+  It uses the raw UNIWARD cost (no side-information scaling); extraction is the
+  same parity-based path as SI-UNIWARD. SI-UNIWARD remains the preferred choice
+  when the uncompressed original is available.
+- **F5 plugin** — the classic Westfeld (2001) JPEG matrix-encoding scheme, for
+  embedding into an existing JPEG cover. Its algorithm core and Blake2b PRNG are
+  a near-verbatim port from **Secret Space Encryptor (SSE)** under the MIT
+  License (Blake2b is CC0); see [NOTICE](NOTICE) and
+  [docs/ALGORITHMS.md](docs/ALGORITHMS.md). Both new options are exposed in the
+  desktop CLI/GUI and the Android app.
+
+### Changed
+- **Multithreaded UNIWARD cost computation** — the per-block JPEG cost map is now
+  computed in parallel. The result is bit-identical to the sequential path, so
+  stego output is unchanged; only embedding speed on large images improves.
+
 ## [1.0.1] — 2026-06-16
 
 Accessibility, contrast, and build-toolchain release. No changes to the

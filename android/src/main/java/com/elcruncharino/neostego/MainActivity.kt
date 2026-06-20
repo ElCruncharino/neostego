@@ -624,6 +624,8 @@ fun StegoApp(target: LaunchTarget) {
 
             if (dest == DEST_HIDE) {
                 val isWav = algorithm == StegoEngine.Algorithm.WAV
+                val needsJpegCover = algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD ||
+                    algorithm == StegoEngine.Algorithm.F5
                 if (splitMode) {
                     FilePickCard(
                         label = "Cover images (split)",
@@ -633,9 +635,19 @@ fun StegoApp(target: LaunchTarget) {
                     )
                 } else {
                     FilePickCard(
-                        label = if (isWav) "Cover audio (WAV)" else "Cover image",
+                        label = if (isWav) {
+                            "Cover audio (WAV)"
+                        } else if (needsJpegCover) {
+                            "Cover image (JPEG)"
+                        } else {
+                            "Cover image"
+                        },
                         chosen = coverUri?.let { displayName(context, it) },
-                        hint = if (isWav) "An uncompressed PCM WAV file" else "The image the data will be hidden in",
+                        hint = when {
+                            isWav -> "An uncompressed PCM WAV file"
+                            needsJpegCover -> "An existing JPEG to hide the data in"
+                            else -> "The image the data will be hidden in"
+                        },
                         onPick = {
                             if (isWav) {
                                 openCoverAudio.launch(arrayOf("audio/x-wav", "audio/wav", "audio/*"))
@@ -683,6 +695,18 @@ fun StegoApp(target: LaunchTarget) {
                             title = "SI-UNIWARD (JPEG)",
                             subtitle = "Side-informed JPEG steganography. Saves a JPEG and is the strongest choice at low embedding rates against modern detectors.",
                             onClick = { algorithm = StegoEngine.Algorithm.SI_UNIWARD },
+                        )
+                        AlgorithmOption(
+                            selected = algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD,
+                            title = "J-UNIWARD (JPEG cover)",
+                            subtitle = "Hides directly in an existing JPEG. Faster and works without the original uncompressed image, but less stealthy than SI-UNIWARD.",
+                            onClick = { algorithm = StegoEngine.Algorithm.PLAIN_UNIWARD },
+                        )
+                        AlgorithmOption(
+                            selected = algorithm == StegoEngine.Algorithm.F5,
+                            title = "F5 (JPEG cover)",
+                            subtitle = "Fast, classic JPEG steganography using matrix encoding. Good for small payloads in an existing JPEG.",
+                            onClick = { algorithm = StegoEngine.Algorithm.F5 },
                         )
                         AlgorithmOption(
                             selected = algorithm == StegoEngine.Algorithm.ADAPTIVE,
@@ -819,7 +843,7 @@ fun StegoApp(target: LaunchTarget) {
                 }
                 Text(
                     when (algorithm) {
-                        StegoEngine.Algorithm.SI_UNIWARD ->
+                        StegoEngine.Algorithm.SI_UNIWARD, StegoEngine.Algorithm.PLAIN_UNIWARD, StegoEngine.Algorithm.F5 ->
                             "Share the saved JPEG as-is. Do not open and re-save it — re-compressing the JPEG destroys the hidden data."
                         StegoEngine.Algorithm.WAV ->
                             "Keep the saved WAV as-is to share. Converting it to MP3/AAC or any lossy audio format destroys the hidden data."

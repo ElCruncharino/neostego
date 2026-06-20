@@ -32,6 +32,24 @@ quantization rounding errors as side information to steer minimal, STC-coded ±1
 wavelet-textured regions. It is the consensus most-secure practical JPEG scheme and strongly resists
 modern DCT-domain steganalysis.
 
+Selecting the **plain J-UNIWARD** mode (a separate algorithm entry) runs the same plugin against an
+**already-compressed JPEG** cover instead of a precover: with no rounding errors available it uses the
+raw UNIWARD cost (no side-information scaling) and embeds with ±1 changes. This lets a user who only
+has a JPEG still use the UNIWARD cost model; it is faster but less secure than true SI-UNIWARD, which
+should be preferred whenever the uncompressed original is available. Extraction is identical for both
+(parity-based, side-information-free), so either is revealed by the same plugin.
+
+### `F5` — classic JPEG matrix encoding
+
+Andreas Westfeld's F5 (2001): it permutes the quantized DCT coefficients with a password-seeded
+Blake2b PRNG and uses `(1, n, k)` matrix encoding to hide each bit while changing as few coefficients
+as possible, always decrementing magnitude toward zero (with shrinkage handling at zero crossings).
+It embeds into an already-compressed JPEG cover and reuses the cover's quantization tables. F5 is fast
+and well established but is a fixed (non-adaptive) embedder, so it is more detectable than SI-UNIWARD —
+offered as a lightweight, broadly-compatible option for small payloads. The algorithm core and PRNG
+are a near-verbatim port of [Secret Space Encryptor (SSE)](https://paranoiaworks.mobi) under the MIT
+License (Blake2b is CC0); see [NOTICE](../NOTICE).
+
 ### `WavLSB` — audio
 
 Hides data in the least-significant bit of each integer PCM sample of an uncompressed **WAV** cover.
@@ -91,6 +109,7 @@ written from the published papers** — no DDE Lab source code is used or derive
 - **HILL** — B. Li, M. Wang, J. Huang & X. Li, "A new cost function for spatial image steganography," *IEEE ICIP*, 2014.
 - **Syndrome-Trellis Codes (STC)** — T. Filler, J. Judas & J. Fridrich, "Minimizing additive distortion in steganography using syndrome-trellis codes," *IEEE TIFS*, 2011.
 - **UNIWARD** — V. Holub, J. Fridrich & T. Denemark, "Universal distortion function for steganography in an arbitrary domain," *EURASIP Journal on Information Security*, 2014.
+- **F5** — A. Westfeld, "F5 — A Steganographic Algorithm," *Information Hiding 2001 (LNCS 2137)*. The implementation is a licensed port of [SSE](https://paranoiaworks.mobi) (MIT), not clean-room — see [NOTICE](../NOTICE).
 
 **Steganalysis (evaluation harnesses)**
 

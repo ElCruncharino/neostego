@@ -134,3 +134,8 @@ fork carry modification notices, and the complete corresponding source is this r
   NeoStego's implementations are **independent, clean-room implementations written from the published
   papers** — no DDE Lab source code is used or derived. Full citations are in
   [docs/ALGORITHMS.md](docs/ALGORITHMS.md).
+- The **F5** plugin's algorithm core and Blake2b PRNG are lifted, near-verbatim, from
+  [**Secret Space Encryptor (SSE)** by Paranoia Works](https://paranoiaworks.mobi) under the MIT
+  License (the Blake2b digest is CC0 public domain); the F5 algorithm itself is due to Andreas
+  Westfeld (2001). Unlike the DDE Lab plugins above, this is licensed reuse rather than clean-room —
+  see [NOTICE](NOTICE) for the full attribution and license text.
