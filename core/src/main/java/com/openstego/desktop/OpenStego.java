@@ -70,6 +70,18 @@ public class OpenStego {
     }
 
     /**
+     * Registers a listener to receive completion progress during the next embed / extract / mark
+     * operation. Forwarded to the underlying plugin; pass {@code null} to disable reporting. Only the
+     * heavy adaptive / UNIWARD / DWT-SVD plugins emit progress; others leave the caller to fall back
+     * to an indeterminate indicator.
+     *
+     * @param listener progress listener, or {@code null}
+     */
+    public void setProgressListener(ProgressListener listener) {
+        this.plugin.setProgressListener(listener);
+    }
+
+    /**
      * Method to embed the message data into the cover data
      *
      * @param msg           Message data to be embedded

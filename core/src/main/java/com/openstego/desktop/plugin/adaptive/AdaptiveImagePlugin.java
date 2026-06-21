@@ -162,6 +162,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
             int[] bandBits = splitBits(bodyBits, caps);
             int off = 0;
             for (int b = 0; b < numBands; b++) {
+                reportProgress((double) b / numBands);
                 int bits = bandBits[b];
                 if (bits == 0) {
                     continue;
@@ -183,6 +184,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
                 off += bits;
             }
         }
+        reportProgress(1.0);
 
         return ImageCodecRegistry.get().encode(image, stegoFileName);
     }
@@ -230,6 +232,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         int[] allBits = new int[bodyBits];
         int off = 0;
         for (int b = 0; b < numBands; b++) {
+            reportProgress((double) b / numBands);
             int bits = bandBits[b];
             if (bits == 0) {
                 continue;
@@ -249,6 +252,7 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
             }
             off += bits;
         }
+        reportProgress(1.0);
         bitsToBytes(allBits, data);
         return data;
     }

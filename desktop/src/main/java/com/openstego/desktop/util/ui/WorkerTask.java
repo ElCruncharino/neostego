@@ -43,6 +43,11 @@ public abstract class WorkerTask extends SwingWorker<Object, Void> {
      * Glass pane
      */
     protected final GlassPane glass;
+    /**
+     * Wall-clock start time (ms) of the task, used to estimate the remaining time. Set when the task
+     * starts; {@code 0} until then.
+     */
+    private long startMs = 0;
 
     /**
      * Default constructor
@@ -118,10 +123,27 @@ public abstract class WorkerTask extends SwingWorker<Object, Void> {
      */
     public void start() {
         Listener listener = new Listener(this);
+        this.startMs = System.currentTimeMillis();
         this.glass.setVisible(true);
         this.cancelButton.addActionListener(listener);
         addPropertyChangeListener(listener);
         execute();
+    }
+
+    /**
+     * Formats a remaining-time estimate (in milliseconds) as a short human string such as
+     * {@code "~12s"} or {@code "~1m 5s"}.
+     *
+     * @param remainingMs estimated time remaining, in milliseconds
+     * @return short ETA string
+     */
+    private static String formatEta(long remainingMs) {
+        long secs = Math.max(0, remainingMs) / 1000;
+        if (secs < 60) {
+            return "~" + secs + "s";
+        }
+        long mins = secs / 60;
+        return "~" + mins + "m " + (secs % 60) + "s";
     }
 
     static class Listener implements PropertyChangeListener, ActionListener {
@@ -140,6 +162,16 @@ public abstract class WorkerTask extends SwingWorker<Object, Void> {
             if ("progress".equals(evt.getPropertyName())) {
                 int progress = (Integer) evt.getNewValue();
                 this.task.progressBar.setValue(progress);
+                // On a determinate bar, append a time estimate once there is enough signal to
+                // extrapolate (a few percent in, and not yet finished) so the number is not wild.
+                if (this.task.progressBar.isStringPainted()
+                        && progress > 2
+                        && progress < 100
+                        && this.task.startMs > 0) {
+                    long elapsed = System.currentTimeMillis() - this.task.startMs;
+                    long remaining = elapsed * (100 - progress) / progress;
+                    this.task.progressBar.setString(progress + "% · " + formatEta(remaining));
+                }
             }
         }
 

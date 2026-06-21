@@ -187,6 +187,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
 
         int off = 0;
         for (int b = 0; b < bands.length; b++) {
+            reportProgress((double) b / bands.length);
             int c = bands[b][0];
             int r0 = bands[b][1];
             int r1 = bands[b][2];
@@ -218,6 +219,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
                 off += segBits;
             }
         }
+        reportProgress(1.0);
 
         return JpegCodec.encode(jpg);
     }
@@ -281,6 +283,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         int[] allBits = new int[bodyBits];
         int off = 0;
         for (int b = 0; b < bands.length; b++) {
+            reportProgress((double) b / bands.length);
             int segBits = bits[b];
             if (segBits == 0) {
                 continue;
@@ -296,6 +299,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             System.arraycopy(seg, 0, allBits, off, segBits);
             off += segBits;
         }
+        reportProgress(1.0);
         bitsToBytes(allBits, data);
         return data;
     }

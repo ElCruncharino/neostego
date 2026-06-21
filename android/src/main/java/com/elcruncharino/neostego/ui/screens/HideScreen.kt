@@ -195,6 +195,7 @@ fun HideScreen(appState: AppState) {
         }
         val pw = readPasswordChars(s.passwordView)
         s.busy = true
+        s.progress = null // split runs across covers; show an indeterminate bar
         scope.launch {
             try {
                 val covers = s.splitCovers.toList()
@@ -245,6 +246,8 @@ fun HideScreen(appState: AppState) {
         }
         val pw = readPasswordChars(s.passwordView)
         s.busy = true
+        s.progress = null
+        s.startedAtMs = System.currentTimeMillis()
         scope.launch {
             try {
                 val coverBytes = withContext(Dispatchers.IO) { readBytes(context, cover) }
@@ -258,6 +261,7 @@ fun HideScreen(appState: AppState) {
                         displayName(context, cover),
                         pw,
                         options,
+                        onProgress = { f -> s.progress = f },
                     )
                 }
                 val name = StegoEngine.outputName(s.algorithm)
@@ -280,6 +284,7 @@ fun HideScreen(appState: AppState) {
             } finally {
                 pw?.fill(' ')
                 s.busy = false
+                s.progress = null
             }
         }
     }
@@ -513,7 +518,13 @@ fun HideScreen(appState: AppState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        PrimaryActionButton(label = "Hide", busy = s.busy, onClick = { runHide() })
+        PrimaryActionButton(
+            label = "Hide",
+            busy = s.busy,
+            onClick = { runHide() },
+            progress = s.progress,
+            startedAtMs = s.startedAtMs,
+        )
 
         s.result?.let { r ->
             OutputResultCard(

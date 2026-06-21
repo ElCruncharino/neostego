@@ -129,6 +129,8 @@ fun WatermarkScreen(appState: AppState) {
             return
         }
         s.busy = true
+        s.progress = null
+        s.startedAtMs = System.currentTimeMillis()
         scope.launch {
             try {
                 val bytes = withContext(Dispatchers.IO) {
@@ -139,6 +141,7 @@ fun WatermarkScreen(appState: AppState) {
                         displayName(context, cover),
                         s.outputJpeg,
                         s.jpegQuality,
+                        onProgress = { f -> s.progress = f },
                     )
                 }
                 val name = StegoEngine.markOutputName(s.outputJpeg)
@@ -151,6 +154,7 @@ fun WatermarkScreen(appState: AppState) {
                 snackbar.showSnackbar(e.message ?: "Failed to embed watermark")
             } finally {
                 s.busy = false
+                s.progress = null
             }
         }
     }
@@ -168,10 +172,18 @@ fun WatermarkScreen(appState: AppState) {
         }
         s.busy = true
         s.verdict = null
+        s.progress = null
+        s.startedAtMs = System.currentTimeMillis()
         scope.launch {
             try {
                 s.verdict = withContext(Dispatchers.IO) {
-                    StegoEngine.checkMark(s.algo, readBytes(context, marked), displayName(context, marked), readBytes(context, sig))
+                    StegoEngine.checkMark(
+                        s.algo,
+                        readBytes(context, marked),
+                        displayName(context, marked),
+                        readBytes(context, sig),
+                        onProgress = { f -> s.progress = f },
+                    )
                 }
             } catch (e: OutOfMemoryError) {
                 snackbar.showSnackbar("This image is too large to check on this device. Try a smaller image.")
@@ -179,6 +191,7 @@ fun WatermarkScreen(appState: AppState) {
                 snackbar.showSnackbar(e.message ?: "Failed to verify watermark")
             } finally {
                 s.busy = false
+                s.progress = null
             }
         }
     }
@@ -304,6 +317,9 @@ fun WatermarkScreen(appState: AppState) {
                     else -> runVerify()
                 }
             },
+            // Generate is fast and reports nothing, so its bar stays indeterminate (progress = null).
+            progress = if (s.mode == 0) null else s.progress,
+            startedAtMs = s.startedAtMs,
         )
 
         if (s.mode != 2) {
