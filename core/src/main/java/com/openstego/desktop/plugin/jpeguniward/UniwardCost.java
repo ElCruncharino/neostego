@@ -143,6 +143,13 @@ final class UniwardCost {
     /** Block counts at or above this fork into the common pool; smaller grids stay single-threaded. */
     private static final int PARALLEL_BLOCK_THRESHOLD = 256;
 
+    /**
+     * Grid-cell count at or above which {@link #invResidual}'s row passes fork into the common pool.
+     * 65,536 cells is a 256&times;256 grid (1,024 blocks); below it the fork/join overhead outweighs
+     * the separable filtering work.
+     */
+    private static final int PARALLEL_CELL_THRESHOLD = 65_536;
+
     /** Fills one block's 64-entry cost row for the block whose top-left grid sample is {@code (r0,c0)}. */
     private static void computeBlock(
             double[] block,
@@ -227,10 +234,16 @@ final class UniwardCost {
             double[][] plane, int planeH, int planeW, int gh, int gw, double[] rowFilter, double[] colFilter) {
         // First filter horizontally (colFilter across columns), then vertically (rowFilter down
         // rows). Sample access clamps to the plane, so grid cells past the image replicate the edge.
+        // Both passes are row-independent: the horizontal pass reads only the (read-only) plane and
+        // writes its own tmp row; the vertical pass reads only the (now read-only) tmp and writes its
+        // own inv row. Each output cell is computed in isolation, so parallelizing across rows is
+        // bit-identical to the sequential loop. Gate on grid size so small planes skip fork/join.
         double[][] tmp = new double[gh][gw];
-        for (int m = 0; m < gh; m++) {
+        boolean par = (long) gh * gw >= PARALLEL_CELL_THRESHOLD;
+        runRows(gh, par, m -> {
             int sy = m < planeH ? m : planeH - 1;
             double[] prow = plane[sy];
+            double[] trow = tmp[m];
             for (int n = 0; n < gw; n++) {
                 double acc = 0.0;
                 for (int b = 0; b < LF; b++) {
@@ -238,11 +251,12 @@ final class UniwardCost {
                     sx = sx < 0 ? 0 : (sx >= planeW ? planeW - 1 : sx);
                     acc += colFilter[b] * prow[sx];
                 }
-                tmp[m][n] = acc;
+                trow[n] = acc;
             }
-        }
+        });
         double[][] inv = new double[gh][gw];
-        for (int m = 0; m < gh; m++) {
+        runRows(gh, par, m -> {
+            double[] irow = inv[m];
             for (int n = 0; n < gw; n++) {
                 double acc = 0.0;
                 for (int aTap = 0; aTap < LF; aTap++) {
@@ -250,10 +264,27 @@ final class UniwardCost {
                     ry = ry < 0 ? 0 : (ry >= gh ? gh - 1 : ry);
                     acc += rowFilter[aTap] * tmp[ry][n];
                 }
-                inv[m][n] = 1.0 / (Math.abs(acc) + SIGMA);
+                irow[n] = 1.0 / (Math.abs(acc) + SIGMA);
+            }
+        });
+        return inv;
+    }
+
+    /** A unit of per-row work for {@link #runRows}. */
+    @FunctionalInterface
+    private interface RowTask {
+        void run(int row);
+    }
+
+    /** Runs {@code task} for every row {@code [0, rows)}, in parallel when {@code parallel} is set. */
+    private static void runRows(int rows, boolean parallel, RowTask task) {
+        if (parallel) {
+            java.util.stream.IntStream.range(0, rows).parallel().forEach(task::run);
+        } else {
+            for (int m = 0; m < rows; m++) {
+                task.run(m);
             }
         }
-        return inv;
     }
 
     /** The orthonormal 8-point DCT-II matrix {@code A[u][n]} (matches {@code Dct8x8}). */
