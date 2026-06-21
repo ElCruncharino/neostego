@@ -11,6 +11,8 @@
 [![License: GPL v2](https://img.shields.io/badge/license-GPLv2-blue.svg)](LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/ElCruncharino/neostego/total)](https://github.com/ElCruncharino/neostego/releases)
 ![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android-informational)
+[![Obtainium](https://img.shields.io/badge/Obtainium-Android%20auto--update-3DDC84?logo=android&logoColor=white)](#download)
+[![Stars](https://img.shields.io/github/stars/ElCruncharino/neostego?style=flat&logo=github)](https://github.com/ElCruncharino/neostego/stargazers)
 
 </div>
 
@@ -38,7 +40,7 @@ Installers **bundle their own Java runtime** — there's nothing else to install
 | **Windows** | `winget install ElCruncharino.NeoStego` &nbsp;·&nbsp; or the [`.msi` installer](https://github.com/ElCruncharino/neostego/releases/latest) ¹ |
 | **macOS** (Apple Silicon) | [`.dmg`](https://github.com/ElCruncharino/neostego/releases/latest) ¹ |
 | **Linux** | [`.deb`](https://github.com/ElCruncharino/neostego/releases/latest) · [`.rpm`](https://github.com/ElCruncharino/neostego/releases/latest) · [portable `.zip`](https://github.com/ElCruncharino/neostego/releases/latest) |
-| **Android** | [`.apk`](https://github.com/ElCruncharino/neostego/releases/latest) |
+| **Android** | [`.apk`](https://github.com/ElCruncharino/neostego/releases/latest) &nbsp;·&nbsp; or **[Obtainium](https://github.com/ImranR98/Obtainium)** for auto-updates: add an app with the URL `https://github.com/ElCruncharino/neostego` |
 
 <sub>¹ Installers are currently unsigned: on macOS right-click → **Open** the first time; on Windows choose **More info → Run anyway** if SmartScreen prompts.</sub>
 
