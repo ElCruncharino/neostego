@@ -76,31 +76,57 @@ public final class HillCost {
         return out;
     }
 
-    /** Separable box blur (averaging filter) of window {@code 2*radius+1} with reflected borders. */
+    /**
+     * Separable box blur (averaging filter) of window {@code 2*radius+1} with reflected borders.
+     * <p>
+     * Each pass uses a sliding running sum: the window for the next output cell is the previous
+     * window plus the entering sample minus the leaving sample, so the cost is O(1) per cell instead
+     * of O(window). This matters most for the 15&times;15 L2 average, where it removes ~15&times; the
+     * per-pixel work. The running sum reorders the floating-point additions, so results can differ
+     * from a fresh per-window sum in the last few ULPs; HILL costs only steer where changes go (never
+     * recoverability), so this is immaterial.
+     */
     private static double[][] boxBlur(double[][] in, int radius) {
         int rows = in.length;
         int cols = in[0].length;
         int window = 2 * radius + 1;
+
+        // Horizontal pass: one scalar running sum swept across each row.
         double[][] tmp = new double[rows][cols];
-        // Horizontal pass
         for (int y = 0; y < rows; y++) {
-            for (int x = 0; x < cols; x++) {
-                double acc = 0.0;
-                for (int dx = -radius; dx <= radius; dx++) {
-                    acc += in[y][reflect(x + dx, cols)];
-                }
-                tmp[y][x] = acc / window;
+            double[] irow = in[y];
+            double[] trow = tmp[y];
+            double acc = 0.0;
+            for (int dx = -radius; dx <= radius; dx++) {
+                acc += irow[reflect(dx, cols)];
+            }
+            trow[0] = acc / window;
+            for (int x = 1; x < cols; x++) {
+                acc += irow[reflect(x + radius, cols)] - irow[reflect(x - 1 - radius, cols)];
+                trow[x] = acc / window;
             }
         }
+
+        // Vertical pass: one running sum per column, advanced row by row (row-major access throughout).
         double[][] out = new double[rows][cols];
-        // Vertical pass
-        for (int y = 0; y < rows; y++) {
+        double[] acc = new double[cols];
+        for (int dy = -radius; dy <= radius; dy++) {
+            double[] srow = tmp[reflect(dy, rows)];
             for (int x = 0; x < cols; x++) {
-                double acc = 0.0;
-                for (int dy = -radius; dy <= radius; dy++) {
-                    acc += tmp[reflect(y + dy, rows)][x];
-                }
-                out[y][x] = acc / window;
+                acc[x] += srow[x];
+            }
+        }
+        double[] out0 = out[0];
+        for (int x = 0; x < cols; x++) {
+            out0[x] = acc[x] / window;
+        }
+        for (int y = 1; y < rows; y++) {
+            double[] addRow = tmp[reflect(y + radius, rows)];
+            double[] subRow = tmp[reflect(y - 1 - radius, rows)];
+            double[] orow = out[y];
+            for (int x = 0; x < cols; x++) {
+                acc[x] += addRow[x] - subRow[x];
+                orow[x] = acc[x] / window;
             }
         }
         return out;

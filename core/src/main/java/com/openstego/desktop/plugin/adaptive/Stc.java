@@ -117,15 +117,28 @@ public final class Stc {
             int base = p * statesWords;
             int xp = x[p];
             double cost = rho[p];
-            for (int k = 0; k < nstates; k++) {
-                double w0 = wght[k] + (xp == 1 ? cost : 0.0); // choose y=0 (differs from x if x=1)
-                double w1 = wght[k ^ col] + (xp == 0 ? cost : 0.0); // choose y=1 (differs from x if x=0)
-                if (w1 < w0) {
-                    next[k] = w1;
-                    path[base + (k >> 6)] |= (1L << (k & 63));
-                } else {
-                    next[k] = w0;
+            // xp is constant across the state loop, so the two y-choice penalties are loop invariants:
+            // exactly one of them is 'cost' (the one that flips the bit), the other 0.
+            double add0 = (xp == 1) ? cost : 0.0; // choose y=0 (differs from x if x=1)
+            double add1 = (xp == 0) ? cost : 0.0; // choose y=1 (differs from x if x=0)
+            // Accumulate each 64-state group's decision bits in a register and store the word once,
+            // instead of a read-modify-write into path[] per chosen state. path is zero-initialized and
+            // each word is written exactly once, so the plain store is equivalent to the prior OR.
+            for (int wd = 0; wd < statesWords; wd++) {
+                int k0 = wd << 6;
+                int kEnd = Math.min(nstates, k0 + 64);
+                long bits = 0L;
+                for (int k = k0; k < kEnd; k++) {
+                    double w0 = wght[k] + add0;
+                    double w1 = wght[k ^ col] + add1;
+                    if (w1 < w0) {
+                        next[k] = w1;
+                        bits |= 1L << (k & 63);
+                    } else {
+                        next[k] = w0;
+                    }
                 }
+                path[base + wd] = bits;
             }
             double[] tmp = wght;
             wght = next;
