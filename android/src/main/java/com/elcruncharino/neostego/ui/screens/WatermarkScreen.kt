@@ -143,6 +143,10 @@ fun WatermarkScreen(appState: AppState) {
                 }
                 val name = StegoEngine.markOutputName(s.outputJpeg)
                 setResult(OutputResult(name, mimeForName(name), bytes))
+            } catch (e: OutOfMemoryError) {
+                // Watermarking decodes the image at full resolution and runs a wavelet transform over it, so a very
+                // large photo can exhaust the heap. Recover gracefully instead of letting the Error crash the app.
+                snackbar.showSnackbar("This image is too large to watermark on this device. Try a smaller image.")
             } catch (e: Exception) {
                 snackbar.showSnackbar(e.message ?: "Failed to embed watermark")
             } finally {
@@ -169,6 +173,8 @@ fun WatermarkScreen(appState: AppState) {
                 s.verdict = withContext(Dispatchers.IO) {
                     StegoEngine.checkMark(s.algo, readBytes(context, marked), displayName(context, marked), readBytes(context, sig))
                 }
+            } catch (e: OutOfMemoryError) {
+                snackbar.showSnackbar("This image is too large to check on this device. Try a smaller image.")
             } catch (e: Exception) {
                 snackbar.showSnackbar(e.message ?: "Failed to verify watermark")
             } finally {
