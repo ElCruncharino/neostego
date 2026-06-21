@@ -699,7 +699,7 @@ public class OpenStegoUI extends OpenStegoFrame {
             return;
         }
 
-        WorkerTask task = new WorkerTask(this, coverFileList, coverFileList.size() > 1) {
+        WorkerTask task = new WorkerTask(this, coverFileList, true) {
             @Override
             protected Object doInBackground() throws Exception {
                 OpenStego openStego;
@@ -816,6 +816,12 @@ public class OpenStegoUI extends OpenStegoFrame {
                     }
 
                     processCount++;
+                    // Drive the bar from the plugin's own progress within this cover, mapped into the
+                    // overall [0,100] range across all covers (heavy plugins report; others stay at the
+                    // per-cover step boundaries).
+                    final int idx = i;
+                    final int total = coverFileList.size();
+                    openStego.setProgressListener(f -> setProgress((int) Math.round((idx + f) * 100.0 / total)));
                     try {
                         stegoData = openStego.embedData(
                                 dataFileName == null || dataFileName.equals("") ? null : new File(dataFileName),
@@ -1199,7 +1205,7 @@ public class OpenStegoUI extends OpenStegoFrame {
         }
         // END: Input Validations
 
-        WorkerTask task = new WorkerTask(this, inputFileList, inputFileList.size() > 1) {
+        WorkerTask task = new WorkerTask(this, inputFileList, true) {
             @Override
             protected Object doInBackground() throws Exception {
                 OpenStego openStego;
@@ -1261,6 +1267,9 @@ public class OpenStegoUI extends OpenStegoFrame {
                     }
 
                     processCount++;
+                    final int idx = i;
+                    final int total = inputFileList.size();
+                    openStego.setProgressListener(f -> setProgress((int) Math.round((idx + f) * 100.0 / total)));
                     try {
                         wmData = openStego.embedMark(
                                 sigFileName == null || sigFileName.equals("") ? null : new File(sigFileName),
@@ -1344,7 +1353,7 @@ public class OpenStegoUI extends OpenStegoFrame {
         }
         // END: Input Validations
 
-        WorkerTask task = new WorkerTask(this, inputFileList, inputFileList.size() > 1) {
+        WorkerTask task = new WorkerTask(this, inputFileList, true) {
             @Override
             protected Object doInBackground() throws Exception {
                 File sigFile;
@@ -1364,6 +1373,9 @@ public class OpenStegoUI extends OpenStegoFrame {
                 for (int i = 0; i < inputFileList.size(); i++) {
                     setProgress(i * 100 / inputFileList.size());
                     File inputFile = inputFileList.get(i);
+                    final int idx = i;
+                    final int total = inputFileList.size();
+                    openStego.setProgressListener(f -> setProgress((int) Math.round((idx + f) * 100.0 / total)));
                     correlation = openStego.checkMark(inputFile, sigFile);
                     tblData[i][0] = inputFile.getName();
                     String color;

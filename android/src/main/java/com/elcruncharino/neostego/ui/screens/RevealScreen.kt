@@ -94,10 +94,17 @@ fun RevealScreen(appState: AppState) {
         }
         val pw = com.elcruncharino.neostego.ui.components.readPasswordChars(s.passwordView)
         s.busy = true
+        s.progress = null
+        s.startedAtMs = System.currentTimeMillis()
         scope.launch {
             try {
                 val extracted = withContext(Dispatchers.IO) {
-                    StegoEngine.extract(readBytes(context, stego), displayName(context, stego), pw)
+                    StegoEngine.extract(
+                        readBytes(context, stego),
+                        displayName(context, stego),
+                        pw,
+                        onProgress = { f -> s.progress = f },
+                    )
                 }
                 val name = extracted.fileName.ifBlank { "revealed.dat" }
                 setResult(OutputResult(name, mimeForName(name), extracted.data))
@@ -107,6 +114,7 @@ fun RevealScreen(appState: AppState) {
             } finally {
                 pw?.fill(' ')
                 s.busy = false
+                s.progress = null
             }
         }
     }
@@ -133,7 +141,13 @@ fun RevealScreen(appState: AppState) {
             onViewCreated = { s.passwordView = it },
         )
 
-        PrimaryActionButton(label = "Reveal", busy = s.busy, onClick = { runReveal() })
+        PrimaryActionButton(
+            label = "Reveal",
+            busy = s.busy,
+            onClick = { runReveal() },
+            progress = s.progress,
+            startedAtMs = s.startedAtMs,
+        )
 
         s.result?.let { r ->
             // A stylized, clearly-decorative scan over a neutral grid: Reveal has no original cover to

@@ -39,6 +39,36 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      */
     protected C config = null;
 
+    /**
+     * Optional listener notified of completion progress during long-running operations. May be
+     * {@code null} (the default), in which case no progress is reported.
+     */
+    protected ProgressListener progressListener = null;
+
+    /**
+     * Registers a listener to receive completion progress during embedding / extraction /
+     * watermarking. Pass {@code null} to disable reporting.
+     *
+     * @param listener progress listener, or {@code null}
+     */
+    public void setProgressListener(ProgressListener listener) {
+        this.progressListener = listener;
+    }
+
+    /**
+     * Reports a completion fraction to the registered {@link ProgressListener}, if any. The fraction
+     * is clamped to {@code [0.0, 1.0]}. Safe to call when no listener is set (no-op).
+     *
+     * @param fraction completion ratio (will be clamped to {@code [0.0, 1.0]})
+     */
+    protected void reportProgress(double fraction) {
+        ProgressListener listener = this.progressListener;
+        if (listener != null) {
+            double f = fraction < 0.0 ? 0.0 : (fraction > 1.0 ? 1.0 : fraction);
+            listener.onProgress(f);
+        }
+    }
+
     // ------------- Metadata Methods -------------
 
     /**

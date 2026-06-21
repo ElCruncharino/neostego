@@ -46,6 +46,10 @@ class HideState {
     var splitMode by mutableStateOf(false)
     val splitCovers = mutableStateListOf<Uri>()
     var busy by mutableStateOf(false)
+
+    // Determinate progress for the "Working..." bar: null = indeterminate; startedAtMs anchors the ETA.
+    var progress by mutableStateOf<Float?>(null)
+    var startedAtMs by mutableStateOf(0L)
     var capacity by mutableStateOf<Int?>(null)
     var result by mutableStateOf<OutputResult?>(null)
 
@@ -62,6 +66,8 @@ class RevealState {
     var showPassword by mutableStateOf(false)
     var passwordView by mutableStateOf<EditText?>(null)
     var busy by mutableStateOf(false)
+    var progress by mutableStateOf<Float?>(null)
+    var startedAtMs by mutableStateOf(0L)
     var result by mutableStateOf<OutputResult?>(null)
     var revealStamp by mutableStateOf(0)
 }
@@ -72,6 +78,8 @@ class WatermarkState {
     var mode by mutableStateOf(0) // 0 = generate, 1 = embed, 2 = verify
     var algo by mutableStateOf(StegoEngine.WmAlgorithm.DWT_SVD)
     var busy by mutableStateOf(false)
+    var progress by mutableStateOf<Float?>(null)
+    var startedAtMs by mutableStateOf(0L)
     var sigUri by mutableStateOf<Uri?>(null)
     var coverUri by mutableStateOf<Uri?>(null)
     var markedUri by mutableStateOf<Uri?>(null)

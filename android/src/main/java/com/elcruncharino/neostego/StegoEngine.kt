@@ -128,6 +128,7 @@ object StegoEngine {
         coverName: String,
         password: CharArray?,
         options: Options = Options(),
+        onProgress: ((Float) -> Unit)? = null,
     ): ByteArray {
         val plugin = newPlugin(algorithm)
         plugin.resetConfig()
@@ -144,6 +145,7 @@ object StegoEngine {
         }
         applyCryptoOptions(config, options, hasPassword)
         val stego = OpenStego(plugin, config)
+        onProgress?.let { cb -> stego.setProgressListener { f -> cb(f.toFloat()) } }
         try {
             return stego.embedData(message, msgName, cover, coverName, outputName(algorithm))
         } finally {
@@ -178,7 +180,12 @@ object StegoEngine {
      * (which reads both plain and matching embeddings, including data made by older OpenStego
      * versions). A wrong password or non-stego image fails every attempt.
      */
-    fun extract(stegoData: ByteArray, stegoName: String, password: CharArray?): Extracted {
+    fun extract(
+        stegoData: ByteArray,
+        stegoName: String,
+        password: CharArray?,
+        onProgress: ((Float) -> Unit)? = null,
+    ): Extracted {
         val makePlugins: List<() -> OpenStegoPlugin<*>> =
             when {
                 isJpeg(stegoData) -> listOf({ JpegUniwardPlugin() }, { F5Plugin() })
@@ -195,6 +202,7 @@ object StegoEngine {
                 config.password = pw
             }
             val stego = OpenStego(plugin, config)
+            onProgress?.let { cb -> stego.setProgressListener { f -> cb(f.toFloat()) } }
             try {
                 val out = stego.extractData(stegoData, stegoName)
                 val name = out[0] as? String ?: "extracted.dat"
@@ -245,10 +253,12 @@ object StegoEngine {
         coverName: String,
         outputJpeg: Boolean = false,
         jpegQuality: Int = 90,
+        onProgress: ((Float) -> Unit)? = null,
     ): ByteArray {
         val plugin = newWatermarkPlugin(algorithm)
         plugin.resetConfig()
         val stego = OpenStego(plugin, plugin.config)
+        onProgress?.let { cb -> stego.setProgressListener { f -> cb(f.toFloat()) } }
         val outName = if (outputJpeg) "marked.jpg" else "marked.png"
         val codec = ImageCodecRegistry.get() as? BitmapImageCodec
         codec?.jpegQuality = jpegQuality
@@ -272,10 +282,17 @@ object StegoEngine {
      * Checks [marked] for the watermark described by [signature] using [algorithm], returning the
      * correlation together with the plugin's high/low decision thresholds.
      */
-    fun checkMark(algorithm: WmAlgorithm, marked: ByteArray, markedName: String, signature: ByteArray): WmVerdict {
+    fun checkMark(
+        algorithm: WmAlgorithm,
+        marked: ByteArray,
+        markedName: String,
+        signature: ByteArray,
+        onProgress: ((Float) -> Unit)? = null,
+    ): WmVerdict {
         val plugin = newWatermarkPlugin(algorithm)
         plugin.resetConfig()
         val stego = OpenStego(plugin, plugin.config)
+        onProgress?.let { cb -> stego.setProgressListener { f -> cb(f.toFloat()) } }
         val corr = stego.checkMark(marked, markedName, signature)
         return WmVerdict(corr, plugin.highWatermarkLevel, plugin.lowWatermarkLevel)
     }
