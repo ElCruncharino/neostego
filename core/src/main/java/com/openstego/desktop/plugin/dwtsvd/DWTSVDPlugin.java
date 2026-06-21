@@ -8,13 +8,10 @@ package com.openstego.desktop.plugin.dwtsvd;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
-import com.openstego.desktop.image.YuvImageUtil;
 import com.openstego.desktop.plugin.template.image.WMImagePluginTemplate;
 import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
-import com.openstego.desktop.util.dwt.DWT;
 import com.openstego.desktop.util.dwt.Image;
-import com.openstego.desktop.util.dwt.ImageTree;
 import com.openstego.desktop.util.ecc.ReedSolomon;
 import com.openstego.desktop.util.svd.Svd;
 import java.io.ByteArrayInputStream;
@@ -23,7 +20,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Random;
 
 /**
@@ -58,12 +54,6 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
 
     /** Side of the square block used for the SVD (in LL sub-band pixels). */
     private static final int BLOCK = 8;
-
-    /** DWT configuration (matches the conventions used by the other watermarking plugins). */
-    private static final int DWT_FILTER_ID = 1;
-
-    private static final int DWT_METHOD = 2;
-    private static final int DWT_LEVEL = 1;
 
     /** Defaults for newly generated signatures. */
     private static final int DEFAULT_PAYLOAD_BITS = 64;
@@ -120,21 +110,20 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         int cols = image.getWidth();
         int rows = image.getHeight();
 
-        List<int[][]> yuv = YuvImageUtil.getYuvFromImage(image);
-        int[][] luminance = yuv.get(0);
-
         Signature sig = new Signature(msg);
         int[] codeBits = buildCodeBits(sig);
 
-        DWT dwt = new DWT(cols, rows, DWT_FILTER_ID, DWT_LEVEL, DWT_METHOD);
-        ImageTree tree = dwt.forwardDWT(luminance);
-        Image ll = tree.getCoarse().getImage();
+        // Stream the wavelet transform row-by-row (see DwtSvdTransform): bit-identical to the legacy
+        // DWT/YuvImageUtil path but with O(width) working memory instead of O(pixels) of transient buffers and
+        // full Y/U/V/alpha planes, so a large cover no longer exhausts the heap. The detail sub-bands are needed
+        // to reconstruct after embedding, so the forward pass produces all four bands.
+        DwtSvdTransform transform = new DwtSvdTransform(cols, rows);
+        Image[] bands = transform.forward(DwtSvdTransform.pixelSource(image), true);
+        Image ll = bands[0];
 
         embedIntoLL(ll, sig, codeBits);
 
-        dwt.inverseDWT(tree, luminance);
-        yuv.set(0, luminance);
-        YuvImageUtil.applyYuvToImage(yuv, image);
+        transform.inverse(bands, DwtSvdTransform.pixelSink(image));
 
         return ImageCodecRegistry.get().encode(image, stegoFileName);
     }
@@ -156,6 +145,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
             for (int bc = 0; bc < blocksW; bc++) {
                 sum += Svd.largestSingularValue(getBlock(ll, br, bc));
             }
+            reportProgress(0.5 * (br + 1.0) / blocksH);
         }
         double mu = sum / numBlocks;
         if (mu < 1e-6) {
@@ -177,6 +167,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
                 svd.setSingularValue(0, newS0);
                 putBlock(ll, br, bc, svd.reconstruct());
             }
+            reportProgress(0.5 + 0.5 * (br + 1.0) / blocksH);
         }
     }
 
@@ -219,11 +210,11 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         PixelImage image = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
         int cols = image.getWidth();
         int rows = image.getHeight();
-        int[][] luminance = YuvImageUtil.getYuvFromImage(image).get(0);
 
-        DWT dwt = new DWT(cols, rows, DWT_FILTER_ID, DWT_LEVEL, DWT_METHOD);
-        ImageTree tree = dwt.forwardDWT(luminance);
-        Image ll = tree.getCoarse().getImage();
+        // Extraction only reads the LL band, so stream just that (the detail bands are not produced). Bit-identical
+        // to the legacy path but with O(width) working memory - see DwtSvdTransform.
+        DwtSvdTransform transform = new DwtSvdTransform(cols, rows);
+        Image ll = transform.forward(DwtSvdTransform.pixelSource(image), false)[0];
 
         int codeLen = codeBitLength(sig);
         if ((ll.getWidth() / BLOCK) * (ll.getHeight() / BLOCK) < codeLen) {
@@ -245,6 +236,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
             int searchBestScore = -1;
             for (int phaseY = 0; phaseY < BLOCK; phaseY++) {
                 for (int phaseX = 0; phaseX < BLOCK; phaseX++) {
+                    reportProgress((phaseY * BLOCK + phaseX + 1.0) / (BLOCK * BLOCK));
                     // The SVD grid (and hence the QIM step) depends only on the grid PHASE, not on the block-origin
                     // offset, which merely shifts the code-index mapping. So decompose each phase's grid once here and
                     // reuse it across all (offR, offC) candidates - the block-origin search then costs only cheap
@@ -275,6 +267,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
                 best = searchBest;
             }
         }
+        reportProgress(1.0);
 
         ReedSolomon rs = new ReedSolomon(sig.parityBytes);
         byte[] payload = rs.decode(bitsToBytes(best));
