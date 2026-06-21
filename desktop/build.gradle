@@ -164,26 +164,32 @@ tasks.register("distBin", Zip) {
     into projectName + '-' + project.version
 }
 
-tasks.register("distWin", Exec) {
+// Token values captured at configuration time so the .iss generation is configuration-cache safe
+// (the old version filtered the script inside an execution-time copy {} that referenced 'project').
+def innoAppVersion  = project.version.toString()
+def innoAuthorName  = project.author.toString()
+def innoHomepageUrl = project.homepageUrl.toString()
+
+tasks.register("distWinGenerateIss", Copy) {
     dependsOn distBase
+    onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
+    from 'artifacts/installer.iss'
+    into layout.buildDirectory.dir('generated')
+    filter(ReplaceTokens, tokens: [
+            'AppName'    : projectName,
+            'AppVersion' : innoAppVersion,
+            'AuthorName' : innoAuthorName,
+            'HomepageUrl': innoHomepageUrl,
+            'AppDir'     : distBaseDir.path,
+            'DistDir'    : layout.buildDirectory.dir('distributions').get().asFile.path
+    ])
+}
+
+tasks.register("distWin", Exec) {
+    dependsOn distWinGenerateIss
 
     onlyIf {
         Os.isFamily(Os.FAMILY_WINDOWS)
-    }
-
-    doFirst {
-        copy {
-            from 'artifacts/installer.iss'
-            into layout.buildDirectory.dir('generated')
-            filter(ReplaceTokens, tokens: [
-                    'AppName'    : projectName,
-                    'AppVersion' : project.version,
-                    'AuthorName' : project.author,
-                    'HomepageUrl': project.homepageUrl,
-                    'AppDir'     : distBaseDir.path,
-                    'DistDir'    : layout.buildDirectory.dir('distributions').get().asFile.path
-            ])
-        }
     }
 
     workingDir layout.buildDirectory.get().asFile
@@ -315,17 +321,27 @@ tasks.register('jpackageInput', Copy) {
     from(configurations.runtimeClasspath)
 }
 
+// jpackage metadata captured at configuration time. The argumentProviders closures below run at
+// execution time, where referencing the Gradle 'project' object is forbidden by the configuration
+// cache, so every project-derived value is resolved to a plain String/path here instead.
+def jpVendor        = project.author.toString()
+def jpCopyright     = "Copyright (c) Samir Vaidya and ${project.author}".toString()
+def jpAboutUrl      = project.homepageUrl.toString()
+def jpLicenseFile   = rootProject.file('LICENSE').absolutePath
+def jpDebMaintainer = project.authorMail.toString()
+def jpIconFile      = file('src/main/dist/neostego.ico').absolutePath
+
 def commonJpackageArgs = {
     [
             '--name'        , projectName,
             '--app-version' , jpackageVersion,
-            '--vendor'      , project.author.toString(),
-            '--copyright'   , "Copyright (c) Samir Vaidya and ${project.author}".toString(),
-            '--about-url'   , project.homepageUrl.toString(),
+            '--vendor'      , jpVendor,
+            '--copyright'   , jpCopyright,
+            '--about-url'   , jpAboutUrl,
             '--input'       , jpackageInputDir.get().asFile.absolutePath,
             '--main-jar'    , 'neostego.jar',
             '--main-class'  , 'com.openstego.desktop.OpenStegoLauncher',
-            '--license-file', rootProject.file('LICENSE').absolutePath,
+            '--license-file', jpLicenseFile,
             '--dest'        , jpackageOutDir.get().asFile.absolutePath
     ]
 }
@@ -340,7 +356,7 @@ tasks.register('jpackageMsi', Exec) {
     argumentProviders.add({
         commonJpackageArgs() + [
                 '--type', 'msi',
-                '--icon', file('src/main/dist/neostego.ico').absolutePath,
+                '--icon', jpIconFile,
                 // Without --win-menu-group jpackage files the Start Menu shortcut under "Unknown".
                 '--win-menu', '--win-menu-group', projectName,
                 '--win-shortcut', '--win-per-user-install',
@@ -374,7 +390,7 @@ tasks.register('jpackageDeb', Exec) {
         commonJpackageArgs() + [
                 '--type', 'deb',
                 '--linux-shortcut', '--linux-menu-group', 'Utility',
-                '--linux-deb-maintainer', project.authorMail.toString()
+                '--linux-deb-maintainer', jpDebMaintainer
         ]
     } as CommandLineArgumentProvider)
 }
