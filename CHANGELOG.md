@@ -11,8 +11,11 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
-JPEG-cover steganography additions and a performance improvement, inspired by a
-comparison with Secret Space Encryptor (SSE).
+## [1.0.3] — 2026-06-20
+
+JPEG-cover steganography additions, an Android UI redesign, broad embedding
+speed-ups, and a watermark crash fix. No change to the on-disk steganography
+format or algorithms.
 
 ### Added
 - **Plain J-UNIWARD mode** — a new algorithm option that runs the UNIWARD cost
@@ -26,11 +29,27 @@ comparison with Secret Space Encryptor (SSE).
   License (Blake2b is CC0); see [NOTICE](NOTICE) and
   [docs/ALGORITHMS.md](docs/ALGORITHMS.md). Both new options are exposed in the
   desktop CLI/GUI and the Android app.
+- **"System" theme mode** that follows the OS light/dark appearance.
 
 ### Changed
+- **Android UI redesign** — a full Material 3 Expressive refresh (floating
+  navigation toolbar, sectioned cards, cover-derived theming) plus an embed-map
+  animation that visualises which regions of the image carry hidden data.
+- **Faster embedding across the adaptive schemes** — the Syndrome-Trellis Codes
+  inner loop (shared by Adaptive, J-UNIWARD and SI-UNIWARD), the UNIWARD cover
+  residual filtering (now parallelised), and the HILL cost's box blur (now an
+  O(1)-per-pixel running sum) were all sped up. STC and UNIWARD output is
+  bit-identical to before; HILL changes only steer where edits go, never
+  recoverability.
 - **Multithreaded UNIWARD cost computation** — the per-block JPEG cost map is now
   computed in parallel. The result is bit-identical to the sequential path, so
   stego output is unchanged; only embedding speed on large images improves.
+
+### Fixed
+- **DWT-SVD watermark** — fixed an out-of-memory crash when embedding a signature
+  into a large image on Android, and made verification dramatically faster
+  (largest-singular-value-only power iteration plus hoisting redundant work out
+  of the crop-alignment search), especially when checking un-watermarked images.
 
 ## [1.0.1] — 2026-06-16
 
