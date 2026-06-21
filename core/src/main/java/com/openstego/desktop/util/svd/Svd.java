@@ -20,6 +20,11 @@ public final class Svd {
     private static final int MAX_SWEEPS = 60;
     private static final double EPS = 1e-12;
 
+    /** Iteration cap and relative tolerance for the largest-singular-value-only power iteration. */
+    private static final int POWER_ITERS = 100;
+
+    private static final double POWER_TOL = 1e-9;
+
     private final int n;
     private final double[][] u;
     private final double[][] v;
@@ -49,6 +54,77 @@ public final class Svd {
 
         decompose();
         sortDescending();
+    }
+
+    /**
+     * Returns only the largest singular value of a square matrix, without forming {@code U} or {@code V}.
+     * <p>
+     * The watermark decode (and the embed's reference-mean pass) need just {@code S[0]}; computing a full SVD there
+     * wastes work and, more importantly, allocates a {@code U}/{@code V} pair plus a boxed sort per block - prohibitive
+     * when this runs over every 8&times;8 block of a multi-megapixel image, repeated across the alignment search. The
+     * largest singular value is the square root of the dominant eigenvalue of the Gram matrix {@code A^T A}, found here
+     * by power iteration: a handful of small mat-vecs that converge geometrically and allocate only a couple of
+     * length-{@code n} vectors. The full {@link Svd} (with {@link #reconstruct()}) is still used where the modified
+     * block must be rebuilt.
+     *
+     * @param a Square matrix (n&times;n); not modified
+     * @return the largest singular value of {@code a}
+     */
+    public static double largestSingularValue(double[][] a) {
+        int n = a.length;
+        for (double[] row : a) {
+            if (row.length != n) {
+                throw new IllegalArgumentException("matrix must be square");
+            }
+        }
+
+        // Gram matrix g = A^T A (symmetric PSD); sigma1 = sqrt(lambda_max(g)).
+        double[][] g = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = i; j < n; j++) {
+                double sum = 0.0;
+                for (int k = 0; k < n; k++) {
+                    sum += a[k][i] * a[k][j];
+                }
+                g[i][j] = sum;
+                g[j][i] = sum;
+            }
+        }
+
+        // Power iteration for the dominant eigenvalue of g, estimated by the Rayleigh quotient of the unit iterate.
+        double[] x = new double[n];
+        java.util.Arrays.fill(x, 1.0 / Math.sqrt(n));
+        double lambda = 0.0;
+        double[] y = new double[n];
+        for (int iter = 0; iter < POWER_ITERS; iter++) {
+            for (int i = 0; i < n; i++) {
+                double sum = 0.0;
+                for (int j = 0; j < n; j++) {
+                    sum += g[i][j] * x[j];
+                }
+                y[i] = sum;
+            }
+            // Rayleigh quotient x^T g x = x^T y (x is unit-norm), then renormalize x <- y / ||y||.
+            double rayleigh = 0.0;
+            double norm = 0.0;
+            for (int i = 0; i < n; i++) {
+                rayleigh += x[i] * y[i];
+                norm += y[i] * y[i];
+            }
+            norm = Math.sqrt(norm);
+            if (norm <= EPS) {
+                return 0.0;
+            }
+            for (int i = 0; i < n; i++) {
+                x[i] = y[i] / norm;
+            }
+            if (Math.abs(rayleigh - lambda) <= POWER_TOL * Math.abs(rayleigh)) {
+                lambda = rayleigh;
+                break;
+            }
+            lambda = rayleigh;
+        }
+        return Math.sqrt(Math.max(lambda, 0.0));
     }
 
     private void decompose() {
