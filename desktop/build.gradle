@@ -1,0 +1,466 @@
+/*
+ * Steganography utility to hide messages into cover files
+ * Copyright (c) Samir Vaidya (mailto:syvaidya@gmail.com)
+ *
+ * Desktop application: Swing GUI + command-line interface, built on the platform-independent :core.
+ */
+
+import org.apache.tools.ant.filters.FixCrLfFilter
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.apache.tools.ant.taskdefs.condition.Os
+
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'com.netflix.nebula.ospackage' version '12.3.0'
+}
+
+String projectName = 'NeoStego'
+File distBaseDir = layout.buildDirectory.dir('distributions/package').get().asFile
+String currYear = new SimpleDateFormat('yyyy').format(new Date())
+def filterTokens = [
+        'app.name'    : projectName,
+        'app.version' : project.version.toString(),
+        'author.name' : project.author,
+        'author.mail' : project.authorMail,
+        'homepage.url': project.homepageUrl,
+        'time.year'   : currYear
+]
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    main {
+        java {
+            exclude 'com/openstego/desktop/plugin/dctlsb/**'
+            exclude 'com/openstego/desktop/plugin/dwtkim/**'
+            exclude 'com/openstego/desktop/plugin/dwtxie/**'
+            exclude 'com/openstego/desktop/plugin/template/dct/**'
+            exclude 'com/openstego/desktop/util/dct/**'
+        }
+    }
+}
+
+dependencies {
+    implementation project(':core')
+    implementation 'com.formdev:flatlaf:3.6'
+    implementation 'com.formdev:flatlaf-extras:3.6'
+    implementation 'info.picocli:picocli:4.7.6'
+    // WebP cover support (upstream issue #63): TwelveMonkeys registers a WebP ImageReader via ServiceLoader,
+    // so ImageIO picks it up automatically. Decode-only; stego output stays in a lossless format (PNG).
+    implementation 'com.twelvemonkeys.imageio:imageio-webp:3.12.0'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.3'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+processResources {
+    filesMatching('**/*.properties') {
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+}
+
+jar {
+    archiveFileName = 'neostego.jar'
+    manifest {
+        attributes([
+                'Main-Class'            : 'com.openstego.desktop.OpenStegoLauncher',
+                'Implementation-Version': project.version,
+                'Built-By'              : project.author,
+                // Runtime dependencies (core + FlatLaf + picocli) are bundled alongside neostego.jar
+                // in lib/, so the Class-Path is resolved relative to the jar's own directory (lib/).
+                'Class-Path'            : configurations.runtimeClasspath.collect { it.name }.join(' ')
+        ])
+    }
+}
+
+test {
+    useJUnitPlatform()
+    // The large-cover tiling proof runs under a tight heap in its own task (:desktop:tilingTest);
+    // keep it out of the default suite so routine test runs stay fast and heap-roomy.
+    exclude '**/LargeCoverTilingTest*'
+    finalizedBy jacocoTestReport
+}
+
+// Constrained-heap proof that Adaptive + SI-UNIWARD tiling bounds the working set to one band:
+// a 13.5 MP cover + 150 KB payload round-trips under -Xmx320m (all three algorithms pass by ~256m;
+// 224m OOMs, and the old per-image arrays needed ~900m), so a regression that reintroduces an
+// O(image) array fails loudly. Banding the JPEG codec too (planes + rounding recomputed per
+// block-row strip), the 1M-carrier band budget, and the short[] DCT coefficient store (half the
+// resident footprint of int[]) are what pulled the peak down here.
+// Override the cap with -PtileXmx=<size>. Usage: ./gradlew :desktop:tilingTest
+tasks.register("tilingTest", Test) {
+    group = "verification"
+    description = "Large-cover tiled-embedding round-trip under a constrained heap."
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    include '**/LargeCoverTilingTest*'
+    maxHeapSize = (project.findProperty("tileXmx") ?: '320m').toString()
+    forkEvery = 1
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = false
+        html.required = true
+    }
+}
+
+tasks.register("run", JavaExec) {
+    dependsOn jar
+    classpath = files(tasks.jar) + configurations.runtimeClasspath
+    mainClass = 'com.openstego.desktop.OpenStegoLauncher'
+}
+
+tasks.register("distBase", Copy) {
+    dependsOn jar
+    destinationDir = distBaseDir
+
+    from(rootDir) {
+        include 'LICENSE'
+    }
+    from('src/main/dist') {
+        exclude '**/*.sh'
+        filesNotMatching('**/*.ico') {
+            filter(ReplaceTokens, tokens: filterTokens)
+        }
+    }
+    from('src/main/dist') {
+        include '**/*.sh'
+        filter(ReplaceTokens, tokens: filterTokens)
+        filePermissions { unix(0755) }
+    }
+    from(tasks.jar) {
+        into 'lib'
+    }
+    // Bundle runtime dependencies (core, FlatLaf, picocli) next to neostego.jar so the manifest
+    // Class-Path resolves them when launched via "java -jar lib/neostego.jar".
+    from(configurations.runtimeClasspath) {
+        into 'lib'
+    }
+}
+
+tasks.register("distBin", Zip) {
+    dependsOn distBase
+    archiveBaseName = projectName
+    from distBaseDir
+    into projectName + '-' + project.version
+}
+
+// Token values captured at configuration time so the .iss generation is configuration-cache safe
+// (the old version filtered the script inside an execution-time copy {} that referenced 'project').
+def innoAppVersion  = project.version.toString()
+def innoAuthorName  = project.author.toString()
+def innoHomepageUrl = project.homepageUrl.toString()
+
+tasks.register("distWinGenerateIss", Copy) {
+    dependsOn distBase
+    onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
+    from 'artifacts/installer.iss'
+    into layout.buildDirectory.dir('generated')
+    filter(ReplaceTokens, tokens: [
+            'AppName'    : projectName,
+            'AppVersion' : innoAppVersion,
+            'AuthorName' : innoAuthorName,
+            'HomepageUrl': innoHomepageUrl,
+            'AppDir'     : distBaseDir.path,
+            'DistDir'    : layout.buildDirectory.dir('distributions').get().asFile.path
+    ])
+}
+
+tasks.register("distWin", Exec) {
+    dependsOn distWinGenerateIss
+
+    onlyIf {
+        Os.isFamily(Os.FAMILY_WINDOWS)
+    }
+
+    workingDir layout.buildDirectory.get().asFile
+    commandLine 'cmd', '/c', 'iscc', 'generated\\installer.iss', '/Q'
+}
+
+tasks.register("distDeb", Deb) {
+    dependsOn distBase
+    packageName = projectName.toLowerCase()
+    summary = projectName
+    release = 1
+    packageGroup = 'utils'
+    maintainer = "${author} (${authorMail})"
+    url = project.homepageUrl
+    requires('default-jre').or('java8-runtime')
+
+    into '/usr/share'
+    from(distBaseDir) {
+        into projectName
+        include 'lib/**'
+    }
+    from(distBaseDir) {
+        into projectName
+        include 'neostego.sh'
+        rename('neostego.sh', 'neostego')
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filePermissions { unix(0755) }
+    }
+    from('artifacts') {
+        into 'applications'
+        include 'neostego.desktop'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+    from('artifacts') {
+        into 'icons/hicolor/scalable/apps'
+        include 'neostego.svg'
+    }
+    from(distBaseDir) {
+        into 'doc/' + projectName
+        include 'README'
+    }
+    from('artifacts') {
+        into 'doc/' + projectName
+        include 'copyright'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+
+    link('/usr/bin/neostego', '/usr/share/' + projectName + '/neostego')
+}
+
+tasks.register("distRpm", Rpm) {
+    dependsOn distBase
+    packageName = projectName.toLowerCase()
+    summary = projectName
+    release = 1
+    packageGroup = 'utils'
+    packager = "${author} (${authorMail})"
+    url = project.homepageUrl
+    user = 'root'
+    license = 'GPLv2'
+    buildHost = ''
+    os = LINUX
+    requires('java', '1.8', GREATER | EQUAL)
+
+    into '/usr/share'
+    from(distBaseDir) {
+        into projectName
+        include 'lib/**'
+    }
+    from(distBaseDir) {
+        into projectName
+        include 'neostego.sh'
+        rename('neostego.sh', 'neostego')
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filePermissions { unix(0755) }
+    }
+    from('artifacts') {
+        into 'applications'
+        addParentDirs false
+        include 'neostego.desktop'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+        filter(ReplaceTokens, tokens: filterTokens)
+    }
+    from('artifacts') {
+        into 'icons/hicolor/scalable/apps'
+        addParentDirs false
+        include 'neostego.svg'
+    }
+    from(distBaseDir) {
+        into 'doc/' + projectName
+        addParentDirs false
+        include 'LICENSE'
+        include 'README'
+        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
+    }
+
+    link('/usr/bin/neostego', '/usr/share/' + projectName + '/neostego')
+}
+
+tasks.register("dist") {
+    dependsOn distBin, distWin, distDeb, distRpm
+}
+
+// ---------------------------------------------------------------------------------------
+// Native installers via jpackage. Unlike distWin/distDeb/distRpm (which require a system
+// JRE), these bundle a Java runtime inside the installer, so end users install nothing else.
+// One config emits the right native installer per OS; the release CI runs the matching task
+// on a runner of that OS. Requires the JDK's jpackage on PATH/JAVA_HOME, plus Inno Setup
+// (Windows .exe) and rpm tools (Linux .rpm) on the build machine.
+// ---------------------------------------------------------------------------------------
+def jpackageInputDir = layout.buildDirectory.dir('jpackage/input')
+def jpackageOutDir   = layout.buildDirectory.dir('jpackage/out')
+// jpackage requires a strictly numeric version (e.g. 1.0.0); drop any -SNAPSHOT/-rc suffix.
+def jpackageVersion  = project.version.toString().replaceAll(/-.*$/, '')
+
+def jpackageBin = {
+    String jh = System.getenv('JAVA_HOME')
+    String exe = Os.isFamily(Os.FAMILY_WINDOWS) ? 'jpackage.exe' : 'jpackage'
+    jh ? new File(jh, "bin/${exe}").absolutePath : exe
+}
+
+tasks.register('jpackageInput', Copy) {
+    dependsOn jar
+    into jpackageInputDir
+    // Main jar plus all runtime deps, flat, so the jar manifest's Class-Path (filenames) resolves.
+    from(tasks.jar)
+    from(configurations.runtimeClasspath)
+}
+
+// jpackage metadata captured at configuration time. The argumentProviders closures below run at
+// execution time, where referencing the Gradle 'project' object is forbidden by the configuration
+// cache, so every project-derived value is resolved to a plain String/path here instead.
+def jpVendor        = project.author.toString()
+def jpCopyright     = "Copyright (c) Samir Vaidya and ${project.author}".toString()
+def jpAboutUrl      = project.homepageUrl.toString()
+def jpLicenseFile   = rootProject.file('LICENSE').absolutePath
+def jpDebMaintainer = project.authorMail.toString()
+def jpIconFile      = file('src/main/dist/neostego.ico').absolutePath
+
+def commonJpackageArgs = {
+    [
+            '--name'        , projectName,
+            '--app-version' , jpackageVersion,
+            '--vendor'      , jpVendor,
+            '--copyright'   , jpCopyright,
+            '--about-url'   , jpAboutUrl,
+            '--input'       , jpackageInputDir.get().asFile.absolutePath,
+            '--main-jar'    , 'neostego.jar',
+            '--main-class'  , 'com.openstego.desktop.OpenStegoLauncher',
+            '--license-file', jpLicenseFile,
+            '--dest'        , jpackageOutDir.get().asFile.absolutePath
+    ]
+}
+
+tasks.register('jpackageMsi', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled Windows .msi installer (WiX).'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'msi',
+                '--icon', jpIconFile,
+                // Without --win-menu-group jpackage files the Start Menu shortcut under "Unknown".
+                '--win-menu', '--win-menu-group', projectName,
+                '--win-shortcut', '--win-per-user-install',
+                // Stable UpgradeCode so future versions upgrade in place (jpackage otherwise
+                // generates a random one per build, which would break upgrades and winget tracking).
+                '--win-upgrade-uuid', 'b4fc0612-03d7-498f-8331-8d8cc780f728'
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageDmg', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled macOS .dmg.'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + ['--type', 'dmg', '--mac-package-name', projectName]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageDeb', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled Linux .deb.'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'deb',
+                '--linux-shortcut', '--linux-menu-group', 'Utility',
+                '--linux-deb-maintainer', jpDebMaintainer
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageRpm', Exec) {
+    group = 'distribution'
+    description = 'Build a runtime-bundled Linux .rpm.'
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'rpm',
+                '--linux-shortcut', '--linux-menu-group', 'Utility',
+                '--linux-rpm-license-type', 'GPLv2'
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+// Umbrella: each sub-task is a no-op unless the host OS matches, so this builds whatever
+// native installer the current runner can produce.
+tasks.register('jpackage') {
+    group = 'distribution'
+    description = 'Build the native runtime-bundled installer(s) for the current OS.'
+    dependsOn jpackageMsi, jpackageDmg, jpackageDeb, jpackageRpm
+}
+
+// Benchmark helper: batch-embed a directory of covers with one algorithm in a single JVM.
+// Usage: ./gradlew :desktop:benchEmbed -PcoverDir=... -PoutDir=... -Palgo=Adaptive -Ppayload=9800 [-Ppw=secret]
+tasks.register("benchEmbed", JavaExec) {
+    group = "verification"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.openstego.desktop.bench.BenchEmbed"
+    args = [
+            project.findProperty("coverDir") ?: "",
+            project.findProperty("outDir") ?: "",
+            project.findProperty("algo") ?: "Adaptive",
+            (project.findProperty("payload") ?: "9800").toString(),
+            project.findProperty("pw") ?: ""
+    ]
+}
+
+// Usage: ./gradlew :desktop:benchJpeg -Pmode=cover|stego -PcoverDir=... -PoutDir=... -Pquality=90 \
+//        [-Ppayload=8000] [-Palgo=JpegUniward] [-Ppw=secret]
+tasks.register("benchJpeg", JavaExec) {
+    group = "verification"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.openstego.desktop.bench.BenchJpeg"
+    args = [
+            project.findProperty("mode") ?: "cover",
+            project.findProperty("coverDir") ?: "",
+            project.findProperty("outDir") ?: "",
+            (project.findProperty("quality") ?: "90").toString(),
+            (project.findProperty("payload") ?: "0").toString(),
+            project.findProperty("algo") ?: "JpegUniward",
+            project.findProperty("pw") ?: ""
+    ]
+}
+
+tasks.register("stcBench", JavaExec) {
+    group = "verification"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.openstego.desktop.bench.StcBench"
+    args = [
+            (project.findProperty("msg") ?: "4000").toString(),
+            project.findProperty("ws") ?: "5,10,25,50,96",
+            project.findProperty("hs") ?: "7,10,12,14"
+    ]
+}

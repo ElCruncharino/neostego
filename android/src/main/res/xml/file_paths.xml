@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Stego/watermark/revealed outputs are written here briefly so they can be shared via the
+         system share sheet through a content:// URI. App-private cache, not world-readable. -->
+    <cache-path name="shared" path="share/" />
+</paths>

@@ -1,0 +1,78 @@
+NeoStego
+Copyright (c) 2026 Nick Haghiri
+
+This product is a derivative work of OpenStego.
+OpenStego is Copyright (c) Samir Vaidya (https://www.openstego.com).
+
+NeoStego is free software, distributed under the terms of the GNU General
+Public License, version 2 (see the LICENSE file). It retains the license of
+the upstream OpenStego project. Files that originate from OpenStego carry the
+original copyright notice; files modified for this fork additionally carry a
+"Modifications copyright (c) 2026 Nick Haghiri" notice. Files created for this
+fork carry only the NeoStego copyright. A summary of the changes made in this
+fork is in CHANGELOG.md.
+
+----------------------------------------------------------------------------
+Third-party code and dependencies
+----------------------------------------------------------------------------
+
+Peter Meerwald
+  The legacy spread-spectrum DWT watermarking plugins (Dugad, Kim, Xie) are
+  based on code from his thesis on wavelet-domain watermarking
+  (University of Salzburg, 2001).
+
+DDE Lab, Binghamton University (Jessica Fridrich et al.)
+  The content-adaptive (HILL+STC) and SI-UNIWARD plugins, and the steganalysis
+  benchmark harnesses, implement methods introduced in research published by
+  the DDE Lab and collaborators. See the "Acknowledgement" section of README.md
+  for full citations. The DDE Lab's own reference code is released by them for
+  research and non-profit use and is not included in this repository.
+
+Paranoia Works -- Secret Space Encryptor (SSE), https://paranoiaworks.mobi
+  The F5 plugin's algorithm core and PRNG -- the files under
+  com/openstego/desktop/plugin/f5/ (F5Embed, F5Extract, F5Permutation) and
+  com/openstego/desktop/plugin/f5/crypto/ (F5Random and the Digest interfaces)
+  -- are lifted, near-verbatim, from SSE's com.paranoiaworks.steganography tree,
+  which SSE licenses under the MIT License (the SSE project's LICENSE lists that
+  tree as "BSD-2 + MIT"; the individual files carry an SPDX MIT identifier,
+  which we preserve). The F5 algorithm itself is due to Andreas Westfeld, "F5 -
+  A Steganographic Algorithm" (2001). Only the file names/packages and the
+  coefficient-order handling were adapted for NeoStego; the per-file SPDX
+  headers are retained unchanged.
+
+  The MIT License text covering those files:
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+    IN THE SOFTWARE.
+
+Joubin Mohammad Houshyar
+  The Blake2b digest used by the F5 PRNG
+  (com/openstego/desktop/plugin/f5/crypto/Blake2bHash.java) is his public-domain
+  (CC0 1.0) Java BLAKE2B implementation; the original author/CC0 dedication
+  header is retained in the file.
+
+NeoStego links against the following libraries at build/run time. Each is the
+property of its respective authors and is used under its own license:
+
+  com.formdev:flatlaf, flatlaf-extras .......... Apache License 2.0
+  info.picocli:picocli ......................... Apache License 2.0
+  com.twelvemonkeys.imageio:imageio-webp ....... BSD 3-Clause License
+  AndroidX / Jetpack Compose ................... Apache License 2.0
+  org.jetbrains.kotlinx:kotlinx-coroutines ..... Apache License 2.0
+
+Test-only dependencies (not distributed): JUnit (EPL 2.0), Mockito (MIT).

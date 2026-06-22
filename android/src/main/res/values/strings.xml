@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NeoStego</string>
+    <!-- Labels shown in another app's share sheet (one per labeled share target) -->
+    <string name="share_target_hide">Hide with NeoStego</string>
+    <string name="share_target_reveal">Reveal with NeoStego</string>
+    <!-- Long-press launcher shortcuts -->
+    <string name="shortcut_hide_short">Hide</string>
+    <string name="shortcut_hide_long">Hide a file</string>
+    <string name="shortcut_reveal_short">Reveal</string>
+    <string name="shortcut_reveal_long">Reveal a file</string>
+</resources>
