@@ -151,3 +151,28 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: dist/**/*
+
+  # Submit the just-published MSI to winget. Runs here (chained via needs) rather than relying on
+  # winget.yml's `release: [released]` trigger: that event is suppressed when the release is created
+  # by the default GITHUB_TOKEN, so the cross-workflow trigger never fires for an auto-published
+  # release. winget.yml is kept for manual (workflow_dispatch) re-submission of any tag.
+  winget:
+    name: Submit to winget
+    needs: [release]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve version (strip leading v)
+        id: ver
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Submit NeoStego to winget-pkgs
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: ElCruncharino.NeoStego
+          # release-tag keeps the leading v (it identifies the GitHub release); version drops it.
+          release-tag: ${{ github.ref_name }}
+          version: ${{ steps.ver.outputs.version }}
+          installers-regex: '\.msi$'
+          token: ${{ secrets.WINGET_TOKEN }}
