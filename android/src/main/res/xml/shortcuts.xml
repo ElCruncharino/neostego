@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="hide"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_hide_short"
+        android:shortcutLongLabel="@string/shortcut_hide_long">
+        <intent
+            android:action="com.elcruncharino.neostego.ACTION_HIDE"
+            android:targetPackage="com.elcruncharino.neostego"
+            android:targetClass="com.elcruncharino.neostego.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="reveal"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_reveal_short"
+        android:shortcutLongLabel="@string/shortcut_reveal_long">
+        <intent
+            android:action="com.elcruncharino.neostego.ACTION_REVEAL"
+            android:targetPackage="com.elcruncharino.neostego"
+            android:targetClass="com.elcruncharino.neostego.MainActivity" />
+    </shortcut>
+</shortcuts>

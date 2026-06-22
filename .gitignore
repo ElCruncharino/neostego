@@ -1,0 +1,25 @@
+/.classpath
+/.gradle/
+/.idea/
+/.project
+/.settings/
+/.vscode/
+/bin
+/build
+build/
+/local.properties
+
+# Kotlin compiler daemon scratch / error logs
+.kotlin/
+
+# JVM heap dumps (OOM diagnostics) — never commit these
+*.hprof
+
+# Android release signing secrets — never commit these
+android/keystore.properties
+*.jks
+*.keystore
+
+# Flatpak build artifacts
+flatpak/build-dir/
+flatpak/.flatpak-builder/

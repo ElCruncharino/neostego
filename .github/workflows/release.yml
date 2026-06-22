@@ -1,0 +1,178 @@
+name: Release
+
+# Build runtime-bundled native installers (and a signed Android APK) on each OS and attach
+# them to a GitHub Release. Push a tag like v1.0.0 to cut a release; or run manually
+# (workflow_dispatch) to test the desktop build without publishing.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x64
+            os: windows-latest
+            tasks: ':desktop:jpackageMsi'
+            artifacts: desktop/build/jpackage/out/*.msi
+          - name: macos-arm64
+            os: macos-latest
+            tasks: ':desktop:jpackageDmg'
+            artifacts: desktop/build/jpackage/out/*.dmg
+          - name: linux-x64
+            os: ubuntu-latest
+            tasks: ':desktop:jpackageDeb :desktop:jpackageRpm :desktop:distBin'
+            artifacts: |
+              desktop/build/jpackage/out/*.deb
+              desktop/build/jpackage/out/*.rpm
+              desktop/build/distributions/*.zip
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Install WiX Toolset (Windows .msi)
+        if: runner.os == 'Windows'
+        # The 'wixtoolset' Chocolatey package is the WiX 3.x line that jpackage requires
+        # (jpackage uses candle.exe/light.exe; it does not support WiX 4/5).
+        run: choco install wixtoolset --no-progress -y
+
+      - name: Install rpm/deb tooling (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm fakeroot binutils
+
+      - name: Resolve version from tag
+        id: ver
+        shell: bash
+        run: |
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            echo "arg=-Pversion=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "arg=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build installer(s)
+        shell: bash
+        run: ./gradlew ${{ matrix.tasks }} ${{ steps.ver.outputs.arg }} --no-daemon --console=plain
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.name }}
+          path: ${{ matrix.artifacts }}
+          if-no-files-found: error
+
+  android:
+    name: android-apk
+    runs-on: ubuntu-latest
+    # Only build the APK for real releases (needs signing secrets); skip on dispatch dry-runs.
+    if: github.ref_type == 'tag'
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Check for signing key
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret set; skipping APK (an unsigned APK cannot be installed)."
+          fi
+
+      - name: Materialize keystore
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        env:
+          SP: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KA: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KP: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/release.keystore
+          printf 'storeFile=release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$SP" "$KA" "$KP" > android/keystore.properties
+
+      - name: Build signed APK
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          ./gradlew :android:assembleRelease -Pversion=${GITHUB_REF_NAME#v} --no-daemon --console=plain
+          apk=$(ls android/build/outputs/apk/release/*.apk | grep -v -- '-unsigned' | head -1)
+          echo "Packaging APK: $apk"
+          cp "$apk" "NeoStego-${GITHUB_REF_NAME#v}.apk"
+
+      - name: Upload APK
+        if: steps.signing.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-apk
+          path: NeoStego-*.apk
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: [build, android]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v3
+        with:
+          name: NeoStego ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: dist/**/*
+
+  # Submit the just-published MSI to winget. Runs here (chained via needs) rather than relying on
+  # winget.yml's `release: [released]` trigger: that event is suppressed when the release is created
+  # by the default GITHUB_TOKEN, so the cross-workflow trigger never fires for an auto-published
+  # release. winget.yml is kept for manual (workflow_dispatch) re-submission of any tag.
+  winget:
+    name: Submit to winget
+    needs: [release]
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve version (strip leading v)
+        id: ver
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Submit NeoStego to winget-pkgs
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: ElCruncharino.NeoStego
+          # release-tag keeps the leading v (it identifies the GitHub release); version drops it.
+          release-tag: ${{ github.ref_name }}
+          version: ${{ steps.ver.outputs.version }}
+          installers-regex: '\.msi$'
+          token: ${{ secrets.WINGET_TOKEN }}

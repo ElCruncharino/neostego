@@ -1,0 +1,97 @@
+/*
+ * Steganography utility to hide messages into cover files
+ * Copyright (c) 2026 Nick Haghiri
+ * Based on OpenStego by Samir Vaidya (mailto:syvaidya@gmail.com)
+ *
+ * Android application built on the platform-independent :core module.
+ */
+
+plugins {
+    id 'com.android.application' version '9.1.0'
+    // AGP 9 compiles Kotlin via built-in Kotlin support, so the standalone 'kotlin.android' plugin
+    // is no longer applied. The Compose compiler plugin is still required and is version-aligned by
+    // AGP's built-in Kotlin (no explicit version).
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
+}
+
+android {
+    namespace = 'com.elcruncharino.neostego'
+    compileSdk = 36
+
+    defaultConfig {
+        applicationId = 'com.elcruncharino.neostego'
+        minSdk = 26
+        targetSdk = 35
+        versionCode = 4
+        versionName = project.version.toString()
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    // Release signing is read from a gitignored keystore.properties (see keystore.properties.example).
+    // When that file is absent (e.g. CI or a fresh checkout) the release build still assembles, just
+    // unsigned, so the build never hard-fails on a missing keystore.
+    signingConfigs {
+        release {
+            def keystoreProps = file('keystore.properties')
+            if (keystoreProps.exists()) {
+                def props = new Properties()
+                keystoreProps.withInputStream { props.load(it) }
+                storeFile file(props['storeFile'])
+                storePassword props['storePassword']
+                keyAlias props['keyAlias']
+                keyPassword props['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (file('keystore.properties').exists()) {
+                signingConfig = signingConfigs.release
+            }
+        }
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+// Kotlin formatting for this module (the Java config is inherited from the root spotless block).
+spotless {
+    kotlin {
+        target 'src/**/*.kt'
+        ktlint('1.2.1')
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+dependencies {
+    implementation project(':core')
+
+    def composeBom = platform('androidx.compose:compose-bom:2026.05.01')
+    implementation composeBom
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    debugImplementation 'androidx.compose.ui:ui-tooling'
+    implementation 'androidx.activity:activity-compose:1.13.0'
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.palette:palette-ktx:1.0.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.10.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1'
+}

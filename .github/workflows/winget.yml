@@ -1,0 +1,45 @@
+name: Submit to winget
+
+# When a GitHub Release is published, automatically generate the winget manifests
+# (with correct schema headers) and open a pull request to microsoft/winget-pkgs.
+# Microsoft's pipeline then validates the package and a moderator merges it.
+#
+# Requires a repo secret WINGET_TOKEN: a GitHub PAT whose account owns a fork of
+# microsoft/winget-pkgs (ElCruncharino/winget-pkgs). See the action docs for scope.
+
+on:
+  release:
+    types: [released]   # fires when a release is published (not on drafts/pre-releases)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing release tag to (re)submit, e.g. v1.0.1'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  winget:
+    name: Publish to winget
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve tag and version
+        id: ver
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"        # git tag, e.g. v1.0.1 (used to fetch assets)
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"  # winget version, e.g. 1.0.1
+
+      - name: Submit NeoStego to winget-pkgs
+        uses: vedantmgoyal9/winget-releaser@v2
+        with:
+          identifier: ElCruncharino.NeoStego
+          # release-tag: which GitHub release to pull assets from (the git tag, with the v).
+          # version: the winget package version (no leading v).
+          release-tag: ${{ steps.ver.outputs.tag }}
+          version: ${{ steps.ver.outputs.version }}
+          # The MSI is the winget installer (silent by default). Match it on the release.
+          installers-regex: '\.msi$'
+          token: ${{ secrets.WINGET_TOKEN }}
