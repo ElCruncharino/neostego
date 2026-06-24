@@ -11,6 +11,29 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.0.5] — 2026-06-23
+
+Linux packaging fixes for the runtime-bundled jpackage installers and a
+smoother GUI. No change to the on-disk steganography format or algorithms.
+
+### Fixed
+- **Linux installer icon** — the jpackage `.rpm`/`.deb` shipped jpackage's
+  generic default Java icon instead of the NeoStego logo (no `--icon` was
+  passed). They now ship the branded logo, register the scalable icon in the
+  FreeDesktop hicolor theme (`Icon=neostego`), and refresh the icon-theme and
+  desktop-database caches on install/removal.
+- **`neostego` command-line tool on Linux** — the jpackage `.rpm`/`.deb` now
+  install a `/usr/bin/neostego` symlink, so the documented CLI works after a
+  bundled-runtime install (previously only the non-jpackage packages provided
+  it).
+
+### Changed
+- **Smoother window resizing** — the main window's background gradient is now
+  cached and only re-rendered when the panel size changes, and the Linux
+  launchers enable the Java2D XRender pipeline (`-Dsun.java2d.xrender=true`),
+  which avoids the laggy full-window re-blit on every resize tick (most
+  noticeable under XWayland).
+
 ## [1.0.3] — 2026-06-20
 
 JPEG-cover steganography additions, an Android UI redesign, broad embedding
