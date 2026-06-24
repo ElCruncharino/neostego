@@ -1,8 +1,8 @@
 /*
- * Prototype: a Compose Multiplatform (Desktop) front-end for the "Hide data" flow, built on the
- * existing toolkit-agnostic :core. The point of this module is to evaluate Compose Desktop's
- * GPU-rendered resize smoothness (vs the Swing :desktop UI) and gauge the effort of a full port —
- * NOT to be a finished app. Only the Embed/"Hide data" screen is implemented.
+ * NeoStego desktop UI built with Compose Multiplatform (Desktop), on the toolkit-agnostic :core.
+ * GPU-rendered (smooth resizing) and accessibility-conscious; the Swing :desktop UI is retained as
+ * the screen-reader-accessible fallback. Covers data hiding (Hide/Extract) and digital watermarking
+ * (generate signature / embed / verify).
  */
 
 import org.apache.tools.ant.filters.ReplaceTokens
