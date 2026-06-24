@@ -13,6 +13,7 @@ import com.openstego.desktop.OpenStegoPlugin;
 import com.openstego.desktop.util.LabelUtil;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import javax.swing.*;
 
 /**
@@ -712,6 +713,10 @@ public class OpenStegoFrame extends JFrame {
         private static final long serialVersionUID = 3865918400221647086L;
         private final Color startColor;
         private final Color endColor;
+        // Cached rendering of the gradient, rebuilt only when the panel size changes. Re-evaluating a
+        // full-panel GradientPaint on every paint is the dominant cost during drag-resize (each resize
+        // tick triggers a full repaint), so caching it keeps corner-dragging smooth.
+        private transient BufferedImage cache;
 
         /**
          * Default constructor
@@ -731,15 +736,21 @@ public class OpenStegoFrame extends JFrame {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            int panelHeight = getHeight();
             int panelWidth = getWidth();
-
-            GradientPaint gradientPaint = new GradientPaint(0, 0, this.startColor, 0, panelHeight, this.endColor);
-            if (g instanceof Graphics2D) {
-                Graphics2D graphics2D = (Graphics2D) g;
-                graphics2D.setPaint(gradientPaint);
-                graphics2D.fillRect(0, 0, panelWidth, panelHeight);
+            int panelHeight = getHeight();
+            if (panelWidth <= 0 || panelHeight <= 0) {
+                return;
             }
+
+            if (this.cache == null || this.cache.getWidth() != panelWidth || this.cache.getHeight() != panelHeight) {
+                BufferedImage img = new BufferedImage(panelWidth, panelHeight, BufferedImage.TYPE_INT_RGB);
+                Graphics2D ig = img.createGraphics();
+                ig.setPaint(new GradientPaint(0, 0, this.startColor, 0, panelHeight, this.endColor));
+                ig.fillRect(0, 0, panelWidth, panelHeight);
+                ig.dispose();
+                this.cache = img;
+            }
+            g.drawImage(this.cache, 0, 0, null);
         }
     }
 }

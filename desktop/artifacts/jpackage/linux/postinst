@@ -1,0 +1,50 @@
+#!/bin/sh
+# postinst script for APPLICATION_PACKAGE
+#
+# see: dh_installdeb(1)
+
+set -e
+
+# summary of how this script can be called:
+#        * <postinst> `configure' <most-recently-configured-version>
+#        * <old-postinst> `abort-upgrade' <new version>
+#        * <conflictor's-postinst> `abort-remove' `in-favour' <package>
+#          <new-version>
+#        * <postinst> `abort-remove'
+#        * <deconfigured's-postinst> `abort-deconfigure' `in-favour'
+#          <failed-install-package> <version> `removing'
+#          <conflicting-package> <version>
+# for details, see https://www.debian.org/doc/debian-policy/ or
+# the debian-policy package
+
+package_type=deb
+LAUNCHER_AS_SERVICE_SCRIPTS
+
+case "$1" in
+    configure)
+DESKTOP_COMMANDS_INSTALL
+LAUNCHER_AS_SERVICE_COMMANDS_INSTALL
+        # NeoStego customization: register the branded icon in the FreeDesktop hicolor theme and
+        # expose the documented `neostego` CLI on PATH. Unlike rpm, a jpackage .deb only ships the
+        # /opt app image, so these are created here (and removed in postrm) rather than packaged.
+        ln -sf /opt/neostego/bin/NeoStego /usr/bin/neostego
+        install -D -m 644 /opt/neostego/lib/app/neostego.svg \
+            /usr/share/icons/hicolor/scalable/apps/neostego.svg
+        if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+            gtk-update-icon-cache -q -t -f /usr/share/icons/hicolor >/dev/null 2>&1 || true
+        fi
+        if command -v update-desktop-database >/dev/null 2>&1; then
+            update-desktop-database -q /usr/share/applications >/dev/null 2>&1 || true
+        fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0
