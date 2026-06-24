@@ -1,11 +1,11 @@
 /*
  * Compose Desktop entry point for NeoStego. Loads the :core plugins, then shows the app shell
  * (sidebar + content) wrapped in the brand theme, scaled to the desktop's detected display scale.
- * This module is the in-progress replacement for the Swing desktop UI; only the "Hide data" screen
- * is fully ported so far.
+ * Theme mode (System/Light/Dark) is user-selectable in Settings and persisted.
  */
 package com.elcruncharino.neostego.compose
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
@@ -23,8 +23,11 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.elcruncharino.neostego.compose.engine.dataHidingAlgorithms
 import com.elcruncharino.neostego.compose.engine.detectUiScale
+import com.elcruncharino.neostego.compose.engine.loadThemeMode
+import com.elcruncharino.neostego.compose.engine.saveThemeMode
 import com.elcruncharino.neostego.compose.engine.watermarkingAlgorithms
 import com.elcruncharino.neostego.compose.theme.NeoStegoTheme
+import com.elcruncharino.neostego.compose.theme.ThemeMode
 import com.elcruncharino.neostego.compose.ui.AppShell
 import com.openstego.desktop.util.PluginManager
 
@@ -34,7 +37,12 @@ fun main() {
     val wmAlgorithms = watermarkingAlgorithms()
     val uiScale = detectUiScale()
     application {
-        var dark by remember { mutableStateOf(true) }
+        var themeMode by remember { mutableStateOf(loadThemeMode()) }
+        val dark = when (themeMode) {
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+        }
         // Open maximized so the scaled content fits the user's actual screen (no fixed-size guess).
         val windowState = rememberWindowState(placement = WindowPlacement.Maximized)
         Window(
@@ -44,16 +52,15 @@ fun main() {
             icon = painterResource("neostego.png"),
         ) {
             NeoStegoTheme(dark = dark) {
-                // Drive Compose's density from the detected desktop scale so the UI matches native
-                // apps. Falls back to the platform density when no scale signal is available.
+                // Drive Compose's density from the detected desktop scale so the UI matches native apps.
                 val density = uiScale?.let { Density(it, 1f) } ?: LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides density) {
                     Surface(modifier = Modifier.fillMaxSize()) {
                         AppShell(
                             dhAlgorithms = dhAlgorithms,
                             wmAlgorithms = wmAlgorithms,
-                            dark = dark,
-                            onToggleDark = { dark = !dark },
+                            themeMode = themeMode,
+                            onThemeChange = { themeMode = it; saveThemeMode(it) },
                         )
                     }
                 }
