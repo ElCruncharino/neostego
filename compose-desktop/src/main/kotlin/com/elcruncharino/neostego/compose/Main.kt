@@ -23,13 +23,15 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.elcruncharino.neostego.compose.engine.dataHidingAlgorithms
 import com.elcruncharino.neostego.compose.engine.detectUiScale
+import com.elcruncharino.neostego.compose.engine.watermarkingAlgorithms
 import com.elcruncharino.neostego.compose.theme.NeoStegoTheme
 import com.elcruncharino.neostego.compose.ui.AppShell
 import com.openstego.desktop.util.PluginManager
 
 fun main() {
     PluginManager.loadPlugins()
-    val algorithms = dataHidingAlgorithms()
+    val dhAlgorithms = dataHidingAlgorithms()
+    val wmAlgorithms = watermarkingAlgorithms()
     val uiScale = detectUiScale()
     application {
         var dark by remember { mutableStateOf(true) }
@@ -47,7 +49,12 @@ fun main() {
                 val density = uiScale?.let { Density(it, 1f) } ?: LocalDensity.current
                 CompositionLocalProvider(LocalDensity provides density) {
                     Surface(modifier = Modifier.fillMaxSize()) {
-                        AppShell(algorithms = algorithms, dark = dark, onToggleDark = { dark = !dark })
+                        AppShell(
+                            dhAlgorithms = dhAlgorithms,
+                            wmAlgorithms = wmAlgorithms,
+                            dark = dark,
+                            onToggleDark = { dark = !dark },
+                        )
                     }
                 }
             }
