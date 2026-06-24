@@ -19,6 +19,7 @@ fun watermarkingAlgorithms(): List<AlgoInfo> =
             description = p.description,
             coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
             stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
+            optionsKind = OptionsKind.NONE,
         )
     }
 

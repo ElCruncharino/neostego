@@ -17,10 +17,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.compose.engine.AdvancedOptions
 import com.elcruncharino.neostego.compose.engine.AlgoInfo
 import com.elcruncharino.neostego.compose.engine.EmbedRequest
 import com.elcruncharino.neostego.compose.engine.embed
 import com.elcruncharino.neostego.compose.engine.pickFile
+import com.elcruncharino.neostego.compose.ui.AdvancedOptionsPanel
 import com.elcruncharino.neostego.compose.ui.AlgorithmSelector
 import com.elcruncharino.neostego.compose.ui.FilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
@@ -44,6 +46,7 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
     var showPw by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Result<String>?>(null) }
+    var options by remember { mutableStateOf(AdvancedOptions()) }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -73,6 +76,7 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
         }
 
         AlgorithmSelector(algorithms, algorithm) { algorithm = it }
+        algorithm?.let { algo -> AdvancedOptionsPanel(algo.optionsKind, options) { newOpts -> options = newOpts } }
 
         SectionLabel("Encryption")
         SegmentedButtonGroup(ENCRYPTION, encIndex, onSelect = { encIndex = it })
@@ -98,6 +102,7 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
                             outputFile = outputFile.orEmpty(),
                             encryptionAlgorithm = if (encIndex == 0) null else ENCRYPTION[encIndex],
                             password = password,
+                            options = options,
                         ),
                     )
                 }

@@ -6,6 +6,9 @@
 package com.elcruncharino.neostego.compose.engine
 
 import com.openstego.desktop.OpenStego
+import com.openstego.desktop.plugin.adaptive.AdaptiveConfig
+import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
+import com.openstego.desktop.plugin.lsb.LSBConfig
 import com.openstego.desktop.util.CommonUtil
 import com.openstego.desktop.util.PluginManager
 import java.io.File
@@ -46,6 +49,25 @@ data class AlgoInfo(
     val description: String,
     val coverExtensions: List<String>,
     val stegoExtensions: List<String>,
+    val optionsKind: OptionsKind,
+)
+
+/** Which advanced-options panel an algorithm offers (matches the Swing EmbedOptionsUIFactory). */
+enum class OptionsKind { NONE, LSB, ADAPTIVE, JPEG }
+
+private fun optionsKindFor(name: String): OptionsKind = when (name) {
+    "LSB", "RandomLSB", "RandomLSBMatch" -> OptionsKind.LSB
+    "Adaptive" -> OptionsKind.ADAPTIVE
+    "JpegUniward" -> OptionsKind.JPEG
+    else -> OptionsKind.NONE
+}
+
+/** Per-algorithm advanced embed options; only the fields for the selected algorithm are applied. */
+data class AdvancedOptions(
+    val maxBitsPerChannel: Int = 3, // LSB family
+    val cmd: Boolean = true,        // Adaptive
+    val cmdMu: Double = 3.0,        // Adaptive
+    val quality: Int = 90,          // JpegUniward
 )
 
 /** The data-hiding algorithms (RandomLSB, Adaptive, JpegUniward, F5, WavLSB, ...) with metadata. */
@@ -59,6 +81,7 @@ fun dataHidingAlgorithms(): List<AlgoInfo> =
             description = p.description,
             coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
             stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
+            optionsKind = optionsKindFor(p.name),
         )
     }
 
@@ -132,7 +155,20 @@ class EmbedRequest(
     val outputFile: String,
     val encryptionAlgorithm: String?, // null => no encryption
     val password: String,
+    val options: AdvancedOptions = AdvancedOptions(),
 )
+
+private fun applyAdvancedOptions(algorithm: String, config: Any, options: AdvancedOptions) {
+    when (optionsKindFor(algorithm)) {
+        OptionsKind.LSB -> (config as LSBConfig).setMaxBitsUsedPerChannel(options.maxBitsPerChannel)
+        OptionsKind.ADAPTIVE -> (config as AdaptiveConfig).apply {
+            setCmd(options.cmd)
+            setCmdMu(options.cmdMu)
+        }
+        OptionsKind.JPEG -> (config as JpegUniwardConfig).setQuality(options.quality)
+        OptionsKind.NONE -> Unit
+    }
+}
 
 /** Runs the embed against :core and writes the stego file. Returns the output path on success. */
 fun embed(req: EmbedRequest): String {
@@ -154,6 +190,7 @@ fun embed(req: EmbedRequest): String {
         require(req.password.isNotEmpty()) { "${req.encryptionAlgorithm} encryption needs a password." }
         config.setEncryptionAlgorithm(req.encryptionAlgorithm)
     }
+    applyAdvancedOptions(req.algorithm, config, req.options)
     val stego = OpenStego(plugin, config)
     val data = stego.embedData(File(req.messageFile), File(req.coverFile), req.outputFile)
     CommonUtil.writeFile(data, req.outputFile)
