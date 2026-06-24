@@ -13,27 +13,20 @@ import javax.swing.JFileChooser
 import javax.swing.SwingUtilities
 
 /**
- * Auto-detect the display scale and apply it as the Java2D/Compose UI scale, so the window renders
- * natively at the desktop's scaling instead of an unscaled 1x (tiny on HiDPI) or an inherited value.
- * Must run before any AWT/Compose graphics initialises. No platform/userbase assumptions: it derives
- * the factor from the X resource DPI (which KDE/GNOME/XFCE all publish for X/XWayland clients), with
- * the GDK_SCALE/GDK_DPI_SCALE environment as a fallback. Does nothing if no signal is found.
+ * Auto-detect the desktop's display scale (e.g. 1.75 on a HiDPI panel), or null if no signal is
+ * found. Applied as Compose's LocalDensity so the UI matches native apps — no hardcoded scale or
+ * window size, no platform/userbase assumptions. The factor comes from the X resource DPI
+ * (Xft.dpi/96, which KDE/GNOME/XFCE publish for X/XWayland clients), with GDK_SCALE/GDK_DPI_SCALE as
+ * a fallback. (LocalDensity is used rather than sun.java2d.uiScale because the Compose runtime
+ * initialises AWT before main() can set that system property.)
  */
-fun applyAutoDetectedUiScale() {
-    val scale = detectDisplayScale() ?: return
-    System.setProperty("sun.java2d.uiScale.enabled", "true")
-    System.setProperty("sun.java2d.uiScale", scale.toString())
-}
-
-private fun detectDisplayScale(): Double? {
-    // Xft.dpi is the per-session display DPI; scale = dpi / 96 (the reference DPI).
+fun detectUiScale(): Float? {
     runCatching {
         val proc = ProcessBuilder("sh", "-c", "xrdb -query 2>/dev/null | awk '/Xft.dpi:/{print \$2}'").start()
         val dpi = proc.inputStream.bufferedReader().readText().trim().toDoubleOrNull()
         proc.waitFor()
         if (dpi != null && dpi > 0) sanitizeScale(dpi / 96.0)?.let { return it }
     }
-    // Fallback: GDK scaling hints (integer GDK_SCALE times fractional GDK_DPI_SCALE).
     val gdk = System.getenv("GDK_SCALE")?.toDoubleOrNull()
     val gdkDpi = System.getenv("GDK_DPI_SCALE")?.toDoubleOrNull()
     if (gdk != null || gdkDpi != null) sanitizeScale((gdk ?: 1.0) * (gdkDpi ?: 1.0))?.let { return it }
@@ -41,8 +34,8 @@ private fun detectDisplayScale(): Double? {
 }
 
 /** Accept plausible scales only, rounded to 2 decimals; reject noise. */
-private fun sanitizeScale(s: Double): Double? =
-    if (s in 0.5..8.0) Math.round(s * 100.0) / 100.0 else null
+private fun sanitizeScale(s: Double): Float? =
+    if (s in 0.5..8.0) (Math.round(s * 100.0) / 100.0).toFloat() else null
 
 /** A data-hiding algorithm and its human-readable description (from the :core plugin). */
 data class AlgoInfo(val name: String, val description: String)
