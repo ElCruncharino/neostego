@@ -51,6 +51,9 @@ data class AlgoInfo(
 /** The data-hiding algorithms (RandomLSB, Adaptive, JpegUniward, F5, WavLSB, ...) with metadata. */
 fun dataHidingAlgorithms(): List<AlgoInfo> =
     PluginManager.getDataHidingPlugins().map { p ->
+        // Initialise the plugin config first: some plugins (e.g. JpegUniward, whose cover formats
+        // depend on SI vs plain mode) read this.config inside get*FileExtensions and NPE otherwise.
+        runCatching { p.resetConfig() }
         AlgoInfo(
             name = p.name,
             description = p.description,
