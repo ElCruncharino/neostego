@@ -30,6 +30,13 @@ dependencies {
     implementation compose.desktop.currentOs
     implementation compose.material3
     implementation compose.materialIconsExtended
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.3'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 kotlin {
