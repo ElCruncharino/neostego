@@ -6,9 +6,11 @@
 package com.elcruncharino.neostego.compose.engine
 
 import com.openstego.desktop.OpenStego
+import com.openstego.desktop.OpenStegoConfig
 import com.openstego.desktop.plugin.adaptive.AdaptiveConfig
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
 import com.openstego.desktop.plugin.lsb.LSBConfig
+import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
 import com.openstego.desktop.util.CommonUtil
 import com.openstego.desktop.util.PluginManager
@@ -79,7 +81,8 @@ fun dataHidingAlgorithms(): List<AlgoInfo> = PluginManager.getDataHidingPlugins(
         name = p.name,
         description = p.description,
         coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
-        stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
+        // BMP last: prefer PNG-style output in the picker/hint (see preferNonBmp).
+        stegoExtensions = preferNonBmp(runCatching { p.writableFileExtensions }.getOrDefault(emptyList())),
         optionsKind = optionsKindFor(p.name),
     )
 }
@@ -146,7 +149,60 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
     return result
 }
 
-class EmbedRequest(
+/**
+ * Open a multi-select file chooser (native KDE/GNOME when available, else Swing), optionally
+ * restricted to [extensions]. Returns the chosen paths, or an empty list if cancelled. Used to pick
+ * the multiple covers for batch and split embedding.
+ */
+fun pickFiles(extensions: List<String> = emptyList(), filterLabel: String = "Files"): List<String> {
+    nativeDialogTool?.let { tool ->
+        val home = System.getProperty("user.home")
+        val glob = extensions.joinToString(" ") { "*.$it" }
+        val cmd = when (tool) {
+            "kdialog" -> buildList {
+                add("kdialog")
+                add("--multiple")
+                add("--separate-output") // one path per line
+                add("--getopenfilename")
+                add(home)
+                if (extensions.isNotEmpty()) add("$glob|$filterLabel")
+            }
+            else -> buildList {
+                add("zenity")
+                add("--file-selection")
+                add("--multiple")
+                add("--separator=\n") // newline-separate so paths with spaces survive
+                if (extensions.isNotEmpty()) add("--file-filter=$filterLabel | $glob")
+            }
+        }
+        return try {
+            val proc = ProcessBuilder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+            val out = proc.inputStream.bufferedReader().readText()
+            if (proc.waitFor() == 0) out.split('\n').map { it.trim() }.filter { it.isNotEmpty() } else emptyList()
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    var result = emptyList<String>()
+    val task = Runnable {
+        val chooser = JFileChooser().apply {
+            isMultiSelectionEnabled = true
+            if (extensions.isNotEmpty()) {
+                fileFilter = javax.swing.filechooser.FileNameExtensionFilter(
+                    "$filterLabel (${extensions.joinToString(", ") { "*.$it" }})",
+                    *extensions.toTypedArray(),
+                )
+            }
+        }
+        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            result = chooser.selectedFiles.map { it.absolutePath }
+        }
+    }
+    if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
+    return result
+}
+
+data class EmbedRequest(
     val algorithm: String,
     val messageFile: String,
     val coverFile: String,
@@ -154,7 +210,39 @@ class EmbedRequest(
     val encryptionAlgorithm: String?, // null => no encryption
     val password: String,
     val options: AdvancedOptions = AdvancedOptions(),
+    val useRandomImage: Boolean = false, // generate a random-noise cover (image plugins only)
 )
+
+/** Shared config setup for embed/batch/split: compression, password (always), encryption, options. */
+private fun prepareEmbedConfig(config: OpenStegoConfig, algorithm: String, encryptionAlgorithm: String?, password: String, options: AdvancedOptions) {
+    config.setUseCompression(true)
+    // Always apply the password: it seeds the bit-placement PRNG (RandomLSB etc.) even without AES.
+    config.setPassword(password)
+    val encrypt = encryptionAlgorithm != null
+    config.setUseEncryption(encrypt)
+    if (encrypt) {
+        require(password.isNotEmpty()) { "$encryptionAlgorithm encryption needs a password." }
+        config.setEncryptionAlgorithm(encryptionAlgorithm)
+    }
+    applyAdvancedOptions(algorithm, config, options)
+}
+
+/** Order extensions so BMP is last: it's lossless but bulky (and AWT can't always encode it), so we
+ *  default away from it whenever a better format (e.g. PNG) is available. */
+private fun preferNonBmp(exts: List<String>): List<String> = exts.sortedBy { if (it.equals("bmp", ignoreCase = true)) 1 else 0 }
+
+/**
+ * The output extension to use for an auto-named stego file: keep the cover's own format when the
+ * algorithm can write it (png→png, jpg→jpg), otherwise the first non-BMP writable format.
+ */
+private fun stegoExtensionFor(algorithm: String, coverFile: String? = null): String {
+    val writable = PluginManager.getPluginByName(algorithm)
+        ?.let { runCatching { it.writableFileExtensions }.getOrDefault(emptyList()) }
+        ?: emptyList()
+    val coverExt = coverFile?.substringAfterLast('.', "")?.lowercase()?.takeIf { it.isNotEmpty() }
+    if (coverExt != null && writable.any { it.equals(coverExt, ignoreCase = true) }) return coverExt
+    return preferNonBmp(writable).firstOrNull() ?: "png"
+}
 
 private fun applyAdvancedOptions(algorithm: String, config: Any, options: AdvancedOptions) {
     when (optionsKindFor(algorithm)) {
@@ -171,29 +259,123 @@ private fun applyAdvancedOptions(algorithm: String, config: Any, options: Advanc
 /** Runs the embed against :core and writes the stego file. Returns the output path on success. */
 fun embed(req: EmbedRequest, onProgress: (Double) -> Unit = {}): String {
     require(req.messageFile.isNotBlank()) { "Choose a message file to hide." }
-    require(req.coverFile.isNotBlank()) { "Choose a cover file." }
+    // A random-image cover needs no input file — the image plugin generates noise to hide in.
+    require(req.useRandomImage || req.coverFile.isNotBlank()) { "Choose a cover file." }
     require(req.outputFile.isNotBlank()) { "Choose where to save the stego file." }
 
     val plugin = PluginManager.getPluginByName(req.algorithm)
         ?: error("Unknown algorithm: ${req.algorithm}")
+    if (req.useRandomImage) {
+        require(plugin is DHImagePluginTemplate<*>) { "${req.algorithm} can't generate a random cover; pick a cover file." }
+    }
     plugin.resetConfig()
     val config = plugin.config
-    config.setUseCompression(true)
-    // Always apply the password: it seeds the bit-placement PRNG (RandomLSB etc.), so it protects
-    // *where* the data is hidden even when encryption is off — and is the AES key when it's on.
-    config.setPassword(req.password)
-    val encrypt = req.encryptionAlgorithm != null
-    config.setUseEncryption(encrypt)
-    if (encrypt) {
-        require(req.password.isNotEmpty()) { "${req.encryptionAlgorithm} encryption needs a password." }
-        config.setEncryptionAlgorithm(req.encryptionAlgorithm)
-    }
-    applyAdvancedOptions(req.algorithm, config, req.options)
+    prepareEmbedConfig(config, req.algorithm, req.encryptionAlgorithm, req.password, req.options)
     val stego = OpenStego(plugin, config)
     stego.setProgressListener { onProgress(it) }
-    val data = stego.embedData(File(req.messageFile), File(req.coverFile), req.outputFile)
+    // Passing a null cover makes the image plugin synthesise a random-noise cover sized to the payload.
+    val cover: File? = if (req.useRandomImage) null else File(req.coverFile)
+    val data = stego.embedData(File(req.messageFile), cover, req.outputFile)
     CommonUtil.writeFile(data, req.outputFile)
     return req.outputFile
+}
+
+/**
+ * Batch embed: hide the same [messageFile] in each of [coverFiles], writing one stego file per cover
+ * into [outputDir]. Returns the written paths. Progress runs 0..1 across the whole batch.
+ */
+fun embedBatch(
+    algorithm: String,
+    messageFile: String,
+    coverFiles: List<String>,
+    outputDir: String,
+    encryptionAlgorithm: String?,
+    password: String,
+    options: AdvancedOptions = AdvancedOptions(),
+    onProgress: (Double) -> Unit = {},
+): List<String> {
+    require(messageFile.isNotBlank()) { "Choose a message file to hide." }
+    require(coverFiles.isNotEmpty()) { "Choose at least one cover file." }
+    require(outputDir.isNotBlank()) { "Choose an output folder." }
+    val used = HashSet<String>()
+    return coverFiles.mapIndexed { i, cover ->
+        val ext = stegoExtensionFor(algorithm, cover)
+        val base = File(cover).nameWithoutExtension
+        var name = "${base}_stego.$ext"
+        var dedup = 1
+        while (!used.add(name.lowercase())) name = "${base}_stego_${dedup++}.$ext"
+        val out = File(outputDir, name).path
+        embed(
+            EmbedRequest(algorithm, messageFile, cover, out, encryptionAlgorithm, password, options),
+        ) { f -> onProgress((i + f) / coverFiles.size) }
+        out
+    }
+}
+
+/**
+ * Split one [messageFile] across [coverFiles] (≥2 image covers): the payload is compressed/encrypted
+ * once, then sliced so each cover carries a part. All parts are needed to reassemble. Returns the
+ * written stego paths. Image algorithms only.
+ */
+fun embedSplitCovers(
+    algorithm: String,
+    messageFile: String,
+    coverFiles: List<String>,
+    outputDir: String,
+    encryptionAlgorithm: String?,
+    password: String,
+    options: AdvancedOptions = AdvancedOptions(),
+): List<String> {
+    require(messageFile.isNotBlank()) { "Choose a message file to hide." }
+    require(coverFiles.size >= 2) { "Splitting needs at least 2 cover files." }
+    require(outputDir.isNotBlank()) { "Choose an output folder." }
+    val plugin = PluginManager.getPluginByName(algorithm) as? DHImagePluginTemplate<*>
+        ?: error("Splitting across covers is only available for image algorithms.")
+    plugin.resetConfig()
+    val config = plugin.config
+    prepareEmbedConfig(config, algorithm, encryptionAlgorithm, password, options)
+
+    val payload = CommonUtil.fileToBytes(File(messageFile))
+    val msgName = File(messageFile).name
+    val covers = coverFiles.map { CommonUtil.fileToBytes(File(it)) }
+    val coverNames = coverFiles.map { File(it).name }
+    val ext = stegoExtensionFor(algorithm, coverFiles.first())
+    val stegoPaths = coverFiles.mapIndexed { i, c ->
+        File(outputDir, "${File(c).nameWithoutExtension}_part${i + 1}of${coverFiles.size}.$ext").path
+    }
+    val stegoNames = stegoPaths.map { File(it).name }
+    val stegos = MultiCoverPayloadSplitter.embedSplit(payload, msgName, covers, coverNames, stegoNames, config, plugin)
+    stegos.forEachIndexed { i, bytes -> CommonUtil.writeFile(bytes, stegoPaths[i]) }
+    return stegoPaths
+}
+
+/**
+ * Reassemble a split payload from all its [stegoFiles] (≥2) into [outputDir]. Tries each image
+ * plugin until the parts parse (the files don't record which algorithm produced them). Returns the
+ * written message path.
+ */
+fun extractSplitFiles(stegoFiles: List<String>, password: String, outputDir: String): String {
+    require(stegoFiles.size >= 2) { "Reassembling a split needs all its parts (2 or more files)." }
+    require(outputDir.isNotBlank()) { "Choose an output folder." }
+    val images = stegoFiles.map { CommonUtil.fileToBytes(File(it)) }
+    val names = stegoFiles.map { File(it).name }
+    var last: Throwable? = null
+    for (plugin in PluginManager.getDataHidingPlugins().filterIsInstance<DHImagePluginTemplate<*>>()) {
+        plugin.resetConfig()
+        val config = plugin.config
+        if (password.isNotEmpty()) config.setPassword(password)
+        try {
+            val out = MultiCoverPayloadSplitter.extractSplit(images, names, config, plugin)
+            val msgName = (out[0] as? String).orEmptyName()
+            val bytes = out[1] as ByteArray
+            val target = File(outputDir, msgName)
+            CommonUtil.writeFile(bytes, target.path)
+            return target.path
+        } catch (e: Throwable) {
+            last = e
+        }
+    }
+    throw last ?: IllegalStateException("Could not reassemble the split (wrong/missing parts or password).")
 }
 
 /**
