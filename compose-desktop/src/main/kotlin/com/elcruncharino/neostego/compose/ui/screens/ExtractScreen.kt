@@ -41,7 +41,7 @@ fun ExtractScreen() {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        FilePickCard("Stego file", stegoFile, "The image or audio file that contains hidden data") {
+        FilePickCard("Stego file", stegoFile, "The image or audio file that contains hidden data", onFileDropped = { stegoFile = it }) {
             pickFile(save = false)?.let { stegoFile = it }
         }
         FilePickCard("Output folder", outputDir, "Where to save the extracted message") {
