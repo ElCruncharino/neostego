@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -44,6 +46,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
@@ -69,10 +72,16 @@ enum class Destination(val title: String, val section: String, val icon: ImageVe
 }
 
 @Composable
-fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
-    var dest by remember { mutableStateOf(Destination.HIDE) }
+fun AppShell(
+    dhAlgorithms: List<AlgoInfo>,
+    wmAlgorithms: List<AlgoInfo>,
+    themeMode: ThemeMode,
+    onThemeChange: (ThemeMode) -> Unit,
+    dest: Destination,
+    onSelect: (Destination) -> Unit,
+) {
     Row(Modifier.fillMaxSize()) {
-        Sidebar(selected = dest, onSelect = { dest = it })
+        Sidebar(selected = dest, onSelect = onSelect)
         GradientBackground(Modifier.fillMaxSize()) {
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp),
@@ -107,12 +116,14 @@ private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit) {
         modifier = Modifier.fillMaxHeight().width(248.dp).semantics { isTraversalGroup = true },
     ) {
         Column(Modifier.fillMaxHeight().padding(16.dp)) {
-            Text(
-                "NeoStego",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-            )
+            ) {
+                Image(painterResource("neostego.png"), contentDescription = null, modifier = Modifier.size(28.dp))
+                Text("NeoStego", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            }
             val grouped = Destination.entries.filter { it.section.isNotEmpty() }.groupBy { it.section }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                 grouped.forEach { (section, items) ->
