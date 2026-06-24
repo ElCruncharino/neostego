@@ -1,0 +1,16 @@
+[Desktop Entry]
+Name=APPLICATION_NAME
+Comment=Hide secret data into innocuous files like images
+Keywords=Steganography;Watermark;Privacy;Security;
+Exec=APPLICATION_LAUNCHER
+Icon=neostego
+Terminal=false
+Type=Application
+Categories=Graphics;Utility;
+Actions=Accessible;
+DESKTOP_MIMES
+
+[Desktop Action Accessible]
+Name=Open in Accessible (Classic) mode
+Exec=APPLICATION_LAUNCHER --classic
+Icon=neostego

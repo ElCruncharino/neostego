@@ -10,7 +10,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -167,20 +166,6 @@ private fun NavItem(dest: Destination, selected: Boolean, modifier: Modifier = M
         ) {
             Icon(dest.icon, contentDescription = null, tint = fg)
             Text(dest.title, color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-        }
-    }
-}
-
-@Composable
-private fun PlaceholderScreen(title: String) {
-    Box(Modifier.fillMaxWidth().padding(top = 48.dp), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("$title — coming soon", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Being ported from the Swing UI in this module.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
