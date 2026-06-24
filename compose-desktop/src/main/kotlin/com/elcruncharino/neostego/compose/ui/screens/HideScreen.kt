@@ -1,7 +1,7 @@
 /*
  * "Hide data" screen — the Compose port of the Swing EmbedPanel, wired to :core. Same fields a
  * Swing user expects (message, cover, output, algorithm, encryption, password) in the modern
- * card-based design shared with the Android app.
+ * card-based design shared with the Android app, plus an inline description of the chosen algorithm.
  */
 package com.elcruncharino.neostego.compose.ui.screens
 
@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.compose.engine.AlgoInfo
 import com.elcruncharino.neostego.compose.engine.EmbedRequest
 import com.elcruncharino.neostego.compose.engine.embed
 import com.elcruncharino.neostego.compose.engine.pickFile
@@ -39,11 +40,11 @@ private val ENCRYPTION = listOf("None", "AES128", "AES256")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HideScreen(algorithms: List<String>) {
+fun HideScreen(algorithms: List<AlgoInfo>) {
     var messageFile by remember { mutableStateOf<String?>(null) }
     var coverFile by remember { mutableStateOf<String?>(null) }
     var outputFile by remember { mutableStateOf<String?>(null) }
-    var algorithm by remember { mutableStateOf(algorithms.firstOrNull() ?: "") }
+    var algorithm by remember { mutableStateOf(algorithms.firstOrNull()) }
     var algoOpen by remember { mutableStateOf(false) }
     var encIndex by remember { mutableStateOf(0) }
     var password by remember { mutableStateOf("") }
@@ -71,7 +72,7 @@ fun HideScreen(algorithms: List<String>) {
         SectionLabel("Algorithm")
         ExposedDropdownMenuBox(expanded = algoOpen, onExpandedChange = { algoOpen = it }) {
             OutlinedTextField(
-                value = algorithm,
+                value = algorithm?.name.orEmpty(),
                 onValueChange = {},
                 readOnly = true,
                 label = { Text("Algorithm") },
@@ -79,11 +80,12 @@ fun HideScreen(algorithms: List<String>) {
                 modifier = Modifier.menuAnchor().fillMaxWidth(),
             )
             ExposedDropdownMenu(expanded = algoOpen, onDismissRequest = { algoOpen = false }) {
-                algorithms.forEach { name ->
-                    DropdownMenuItem(text = { Text(name) }, onClick = { algorithm = name; algoOpen = false })
+                algorithms.forEach { info ->
+                    DropdownMenuItem(text = { Text(info.name) }, onClick = { algorithm = info; algoOpen = false })
                 }
             }
         }
+        algorithm?.let { AlgorithmDescriptionCard(it) }
 
         SectionLabel("Encryption")
         SegmentedButtonGroup(ENCRYPTION, encIndex, onSelect = { encIndex = it })
@@ -97,7 +99,7 @@ fun HideScreen(algorithms: List<String>) {
                 result = runCatching {
                     embed(
                         EmbedRequest(
-                            algorithm = algorithm,
+                            algorithm = algorithm?.name.orEmpty(),
                             messageFile = messageFile.orEmpty(),
                             coverFile = coverFile.orEmpty(),
                             outputFile = outputFile.orEmpty(),
@@ -111,6 +113,20 @@ fun HideScreen(algorithms: List<String>) {
         })
 
         result?.let { ResultCard(it) }
+    }
+}
+
+@Composable
+private fun AlgorithmDescriptionCard(info: AlgoInfo) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(info.name, fontWeight = FontWeight.SemiBold)
+            Text(
+                info.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

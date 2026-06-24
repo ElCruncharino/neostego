@@ -14,12 +14,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.elcruncharino.neostego.compose.engine.applyAutoDetectedUiScale
 import com.elcruncharino.neostego.compose.engine.dataHidingAlgorithms
 import com.elcruncharino.neostego.compose.theme.NeoStegoTheme
 import com.elcruncharino.neostego.compose.ui.AppShell
 import com.openstego.desktop.util.PluginManager
 
 fun main() {
+    // Match the desktop's own scaling before any window/graphics is created.
+    applyAutoDetectedUiScale()
     PluginManager.loadPlugins()
     val algorithms = dataHidingAlgorithms()
     application {
