@@ -37,8 +37,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -202,7 +204,11 @@ fun ResultCard(result: Result<String>, successMessage: (String) -> String) {
     val ok = result.isSuccess
     val container = if (ok) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
     val content = if (ok) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
-    Card(colors = CardDefaults.cardColors(containerColor = container)) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = container),
+        // Announce the outcome to screen readers as soon as it appears.
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+    ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(if (ok) "Done" else "Failed", fontWeight = FontWeight.SemiBold, color = content)
             Text(
