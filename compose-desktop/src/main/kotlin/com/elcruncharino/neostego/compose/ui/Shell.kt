@@ -43,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.compose.engine.AlgoInfo
 import com.elcruncharino.neostego.compose.ui.screens.HideScreen
 
 enum class Destination(val title: String, val section: String, val icon: ImageVector) {
@@ -55,7 +56,7 @@ enum class Destination(val title: String, val section: String, val icon: ImageVe
 }
 
 @Composable
-fun AppShell(algorithms: List<String>, dark: Boolean, onToggleDark: () -> Unit) {
+fun AppShell(algorithms: List<AlgoInfo>, dark: Boolean, onToggleDark: () -> Unit) {
     var dest by remember { mutableStateOf(Destination.HIDE) }
     Row(Modifier.fillMaxSize()) {
         Sidebar(selected = dest, onSelect = { dest = it }, dark = dark, onToggleDark = onToggleDark)
