@@ -9,6 +9,7 @@ package com.elcruncharino.neostego.compose.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -31,10 +32,16 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.input.key.Key
@@ -53,6 +60,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import java.awt.datatransfer.DataFlavor
+import java.io.File
+import kotlin.math.roundToInt
 
 /** App background: a soft vertical gradient on the surface, like the Android GradientBackground. */
 @Composable
@@ -82,9 +92,33 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
  * A file input card: label + current selection + Choose/Change. Mirrors the Android FilePickCard,
  * including its merged semantics so a screen reader announces the card as one unit.
  */
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
-fun FilePickCard(label: String, chosen: String?, hint: String, onPick: () -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+fun FilePickCard(label: String, chosen: String?, hint: String, onFileDropped: ((String) -> Unit)? = null, onPick: () -> Unit) {
+    val dndModifier = if (onFileDropped != null) {
+        val target = remember(onFileDropped) {
+            object : DragAndDropTarget {
+                override fun onDrop(event: DragAndDropEvent): Boolean = runCatching {
+                    val transfer = event.awtTransferable
+                    if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                        @Suppress("UNCHECKED_CAST")
+                        val files = transfer.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
+                        files.firstOrNull()?.let { onFileDropped(it.absolutePath) }
+                        files.isNotEmpty()
+                    } else {
+                        false
+                    }
+                }.getOrDefault(false)
+            }
+        }
+        Modifier.dragAndDropTarget(shouldStartDragAndDrop = { true }, target = target)
+    } else {
+        Modifier
+    }
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        modifier = dndModifier,
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -208,23 +242,42 @@ fun SecurePasswordField(
     }
 }
 
-/** Full-width primary action with an inline progress bar while busy — like Android PrimaryActionButton. */
+/**
+ * Full-width primary action with an inline progress bar while busy. [progress] (0..1) shows a
+ * determinate bar with a percentage; null shows an indeterminate bar.
+ */
 @Composable
-fun PrimaryActionButton(label: String, busy: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PrimaryActionButton(
+    label: String,
+    busy: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    progress: Float? = null,
+) {
     Column(
         // Announce the busy state to screen readers when it changes.
         modifier = modifier.fillMaxWidth().semantics { stateDescription = if (busy) "Working" else "Ready" },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (busy) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+            if (progress != null) {
+                LinearProgressIndicator(
+                    progress = { progress.coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                )
+            } else {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
+            }
         }
         Button(
             onClick = onClick,
             enabled = !busy,
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier.fillMaxWidth().height(56.dp),
-        ) { Text(if (busy) "Working…" else label) }
+        ) {
+            val busyText = progress?.let { "Working… ${(it * 100).roundToInt()}%" } ?: "Working…"
+            Text(if (busy) busyText else label)
+        }
     }
 }
 

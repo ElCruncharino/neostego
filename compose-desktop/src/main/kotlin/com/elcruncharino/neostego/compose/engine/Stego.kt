@@ -9,6 +9,7 @@ import com.openstego.desktop.OpenStego
 import com.openstego.desktop.plugin.adaptive.AdaptiveConfig
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
 import com.openstego.desktop.plugin.lsb.LSBConfig
+import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
 import com.openstego.desktop.util.CommonUtil
 import com.openstego.desktop.util.PluginManager
 import java.io.File
@@ -171,7 +172,7 @@ private fun applyAdvancedOptions(algorithm: String, config: Any, options: Advanc
 }
 
 /** Runs the embed against :core and writes the stego file. Returns the output path on success. */
-fun embed(req: EmbedRequest): String {
+fun embed(req: EmbedRequest, onProgress: (Double) -> Unit = {}): String {
     require(req.messageFile.isNotBlank()) { "Choose a message file to hide." }
     require(req.coverFile.isNotBlank()) { "Choose a cover file." }
     require(req.outputFile.isNotBlank()) { "Choose where to save the stego file." }
@@ -192,10 +193,45 @@ fun embed(req: EmbedRequest): String {
     }
     applyAdvancedOptions(req.algorithm, config, req.options)
     val stego = OpenStego(plugin, config)
+    stego.setProgressListener { onProgress(it) }
     val data = stego.embedData(File(req.messageFile), File(req.coverFile), req.outputFile)
     CommonUtil.writeFile(data, req.outputFile)
     return req.outputFile
 }
+
+/**
+ * Maximum embeddable bytes for [coverFile] with the given image algorithm and options, or null if the
+ * algorithm isn't image-based or the cover can't be read. Used for the capacity indicator.
+ */
+fun coverCapacityBytes(algorithm: String, coverFile: String, options: AdvancedOptions): Long? {
+    if (coverFile.isBlank()) return null
+    val plugin = PluginManager.getPluginByName(algorithm)
+    if (plugin !is DHImagePluginTemplate<*>) return null
+    return runCatching {
+        plugin.resetConfig()
+        applyAdvancedOptions(algorithm, plugin.config, options)
+        val (w, h) = imageDimensions(coverFile) ?: return null
+        plugin.getMaxDataLength(w, h).toLong()
+    }.getOrNull()
+}
+
+/** Read just the image header for its dimensions (no full decode). */
+private fun imageDimensions(path: String): Pair<Int, Int>? = runCatching {
+    javax.imageio.ImageIO.createImageInputStream(File(path)).use { iis ->
+        val readers = javax.imageio.ImageIO.getImageReaders(iis)
+        if (!readers.hasNext()) return null
+        val reader = readers.next()
+        try {
+            reader.input = iis
+            Pair(reader.getWidth(0), reader.getHeight(0))
+        } finally {
+            reader.dispose()
+        }
+    }
+}.getOrNull()
+
+/** File size in bytes, or null if missing. */
+fun fileSizeBytes(path: String): Long? = path.takeIf { it.isNotBlank() }?.let { File(it).takeIf { f -> f.isFile }?.length() }
 
 /** Open a folder chooser (native KDE/GNOME when available, else Swing). Null if cancelled. */
 fun pickDirectory(): String? {
