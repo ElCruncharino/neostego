@@ -25,6 +25,9 @@ private val DarkColors = darkColorScheme(
     tertiary = Color(0xFFCFBCFF),
 )
 
+/** User-selectable theme preference. SYSTEM follows the OS light/dark setting. */
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
 @Composable
 fun NeoStegoTheme(dark: Boolean, content: @Composable () -> Unit) {
     MaterialTheme(colorScheme = if (dark) DarkColors else LightColors, content = content)

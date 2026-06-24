@@ -34,6 +34,21 @@ kotlin {
     jvmToolchain(21)
 }
 
+// Expose the project version to the app at runtime (for the About screen) without hardcoding it.
+def versionResourceDir = layout.buildDirectory.dir('generated/version')
+def generateVersionResource = tasks.register('generateVersionResource') {
+    def outFile = versionResourceDir.map { it.file('neostego-version.txt') }
+    def projectVersion = project.version.toString()
+    inputs.property('version', projectVersion)
+    outputs.file(outFile)
+    doLast {
+        def f = outFile.get().asFile
+        f.parentFile.mkdirs()
+        f.text = projectVersion
+    }
+}
+sourceSets.main.resources.srcDir(generateVersionResource)
+
 compose.desktop {
     application {
         mainClass = 'com.elcruncharino.neostego.compose.MainKt'

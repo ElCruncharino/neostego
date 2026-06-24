@@ -22,8 +22,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Settings
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -54,10 +51,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.AlgoInfo
+import com.elcruncharino.neostego.compose.theme.ThemeMode
 import com.elcruncharino.neostego.compose.ui.screens.EmbedWatermarkScreen
 import com.elcruncharino.neostego.compose.ui.screens.ExtractScreen
 import com.elcruncharino.neostego.compose.ui.screens.GenerateSignatureScreen
 import com.elcruncharino.neostego.compose.ui.screens.HideScreen
+import com.elcruncharino.neostego.compose.ui.screens.SettingsScreen
 import com.elcruncharino.neostego.compose.ui.screens.VerifyWatermarkScreen
 
 enum class Destination(val title: String, val section: String, val icon: ImageVector) {
@@ -70,10 +69,10 @@ enum class Destination(val title: String, val section: String, val icon: ImageVe
 }
 
 @Composable
-fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, dark: Boolean, onToggleDark: () -> Unit) {
+fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
     var dest by remember { mutableStateOf(Destination.HIDE) }
     Row(Modifier.fillMaxSize()) {
-        Sidebar(selected = dest, onSelect = { dest = it }, dark = dark, onToggleDark = onToggleDark)
+        Sidebar(selected = dest, onSelect = { dest = it })
         GradientBackground(Modifier.fillMaxSize()) {
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp),
@@ -91,7 +90,7 @@ fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, dark: B
                     Destination.GENERATE_SIGNATURE -> GenerateSignatureScreen(wmAlgorithms)
                     Destination.EMBED_WATERMARK -> EmbedWatermarkScreen(wmAlgorithms)
                     Destination.VERIFY_WATERMARK -> VerifyWatermarkScreen(wmAlgorithms)
-                    Destination.SETTINGS -> PlaceholderScreen(dest.title)
+                    Destination.SETTINGS -> SettingsScreen(themeMode, onThemeChange)
                 }
             }
         }
@@ -99,7 +98,7 @@ fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, dark: B
 }
 
 @Composable
-private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit, dark: Boolean, onToggleDark: () -> Unit) {
+private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit) {
     val firstFocus = remember { FocusRequester() }
     // Land focus on the first nav item at startup so keyboard users have a clear starting point.
     LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
@@ -108,15 +107,12 @@ private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit, dark
         modifier = Modifier.fillMaxHeight().width(248.dp).semantics { isTraversalGroup = true },
     ) {
         Column(Modifier.fillMaxHeight().padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
-                Text("NeoStego", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                IconButton(onClick = onToggleDark) {
-                    Icon(
-                        if (dark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
-                        contentDescription = if (dark) "Switch to light theme" else "Switch to dark theme",
-                    )
-                }
-            }
+            Text(
+                "NeoStego",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            )
             val grouped = Destination.entries.filter { it.section.isNotEmpty() }.groupBy { it.section }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                 grouped.forEach { (section, items) ->
