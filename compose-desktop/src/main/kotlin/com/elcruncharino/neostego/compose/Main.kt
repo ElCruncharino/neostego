@@ -135,8 +135,10 @@ private fun launchComposeUi() {
         LaunchedEffect(windowState) {
             snapshotFlow { Triple(windowState.placement, windowState.position, windowState.size) }
                 .collect { (placement, pos, size) ->
-                    if (placement == WindowPlacement.Floating && pos is WindowPosition.Absolute &&
-                        size.width.value > 0f && size.height.value > 0f
+                    if (placement == WindowPlacement.Floating &&
+                        pos is WindowPosition.Absolute &&
+                        size.width.value > 0f &&
+                        size.height.value > 0f
                     ) {
                         lastFloating.value = WindowBounds(
                             pos.x.value.toInt(),
