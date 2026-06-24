@@ -10,6 +10,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,7 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -95,29 +98,57 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun FilePickCard(label: String, chosen: String?, hint: String, onFileDropped: ((String) -> Unit)? = null, onPick: () -> Unit) {
+    // Highlight the whole card while a file is dragged over it, so the entire card reads as the drop zone.
+    var dragOver by remember { mutableStateOf(false) }
     val dndModifier = if (onFileDropped != null) {
         val target = remember(onFileDropped) {
             object : DragAndDropTarget {
-                override fun onDrop(event: DragAndDropEvent): Boolean = runCatching {
-                    val transfer = event.awtTransferable
-                    if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                        @Suppress("UNCHECKED_CAST")
-                        val files = transfer.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
-                        files.firstOrNull()?.let { onFileDropped(it.absolutePath) }
-                        files.isNotEmpty()
-                    } else {
-                        false
-                    }
-                }.getOrDefault(false)
+                override fun onEntered(event: DragAndDropEvent) {
+                    dragOver = true
+                }
+                override fun onExited(event: DragAndDropEvent) {
+                    dragOver = false
+                }
+                override fun onEnded(event: DragAndDropEvent) {
+                    dragOver = false
+                }
+                override fun onDrop(event: DragAndDropEvent): Boolean {
+                    dragOver = false
+                    return runCatching {
+                        val transfer = event.awtTransferable
+                        if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                            @Suppress("UNCHECKED_CAST")
+                            val files = transfer.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
+                            files.firstOrNull()?.let { onFileDropped(it.absolutePath) }
+                            files.isNotEmpty()
+                        } else {
+                            false
+                        }
+                    }.getOrDefault(false)
+                }
             }
         }
-        Modifier.dragAndDropTarget(shouldStartDragAndDrop = { true }, target = target)
-    } else {
+        // fillMaxWidth + the target on the Card itself makes the entire card the active drop region.
         Modifier
+            .fillMaxWidth()
+            .dragAndDropTarget(shouldStartDragAndDrop = { true }, target = target)
+    } else {
+        Modifier.fillMaxWidth()
+    }
+    val borderShape = RoundedCornerShape(12.dp)
+    // The caller phrases [hint] as a natural call-to-action (e.g. "Choose or drag … here"); we only
+    // swap in a live "drop now" prompt while a file is actually hovering over the card.
+    val canDrop = onFileDropped != null
+    val subtitle = when {
+        chosen != null -> chosen
+        canDrop && dragOver -> "Drop the file to use it"
+        else -> hint
     }
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        modifier = dndModifier,
+        modifier = dndModifier.then(
+            if (dragOver) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, borderShape) else Modifier,
+        ),
     ) {
         Row(
             modifier = Modifier
@@ -130,9 +161,9 @@ fun FilePickCard(label: String, chosen: String?, hint: String, onFileDropped: ((
             Column(modifier = Modifier.weight(1f)) {
                 Text(label, fontWeight = FontWeight.SemiBold)
                 Text(
-                    chosen ?: hint,
+                    subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (canDrop && dragOver) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             OutlinedButton(
