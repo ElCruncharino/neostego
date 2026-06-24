@@ -29,6 +29,7 @@ import com.elcruncharino.neostego.compose.engine.watermarkingAlgorithms
 import com.elcruncharino.neostego.compose.theme.NeoStegoTheme
 import com.elcruncharino.neostego.compose.theme.ThemeMode
 import com.elcruncharino.neostego.compose.ui.AppShell
+import com.elcruncharino.neostego.compose.ui.Destination
 import com.openstego.desktop.util.PluginManager
 
 fun main() {
@@ -38,6 +39,7 @@ fun main() {
     val uiScale = detectUiScale()
     application {
         var themeMode by remember { mutableStateOf(loadThemeMode()) }
+        var dest by remember { mutableStateOf(Destination.HIDE) }
         val dark = when (themeMode) {
             ThemeMode.SYSTEM -> isSystemInDarkTheme()
             ThemeMode.LIGHT -> false
@@ -48,7 +50,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             state = windowState,
-            title = "NeoStego",
+            title = "NeoStego — ${dest.title}",
             icon = painterResource("neostego.png"),
         ) {
             NeoStegoTheme(dark = dark) {
@@ -61,6 +63,8 @@ fun main() {
                             wmAlgorithms = wmAlgorithms,
                             themeMode = themeMode,
                             onThemeChange = { themeMode = it; saveThemeMode(it) },
+                            dest = dest,
+                            onSelect = { dest = it },
                         )
                     }
                 }
