@@ -26,6 +26,10 @@ smoother GUI. No change to the on-disk steganography format or algorithms.
   install a `/usr/bin/neostego` symlink, so the documented CLI works after a
   bundled-runtime install (previously only the non-jpackage packages provided
   it).
+- **Menu entry survives rpm upgrades** — jpackage's generated `%preun`
+  unregistered the desktop entry on every upgrade (rpm runs the new `%post`
+  before the old `%preun`), leaving the app with no launcher. The uninstall is
+  now guarded to run only on a real removal.
 
 ### Changed
 - **Smoother window resizing** — the main window's background gradient is now
