@@ -31,9 +31,29 @@ jobs:
         shell: pwsh
         env:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "${{ github.event.inputs.tag || github.event.release.tag_name }}"
           $ver = $tag -replace '^v', ''
-          $msi = "https://github.com/${{ github.repository }}/releases/download/$tag/NeoStego-$ver.msi"
+          $repo = "${{ github.repository }}"
+          $msi = "https://github.com/$repo/releases/download/$tag/NeoStego-$ver.msi"
           Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
-          .\wingetcreate.exe update ElCruncharino.NeoStego --version $ver --urls "$msi" --submit --token $env:WINGET_TOKEN
+          # Generate manifests without submitting (carries MinimumOSVersion forward from the prior version).
+          .\wingetcreate.exe update ElCruncharino.NeoStego --version $ver --urls "$msi" --out manifests --token $env:WINGET_TOKEN
+          # Inject a single-line ReleaseNotes so metadata stays consistent with the 1.0.x lineage (komac
+          # set it; wingetcreate doesn't, which winget-pkgs flags as an inconsistency). Best-effort:
+          # never block the submit on this, and write pure LF (mixed endings are a hard validation error).
+          try {
+            $tags = (gh api "repos/$repo/releases" --jq '.[].tag_name') -split "`n" | Where-Object { $_ }
+            $prev = ($tags | Where-Object { $_ -ne $tag } | Select-Object -First 1)
+            if (-not $prev) { $prev = $tag }
+            $rn = "ReleaseNotes: 'Full Changelog: $prev...$tag'"
+            $locale = (Get-ChildItem -Path manifests -Recurse -Filter '*.locale.en-US.yaml' | Select-Object -First 1).FullName
+            $text = ([IO.File]::ReadAllText($locale) -replace "`r`n", "`n") -replace "`r", "`n"
+            if ($text -notmatch "(?m)^ReleaseNotes:") {
+              $text = $text -replace "(?m)^(ReleaseNotesUrl:)", "$rn`n`$1"
+            }
+            [IO.File]::WriteAllText($locale, $text, (New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "Injected $rn"
+          } catch { Write-Host "ReleaseNotes injection skipped: $_" }
+          .\wingetcreate.exe submit manifests --token $env:WINGET_TOKEN
