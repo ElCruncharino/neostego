@@ -57,3 +57,17 @@ compose.desktop {
         mainClass = 'com.elcruncharino.neostego.compose.MainKt'
     }
 }
+
+// Format the Kotlin in this module (the root Spotless config only covers Java).
+spotless {
+    kotlin {
+        target 'src/**/*.kt'
+        ktlint('1.5.0').editorConfigOverride([
+                'ktlint_standard_no-wildcard-imports'    : 'disabled',
+                'ktlint_standard_function-naming'        : 'disabled',
+                'max_line_length'                        : 'off',
+        ])
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}

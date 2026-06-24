@@ -73,30 +73,40 @@ fun AdvancedOptionsPanel(kind: OptionsKind, options: AdvancedOptions, onChange: 
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     when (kind) {
                         OptionsKind.LSB -> SliderOption(
-                            "Maximum bits per color channel", options.maxBitsPerChannel.toString(),
-                            options.maxBitsPerChannel.toFloat(), 1f..8f, 6,
+                            "Maximum bits per color channel",
+                            options.maxBitsPerChannel.toString(),
+                            options.maxBitsPerChannel.toFloat(),
+                            1f..8f,
+                            6,
                             "How many least-significant bits of each colour channel to overwrite. Higher hides more " +
                                 "data but distorts the image more and is easier to detect. Default 3.",
                         ) { onChange(options.copy(maxBitsPerChannel = it.roundToInt())) }
 
                         OptionsKind.ADAPTIVE -> {
                             ToggleOption(
-                                "Cluster changes (CMD)", options.cmd,
+                                "Cluster changes (CMD)",
+                                options.cmd,
                                 "Groups the +/-1 pixel changes so they reinforce each other, which resists statistical " +
                                     "steganalysis. Default on.",
                             ) { onChange(options.copy(cmd = it)) }
                             if (options.cmd) {
                                 SliderOption(
-                                    "Clustering strength (mu)", formatMu(options.cmdMu),
-                                    options.cmdMu.toFloat(), 1f..9f, 15,
+                                    "Clustering strength (mu)",
+                                    formatMu(options.cmdMu),
+                                    options.cmdMu.toFloat(),
+                                    1f..9f,
+                                    15,
                                     "How strongly the changes cluster together. Higher concentrates them more. Default 3.0.",
                                 ) { onChange(options.copy(cmdMu = Math.round(it * 2.0) / 2.0)) }
                             }
                         }
 
                         OptionsKind.JPEG -> SliderOption(
-                            "JPEG quality", options.quality.toString(),
-                            options.quality.toFloat(), 50f..100f, 49,
+                            "JPEG quality",
+                            options.quality.toString(),
+                            options.quality.toFloat(),
+                            50f..100f,
+                            49,
                             "Quality of the output JPEG (50-100). Higher means better image quality and more capacity, " +
                                 "but a larger file. Default 90.",
                         ) { onChange(options.copy(quality = it.roundToInt())) }

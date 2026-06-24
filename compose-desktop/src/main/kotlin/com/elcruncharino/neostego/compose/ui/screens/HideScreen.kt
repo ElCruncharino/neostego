@@ -33,8 +33,8 @@ import com.elcruncharino.neostego.compose.ui.AlgorithmSelector
 import com.elcruncharino.neostego.compose.ui.FilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
 import com.elcruncharino.neostego.compose.ui.ResultCard
-import com.elcruncharino.neostego.compose.ui.SecurePasswordField
 import com.elcruncharino.neostego.compose.ui.SectionLabel
+import com.elcruncharino.neostego.compose.ui.SecurePasswordField
 import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
 
 private val ENCRYPTION = listOf("None", "AES128", "AES256")

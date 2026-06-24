@@ -11,17 +11,16 @@ import com.openstego.desktop.util.PluginManager
 import java.io.File
 
 /** The watermarking algorithms (DWTSVD robust, DWTDugad) with descriptions and cover/output formats. */
-fun watermarkingAlgorithms(): List<AlgoInfo> =
-    PluginManager.getWatermarkingPlugins().map { p ->
-        runCatching { p.resetConfig() }
-        AlgoInfo(
-            name = p.name,
-            description = p.description,
-            coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
-            stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
-            optionsKind = OptionsKind.NONE,
-        )
-    }
+fun watermarkingAlgorithms(): List<AlgoInfo> = PluginManager.getWatermarkingPlugins().map { p ->
+    runCatching { p.resetConfig() }
+    AlgoInfo(
+        name = p.name,
+        description = p.description,
+        coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
+        stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
+        optionsKind = OptionsKind.NONE,
+    )
+}
 
 /** Generate a signature from [key] and write it to [outputSigFile]. Returns the written path. */
 fun generateSignature(algorithm: String, key: String, outputSigFile: String): String {
