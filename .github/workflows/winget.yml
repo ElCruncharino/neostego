@@ -22,24 +22,18 @@ permissions:
 jobs:
   winget:
     name: Publish to winget
-    runs-on: ubuntu-latest
+    # wingetcreate (Windows) preserves MinimumOSVersion carried forward from the prior published
+    # version; winget-releaser/komac strips it (== 10.0.0.0 default), which winget-pkgs flags as an
+    # inconsistency and stalls the PR. See the matching note in release.yml.
+    runs-on: windows-latest
     steps:
-      - name: Resolve tag and version
-        id: ver
-        shell: bash
+      - name: Submit NeoStego to winget-pkgs (wingetcreate)
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
-          tag="${{ github.event.inputs.tag || github.event.release.tag_name }}"
-          echo "tag=${tag}" >> "$GITHUB_OUTPUT"        # git tag, e.g. v1.0.1 (used to fetch assets)
-          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"  # winget version, e.g. 1.0.1
-
-      - name: Submit NeoStego to winget-pkgs
-        uses: vedantmgoyal9/winget-releaser@v2
-        with:
-          identifier: ElCruncharino.NeoStego
-          # release-tag: which GitHub release to pull assets from (the git tag, with the v).
-          # version: the winget package version (no leading v).
-          release-tag: ${{ steps.ver.outputs.tag }}
-          version: ${{ steps.ver.outputs.version }}
-          # The MSI is the winget installer (silent by default). Match it on the release.
-          installers-regex: '\.msi$'
-          token: ${{ secrets.WINGET_TOKEN }}
+          $tag = "${{ github.event.inputs.tag || github.event.release.tag_name }}"
+          $ver = $tag -replace '^v', ''
+          $msi = "https://github.com/${{ github.repository }}/releases/download/$tag/NeoStego-$ver.msi"
+          Invoke-WebRequest -Uri https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update ElCruncharino.NeoStego --version $ver --urls "$msi" --submit --token $env:WINGET_TOKEN
