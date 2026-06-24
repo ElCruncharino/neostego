@@ -153,3 +153,65 @@ fun embed(req: EmbedRequest): String {
     CommonUtil.writeFile(data, req.outputFile)
     return req.outputFile
 }
+
+/** Open a folder chooser (native KDE/GNOME when available, else Swing). Null if cancelled. */
+fun pickDirectory(): String? {
+    val home = System.getProperty("user.home")
+    nativeDialogTool?.let { tool ->
+        val cmd = when (tool) {
+            "kdialog" -> listOf("kdialog", "--getexistingdirectory", home)
+            else -> listOf("zenity", "--file-selection", "--directory")
+        }
+        return try {
+            val proc = ProcessBuilder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+            val out = proc.inputStream.bufferedReader().readText().trim()
+            if (proc.waitFor() == 0 && out.isNotEmpty()) out else null
+        } catch (e: Exception) {
+            null
+        }
+    }
+    var result: String? = null
+    val task = Runnable {
+        val chooser = JFileChooser().apply { fileSelectionMode = JFileChooser.DIRECTORIES_ONLY }
+        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) result = chooser.selectedFile.absolutePath
+    }
+    if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
+    return result
+}
+
+/**
+ * Extract a hidden message from [stegoFile] into [outputDir]. The stego file does not record which
+ * algorithm produced it, so this mirrors the Swing UI: try each data-hiding plugin (preferring those
+ * whose output format matches the file extension) until one succeeds. Compression/encryption flags
+ * are read from the embedded header; the user only supplies the password. Returns the written path.
+ */
+fun extract(stegoFile: String, password: String, outputDir: String): String {
+    require(stegoFile.isNotBlank()) { "Choose a stego file." }
+    require(outputDir.isNotBlank()) { "Choose an output folder." }
+    val file = File(stegoFile)
+    val data = CommonUtil.fileToBytes(file)
+    val name = file.name
+    val ext = name.substringAfterLast('.', "").lowercase()
+    val ordered = PluginManager.getDataHidingPlugins().sortedByDescending { p ->
+        runCatching { p.writableFileExtensions.any { it.equals(ext, ignoreCase = true) } }.getOrDefault(false)
+    }
+    var last: Throwable? = null
+    for (plugin in ordered) {
+        plugin.resetConfig()
+        val config = plugin.config
+        if (password.isNotEmpty()) config.setPassword(password)
+        try {
+            val out = OpenStego(plugin, config).extractData(data, name)
+            val msgName = (out[0] as? String).orEmptyName()
+            val bytes = out[1] as ByteArray
+            val target = File(outputDir, msgName)
+            CommonUtil.writeFile(bytes, target.path)
+            return target.path
+        } catch (e: Throwable) {
+            last = e
+        }
+    }
+    throw last ?: IllegalStateException("No hidden data found (wrong password, or not a NeoStego file).")
+}
+
+private fun String?.orEmptyName(): String = if (isNullOrBlank()) "extracted.bin" else this

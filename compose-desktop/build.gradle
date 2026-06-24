@@ -19,6 +19,12 @@ repositories {
 
 dependencies {
     implementation project(':core')
+    // INTERIM: depend on :desktop for its AWT/ImageIO raster codec (AwtImageCodec + ImageUtil),
+    // registered via ServiceLoader — without it the image plugins report no readable/writable formats
+    // and image embeds fail. This also pulls in the Swing UI/FlatLaf transitively, which we don't use.
+    // Phase 5 (retire Swing) will split the desktop-platform support (codec, image util, preferences)
+    // into a shared module so this can become a clean dependency.
+    implementation project(':desktop')
     implementation compose.desktop.currentOs
     implementation compose.material3
     implementation compose.materialIconsExtended
