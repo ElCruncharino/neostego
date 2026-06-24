@@ -6,10 +6,17 @@ package com.elcruncharino.neostego.compose.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -18,8 +25,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -173,14 +182,19 @@ private fun VerdictCard(result: Result<Verdict>) {
     val scheme = MaterialTheme.colorScheme
     val v = result.getOrNull()
     if (v != null) {
-        val (container, content, label) = when (v.level) {
-            VerdictLevel.PRESENT -> Triple(scheme.secondaryContainer, scheme.onSecondaryContainer, "Watermark present")
-            VerdictLevel.WEAK -> Triple(scheme.tertiaryContainer, scheme.onTertiaryContainer, "Weak / partial match")
-            VerdictLevel.ABSENT -> Triple(scheme.errorContainer, scheme.onErrorContainer, "Watermark absent")
+        val pct = "Correlation: ${(v.correlation * 100).roundToInt()}%"
+        // Icon + text label so the verdict never depends on colour alone (WCAG 1.4.1).
+        when (v.level) {
+            VerdictLevel.PRESENT ->
+                VerdictBox(Icons.Filled.CheckCircle, scheme.secondaryContainer, scheme.onSecondaryContainer, "Watermark present", pct)
+            VerdictLevel.WEAK ->
+                VerdictBox(Icons.Filled.Warning, scheme.tertiaryContainer, scheme.onTertiaryContainer, "Weak / partial match", pct)
+            VerdictLevel.ABSENT ->
+                VerdictBox(Icons.Filled.Cancel, scheme.errorContainer, scheme.onErrorContainer, "Watermark absent", pct)
         }
-        VerdictBox(container, content, label, "Correlation: ${(v.correlation * 100).roundToInt()}%")
     } else {
         VerdictBox(
+            Icons.Filled.Error,
             scheme.errorContainer,
             scheme.onErrorContainer,
             "Failed",
@@ -190,14 +204,21 @@ private fun VerdictCard(result: Result<Verdict>) {
 }
 
 @Composable
-private fun VerdictBox(container: Color, content: Color, title: String, detail: String) {
+private fun VerdictBox(icon: ImageVector, container: Color, content: Color, title: String, detail: String) {
     Card(
         colors = CardDefaults.cardColors(containerColor = container),
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     ) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold, color = content)
-            Text(detail, style = MaterialTheme.typography.bodyMedium, color = content)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, tint = content) // title text conveys meaning to SRs
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(title, fontWeight = FontWeight.SemiBold, color = content)
+                Text(detail, style = MaterialTheme.typography.bodyMedium, color = content)
+            }
         }
     }
 }

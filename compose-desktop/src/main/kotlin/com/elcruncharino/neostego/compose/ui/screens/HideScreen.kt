@@ -45,7 +45,8 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
     var messageFile by remember { mutableStateOf<String?>(null) }
     var coverFile by remember { mutableStateOf<String?>(null) }
     var outputFile by remember { mutableStateOf<String?>(null) }
-    var algorithm by remember { mutableStateOf(algorithms.firstOrNull()) }
+    // Default to Adaptive (the most secure image algorithm) when present.
+    var algorithm by remember { mutableStateOf(algorithms.firstOrNull { it.name == "Adaptive" } ?: algorithms.firstOrNull()) }
     var algoOpen by remember { mutableStateOf(false) }
     var encIndex by remember { mutableStateOf(0) }
     var password by remember { mutableStateOf("") }
