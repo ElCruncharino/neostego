@@ -41,6 +41,7 @@ import com.elcruncharino.neostego.compose.engine.embedWatermark
 import com.elcruncharino.neostego.compose.engine.generateSignature
 import com.elcruncharino.neostego.compose.engine.pickFile
 import com.elcruncharino.neostego.compose.engine.verifyWatermark
+import com.elcruncharino.neostego.compose.theme.verdictColors
 import com.elcruncharino.neostego.compose.ui.AlgorithmSelector
 import com.elcruncharino.neostego.compose.ui.FilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
@@ -179,27 +180,20 @@ private fun ScreenIntro(text: String) {
 
 @Composable
 private fun VerdictCard(result: Result<Verdict>) {
-    val scheme = MaterialTheme.colorScheme
     val v = result.getOrNull()
     if (v != null) {
+        val sc = verdictColors(v.level)
         val pct = "Correlation: ${(v.correlation * 100).roundToInt()}%"
-        // Icon + text label so the verdict never depends on colour alone (WCAG 1.4.1).
-        when (v.level) {
-            VerdictLevel.PRESENT ->
-                VerdictBox(Icons.Filled.CheckCircle, scheme.secondaryContainer, scheme.onSecondaryContainer, "Watermark present", pct)
-            VerdictLevel.WEAK ->
-                VerdictBox(Icons.Filled.Warning, scheme.tertiaryContainer, scheme.onTertiaryContainer, "Weak / partial match", pct)
-            VerdictLevel.ABSENT ->
-                VerdictBox(Icons.Filled.Cancel, scheme.errorContainer, scheme.onErrorContainer, "Watermark absent", pct)
+        // Icon + text + contrast-safe colour so the verdict never depends on colour alone (WCAG 1.4.1).
+        val (icon, title) = when (v.level) {
+            VerdictLevel.PRESENT -> Icons.Filled.CheckCircle to "Watermark present"
+            VerdictLevel.WEAK -> Icons.Filled.Warning to "Weak / partial match"
+            VerdictLevel.ABSENT -> Icons.Filled.Cancel to "Watermark absent"
         }
+        VerdictBox(icon, sc.container, sc.content, title, pct)
     } else {
-        VerdictBox(
-            Icons.Filled.Error,
-            scheme.errorContainer,
-            scheme.onErrorContainer,
-            "Failed",
-            result.exceptionOrNull()?.message ?: "Verification failed",
-        )
+        val sc = verdictColors(VerdictLevel.ABSENT)
+        VerdictBox(Icons.Filled.Error, sc.container, sc.content, "Failed", result.exceptionOrNull()?.message ?: "Verification failed")
     }
 }
 

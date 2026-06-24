@@ -36,15 +36,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -96,9 +100,12 @@ fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, dark: B
 
 @Composable
 private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit, dark: Boolean, onToggleDark: () -> Unit) {
+    val firstFocus = remember { FocusRequester() }
+    // Land focus on the first nav item at startup so keyboard users have a clear starting point.
+    LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        modifier = Modifier.fillMaxHeight().width(248.dp),
+        modifier = Modifier.fillMaxHeight().width(248.dp).semantics { isTraversalGroup = true },
     ) {
         Column(Modifier.fillMaxHeight().padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
@@ -114,7 +121,13 @@ private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit, dark
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                 grouped.forEach { (section, items) ->
                     SectionLabel(section, modifier = Modifier.padding(start = 12.dp, top = 14.dp, bottom = 4.dp))
-                    items.forEach { d -> NavItem(d, selected == d) { onSelect(d) } }
+                    items.forEach { d ->
+                        NavItem(
+                            d,
+                            selected == d,
+                            modifier = if (d == Destination.HIDE) Modifier.focusRequester(firstFocus) else Modifier,
+                        ) { onSelect(d) }
+                    }
                 }
             }
             Spacer(Modifier.fillMaxWidth())
@@ -124,7 +137,7 @@ private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit, dark
 }
 
 @Composable
-private fun NavItem(dest: Destination, selected: Boolean, onClick: () -> Unit) {
+private fun NavItem(dest: Destination, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val bg = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
     val fg = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
     val shape = RoundedCornerShape(14.dp)
@@ -135,7 +148,7 @@ private fun NavItem(dest: Destination, selected: Boolean, onClick: () -> Unit) {
         shape = shape,
         color = bg,
         interactionSource = interaction,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .semantics { this.selected = selected }
             // Visible focus ring for keyboard navigation (Material's default indication is subtle here).
