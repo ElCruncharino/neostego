@@ -1,0 +1,34 @@
+/*
+ * Prototype: a Compose Multiplatform (Desktop) front-end for the "Hide data" flow, built on the
+ * existing toolkit-agnostic :core. The point of this module is to evaluate Compose Desktop's
+ * GPU-rendered resize smoothness (vs the Swing :desktop UI) and gauge the effort of a full port —
+ * NOT to be a finished app. Only the Embed/"Hide data" screen is implemented.
+ */
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.2.10'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
+    id 'org.jetbrains.compose' version '1.11.1'
+}
+
+repositories {
+    mavenCentral()
+    google()
+    maven { url = 'https://maven.pkg.jetbrains.space/public/p/compose/dev' }
+}
+
+dependencies {
+    implementation project(':core')
+    implementation compose.desktop.currentOs
+    implementation compose.material3
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+compose.desktop {
+    application {
+        mainClass = 'com.elcruncharino.neostego.compose.MainKt'
+    }
+}
