@@ -108,7 +108,12 @@ fi
 package_type=rpm
 DESKTOP_SCRIPTS
 LAUNCHER_AS_SERVICE_SCRIPTS
+# Only unregister the menu entry on a real uninstall ($1 = 0). On an upgrade ($1 = 1) rpm runs the
+# NEW package's %post (which installs the menu entry) BEFORE the OLD package's %preun, so an
+# unguarded uninstall here would wipe the just-installed entry and leave the app with no launcher.
+if [ "$1" = 0 ]; then
 DESKTOP_COMMANDS_UNINSTALL
+fi
 LAUNCHER_AS_SERVICE_COMMANDS_UNINSTALL
 
 %postun
