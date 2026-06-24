@@ -38,7 +38,8 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
     var outputFile by remember { mutableStateOf<String?>(null) }
     // Default to Adaptive (the most secure image algorithm) when present.
     var algorithm by remember { mutableStateOf(algorithms.firstOrNull { it.name == "Adaptive" } ?: algorithms.firstOrNull()) }
-    var encIndex by remember { mutableStateOf(0) }
+    // Default to AES128 encryption (which makes the password required).
+    var encIndex by remember { mutableStateOf(1) }
     var password by remember { mutableStateOf("") }
     var showPw by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -76,7 +77,13 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
         SectionLabel("Encryption")
         SegmentedButtonGroup(ENCRYPTION, encIndex, onSelect = { encIndex = it })
 
-        SecurePasswordField(value = password, onValueChange = { password = it }, show = showPw, onToggleShow = { showPw = !showPw })
+        SecurePasswordField(
+            value = password,
+            onValueChange = { password = it },
+            show = showPw,
+            onToggleShow = { showPw = !showPw },
+            label = if (encIndex == 0) "Password (optional)" else "Password (required for encryption)",
+        )
 
         PrimaryActionButton("Hide data", busy = busy, onClick = {
             busy = true

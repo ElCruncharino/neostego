@@ -145,9 +145,10 @@ fun embed(req: EmbedRequest): String {
     plugin.resetConfig()
     val config = plugin.config
     config.setUseCompression(true)
-    val encrypt = req.encryptionAlgorithm != null && req.password.isNotEmpty()
+    val encrypt = req.encryptionAlgorithm != null
     config.setUseEncryption(encrypt)
     if (encrypt) {
+        require(req.password.isNotEmpty()) { "${req.encryptionAlgorithm} encryption needs a password." }
         config.setEncryptionAlgorithm(req.encryptionAlgorithm)
         config.setPassword(req.password)
     }

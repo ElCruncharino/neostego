@@ -189,11 +189,12 @@ fun SecurePasswordField(
     onValueChange: (String) -> Unit,
     show: Boolean,
     onToggleShow: () -> Unit,
+    label: String = "Password (optional)",
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Password (optional)", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(label, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 TextButton(onClick = onToggleShow) { Text(if (show) "Hide" else "Show") }
             }
             OutlinedTextField(
@@ -201,7 +202,7 @@ fun SecurePasswordField(
                 onValueChange = onValueChange,
                 singleLine = true,
                 visualTransformation = if (show) VisualTransformation.None else PasswordVisualTransformation(),
-                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Password, optional" },
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = label },
             )
         }
     }
