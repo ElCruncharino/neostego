@@ -145,12 +145,14 @@ fun embed(req: EmbedRequest): String {
     plugin.resetConfig()
     val config = plugin.config
     config.setUseCompression(true)
+    // Always apply the password: it seeds the bit-placement PRNG (RandomLSB etc.), so it protects
+    // *where* the data is hidden even when encryption is off — and is the AES key when it's on.
+    config.setPassword(req.password)
     val encrypt = req.encryptionAlgorithm != null
     config.setUseEncryption(encrypt)
     if (encrypt) {
         require(req.password.isNotEmpty()) { "${req.encryptionAlgorithm} encryption needs a password." }
         config.setEncryptionAlgorithm(req.encryptionAlgorithm)
-        config.setPassword(req.password)
     }
     val stego = OpenStego(plugin, config)
     val data = stego.embedData(File(req.messageFile), File(req.coverFile), req.outputFile)
