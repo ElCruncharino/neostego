@@ -38,8 +38,7 @@ fun detectUiScale(): Float? {
 }
 
 /** Accept plausible scales only, rounded to 2 decimals; reject noise. */
-private fun sanitizeScale(s: Double): Float? =
-    if (s in 0.5..8.0) (Math.round(s * 100.0) / 100.0).toFloat() else null
+private fun sanitizeScale(s: Double): Float? = if (s in 0.5..8.0) (Math.round(s * 100.0) / 100.0).toFloat() else null
 
 /**
  * A data-hiding algorithm with its :core description and the file extensions it accepts as a cover
@@ -66,32 +65,30 @@ private fun optionsKindFor(name: String): OptionsKind = when (name) {
 /** Per-algorithm advanced embed options; only the fields for the selected algorithm are applied. */
 data class AdvancedOptions(
     val maxBitsPerChannel: Int = 3, // LSB family
-    val cmd: Boolean = true,        // Adaptive
-    val cmdMu: Double = 3.0,        // Adaptive
-    val quality: Int = 90,          // JpegUniward
+    val cmd: Boolean = true, // Adaptive
+    val cmdMu: Double = 3.0, // Adaptive
+    val quality: Int = 90, // JpegUniward
 )
 
 /** The data-hiding algorithms (RandomLSB, Adaptive, JpegUniward, F5, WavLSB, ...) with metadata. */
-fun dataHidingAlgorithms(): List<AlgoInfo> =
-    PluginManager.getDataHidingPlugins().map { p ->
-        // Initialise the plugin config first: some plugins (e.g. JpegUniward, whose cover formats
-        // depend on SI vs plain mode) read this.config inside get*FileExtensions and NPE otherwise.
-        runCatching { p.resetConfig() }
-        AlgoInfo(
-            name = p.name,
-            description = p.description,
-            coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
-            stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
-            optionsKind = optionsKindFor(p.name),
-        )
-    }
+fun dataHidingAlgorithms(): List<AlgoInfo> = PluginManager.getDataHidingPlugins().map { p ->
+    // Initialise the plugin config first: some plugins (e.g. JpegUniward, whose cover formats
+    // depend on SI vs plain mode) read this.config inside get*FileExtensions and NPE otherwise.
+    runCatching { p.resetConfig() }
+    AlgoInfo(
+        name = p.name,
+        description = p.description,
+        coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
+        stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
+        optionsKind = optionsKindFor(p.name),
+    )
+}
 
-private fun commandExists(cmd: String): Boolean =
-    try {
-        ProcessBuilder("sh", "-c", "command -v $cmd").start().waitFor() == 0
-    } catch (e: Exception) {
-        false
-    }
+private fun commandExists(cmd: String): Boolean = try {
+    ProcessBuilder("sh", "-c", "command -v $cmd").start().waitFor() == 0
+} catch (e: Exception) {
+    false
+}
 
 // Prefer the desktop's own file dialog so users get their native KDE/GNOME picker (with places,
 // recent files, search) rather than Swing's dated chooser. Resolved once.

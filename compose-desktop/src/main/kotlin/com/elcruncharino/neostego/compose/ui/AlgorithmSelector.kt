@@ -90,7 +90,10 @@ fun AlgorithmSelector(algorithms: List<AlgoInfo>, selected: AlgoInfo?, onSelect:
         // The menu anchors here; when open it takes focus, so arrows/Enter/Esc work on the items.
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             algorithms.forEach { info ->
-                DropdownMenuItem(text = { Text(info.name) }, onClick = { onSelect(info); open = false })
+                DropdownMenuItem(text = { Text(info.name) }, onClick = {
+                    onSelect(info)
+                    open = false
+                })
             }
         }
     }

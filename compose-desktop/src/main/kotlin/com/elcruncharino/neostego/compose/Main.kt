@@ -62,7 +62,10 @@ fun main() {
                             dhAlgorithms = dhAlgorithms,
                             wmAlgorithms = wmAlgorithms,
                             themeMode = themeMode,
-                            onThemeChange = { themeMode = it; saveThemeMode(it) },
+                            onThemeChange = {
+                                themeMode = it
+                                saveThemeMode(it)
+                            },
                             dest = dest,
                             onSelect = { dest = it },
                         )
