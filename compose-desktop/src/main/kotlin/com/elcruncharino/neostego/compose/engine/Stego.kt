@@ -37,12 +37,27 @@ fun detectUiScale(): Float? {
 private fun sanitizeScale(s: Double): Float? =
     if (s in 0.5..8.0) (Math.round(s * 100.0) / 100.0).toFloat() else null
 
-/** A data-hiding algorithm and its human-readable description (from the :core plugin). */
-data class AlgoInfo(val name: String, val description: String)
+/**
+ * A data-hiding algorithm with its :core description and the file extensions it accepts as a cover
+ * (readable) and can write as a stego file (writable) — used to filter the cover/output pickers.
+ */
+data class AlgoInfo(
+    val name: String,
+    val description: String,
+    val coverExtensions: List<String>,
+    val stegoExtensions: List<String>,
+)
 
-/** The data-hiding algorithms (RandomLSB, Adaptive, JpegUniward, F5, WavLSB, ...) with descriptions. */
+/** The data-hiding algorithms (RandomLSB, Adaptive, JpegUniward, F5, WavLSB, ...) with metadata. */
 fun dataHidingAlgorithms(): List<AlgoInfo> =
-    PluginManager.getDataHidingPlugins().map { AlgoInfo(it.name, it.description) }
+    PluginManager.getDataHidingPlugins().map { p ->
+        AlgoInfo(
+            name = p.name,
+            description = p.description,
+            coverExtensions = runCatching { p.readableFileExtensions }.getOrDefault(emptyList()),
+            stegoExtensions = runCatching { p.writableFileExtensions }.getOrDefault(emptyList()),
+        )
+    }
 
 private fun commandExists(cmd: String): Boolean =
     try {
@@ -55,11 +70,25 @@ private fun commandExists(cmd: String): Boolean =
 // recent files, search) rather than Swing's dated chooser. Resolved once.
 private val nativeDialogTool: String? by lazy { listOf("kdialog", "zenity").firstOrNull(::commandExists) }
 
-private fun runNativePicker(tool: String, save: Boolean): String? {
+private fun runNativePicker(tool: String, save: Boolean, extensions: List<String>, label: String): String? {
     val home = System.getProperty("user.home")
+    val glob = extensions.joinToString(" ") { "*.$it" }
     val cmd = when (tool) {
-        "kdialog" -> if (save) listOf("kdialog", "--getsavefilename", home) else listOf("kdialog", "--getopenfilename", home)
-        else -> if (save) listOf("zenity", "--file-selection", "--save", "--confirm-overwrite") else listOf("zenity", "--file-selection")
+        "kdialog" -> buildList {
+            add("kdialog")
+            add(if (save) "--getsavefilename" else "--getopenfilename")
+            add(home)
+            if (extensions.isNotEmpty()) add("$glob|$label")
+        }
+        else -> buildList {
+            add("zenity")
+            add("--file-selection")
+            if (save) {
+                add("--save")
+                add("--confirm-overwrite")
+            }
+            if (extensions.isNotEmpty()) add("--file-filter=$label | $glob")
+        }
     }
     return try {
         val proc = ProcessBuilder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start()
@@ -71,14 +100,21 @@ private fun runNativePicker(tool: String, save: Boolean): String? {
 }
 
 /**
- * Open a file chooser. Uses the native desktop dialog (KDE kdialog / GNOME zenity) when available;
- * otherwise falls back to Swing's JFileChooser. Returns the chosen path, or null if cancelled.
+ * Open a file chooser, optionally restricted to [extensions] (e.g. listOf("png", "bmp")). Uses the
+ * native desktop dialog (KDE kdialog / GNOME zenity) when available; otherwise Swing's JFileChooser.
+ * Returns the chosen path, or null if cancelled.
  */
-fun pickFile(save: Boolean): String? {
-    nativeDialogTool?.let { return runNativePicker(it, save) }
+fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel: String = "Files"): String? {
+    nativeDialogTool?.let { return runNativePicker(it, save, extensions, filterLabel) }
     var result: String? = null
     val task = Runnable {
         val chooser = JFileChooser()
+        if (extensions.isNotEmpty()) {
+            chooser.fileFilter = javax.swing.filechooser.FileNameExtensionFilter(
+                "$filterLabel (${extensions.joinToString(", ") { "*.$it" }})",
+                *extensions.toTypedArray(),
+            )
+        }
         val outcome = if (save) chooser.showSaveDialog(null) else chooser.showOpenDialog(null)
         if (outcome == JFileChooser.APPROVE_OPTION) result = chooser.selectedFile.absolutePath
     }

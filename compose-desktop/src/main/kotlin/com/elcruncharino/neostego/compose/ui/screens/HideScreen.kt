@@ -62,11 +62,21 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
         FilePickCard("Message file", messageFile, "The secret file to hide") {
             pickFile(save = false)?.let { messageFile = it }
         }
-        FilePickCard("Cover file", coverFile, "An image or audio file to hide the message in") {
-            pickFile(save = false)?.let { coverFile = it }
+        val coverExts = algorithm?.coverExtensions.orEmpty()
+        val stegoExts = algorithm?.stegoExtensions.orEmpty()
+        FilePickCard(
+            "Cover file",
+            coverFile,
+            if (coverExts.isEmpty()) "An image or audio file to hide the message in" else "Allowed: ${coverExts.joinToString(", ")}",
+        ) {
+            pickFile(save = false, extensions = coverExts, filterLabel = "Cover files")?.let { coverFile = it }
         }
-        FilePickCard("Output stego file", outputFile, "Where to save the result") {
-            pickFile(save = true)?.let { outputFile = it }
+        FilePickCard(
+            "Output stego file",
+            outputFile,
+            if (stegoExts.isEmpty()) "Where to save the result" else "Saved as: ${stegoExts.joinToString(", ")}",
+        ) {
+            pickFile(save = true, extensions = stegoExts, filterLabel = "Stego files")?.let { outputFile = it }
         }
 
         SectionLabel("Algorithm")
