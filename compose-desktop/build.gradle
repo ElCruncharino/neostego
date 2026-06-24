@@ -5,6 +5,8 @@
  * NOT to be a finished app. Only the Embed/"Hide data" screen is implemented.
  */
 
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '2.2.10'
     id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
@@ -34,20 +36,14 @@ kotlin {
     jvmToolchain(21)
 }
 
-// Expose the project version to the app at runtime (for the About screen) without hardcoding it.
-def versionResourceDir = layout.buildDirectory.dir('generated/version')
-def generateVersionResource = tasks.register('generateVersionResource') {
-    def outFile = versionResourceDir.map { it.file('neostego-version.txt') }
-    def projectVersion = project.version.toString()
-    inputs.property('version', projectVersion)
-    outputs.file(outFile)
-    doLast {
-        def f = outFile.get().asFile
-        f.parentFile.mkdirs()
-        f.text = projectVersion
+// Expose the project version to the app at runtime (for the About screen) without hardcoding it:
+// filter @version@ in the bundled neostego-version.txt at processResources time (config-cache safe).
+def appVersion = project.version.toString()
+tasks.named('processResources') {
+    filesMatching('neostego-version.txt') {
+        filter(ReplaceTokens, tokens: [version: appVersion])
     }
 }
-sourceSets.main.resources.srcDir(generateVersionResource)
 
 compose.desktop {
     application {
