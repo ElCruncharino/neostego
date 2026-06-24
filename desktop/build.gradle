@@ -319,6 +319,10 @@ tasks.register('jpackageInput', Copy) {
     // Main jar plus all runtime deps, flat, so the jar manifest's Class-Path (filenames) resolves.
     from(tasks.jar)
     from(configurations.runtimeClasspath)
+    // Ship the scalable logo inside the app image (lands in lib/app/) so the Linux packages can
+    // register it in the FreeDesktop icon theme at install time. See the jpackageRpm/jpackageDeb
+    // resource-dir overrides under artifacts/jpackage/linux/.
+    from('artifacts/neostego.svg')
 }
 
 // jpackage metadata captured at configuration time. The argumentProviders closures below run at
@@ -330,6 +334,14 @@ def jpAboutUrl      = project.homepageUrl.toString()
 def jpLicenseFile   = rootProject.file('LICENSE').absolutePath
 def jpDebMaintainer = project.authorMail.toString()
 def jpIconFile      = file('src/main/dist/neostego.ico').absolutePath
+// Linux resource-dir overrides for jpackage: a branded NeoStego.png (replaces jpackage's generic
+// default icon), a richer NeoStego.desktop (themed Icon=neostego), and the rpm spec / deb maint
+// scripts that register the hicolor theme icon, add the /usr/bin/neostego CLI symlink, and refresh
+// the icon-theme/desktop caches.
+def jpLinuxResourceDir = file('artifacts/jpackage/linux').absolutePath
+// Java2D's default X11 pipeline re-blits the whole window on every resize tick, which makes
+// corner-dragging laggy (especially under XWayland); the XRender pipeline is far smoother.
+def jpLinuxJavaOptions = ['--java-options', '-Dsun.java2d.xrender=true']
 
 def commonJpackageArgs = {
     [
@@ -387,8 +399,9 @@ tasks.register('jpackageDeb', Exec) {
     doFirst { jpackageOutDir.get().asFile.mkdirs() }
     executable jpackageBin()
     argumentProviders.add({
-        commonJpackageArgs() + [
+        commonJpackageArgs() + jpLinuxJavaOptions + [
                 '--type', 'deb',
+                '--resource-dir', jpLinuxResourceDir,
                 '--linux-shortcut', '--linux-menu-group', 'Utility',
                 '--linux-deb-maintainer', jpDebMaintainer
         ]
@@ -403,8 +416,9 @@ tasks.register('jpackageRpm', Exec) {
     doFirst { jpackageOutDir.get().asFile.mkdirs() }
     executable jpackageBin()
     argumentProviders.add({
-        commonJpackageArgs() + [
+        commonJpackageArgs() + jpLinuxJavaOptions + [
                 '--type', 'rpm',
+                '--resource-dir', jpLinuxResourceDir,
                 '--linux-shortcut', '--linux-menu-group', 'Utility',
                 '--linux-rpm-license-type', 'GPLv2'
         ]
