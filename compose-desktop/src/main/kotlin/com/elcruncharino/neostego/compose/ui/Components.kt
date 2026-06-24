@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -209,7 +210,11 @@ fun SecurePasswordField(
 /** Full-width primary action with an inline progress bar while busy — like Android PrimaryActionButton. */
 @Composable
 fun PrimaryActionButton(label: String, busy: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        // Announce the busy state to screen readers when it changes.
+        modifier = modifier.fillMaxWidth().semantics { stateDescription = if (busy) "Working" else "Ready" },
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         if (busy) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp))
         }
