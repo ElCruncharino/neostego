@@ -7,4 +7,4 @@ pluginManagement {
 }
 
 rootProject.name = 'openstego'
-include 'core', 'desktop', 'android'
+include 'core', 'desktop', 'android', 'compose-desktop'

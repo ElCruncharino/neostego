@@ -711,12 +711,17 @@ public class OpenStegoFrame extends JFrame {
 
     static class GradientPanel extends JPanel {
         private static final long serialVersionUID = 3865918400221647086L;
+        // Height of the pre-rendered gradient strip. The gradient only varies vertically, so a
+        // 1-pixel-wide strip captures it fully; 256 rows give a smooth ramp when scaled to any height.
+        private static final int STRIP_HEIGHT = 256;
         private final Color startColor;
         private final Color endColor;
-        // Cached rendering of the gradient, rebuilt only when the panel size changes. Re-evaluating a
-        // full-panel GradientPaint on every paint is the dominant cost during drag-resize (each resize
-        // tick triggers a full repaint), so caching it keeps corner-dragging smooth.
-        private transient BufferedImage cache;
+        // The gradient rendered once into a tiny 1xSTRIP_HEIGHT image. paintComponent() just blits it
+        // scaled to fill the panel — a hardware-accelerated stretch that costs almost nothing per
+        // frame. Re-evaluating a full-panel GradientPaint (or reallocating a full-window image) on
+        // every resize tick was the dominant cost that made corner-dragging lag and the content trail
+        // behind the window frame.
+        private transient BufferedImage strip;
 
         /**
          * Default constructor
@@ -727,6 +732,18 @@ public class OpenStegoFrame extends JFrame {
         public GradientPanel(Color startColor, Color endColor) {
             this.startColor = startColor;
             this.endColor = endColor;
+        }
+
+        private BufferedImage gradientStrip() {
+            if (this.strip == null) {
+                BufferedImage img = new BufferedImage(1, STRIP_HEIGHT, BufferedImage.TYPE_INT_RGB);
+                Graphics2D ig = img.createGraphics();
+                ig.setPaint(new GradientPaint(0, 0, this.startColor, 0, STRIP_HEIGHT, this.endColor));
+                ig.fillRect(0, 0, 1, STRIP_HEIGHT);
+                ig.dispose();
+                this.strip = img;
+            }
+            return this.strip;
         }
 
         /*
@@ -741,16 +758,7 @@ public class OpenStegoFrame extends JFrame {
             if (panelWidth <= 0 || panelHeight <= 0) {
                 return;
             }
-
-            if (this.cache == null || this.cache.getWidth() != panelWidth || this.cache.getHeight() != panelHeight) {
-                BufferedImage img = new BufferedImage(panelWidth, panelHeight, BufferedImage.TYPE_INT_RGB);
-                Graphics2D ig = img.createGraphics();
-                ig.setPaint(new GradientPaint(0, 0, this.startColor, 0, panelHeight, this.endColor));
-                ig.fillRect(0, 0, panelWidth, panelHeight);
-                ig.dispose();
-                this.cache = img;
-            }
-            g.drawImage(this.cache, 0, 0, null);
+            g.drawImage(gradientStrip(), 0, 0, panelWidth, panelHeight, null);
         }
     }
 }
