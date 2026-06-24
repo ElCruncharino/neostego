@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -74,7 +75,12 @@ fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, dark: B
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(28.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
-                Text(dest.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                Text(
+                    dest.title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.semantics { heading() },
+                )
                 when (dest) {
                     Destination.HIDE -> HideScreen(dhAlgorithms)
                     Destination.EXTRACT -> ExtractScreen()

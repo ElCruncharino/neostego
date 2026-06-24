@@ -37,6 +37,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -121,7 +126,26 @@ fun SegmentedButtonGroup(
         color = MaterialTheme.colorScheme.surfaceVariant,
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(modifier = Modifier.padding(4.dp).selectableGroup()) {
+        Row(
+            modifier = Modifier
+                .padding(4.dp)
+                .selectableGroup()
+                // Arrow keys move the selection (radio-group convention) when a segment is focused.
+                .onKeyEvent { ev ->
+                    if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
+                    when (ev.key) {
+                        Key.DirectionRight, Key.DirectionDown -> {
+                            if (selectedIndex < options.lastIndex) onSelect(selectedIndex + 1)
+                            true
+                        }
+                        Key.DirectionLeft, Key.DirectionUp -> {
+                            if (selectedIndex > 0) onSelect(selectedIndex - 1)
+                            true
+                        }
+                        else -> false
+                    }
+                },
+        ) {
             options.forEachIndexed { index, label ->
                 val selected = index == selectedIndex
                 val bg by animateColorAsState(
