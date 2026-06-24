@@ -44,8 +44,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.AlgoInfo
+import com.elcruncharino.neostego.compose.ui.screens.EmbedWatermarkScreen
 import com.elcruncharino.neostego.compose.ui.screens.ExtractScreen
+import com.elcruncharino.neostego.compose.ui.screens.GenerateSignatureScreen
 import com.elcruncharino.neostego.compose.ui.screens.HideScreen
+import com.elcruncharino.neostego.compose.ui.screens.VerifyWatermarkScreen
 
 enum class Destination(val title: String, val section: String, val icon: ImageVector) {
     HIDE("Hide data", "Data hiding", Icons.Filled.Lock),
@@ -57,7 +60,7 @@ enum class Destination(val title: String, val section: String, val icon: ImageVe
 }
 
 @Composable
-fun AppShell(algorithms: List<AlgoInfo>, dark: Boolean, onToggleDark: () -> Unit) {
+fun AppShell(dhAlgorithms: List<AlgoInfo>, wmAlgorithms: List<AlgoInfo>, dark: Boolean, onToggleDark: () -> Unit) {
     var dest by remember { mutableStateOf(Destination.HIDE) }
     Row(Modifier.fillMaxSize()) {
         Sidebar(selected = dest, onSelect = { dest = it }, dark = dark, onToggleDark = onToggleDark)
@@ -68,9 +71,12 @@ fun AppShell(algorithms: List<AlgoInfo>, dark: Boolean, onToggleDark: () -> Unit
             ) {
                 Text(dest.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 when (dest) {
-                    Destination.HIDE -> HideScreen(algorithms)
+                    Destination.HIDE -> HideScreen(dhAlgorithms)
                     Destination.EXTRACT -> ExtractScreen()
-                    else -> PlaceholderScreen(dest.title)
+                    Destination.GENERATE_SIGNATURE -> GenerateSignatureScreen(wmAlgorithms)
+                    Destination.EMBED_WATERMARK -> EmbedWatermarkScreen(wmAlgorithms)
+                    Destination.VERIFY_WATERMARK -> VerifyWatermarkScreen(wmAlgorithms)
+                    Destination.SETTINGS -> PlaceholderScreen(dest.title)
                 }
             }
         }
