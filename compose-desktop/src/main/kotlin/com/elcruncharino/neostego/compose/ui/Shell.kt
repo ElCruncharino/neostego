@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.AlgoInfo
+import com.elcruncharino.neostego.compose.ui.screens.ExtractScreen
 import com.elcruncharino.neostego.compose.ui.screens.HideScreen
 
 enum class Destination(val title: String, val section: String, val icon: ImageVector) {
@@ -68,6 +69,7 @@ fun AppShell(algorithms: List<AlgoInfo>, dark: Boolean, onToggleDark: () -> Unit
                 Text(dest.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                 when (dest) {
                     Destination.HIDE -> HideScreen(algorithms)
+                    Destination.EXTRACT -> ExtractScreen()
                     else -> PlaceholderScreen(dest.title)
                 }
             }

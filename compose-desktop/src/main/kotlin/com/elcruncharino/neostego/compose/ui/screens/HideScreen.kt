@@ -32,6 +32,7 @@ import com.elcruncharino.neostego.compose.engine.embed
 import com.elcruncharino.neostego.compose.engine.pickFile
 import com.elcruncharino.neostego.compose.ui.FilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
+import com.elcruncharino.neostego.compose.ui.ResultCard
 import com.elcruncharino.neostego.compose.ui.SecurePasswordField
 import com.elcruncharino.neostego.compose.ui.SectionLabel
 import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
@@ -122,7 +123,7 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
             }.start()
         })
 
-        result?.let { ResultCard(it) }
+        result?.let { ResultCard(it) { path -> "Wrote stego file to $path" } }
     }
 }
 
@@ -135,23 +136,6 @@ private fun AlgorithmDescriptionCard(info: AlgoInfo) {
                 info.description,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ResultCard(result: Result<String>) {
-    val success = result.isSuccess
-    val container = if (success) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
-    val content = if (success) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
-    Card(colors = CardDefaults.cardColors(containerColor = container)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(if (success) "Done" else "Failed", fontWeight = FontWeight.SemiBold, color = content)
-            Text(
-                result.fold({ "Wrote stego file to $it" }, { it.message ?: it.toString() }),
-                style = MaterialTheme.typography.bodyMedium,
-                color = content,
             )
         }
     }

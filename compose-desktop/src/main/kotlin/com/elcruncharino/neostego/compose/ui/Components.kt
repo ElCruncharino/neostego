@@ -195,3 +195,21 @@ fun PrimaryActionButton(label: String, busy: Boolean, onClick: () -> Unit, modif
         ) { Text(if (busy) "Working…" else label) }
     }
 }
+
+/** Outcome card shared by the action screens: green on success, error-coloured on failure. */
+@Composable
+fun ResultCard(result: Result<String>, successMessage: (String) -> String) {
+    val ok = result.isSuccess
+    val container = if (ok) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.errorContainer
+    val content = if (ok) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onErrorContainer
+    Card(colors = CardDefaults.cardColors(containerColor = container)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(if (ok) "Done" else "Failed", fontWeight = FontWeight.SemiBold, color = content)
+            Text(
+                result.fold(successMessage, { it.message ?: it.toString() }),
+                style = MaterialTheme.typography.bodyMedium,
+                color = content,
+            )
+        }
+    }
+}
