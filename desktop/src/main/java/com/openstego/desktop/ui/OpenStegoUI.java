@@ -989,6 +989,9 @@ public class OpenStegoUI extends OpenStegoFrame {
             try {
                 return new OpenStego(plugin, config).extractData(stegoData, stegoFileName);
             } catch (OpenStegoException e) {
+                if (e.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
+                    throw e; // right plugin matched the container, wrong password - no point trying the others
+                }
                 last = e;
             } finally {
                 config.clearPassword();
