@@ -12,6 +12,7 @@ import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
 import com.openstego.desktop.plugin.lsb.LSBConfig
 import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
+import com.openstego.desktop.util.AutoExtractor
 import com.openstego.desktop.util.CommonUtil
 import com.openstego.desktop.util.PluginManager
 import java.io.File
@@ -439,9 +440,10 @@ fun pickDirectory(): String? {
 
 /**
  * Extract a hidden message from [stegoFile] into [outputDir]. The stego file does not record which
- * algorithm produced it, so this mirrors the Swing UI: try each data-hiding plugin (preferring those
- * whose output format matches the file extension) until one succeeds. Compression/encryption flags
- * are read from the embedded header; the user only supplies the password. Returns the written path.
+ * algorithm produced it, so [AutoExtractor] tries the data-hiding plugins that can read the container
+ * (by magic bytes) until one succeeds - skipping plugins for other formats so a failed PNG no longer
+ * reports the WAV plugin's "not a RIFF/WAVE container" error. Compression/encryption flags are read
+ * from the embedded header; the user only supplies the password. Returns the written path.
  */
 fun extract(stegoFile: String, password: String, outputDir: String): String {
     require(stegoFile.isNotBlank()) { "Choose a stego file." }
@@ -449,27 +451,13 @@ fun extract(stegoFile: String, password: String, outputDir: String): String {
     val file = File(stegoFile)
     val data = CommonUtil.fileToBytes(file)
     val name = file.name
-    val ext = name.substringAfterLast('.', "").lowercase()
-    val ordered = PluginManager.getDataHidingPlugins().sortedByDescending { p ->
-        runCatching { p.writableFileExtensions.any { it.equals(ext, ignoreCase = true) } }.getOrDefault(false)
-    }
-    var last: Throwable? = null
-    for (plugin in ordered) {
-        plugin.resetConfig()
-        val config = plugin.config
-        if (password.isNotEmpty()) config.setPassword(password)
-        try {
-            val out = OpenStego(plugin, config).extractData(data, name)
-            val msgName = (out[0] as? String).orEmptyName()
-            val bytes = out[1] as ByteArray
-            val target = File(outputDir, msgName)
-            CommonUtil.writeFile(bytes, target.path)
-            return target.path
-        } catch (e: Throwable) {
-            last = e
-        }
-    }
-    throw last ?: IllegalStateException("No hidden data found (wrong password, or not a NeoStego file).")
+    val pw = if (password.isEmpty()) null else password.toCharArray()
+    val out = AutoExtractor.extract(data, name, pw, PluginManager.getDataHidingPlugins(), null)
+    val msgName = (out[0] as? String).orEmptyName()
+    val bytes = out[1] as ByteArray
+    val target = File(outputDir, msgName)
+    CommonUtil.writeFile(bytes, target.path)
+    return target.path
 }
 
 private fun String?.orEmptyName(): String = if (isNullOrBlank()) "extracted.bin" else this
