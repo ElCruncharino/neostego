@@ -11,6 +11,28 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.1.2] — 2026-06-27
+
+A usability fix for extraction error messages. No change to the on-disk
+steganography format or algorithms.
+
+### Fixed
+- **Confusing extraction error on the wrong password** — extracting from a
+  PNG (or any non-audio file) with an incorrect password could report
+  *"invalid or unsupported audio file: not a RIFF/WAVE container"*. Because a
+  stego file does not record which algorithm produced it, extraction tries the
+  data-hiding plugins in turn, and the WAV plugin's format error was the one
+  left showing. Extraction now routes by the container's magic bytes, so the
+  WAV/JPEG plugins are never tried against a PNG, and the surfaced error
+  reflects the right format (and names a wrong password as a likely cause).
+
+### Changed
+- **Unified auto-detecting extraction** — the desktop (Swing and Compose) and
+  Android front-ends now share one container-aware extraction routine in
+  `:core` (`AutoExtractor`). As a result, Android can extract every
+  spatial-image algorithm the desktop writes (previously only Adaptive and
+  Random-LSB), so files embedded on one platform extract on the other.
+
 ## [1.0.5] — 2026-06-23
 
 Linux packaging fixes for the runtime-bundled jpackage installers and a
