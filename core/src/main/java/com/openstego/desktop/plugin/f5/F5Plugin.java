@@ -79,6 +79,13 @@ public class F5Plugin extends DHImagePluginTemplate<F5Config> {
         return Arrays.asList("jpg", "jpeg");
     }
 
+    /** F5 reads its payload from the JPEG DCT coefficients, so it only handles JPEG stego files. */
+    @Override
+    public boolean canExtractFrom(byte[] stegoData) {
+        return com.openstego.desktop.util.ContainerType.detect(stegoData)
+                == com.openstego.desktop.util.ContainerType.JPEG;
+    }
+
     @Override
     public List<String> getWritableFileExtensions() {
         return Arrays.asList("jpg", "jpeg");

@@ -137,6 +137,13 @@ public class WavLSBPlugin extends DataHidingPlugin<OpenStegoConfig> {
         return Arrays.asList("wav", "wave");
     }
 
+    /** Audio plugin: only a RIFF/WAVE container can be decoded. */
+    @Override
+    public boolean canExtractFrom(byte[] stegoData) {
+        return com.openstego.desktop.util.ContainerType.detect(stegoData)
+                == com.openstego.desktop.util.ContainerType.WAVE;
+    }
+
     @Override
     public List<String> getWritableFileExtensions() {
         return Arrays.asList("wav", "wave");
