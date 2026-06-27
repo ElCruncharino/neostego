@@ -9,6 +9,7 @@ import com.openstego.desktop.OpenStego
 import com.openstego.desktop.OpenStegoConfig
 import com.openstego.desktop.OpenStegoCrypto
 import com.openstego.desktop.OpenStegoPlugin
+import com.openstego.desktop.ProgressListener
 import com.openstego.desktop.WatermarkingPlugin
 import com.openstego.desktop.image.ImageCodecRegistry
 import com.openstego.desktop.plugin.adaptive.AdaptiveConfig
@@ -20,11 +21,13 @@ import com.openstego.desktop.plugin.f5.F5Plugin
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardPlugin
 import com.openstego.desktop.plugin.lsb.LSBConfig
+import com.openstego.desktop.plugin.lsb.LSBPlugin
 import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter
 import com.openstego.desktop.plugin.randlsb.RandomLSBMatchPlugin
 import com.openstego.desktop.plugin.randlsb.RandomLSBPlugin
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
 import com.openstego.desktop.plugin.wavlsb.WavLSBPlugin
+import com.openstego.desktop.util.AutoExtractor
 
 /**
  * Thin Kotlin wrapper over the core [OpenStego] API for embedding and extracting data.
@@ -52,18 +55,6 @@ object StegoEngine {
         /** Use AES-256 instead of the default AES-128 when a password is supplied. */
         val encryptionAes256: Boolean = false,
     )
-
-    /** True if [data] begins with the JPEG SOI marker (so it must be handled by the JPEG plugin). */
-    private fun isJpeg(data: ByteArray): Boolean =
-        data.size >= 2 && data[0] == 0xFF.toByte() && data[1] == 0xD8.toByte()
-
-    /** True if [data] is a RIFF/WAVE container (so it must be handled by the WAV plugin). */
-    private fun isWav(data: ByteArray): Boolean =
-        data.size >= 12 &&
-            data[0] == 'R'.code.toByte() && data[1] == 'I'.code.toByte() &&
-            data[2] == 'F'.code.toByte() && data[3] == 'F'.code.toByte() &&
-            data[8] == 'W'.code.toByte() && data[9] == 'A'.code.toByte() &&
-            data[10] == 'V'.code.toByte() && data[11] == 'E'.code.toByte()
 
     /** Default output file name (and thus extension) the plugin should produce for [algorithm]. */
     fun outputName(algorithm: Algorithm): String = when (algorithm) {
@@ -174,11 +165,11 @@ object StegoEngine {
     data class Extracted(val fileName: String, val data: ByteArray)
 
     /**
-     * Extracts hidden data from [stegoData]. The algorithm is auto-detected: JPEG input is tried
-     * against the UNIWARD plugin first (it reads both SI- and plain J-UNIWARD stego, parity-based),
-     * then F5; PNG/BMP input is tried against the content-adaptive plugin first, then Random-LSB
-     * (which reads both plain and matching embeddings, including data made by older OpenStego
-     * versions). A wrong password or non-stego image fails every attempt.
+     * Extracts hidden data from [stegoData]. The algorithm is auto-detected by [AutoExtractor], which
+     * routes the attempt to the plugins that can read the container (by magic bytes) and surfaces an
+     * invalid-password error immediately rather than the error of whichever plugin was tried last. The
+     * candidate set mirrors the desktop data-hiding plugins so files embedded on either platform
+     * extract on the other. A wrong password or non-stego file fails every applicable attempt.
      */
     fun extract(
         stegoData: ByteArray,
@@ -186,35 +177,22 @@ object StegoEngine {
         password: CharArray?,
         onProgress: ((Float) -> Unit)? = null,
     ): Extracted {
-        val makePlugins: List<() -> OpenStegoPlugin<*>> =
-            when {
-                isJpeg(stegoData) -> listOf({ JpegUniwardPlugin() }, { F5Plugin() })
-                isWav(stegoData) -> listOf({ WavLSBPlugin() })
-                else -> listOf({ AdaptiveImagePlugin() }, { RandomLSBPlugin() })
-            }
-        var lastError: Exception? = null
-        for (make in makePlugins) {
-            val plugin = make()
-            plugin.resetConfig()
-            val config = plugin.config
-            val pw = password?.copyOf() // clone per attempt; cleared below
-            if (pw != null && pw.isNotEmpty()) {
-                config.password = pw
-            }
-            val stego = OpenStego(plugin, config)
-            onProgress?.let { cb -> stego.setProgressListener { f -> cb(f.toFloat()) } }
-            try {
-                val out = stego.extractData(stegoData, stegoName)
-                val name = out[0] as? String ?: "extracted.dat"
-                val data = out[1] as ByteArray
-                return Extracted(name, data)
-            } catch (e: Exception) {
-                lastError = e
-            } finally {
-                config.clearPassword()
-            }
-        }
-        throw lastError ?: IllegalStateException("Unable to extract data")
+        val candidates: List<OpenStegoPlugin<*>> =
+            listOf(
+                AdaptiveImagePlugin(),
+                RandomLSBPlugin(),
+                RandomLSBMatchPlugin(),
+                LSBPlugin(),
+                JpegUniwardPlugin(),
+                F5Plugin(),
+                WavLSBPlugin(),
+            )
+        val listener: ProgressListener? =
+            onProgress?.let { cb -> ProgressListener { f -> cb(f.toFloat()) } }
+        val out = AutoExtractor.extract(stegoData, stegoName, password, candidates, listener)
+        val name = out[0] as? String ?: "extracted.dat"
+        val data = out[1] as ByteArray
+        return Extracted(name, data)
     }
 
     // ------------------------------------------------------------------

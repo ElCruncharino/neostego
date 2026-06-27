@@ -130,6 +130,16 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         return this.config.isPlainMode() ? Arrays.asList("jpg", "jpeg") : Arrays.asList("png", "bmp");
     }
 
+    /**
+     * The stego output is always a baseline JPEG (SI mode takes a PNG/BMP precover but still emits a
+     * JPEG), so extraction only ever applies to JPEG input regardless of the configured mode.
+     */
+    @Override
+    public boolean canExtractFrom(byte[] stegoData) {
+        return com.openstego.desktop.util.ContainerType.detect(stegoData)
+                == com.openstego.desktop.util.ContainerType.JPEG;
+    }
+
     @Override
     public List<String> getWritableFileExtensions() {
         return Arrays.asList("jpg", "jpeg");

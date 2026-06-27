@@ -101,6 +101,13 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         return "Adaptive";
     }
 
+    /** Spatial plugin: reads PNG/BMP-style raster pixels, never JPEG or WAV containers. */
+    @Override
+    public boolean canExtractFrom(byte[] stegoData) {
+        return com.openstego.desktop.util.ContainerType.detect(stegoData)
+                == com.openstego.desktop.util.ContainerType.OTHER;
+    }
+
     @Override
     public String getDescription() {
         return labelUtil.getString("plugin.description");

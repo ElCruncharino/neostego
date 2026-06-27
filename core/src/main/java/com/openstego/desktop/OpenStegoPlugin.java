@@ -159,6 +159,23 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
             throws OpenStegoException;
 
     /**
+     * Whether this plugin could plausibly decode the given stego bytes, judged solely by the container
+     * magic bytes (not by the embedded payload, which may be password-protected). Auto-detecting
+     * extraction uses this to skip plugins that physically cannot read the container - e.g. the WAV
+     * plugin should not be tried against a PNG - so the error that surfaces on failure reflects the
+     * right format family rather than whichever plugin happened to be tried last.
+     *
+     * <p>The default accepts everything; format-specific plugins override it to gate on
+     * {@link com.openstego.desktop.util.ContainerType}.
+     *
+     * @param stegoData Stego file bytes
+     * @return {@code true} if this plugin should be attempted for the given bytes
+     */
+    public boolean canExtractFrom(byte[] stegoData) {
+        return true;
+    }
+
+    /**
      * Method to generate the signature data. This method needs to be implemented only if the purpose of the plugin is
      * Watermarking
      *

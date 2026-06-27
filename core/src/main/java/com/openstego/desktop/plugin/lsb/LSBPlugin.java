@@ -51,6 +51,16 @@ public class LSBPlugin extends DHImagePluginTemplate<LSBConfig> {
     }
 
     /**
+     * Spatial LSB hides in PNG/BMP-style raster pixels and cannot read JPEG or WAV containers, so it
+     * is only attempted for non-JPEG/non-WAV input. Inherited by the Random-LSB variants.
+     */
+    @Override
+    public boolean canExtractFrom(byte[] stegoData) {
+        return com.openstego.desktop.util.ContainerType.detect(stegoData)
+                == com.openstego.desktop.util.ContainerType.OTHER;
+    }
+
+    /**
      * Gives a short description of the plugin
      *
      * @return Short description of the plugin
