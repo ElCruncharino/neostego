@@ -10,6 +10,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.openstego.desktop.*;
 import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter;
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
+import com.openstego.desktop.util.AutoExtractor;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.ImageUtil;
 import com.openstego.desktop.util.LabelUtil;
@@ -979,28 +980,7 @@ public class OpenStegoUI extends OpenStegoFrame {
      */
     private List<?> extractWithAutoDetect(File stegoFile, char[] password) throws OpenStegoException {
         byte[] stegoData = CommonUtil.fileToBytes(stegoFile);
-        String stegoFileName = stegoFile.getName();
-
-        OpenStegoException last = null;
-        for (OpenStegoPlugin<?> plugin : orderPluginsForExtract(stegoFileName)) {
-            plugin.resetConfig();
-            OpenStegoConfig config = plugin.getConfig();
-            config.setPassword(password == null ? null : password.clone());
-            try {
-                return new OpenStego(plugin, config).extractData(stegoData, stegoFileName);
-            } catch (OpenStegoException e) {
-                if (e.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
-                    throw e; // right plugin matched the container, wrong password - no point trying the others
-                }
-                last = e;
-            } finally {
-                config.clearPassword();
-            }
-        }
-        if (last != null) {
-            throw last;
-        }
-        throw new OpenStegoException(new RuntimeException("No data-hiding plugin available for extraction"));
+        return AutoExtractor.extract(stegoData, stegoFile.getName(), password, this.dhPlugins, null);
     }
 
     /**
