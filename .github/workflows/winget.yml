@@ -56,4 +56,7 @@ jobs:
             [IO.File]::WriteAllText($locale, $text, (New-Object System.Text.UTF8Encoding($false)))
             Write-Host "Injected $rn"
           } catch { Write-Host "ReleaseNotes injection skipped: $_" }
-          .\wingetcreate.exe submit manifests --token $env:WINGET_TOKEN
+          # `update --out manifests` nests the version manifests under manifests\manifests\<p>\...\$ver;
+          # submit must point at that leaf dir (the locale file's parent), not the outer --out folder.
+          $manifestDir = (Get-ChildItem -Path manifests -Recurse -Filter '*.locale.en-US.yaml' | Select-Object -First 1).Directory.FullName
+          .\wingetcreate.exe submit $manifestDir --token $env:WINGET_TOKEN
