@@ -120,6 +120,14 @@ Issues and pull requests are welcome. The project is split into `core` (platform
 algorithms, crypto, plugin SPI), `desktop` (Swing GUI + CLI), and `android` (Compose app). Run
 `./gradlew test` before submitting.
 
+Optionally enable the local pre-push hook so a Kotlin formatting slip can't reach CI:
+
+```sh
+git config core.hooksPath .githooks
+```
+
+It runs `spotlessKotlinCheck` on push (`./gradlew spotlessKotlinApply` fixes any findings).
+
 ## License
 
 NeoStego is a modified version of OpenStego, distributed under the **GNU General Public License,
