@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# Pre-push guardrail: run the Kotlin formatting check before pushing, since a ktlint
+# violation slipping to master has broken CI before (see the "unbreak master CI" fixups).
+#
+# Scope is Kotlin only on purpose: the Java/palantir spotless step can't run reliably on a
+# local JDK 25 (it crashes on javac internals), so it stays enforced in CI. This hook catches
+# the failure mode that actually recurs locally.
+#
+# Enable once per clone:   git config core.hooksPath .githooks
+# Bypass for one push:     git push --no-verify
+
+echo "pre-push: checking Kotlin formatting (spotlessKotlinCheck)…"
+
+if ! ./gradlew --quiet spotlessKotlinCheck; then
+    echo >&2
+    echo "✗ Kotlin formatting check failed." >&2
+    echo "  Fix with:  ./gradlew spotlessKotlinApply   then re-commit and push." >&2
+    echo "  (Bypass with 'git push --no-verify' if you really must.)" >&2
+    exit 1
+fi
+
+echo "pre-push: Kotlin formatting OK."
