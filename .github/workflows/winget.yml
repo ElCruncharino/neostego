@@ -15,6 +15,10 @@ on:
       tag:
         description: 'Existing release tag to (re)submit, e.g. v1.0.1'
         required: true
+      dry_run:
+        description: 'Generate + validate the manifests but do NOT open a winget-pkgs PR'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -32,6 +36,8 @@ jobs:
         env:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
           GH_TOKEN: ${{ github.token }}
+          # 'true' only when dispatched with dry_run checked; empty/'false' on the release trigger.
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
           $tag = "${{ github.event.inputs.tag || github.event.release.tag_name }}"
           $ver = $tag -replace '^v', ''
@@ -59,4 +65,15 @@ jobs:
           # `update --out manifests` nests the version manifests under manifests\manifests\<p>\...\$ver;
           # submit must point at that leaf dir (the locale file's parent), not the outer --out folder.
           $manifestDir = (Get-ChildItem -Path manifests -Recurse -Filter '*.locale.en-US.yaml' | Select-Object -First 1).Directory.FullName
-          .\wingetcreate.exe submit $manifestDir --token $env:WINGET_TOKEN
+          if (-not $manifestDir -or -not (Test-Path $manifestDir)) {
+            Write-Error "Could not resolve the generated manifest directory under .\manifests"; exit 1
+          }
+          if ($env:DRY_RUN -eq 'true') {
+            # Exercise everything up to (but not including) the winget-pkgs PR: generation already
+            # validated the manifests above; here we just confirm the submit path resolves and show it.
+            Write-Host "DRY RUN - would submit the following manifest dir (no PR opened):"
+            Write-Host "  $manifestDir"
+            Get-ChildItem $manifestDir | ForEach-Object { Write-Host "    $($_.Name)" }
+          } else {
+            .\wingetcreate.exe submit $manifestDir --token $env:WINGET_TOKEN
+          }
