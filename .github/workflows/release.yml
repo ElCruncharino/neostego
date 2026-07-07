@@ -39,7 +39,7 @@ jobs:
               compose-desktop/build/jpackage/out/*.rpm
               desktop/build/distributions/*.zip
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       # Install JDK 25 *and* 21. The app compiles against the 21 toolchain (JAVA_HOME stays 21, listed
       # last), but on Linux jpackage runs from JDK 25 (via JPACKAGE_HOME below): the JDK 21 native
@@ -98,7 +98,7 @@ jobs:
     env:
       ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
