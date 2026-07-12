@@ -6,6 +6,7 @@
 package com.elcruncharino.neostego.ui.components
 
 import android.text.InputType
+import android.text.TextUtils
 import android.text.method.PasswordTransformationMethod
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
@@ -40,7 +41,7 @@ internal fun readPasswordChars(editText: EditText?): CharArray? {
         return null
     }
     val chars = CharArray(length)
-    editable.getChars(0, length, chars, 0)
+    TextUtils.getChars(editable, 0, length, chars, 0)
     return chars
 }
 
