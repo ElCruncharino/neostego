@@ -47,18 +47,18 @@ sourceSets {
 
 dependencies {
     implementation project(':core')
-    implementation 'com.formdev:flatlaf:3.6'
-    implementation 'com.formdev:flatlaf-extras:3.6'
-    implementation 'info.picocli:picocli:4.7.7'
+    implementation 'com.formdev:flatlaf:3.7.2'
+    implementation 'com.formdev:flatlaf-extras:3.7.2'
+    implementation 'info.picocli:picocli:4.7.6'
     // WebP cover support (upstream issue #63): TwelveMonkeys registers a WebP ImageReader via ServiceLoader,
     // so ImageIO picks it up automatically. Decode-only; stego output stays in a lossless format (PNG).
     implementation 'com.twelvemonkeys.imageio:imageio-webp:3.12.0'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:6.1.2'
     testImplementation 'org.mockito:mockito-core:5.14.2'
     testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
 
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:6.1.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:6.1.1'
 }
 
