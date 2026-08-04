@@ -11,7 +11,7 @@ plugins {
     // AGP 9 compiles Kotlin via built-in Kotlin support, so the standalone 'kotlin.android' plugin
     // is no longer applied. The Compose compiler plugin is still required and is version-aligned by
     // AGP's built-in Kotlin (no explicit version).
-    id 'org.jetbrains.kotlin.plugin.compose' version '2.2.10'
+    id 'org.jetbrains.kotlin.plugin.compose' version '2.4.10'
 }
 
 android {
