@@ -206,27 +206,4 @@ public class UserPreferences {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_FLOAT, key);
         }
     }
-
-    /**
-     * Returns the user preference in form of boolean
-     *
-     * @param key Preference key
-     * @return value
-     * @throws OpenStegoException Processing issues
-     */
-    @SuppressWarnings("unused")
-    public static Boolean getBoolean(String key) throws OpenStegoException {
-        String val = getString(key);
-        if (val == null) {
-            return null;
-        }
-        val = val.toLowerCase();
-        if ("t".equals(val) || "true".equals(val) || "y".equals(val) || "yes".equals(val) || "1".equals(val)) {
-            return true;
-        } else if ("f".equals(val) || "false".equals(val) || "n".equals(val) || "no".equals(val) || "0".equals(val)) {
-            return false;
-        } else {
-            throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.USERPREF_INVALID_BOOL, key);
-        }
-    }
 }
