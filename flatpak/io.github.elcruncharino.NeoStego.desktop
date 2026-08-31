@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=NeoStego
-Comment=Hide data in images and audio, and watermark files
-Exec=neostego
-Icon=io.github.elcruncharino.NeoStego
-Terminal=false
-Categories=Utility;Security;
-Keywords=steganography;watermark;privacy;hide;

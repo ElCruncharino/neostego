@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Utility class to load and manage the available stego plugins
@@ -65,16 +64,6 @@ public class PluginManager {
         } catch (Exception ex) {
             throw new OpenStegoException(ex);
         }
-    }
-
-    /**
-     * Method to get the list of names of the loaded plugins
-     *
-     * @return List of names of the loaded plugins
-     */
-    @SuppressWarnings("unused")
-    public static List<String> getPluginNames() {
-        return plugins.stream().map(OpenStegoPlugin::getName).collect(Collectors.toList());
     }
 
     /**

@@ -11,7 +11,6 @@ import com.openstego.desktop.OpenStegoException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +18,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
 
 /**
@@ -37,8 +37,7 @@ public class StringUtil {
      * @return Hex string
      */
     public static String getHexString(byte[] raw) {
-        BigInteger bigInteger = new BigInteger(1, raw);
-        return String.format("%0" + (raw.length << 1) + "x", bigInteger);
+        return HexFormat.of().formatHex(raw);
     }
 
     /**

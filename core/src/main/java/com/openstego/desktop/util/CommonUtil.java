@@ -9,6 +9,8 @@ package com.openstego.desktop.util;
 
 import com.openstego.desktop.OpenStegoException;
 import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -30,18 +32,8 @@ public class CommonUtil {
      * @throws OpenStegoException Processing issues
      */
     public static byte[] streamToBytes(InputStream is) throws OpenStegoException {
-        final int BUF_SIZE = 512;
-        int bytesRead;
-        byte[] data;
-
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            data = new byte[BUF_SIZE];
-
-            while ((bytesRead = is.read(data, 0, BUF_SIZE)) >= 0) {
-                bos.write(data, 0, bytesRead);
-            }
-
-            return bos.toByteArray();
+        try {
+            return is.readAllBytes();
         } catch (IOException ioEx) {
             throw new OpenStegoException(ioEx);
         }
@@ -139,7 +131,12 @@ public class CommonUtil {
             boolean hasWildcard = fileName.indexOf('*') >= 0 || fileName.indexOf('?') >= 0;
 
             File fileDir = new File(dirName.isEmpty() ? "." : dirName);
-            File[] arrFile = fileDir.listFiles(new WildcardFilenameFilter(replaceWildcards(fileName)));
+            // Glob matching is case-sensitive on most platforms; lower-case both sides to match the
+            // case-insensitive semantics of the original hand-rolled regex filter.
+            java.nio.file.PathMatcher matcher =
+                    FileSystems.getDefault().getPathMatcher("glob:" + fileName.toLowerCase());
+            File[] arrFile =
+                    fileDir.listFiles((dir, name) -> matcher.matches(Paths.get(name.toLowerCase())));
             if (arrFile != null && arrFile.length > 0) {
                 Collections.addAll(output, arrFile);
             } else if (!hasWildcard) {
@@ -188,67 +185,7 @@ public class CommonUtil {
      * @return Int value
      */
     public static int byteToInt(int b) {
-        int i = b;
-        if (i < 0) {
-            i = i + 256;
-        }
-        return i;
-    }
-
-    /**
-     * Helper method to replace file wildcard characters with Java regexp wildcard chararcters
-     *
-     * @param input Input String
-     * @return String containing modified wildcard characters
-     */
-    private static String replaceWildcards(String input) {
-        StringBuilder buffer = new StringBuilder();
-        char[] chars = input.toCharArray();
-
-        for (char aChar : chars) {
-            if (aChar == '*') {
-                buffer.append(".*");
-            } else if (aChar == '?') {
-                buffer.append(".{1}");
-            } else if ("+()^$.{}[]|\\".indexOf(aChar) != -1) { // Escape rest of the java regexp wildcards
-                buffer.append('\\').append(aChar);
-            } else {
-                buffer.append(aChar);
-            }
-        }
-
-        return buffer.toString();
-    }
-
-    /**
-     * Inner class for wildcard filename filter
-     */
-    static class WildcardFilenameFilter implements FilenameFilter {
-        /**
-         * Variable to hold the filter string
-         */
-        private final String filter;
-
-        /**
-         * Default constructor
-         *
-         * @param filter Filter string
-         */
-        public WildcardFilenameFilter(String filter) {
-            this.filter = filter.toLowerCase();
-        }
-
-        /**
-         * Implementation of <code>accept</code> method
-         *
-         * @param dir  Directory to traverse
-         * @param name Name of the file
-         * @return Whether file is accepted by the filter or not
-         */
-        @Override
-        public boolean accept(File dir, String name) {
-            return (name.toLowerCase().matches(this.filter));
-        }
+        return Byte.toUnsignedInt((byte) b);
     }
 
     /**
@@ -258,11 +195,7 @@ public class CommonUtil {
      * @return Floor of the half of the input number
      */
     public static int floorHalf(int num) {
-        if ((num & 1) == 1) {
-            return (num - 1) / 2;
-        } else {
-            return num / 2;
-        }
+        return Math.floorDiv(num, 2);
     }
 
     /**
@@ -272,11 +205,7 @@ public class CommonUtil {
      * @return Ceiling of the half of the input number
      */
     public static int ceilingHalf(int num) {
-        if ((num & 1) == 1) {
-            return (num + 1) / 2;
-        } else {
-            return num / 2;
-        }
+        return Math.floorDiv(num + 1, 2);
     }
 
     /**
@@ -287,10 +216,6 @@ public class CommonUtil {
      * @return Modulus of num by div
      */
     public static int mod(int num, int div) {
-        if (num < 0) {
-            return div - (-num % div);
-        } else {
-            return num % div;
-        }
+        return Math.floorMod(num, div);
     }
 }

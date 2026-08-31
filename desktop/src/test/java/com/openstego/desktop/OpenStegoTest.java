@@ -24,13 +24,16 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Test class for {@link OpenStego}
  */
-public class OpenStegoTest extends MockitoTest {
+@ExtendWith(MockitoExtension.class)
+public class OpenStegoTest {
 
     @Mock
     private OpenStegoPlugin<?> mockPlugin;

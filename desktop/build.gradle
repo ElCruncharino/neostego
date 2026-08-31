@@ -5,7 +5,6 @@
  * Desktop application: Swing GUI + command-line interface, built on the platform-independent :core.
  */
 
-import org.apache.tools.ant.filters.FixCrLfFilter
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.apache.tools.ant.taskdefs.condition.Os
 
@@ -14,7 +13,6 @@ import java.text.SimpleDateFormat
 plugins {
     id 'java'
     id 'jacoco'
-    id 'com.netflix.nebula.ospackage' version '12.3.0'
 }
 
 String projectName = 'NeoStego'
@@ -31,18 +29,6 @@ def filterTokens = [
 
 repositories {
     mavenCentral()
-}
-
-sourceSets {
-    main {
-        java {
-            exclude 'com/openstego/desktop/plugin/dctlsb/**'
-            exclude 'com/openstego/desktop/plugin/dwtkim/**'
-            exclude 'com/openstego/desktop/plugin/dwtxie/**'
-            exclude 'com/openstego/desktop/plugin/template/dct/**'
-            exclude 'com/openstego/desktop/util/dct/**'
-        }
-    }
 }
 
 dependencies {
@@ -162,137 +148,6 @@ tasks.register("distBin", Zip) {
     archiveBaseName = projectName
     from distBaseDir
     into projectName + '-' + project.version
-}
-
-// Token values captured at configuration time so the .iss generation is configuration-cache safe
-// (the old version filtered the script inside an execution-time copy {} that referenced 'project').
-def innoAppVersion  = project.version.toString()
-def innoAuthorName  = project.author.toString()
-def innoHomepageUrl = project.homepageUrl.toString()
-
-tasks.register("distWinGenerateIss", Copy) {
-    dependsOn distBase
-    onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
-    from 'artifacts/installer.iss'
-    into layout.buildDirectory.dir('generated')
-    filter(ReplaceTokens, tokens: [
-            'AppName'    : projectName,
-            'AppVersion' : innoAppVersion,
-            'AuthorName' : innoAuthorName,
-            'HomepageUrl': innoHomepageUrl,
-            'AppDir'     : distBaseDir.path,
-            'DistDir'    : layout.buildDirectory.dir('distributions').get().asFile.path
-    ])
-}
-
-tasks.register("distWin", Exec) {
-    dependsOn distWinGenerateIss
-
-    onlyIf {
-        Os.isFamily(Os.FAMILY_WINDOWS)
-    }
-
-    workingDir layout.buildDirectory.get().asFile
-    commandLine 'cmd', '/c', 'iscc', 'generated\\installer.iss', '/Q'
-}
-
-tasks.register("distDeb", Deb) {
-    dependsOn distBase
-    packageName = projectName.toLowerCase()
-    summary = projectName
-    release = 1
-    packageGroup = 'utils'
-    maintainer = "${author} (${authorMail})"
-    url = project.homepageUrl
-    requires('default-jre').or('java8-runtime')
-
-    into '/usr/share'
-    from(distBaseDir) {
-        into projectName
-        include 'lib/**'
-    }
-    from(distBaseDir) {
-        into projectName
-        include 'neostego.sh'
-        rename('neostego.sh', 'neostego')
-        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        filePermissions { unix(0755) }
-    }
-    from('artifacts') {
-        into 'applications'
-        include 'neostego.desktop'
-        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        filter(ReplaceTokens, tokens: filterTokens)
-    }
-    from('artifacts') {
-        into 'icons/hicolor/scalable/apps'
-        include 'neostego.svg'
-    }
-    from(distBaseDir) {
-        into 'doc/' + projectName
-        include 'README'
-    }
-    from('artifacts') {
-        into 'doc/' + projectName
-        include 'copyright'
-        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        filter(ReplaceTokens, tokens: filterTokens)
-    }
-
-    link('/usr/bin/neostego', '/usr/share/' + projectName + '/neostego')
-}
-
-tasks.register("distRpm", Rpm) {
-    dependsOn distBase
-    packageName = projectName.toLowerCase()
-    summary = projectName
-    release = 1
-    packageGroup = 'utils'
-    packager = "${author} (${authorMail})"
-    url = project.homepageUrl
-    user = 'root'
-    license = 'GPLv2'
-    buildHost = ''
-    os = LINUX
-    requires('java', '1.8', GREATER | EQUAL)
-
-    into '/usr/share'
-    from(distBaseDir) {
-        into projectName
-        include 'lib/**'
-    }
-    from(distBaseDir) {
-        into projectName
-        include 'neostego.sh'
-        rename('neostego.sh', 'neostego')
-        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        filePermissions { unix(0755) }
-    }
-    from('artifacts') {
-        into 'applications'
-        addParentDirs false
-        include 'neostego.desktop'
-        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-        filter(ReplaceTokens, tokens: filterTokens)
-    }
-    from('artifacts') {
-        into 'icons/hicolor/scalable/apps'
-        addParentDirs false
-        include 'neostego.svg'
-    }
-    from(distBaseDir) {
-        into 'doc/' + projectName
-        addParentDirs false
-        include 'LICENSE'
-        include 'README'
-        filter(FixCrLfFilter, eol: FixCrLfFilter.CrLf.newInstance('lf'))
-    }
-
-    link('/usr/bin/neostego', '/usr/share/' + projectName + '/neostego')
-}
-
-tasks.register("dist") {
-    dependsOn distBin, distWin, distDeb, distRpm
 }
 
 // ---------------------------------------------------------------------------------------

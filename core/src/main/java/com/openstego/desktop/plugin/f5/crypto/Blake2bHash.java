@@ -140,7 +140,7 @@ public interface Blake2bHash {
     // ---------------------------------------------------------------------
 
     /** Generalized Blake2b digest. */
-    public static class Digest extends Engine implements Blake2bHash, ExtendedDigest {
+    public static class Digest extends Engine implements Blake2bHash {
         private Digest(final Param p) {
             super(p);
         }
