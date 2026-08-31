@@ -11,11 +11,8 @@ import android.net.Uri
 
 /** Reads just the dimensions of an image without decoding its pixels. Returns 0 if unknown. */
 internal fun imagePixelCount(context: Context, uri: Uri): Long {
-    val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
-    val w = opts.outWidth.toLong()
-    val h = opts.outHeight.toLong()
-    return if (w > 0 && h > 0) w * h else 0L
+    val (w, h) = imageDimensions(context, uri) ?: return 0L
+    return w.toLong() * h.toLong()
 }
 
 /** Reads an image's pixel dimensions without decoding its pixels. Returns null if unknown. */
