@@ -51,14 +51,25 @@ public class LSBErrors {
      * Initialize the error code - message key map
      */
     public static void init() {
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, ERR_IMAGE_DATA_READ, "err.image.read");
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, NULL_IMAGE_ARGUMENT, "err.image.arg.nullValue");
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, IMAGE_SIZE_INSUFFICIENT, "err.image.insufficientSize");
-        OpenStegoException.addErrorCode(
-                LSBPlugin.NAMESPACE, MAX_BITS_NOT_NUMBER, "err.config.maxBitsUsedPerChannel.notNumber");
-        OpenStegoException.addErrorCode(
-                LSBPlugin.NAMESPACE, MAX_BITS_NOT_IN_RANGE, "err.config.maxBitsUsedPerChannel.notInRange");
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, INVALID_STEGO_HEADER, "err.invalidHeaderStamp");
-        OpenStegoException.addErrorCode(LSBPlugin.NAMESPACE, INVALID_HEADER_VERSION, "err.invalidHeaderVersion");
+        OpenStegoException.addErrorCodes(
+                LSBPlugin.NAMESPACE,
+                new int[] {
+                    ERR_IMAGE_DATA_READ,
+                    NULL_IMAGE_ARGUMENT,
+                    IMAGE_SIZE_INSUFFICIENT,
+                    MAX_BITS_NOT_NUMBER,
+                    MAX_BITS_NOT_IN_RANGE,
+                    INVALID_STEGO_HEADER,
+                    INVALID_HEADER_VERSION
+                },
+                new String[] {
+                    "err.image.read",
+                    "err.image.arg.nullValue",
+                    "err.image.insufficientSize",
+                    "err.config.maxBitsUsedPerChannel.notNumber",
+                    "err.config.maxBitsUsedPerChannel.notInRange",
+                    "err.invalidHeaderStamp",
+                    "err.invalidHeaderVersion"
+                });
     }
 }
