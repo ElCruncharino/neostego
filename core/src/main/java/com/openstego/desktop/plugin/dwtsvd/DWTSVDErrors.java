@@ -31,8 +31,9 @@ public class DWTSVDErrors {
      * Initialize the error code - message key map
      */
     public static void init() {
-        OpenStegoException.addErrorCode(DWTSVDPlugin.NAMESPACE, ERR_NO_COVER_FILE, "err.cover.missing");
-        OpenStegoException.addErrorCode(DWTSVDPlugin.NAMESPACE, ERR_SIG_NOT_VALID, "err.signature.invalid");
-        OpenStegoException.addErrorCode(DWTSVDPlugin.NAMESPACE, ERR_FILE_TOO_SMALL, "err.file.too.small");
+        OpenStegoException.addErrorCodes(
+                DWTSVDPlugin.NAMESPACE,
+                new int[] {ERR_NO_COVER_FILE, ERR_SIG_NOT_VALID, ERR_FILE_TOO_SMALL},
+                new String[] {"err.cover.missing", "err.signature.invalid", "err.file.too.small"});
     }
 }

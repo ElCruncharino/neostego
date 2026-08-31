@@ -128,6 +128,11 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         p = dwtTree;
         // Consider each resolution level
         while (p.getLevel() < sig.embeddingLevel) {
+            // waveletTransform silently caps the decomposition depth for small covers, so the requested
+            // embedding level may not exist in the tree
+            if (p.getCoarse() == null) {
+                throw new OpenStegoException(null, NAMESPACE, DWTXieErrors.ERR_FILE_TOO_SMALL);
+            }
             // Descend one level
             p = p.getCoarse();
         }
@@ -211,6 +216,11 @@ public class DWTXiePlugin extends WMImagePluginTemplate {
         p = dwtTree;
         // Consider each resolution level
         while (p.getLevel() < sig.embeddingLevel) {
+            // waveletTransform silently caps the decomposition depth for small covers, so the requested
+            // embedding level may not exist in the tree
+            if (p.getCoarse() == null) {
+                throw new OpenStegoException(null, NAMESPACE, DWTXieErrors.ERR_FILE_TOO_SMALL);
+            }
             // Descend one level
             p = p.getCoarse();
         }

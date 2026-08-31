@@ -22,8 +22,9 @@ public class AdaptiveErrors {
      * Registers the error-code to message-key mappings.
      */
     public static void init() {
-        OpenStegoException.addErrorCode(
-                AdaptiveImagePlugin.NAMESPACE, IMAGE_SIZE_INSUFFICIENT, "err.image.insufficientSize");
-        OpenStegoException.addErrorCode(AdaptiveImagePlugin.NAMESPACE, ERR_IMAGE_DATA_READ, "err.image.read");
+        OpenStegoException.addErrorCodes(
+                AdaptiveImagePlugin.NAMESPACE,
+                new int[] {IMAGE_SIZE_INSUFFICIENT, ERR_IMAGE_DATA_READ},
+                new String[] {"err.image.insufficientSize", "err.image.read"});
     }
 }
