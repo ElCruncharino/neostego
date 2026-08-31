@@ -6,14 +6,9 @@
 package com.openstego.desktop;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
  * Tests for the command-line interface ({@link OpenStegoCmd}). These guard the picocli-based parsing
  * and the end-to-end embed/extract flow, including a plugin-specific option and encryption.
  */
-public class CLITest {
+public class CLITest extends CmdTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -159,37 +154,5 @@ public class CLITest {
             "embed", "-a", "RandomLSB", "-S", "-mf", msg.toString(), "-cf", covers, "-sf", stegoFile.toString()
         }));
         assertTrue(err.contains("directory"), "Split embed to a non-directory output should be rejected; got: " + err);
-    }
-
-    private static Path copyResource(String resource, Path target) throws Exception {
-        try (InputStream is = CLITest.class.getResourceAsStream(resource)) {
-            assertNotNull(is, "Test resource not found: " + resource);
-            Files.write(target, CommonUtil.streamToBytes(is));
-        }
-        return target;
-    }
-
-    private static String captureStdout(Runnable action) {
-        PrintStream original = System.out;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        try {
-            System.setOut(new PrintStream(buffer, true, StandardCharsets.UTF_8));
-            action.run();
-        } finally {
-            System.setOut(original);
-        }
-        return buffer.toString(StandardCharsets.UTF_8);
-    }
-
-    private static String captureStderr(Runnable action) {
-        PrintStream original = System.err;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        try {
-            System.setErr(new PrintStream(buffer, true, StandardCharsets.UTF_8));
-            action.run();
-        } finally {
-            System.setErr(original);
-        }
-        return buffer.toString(StandardCharsets.UTF_8);
     }
 }

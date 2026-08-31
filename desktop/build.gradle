@@ -6,7 +6,6 @@
  */
 
 import org.apache.tools.ant.filters.ReplaceTokens
-import org.apache.tools.ant.taskdefs.condition.Os
 
 import java.text.SimpleDateFormat
 

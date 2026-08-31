@@ -5,6 +5,9 @@
 
 package com.elcruncharino.neostego.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,13 +45,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.LaunchTarget
 import com.elcruncharino.neostego.StegoEngine
-import com.elcruncharino.neostego.ui.components.GradientBackground
 import com.elcruncharino.neostego.ui.screens.AboutDialog
 import com.elcruncharino.neostego.ui.screens.HideScreen
 import com.elcruncharino.neostego.ui.screens.RevealScreen
@@ -103,7 +107,27 @@ fun StegoScaffold(target: LaunchTarget, appState: AppState) {
         bottomBar = { FloatingNavBar(appState.dest, onSelect = { appState.dest = it }) },
         snackbarHost = { SnackbarHost(appState.snackbar) },
     ) { padding ->
-        GradientBackground(modifier = Modifier.fillMaxSize()) {
+        // A soft full-screen gradient drawn from the theme's primary/tertiary accents into the
+        // surface colour. Because the accents track the cover-derived seed, the whole backdrop
+        // gently recolours when a cover image is chosen. Colours are animated so theme/seed
+        // changes cross-fade rather than snap.
+        val scheme = MaterialTheme.colorScheme
+        val topColor by animateColorAsState(
+            targetValue = scheme.primaryContainer.copy(alpha = 0.55f),
+            animationSpec = tween(600),
+            label = "gradientTop",
+        )
+        val midColor by animateColorAsState(
+            targetValue = scheme.tertiaryContainer.copy(alpha = 0.30f),
+            animationSpec = tween(600),
+            label = "gradientMid",
+        )
+        val gradientBrush = Brush.linearGradient(
+            colors = listOf(topColor, midColor, scheme.surface),
+            start = Offset.Zero,
+            end = Offset(0f, Float.POSITIVE_INFINITY),
+        )
+        Box(modifier = Modifier.fillMaxSize().background(scheme.surface).background(gradientBrush)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()

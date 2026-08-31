@@ -25,6 +25,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -37,6 +38,9 @@ public class OpenStegoTest {
 
     @Mock
     private OpenStegoPlugin<?> mockPlugin;
+
+    @TempDir
+    private Path tempDir;
 
     @Test
     public void testConstructor() throws OpenStegoException {
@@ -185,19 +189,14 @@ public class OpenStegoTest {
         config.setUseEncryption(false);
         OpenStego os = new OpenStego(mockPlugin, config);
 
-        try {
-            os.embedData(msgFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
-            verify(mockPlugin, times(1))
-                    .embedData(
-                            argThat(v -> "message".equals(new String(v, StandardCharsets.UTF_8))),
-                            argThat(v -> v.startsWith("message") && v.endsWith(".txt")),
-                            argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
-                            argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
-                            argThat(stegoFileName::equals));
-        } finally {
-            Files.delete(msgFilePath);
-            Files.delete(coverFilePath);
-        }
+        os.embedData(msgFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
+        verify(mockPlugin, times(1))
+                .embedData(
+                        argThat(v -> "message".equals(new String(v, StandardCharsets.UTF_8))),
+                        argThat(v -> v.startsWith("message") && v.endsWith(".txt")),
+                        argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
+                        argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
+                        argThat(stegoFileName::equals));
     }
 
     @Test
@@ -294,19 +293,14 @@ public class OpenStegoTest {
                 .getPurposes();
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
-        try {
-            os.embedMark(sigFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
-            verify(mockPlugin, times(1))
-                    .embedData(
-                            argThat(v -> "signature".equals(new String(v, StandardCharsets.UTF_8))),
-                            argThat(v -> v.startsWith("general") && v.endsWith(".sig")),
-                            argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
-                            argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
-                            argThat(stegoFileName::equals));
-        } finally {
-            Files.delete(sigFilePath);
-            Files.delete(coverFilePath);
-        }
+        os.embedMark(sigFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
+        verify(mockPlugin, times(1))
+                .embedData(
+                        argThat(v -> "signature".equals(new String(v, StandardCharsets.UTF_8))),
+                        argThat(v -> v.startsWith("general") && v.endsWith(".sig")),
+                        argThat(v -> "cover data".equals(new String(v, StandardCharsets.UTF_8))),
+                        argThat(v -> v.startsWith("cover") && v.endsWith(".in")),
+                        argThat(stegoFileName::equals));
     }
 
     @Test
@@ -625,7 +619,7 @@ public class OpenStegoTest {
      * Helper method to create temporary file with given content
      */
     private Path createTempFile(String prefix, String extension, String content) throws IOException {
-        Path path = Files.createTempFile(prefix, extension);
+        Path path = tempDir.resolve(prefix + extension);
         Files.writeString(path, content, StandardCharsets.UTF_8);
         return path;
     }

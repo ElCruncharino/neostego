@@ -193,12 +193,4 @@ class StcTest {
             assertTrue(changes <= n, "more changes than elements");
         }
     }
-
-    @Test
-    void chooseWidth() {
-        assertEquals(4, Stc.chooseWidth(400, 100)); // 4 cover bits per message bit
-        assertEquals(1, Stc.chooseWidth(100, 100)); // full payload
-        assertEquals(0, Stc.chooseWidth(50, 100)); // message too big -> capacity exceeded
-        assertEquals(1, Stc.chooseWidth(100, 0)); // empty message
-    }
 }

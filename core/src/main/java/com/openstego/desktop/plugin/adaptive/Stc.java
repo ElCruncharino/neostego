@@ -209,21 +209,4 @@ public final class Stc {
         }
         return m;
     }
-
-    /**
-     * Chooses the largest block width {@code w} (lowest, safest payload) such that {@code messageLen}
-     * message bits fit into {@code coverLen} cover elements. Returns 0 if the message cannot fit even
-     * at full payload.
-     *
-     * @param coverLen   number of available cover elements (bits)
-     * @param messageLen number of message bits to embed
-     * @return block width {@code w} (1 or greater), or 0 if capacity is exceeded
-     */
-    public static int chooseWidth(int coverLen, int messageLen) {
-        if (messageLen <= 0) {
-            return 1;
-        }
-        int w = coverLen / messageLen;
-        return Math.max(0, w);
-    }
 }
