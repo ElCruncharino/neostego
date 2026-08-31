@@ -15,10 +15,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.ImageBitmap
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.data.ThemePreferences
-import com.elcruncharino.neostego.ui.util.EmbedMap
 import com.elcruncharino.neostego.ui.util.OutputResult
 
 /** Top-level destinations. */
@@ -52,11 +50,6 @@ class HideState {
     var startedAtMs by mutableStateOf(0L)
     var capacity by mutableStateOf<Int?>(null)
     var result by mutableStateOf<OutputResult?>(null)
-
-    // Embed-map animation: the changed-cell map, a thumbnail of the cover, and a replay counter.
-    var embedMap by mutableStateOf<EmbedMap?>(null)
-    var embedThumb by mutableStateOf<ImageBitmap?>(null)
-    var resultStamp by mutableStateOf(0)
 }
 
 /** Reveal-screen input and produced output. */
@@ -69,7 +62,6 @@ class RevealState {
     var progress by mutableStateOf<Float?>(null)
     var startedAtMs by mutableStateOf(0L)
     var result by mutableStateOf<OutputResult?>(null)
-    var revealStamp by mutableStateOf(0)
 }
 
 /** Watermark-screen state (generate / embed / verify). */
@@ -98,9 +90,6 @@ class AppState(
     val snackbar: SnackbarHostState,
 ) {
     var dest by mutableStateOf(DEST_HIDE)
-
-    /** Seed colour derived from the current Hide cover image; drives "album-art" theming. */
-    var coverSeedArgb by mutableStateOf<Int?>(null)
 
     val hide = HideState()
     val reveal = RevealState()

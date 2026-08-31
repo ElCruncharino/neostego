@@ -128,8 +128,18 @@ public class OpenStegoConfig {
                 }
                 break;
             case ENCRYPTION_ALGORITHM:
-                assert value instanceof String;
-                this.encryptionAlgorithm = (String) value;
+                // Only known algorithm names may be stored: the name is written into a fixed-size
+                // field of the stego header, and an unknown one would fail late (or overflow it)
+                String algo = (value == null) ? null : ((String) value).trim().toUpperCase();
+                if (algo != null
+                        && !algo.isEmpty()
+                        && !OpenStegoCrypto.ALGO_AES128.equals(algo)
+                        && !OpenStegoCrypto.ALGO_AES256.equals(algo)
+                        && !OpenStegoCrypto.ALGO_DES.equals(algo)) {
+                    throw new OpenStegoException(
+                            null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, value);
+                }
+                this.encryptionAlgorithm = algo;
                 break;
             case USE_STRONG_ENCRYPTION:
                 if (value != null) {

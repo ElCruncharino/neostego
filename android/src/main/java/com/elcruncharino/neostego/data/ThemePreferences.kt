@@ -22,7 +22,7 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
  * state so the UI recomposes immediately.
  *
  * - [themeMode]      light / dark / follow-system
- * - [useDynamicColor] opt into the OS Material You palette (Android 12+) when no cover colour applies
+ * - [useDynamicColor] opt into the OS Material You palette (Android 12+) when no seed colour applies
  * - [seedColorArgb]   a user-chosen seed colour, or null to fall back to dynamic / the fixed default
  */
 class ThemePreferences(context: Context) {

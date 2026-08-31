@@ -75,7 +75,14 @@ public class LSBDataHeader {
         if (fileName == null) {
             this.fileName = new byte[0];
         } else {
-            this.fileName = fileName.getBytes(StandardCharsets.UTF_8);
+            // The header stores the name length in a single byte, so keep the stored name within 255
+            // bytes. Trim whole characters (not raw bytes) so multi-byte sequences are never split.
+            byte[] nameBytes = fileName.getBytes(StandardCharsets.UTF_8);
+            while (nameBytes.length > 255) {
+                fileName = fileName.substring(0, fileName.length() - 1);
+                nameBytes = fileName.getBytes(StandardCharsets.UTF_8);
+            }
+            this.fileName = nameBytes;
         }
     }
 
@@ -123,7 +130,13 @@ public class LSBDataHeader {
                     + (Byte.toUnsignedInt(header[1]) << 8)
                     + (Byte.toUnsignedInt(header[2]) << 16)
                     + (Byte.toUnsignedInt(header[3]) << 24));
+            if (this.dataLength < 0) {
+                throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_STEGO_HEADER);
+            }
             channelBits = header[4];
+            if (channelBits < 1 || channelBits > 8) {
+                throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_STEGO_HEADER);
+            }
             // Read filename length as an unsigned byte so that names of 128-255 bytes are handled correctly
             fileNameLen = header[5] & 0xFF;
             config.setUseCompression(header[6] == 1);
@@ -186,7 +199,7 @@ public class LSBDataHeader {
 
         if (this.config.getEncryptionAlgorithm() != null) {
             byte[] encAlgo = this.config.getEncryptionAlgorithm().getBytes(StandardCharsets.UTF_8);
-            System.arraycopy(encAlgo, 0, out, currIndex, encAlgo.length);
+            System.arraycopy(encAlgo, 0, out, currIndex, Math.min(encAlgo.length, CRYPT_ALGO_LENGTH));
         }
         currIndex += CRYPT_ALGO_LENGTH;
 

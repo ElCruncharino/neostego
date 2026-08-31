@@ -923,6 +923,7 @@ public class OpenStegoUI extends OpenStegoFrame {
                                     JOptionPane.WARNING_MESSAGE)
                             == JOptionPane.NO_OPTION) {
                         this.cancel(true);
+                        return null;
                     }
                 }
 
@@ -1067,7 +1068,6 @@ public class OpenStegoUI extends OpenStegoFrame {
     private void generateSignature() throws OpenStegoException {
         OpenStego openStego;
         byte[] sigData;
-        String inputKey;
         String sigFileName;
         File sigFile;
         OpenStegoConfig config;
@@ -1075,48 +1075,58 @@ public class OpenStegoUI extends OpenStegoFrame {
         wmPlugin.resetConfig();
         config = wmPlugin.getConfig();
 
-        inputKey = getGenSigPanel().getInputKeyTextField().getText();
+        char[] inputKey = getGenSigPanel().getInputKeyTextField().getPassword();
         sigFileName = getGenSigPanel().getSignatureFileTextField().getText();
         sigFile = new File(sigFileName);
 
-        // START: Input Validations
-        if (!checkMandatory(
-                getGenSigPanel().getInputKeyTextField(), labelUtil.getString("gui.label.wmGenSig.inputKey"))) {
-            return;
-        }
-        if (!checkMandatory(
-                getGenSigPanel().getSignatureFileTextField(), labelUtil.getString("gui.label.wmGenSig.sigFile"))) {
-            return;
-        }
-        // END: Input Validations
-
         config.setPassword(inputKey);
-        openStego = new OpenStego(wmPlugin, config);
-        if (sigFile.exists()) {
-            if (JOptionPane.showConfirmDialog(
-                            this,
-                            labelUtil.getString("gui.msg.warn.fileExists", sigFileName),
-                            labelUtil.getString("gui.msg.title.warn"),
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.WARNING_MESSAGE)
-                    == JOptionPane.NO_OPTION) {
+        try {
+            // START: Input Validations
+            if (!config.isPasswordSet()) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        labelUtil.getString(
+                                "gui.msg.err.mandatoryCheck", labelUtil.getString("gui.label.wmGenSig.inputKey")),
+                        labelUtil.getString("gui.msg.title.err"),
+                        JOptionPane.ERROR_MESSAGE);
+                getGenSigPanel().getInputKeyTextField().requestFocus();
                 return;
             }
+            if (!checkMandatory(
+                    getGenSigPanel().getSignatureFileTextField(), labelUtil.getString("gui.label.wmGenSig.sigFile"))) {
+                return;
+            }
+            // END: Input Validations
+
+            openStego = new OpenStego(wmPlugin, config);
+            if (sigFile.exists()) {
+                if (JOptionPane.showConfirmDialog(
+                                this,
+                                labelUtil.getString("gui.msg.warn.fileExists", sigFileName),
+                                labelUtil.getString("gui.msg.title.warn"),
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE)
+                        == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+
+            sigData = openStego.generateSignature();
+            CommonUtil.writeFile(sigData, sigFile);
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    labelUtil.getString("gui.msg.success.wmGenSig"),
+                    labelUtil.getString("gui.msg.title.success"),
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Reset GUI
+            getGenSigPanel().getInputKeyTextField().setText("");
+            getGenSigPanel().getSignatureFileTextField().setText("");
+            getGenSigPanel().getInputKeyTextField().requestFocus();
+        } finally {
+            config.clearPassword();
         }
-
-        sigData = openStego.generateSignature();
-        CommonUtil.writeFile(sigData, sigFile);
-
-        JOptionPane.showMessageDialog(
-                this,
-                labelUtil.getString("gui.msg.success.wmGenSig"),
-                labelUtil.getString("gui.msg.title.success"),
-                JOptionPane.INFORMATION_MESSAGE);
-
-        // Reset GUI
-        getGenSigPanel().getInputKeyTextField().setText("");
-        getGenSigPanel().getSignatureFileTextField().setText("");
-        getGenSigPanel().getInputKeyTextField().requestFocus();
     }
 
     /**

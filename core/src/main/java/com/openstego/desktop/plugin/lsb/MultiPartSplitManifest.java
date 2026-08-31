@@ -104,7 +104,18 @@ public class MultiPartSplitManifest {
         this.useCompression = useCompression;
         this.useEncryption = useEncryption;
         this.encryptionAlgorithm = encryptionAlgorithm;
-        this.fileNameBytes = (fileName == null) ? new byte[0] : fileName.getBytes(StandardCharsets.UTF_8);
+        if (fileName == null) {
+            this.fileNameBytes = new byte[0];
+        } else {
+            // fileNameLen is a single unsigned byte, so keep the stored name within 255 bytes. Trim
+            // whole characters (not raw bytes) so multi-byte sequences are never split.
+            byte[] nameBytes = fileName.getBytes(StandardCharsets.UTF_8);
+            while (nameBytes.length > 255) {
+                fileName = fileName.substring(0, fileName.length() - 1);
+                nameBytes = fileName.getBytes(StandardCharsets.UTF_8);
+            }
+            this.fileNameBytes = nameBytes;
+        }
     }
 
     private MultiPartSplitManifest(

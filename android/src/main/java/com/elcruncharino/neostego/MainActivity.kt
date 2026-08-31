@@ -57,8 +57,6 @@ class MainActivity : ComponentActivity() {
                 themeMode = prefs.themeMode,
                 useDynamicColor = prefs.useDynamicColor,
                 seedColorArgb = prefs.seedColorArgb,
-                // Cover-derived ("album-art") seed only applies while dynamic colour is enabled.
-                coverSeedArgb = if (prefs.useDynamicColor) appState.coverSeedArgb else null,
             ) {
                 StegoScaffold(launchTarget.value, appState)
             }
