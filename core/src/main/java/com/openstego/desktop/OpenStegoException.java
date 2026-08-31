@@ -115,4 +115,17 @@ public class OpenStegoException extends Exception {
     public static void addErrorCode(String namespace, int errorCode, String labelKey) {
         errMsgKeyMap.put(namespace + errorCode, labelKey);
     }
+
+    /**
+     * Convenience method to register multiple error code - message key mappings at once
+     *
+     * @param namespace Namespace for the error codes
+     * @param errorCodes Error codes, in the same order as <code>labelKeys</code>
+     * @param labelKeys Message keys, one per error code
+     */
+    public static void addErrorCodes(String namespace, int[] errorCodes, String[] labelKeys) {
+        for (int i = 0; i < errorCodes.length; i++) {
+            addErrorCode(namespace, errorCodes[i], labelKeys[i]);
+        }
+    }
 }

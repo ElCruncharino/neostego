@@ -30,10 +30,15 @@ public class WavLSBErrors {
      * Initialize the error code - message key map
      */
     public static void init() {
-        OpenStegoException.addErrorCode(WavLSBPlugin.NAMESPACE, AUDIO_SIZE_INSUFFICIENT, "err.audio.insufficientSize");
-        OpenStegoException.addErrorCode(WavLSBPlugin.NAMESPACE, INVALID_WAV_FILE, "err.audio.invalidWav");
-        OpenStegoException.addErrorCode(WavLSBPlugin.NAMESPACE, UNSUPPORTED_WAV_FORMAT, "err.audio.unsupportedFormat");
-        OpenStegoException.addErrorCode(WavLSBPlugin.NAMESPACE, NO_COVER_FILE, "err.audio.noCoverFile");
-        OpenStegoException.addErrorCode(WavLSBPlugin.NAMESPACE, ERR_AUDIO_DATA_READ, "err.audio.read");
+        OpenStegoException.addErrorCodes(
+                WavLSBPlugin.NAMESPACE,
+                new int[] {AUDIO_SIZE_INSUFFICIENT, INVALID_WAV_FILE, UNSUPPORTED_WAV_FORMAT, NO_COVER_FILE, ERR_AUDIO_DATA_READ},
+                new String[] {
+                    "err.audio.insufficientSize",
+                    "err.audio.invalidWav",
+                    "err.audio.unsupportedFormat",
+                    "err.audio.noCoverFile",
+                    "err.audio.read"
+                });
     }
 }

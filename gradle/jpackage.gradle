@@ -1,0 +1,156 @@
+/*
+ * Shared jpackage convention: native installers (msi/dmg/deb/rpm) via the jpackage JDK tool.
+ * Included with `apply from:` by :desktop and :compose-desktop, each of which sets the ext
+ * properties below (app identity + module-specific quirks) before applying. Unlike
+ * distWin/distDeb/distRpm (which require a system JRE), these bundle a Java runtime inside the
+ * installer, so end users install nothing else. One config emits the right native installer per
+ * OS; release CI runs the matching task on a runner of that OS. Requires the JDK's jpackage on
+ * PATH/JAVA_HOME (or JPACKAGE_HOME, where supported), plus WiX (Windows .msi) and rpm tools
+ * (Linux .rpm) on the build machine.
+ *
+ * Required ext properties (set before `apply from: ".../jpackage.gradle"`):
+ *   jpackageAppName             - display name, e.g. 'NeoStego'
+ *   jpackageMainJar             - jar filename inside jpackage/input, e.g. 'neostego.jar'
+ *   jpackageMainClass           - main class, fully qualified
+ *   jpackageIconFile            - absolute path to the .ico used for the Windows build
+ *   jpackageMsiDesc/DmgDesc/DebDesc/RpmDesc - task 'description', one per installer type
+ *   jpackageUseJpackageHomeEnv  - if true, jpackageBin also checks JPACKAGE_HOME before JAVA_HOME
+ *   jpackageSupportRuntimeImage - if true, honor JPACKAGE_RUNTIME_IMAGE (--runtime-image)
+ */
+
+import org.apache.tools.ant.taskdefs.condition.Os
+
+def jpackageInputDir = layout.buildDirectory.dir('jpackage/input')
+def jpackageOutDir   = layout.buildDirectory.dir('jpackage/out')
+// jpackage requires a strictly numeric version (e.g. 1.0.0); drop any -SNAPSHOT/-rc suffix.
+def jpackageVersion  = project.version.toString().replaceAll(/-.*$/, '')
+
+def jpackageBin = {
+    String jh = jpackageUseJpackageHomeEnv
+            ? (System.getenv('JPACKAGE_HOME') ?: System.getenv('JAVA_HOME'))
+            : System.getenv('JAVA_HOME')
+    String exe = Os.isFamily(Os.FAMILY_WINDOWS) ? 'jpackage.exe' : 'jpackage'
+    jh ? new File(jh, "bin/${exe}").absolutePath : exe
+}
+
+tasks.register('jpackageInput', Copy) {
+    dependsOn jar
+    into jpackageInputDir
+    // Main jar plus all runtime deps, flat, so the jar manifest's Class-Path (filenames) resolves.
+    from(tasks.jar)
+    from(configurations.runtimeClasspath)
+    // Ship the scalable logo inside the app image (lands in lib/app/) so the Linux packages can
+    // register it in the FreeDesktop icon theme at install time. See the jpackageRpm/jpackageDeb
+    // resource-dir overrides under artifacts/jpackage/linux/.
+    from('artifacts/neostego.svg')
+}
+
+// jpackage metadata captured at configuration time. The argumentProviders closures below run at
+// execution time, where referencing the Gradle 'project' object is forbidden by the configuration
+// cache, so every project-derived value is resolved to a plain String/path here instead.
+def jpVendor           = project.author.toString()
+def jpCopyright        = "Copyright (c) Samir Vaidya and ${project.author}".toString()
+def jpAboutUrl         = project.homepageUrl.toString()
+def jpLicenseFile      = rootProject.file('LICENSE').absolutePath
+def jpDebMaintainer    = project.authorMail.toString()
+def jpIconFile         = jpackageIconFile
+def jpWinUpgradeUuid   = 'b4fc0612-03d7-498f-8331-8d8cc780f728'
+def jpLinuxResourceDir = file('artifacts/jpackage/linux').absolutePath
+// Java2D's default X11 pipeline re-blits the whole window on every resize tick, which makes
+// corner-dragging laggy (especially under XWayland); the XRender pipeline is far smoother.
+def jpLinuxJavaOptions = ['--java-options', '-Dsun.java2d.xrender=true']
+def jpackageRuntimeImage = jpackageSupportRuntimeImage ? System.getenv('JPACKAGE_RUNTIME_IMAGE') : null
+
+def commonJpackageArgs = {
+    def a = [
+            '--name'        , jpackageAppName,
+            '--app-version' , jpackageVersion,
+            '--vendor'      , jpVendor,
+            '--copyright'   , jpCopyright,
+            '--about-url'   , jpAboutUrl,
+            '--input'       , jpackageInputDir.get().asFile.absolutePath,
+            '--main-jar'    , jpackageMainJar,
+            '--main-class'  , jpackageMainClass,
+            '--license-file', jpLicenseFile,
+            '--dest'        , jpackageOutDir.get().asFile.absolutePath
+    ]
+    if (jpackageRuntimeImage) {
+        a += ['--runtime-image', jpackageRuntimeImage]
+    }
+    a
+}
+
+tasks.register('jpackageMsi', Exec) {
+    group = 'distribution'
+    description = jpackageMsiDesc
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_WINDOWS) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + [
+                '--type', 'msi',
+                '--icon', jpIconFile,
+                // Without --win-menu-group jpackage files the Start Menu shortcut under "Unknown".
+                '--win-menu', '--win-menu-group', jpackageAppName,
+                '--win-shortcut', '--win-per-user-install',
+                // Stable UpgradeCode so future versions upgrade in place (jpackage otherwise
+                // generates a random one per build, which would break upgrades and winget tracking).
+                '--win-upgrade-uuid', jpWinUpgradeUuid
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageDmg', Exec) {
+    group = 'distribution'
+    description = jpackageDmgDesc
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + ['--type', 'dmg', '--mac-package-name', jpackageAppName]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageDeb', Exec) {
+    group = 'distribution'
+    description = jpackageDebDesc
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + jpLinuxJavaOptions + [
+                '--type', 'deb',
+                '--resource-dir', jpLinuxResourceDir,
+                '--linux-shortcut', '--linux-menu-group', 'Utility',
+                '--linux-deb-maintainer', jpDebMaintainer
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+tasks.register('jpackageRpm', Exec) {
+    group = 'distribution'
+    description = jpackageRpmDesc
+    dependsOn jpackageInput
+    onlyIf { Os.isFamily(Os.FAMILY_UNIX) && !Os.isFamily(Os.FAMILY_MAC) }
+    doFirst { jpackageOutDir.get().asFile.mkdirs() }
+    executable jpackageBin()
+    argumentProviders.add({
+        commonJpackageArgs() + jpLinuxJavaOptions + [
+                '--type', 'rpm',
+                '--resource-dir', jpLinuxResourceDir,
+                '--linux-shortcut', '--linux-menu-group', 'Utility',
+                '--linux-rpm-license-type', 'GPLv2'
+        ]
+    } as CommandLineArgumentProvider)
+}
+
+// Umbrella: each sub-task is a no-op unless the host OS matches, so this builds whatever
+// native installer the current runner can produce.
+tasks.register('jpackage') {
+    group = 'distribution'
+    description = 'Build the native runtime-bundled installer(s) for the current OS.'
+    dependsOn jpackageMsi, jpackageDmg, jpackageDeb, jpackageRpm
+}

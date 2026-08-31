@@ -23,10 +23,17 @@ public class DWTXieErrors {
     public static final int ERR_SIG_NOT_VALID = 2;
 
     /**
+     * Error Code - file size not enough to embed watermark
+     */
+    public static final int ERR_FILE_TOO_SMALL = 3;
+
+    /**
      * Initialize the error code - message key map
      */
     public static void init() {
-        OpenStegoException.addErrorCode(DWTXiePlugin.NAMESPACE, ERR_NO_COVER_FILE, "err.cover.missing");
-        OpenStegoException.addErrorCode(DWTXiePlugin.NAMESPACE, ERR_SIG_NOT_VALID, "err.signature.invalid");
+        OpenStegoException.addErrorCodes(
+                DWTXiePlugin.NAMESPACE,
+                new int[] {ERR_NO_COVER_FILE, ERR_SIG_NOT_VALID, ERR_FILE_TOO_SMALL},
+                new String[] {"err.cover.missing", "err.signature.invalid", "err.file.too.small"});
     }
 }
