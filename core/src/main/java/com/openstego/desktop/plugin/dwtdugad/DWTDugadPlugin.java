@@ -176,6 +176,9 @@ public class DWTDugadPlugin extends WMImagePluginTemplate {
             oos.writeDouble(sig.alpha);
 
             for (int i = 0; i < sig.decompositionLevel; i++) {
+                if (s.getHorizontal() == null || s.getVertical() == null || s.getDiagonal() == null) {
+                    throw new OpenStegoException(null, NAMESPACE, DWTDugadErrors.ERR_FILE_TOO_SMALL);
+                }
                 vals = invWmSubBand(
                         s.getHorizontal().getImage(), sig.watermark, sig.watermarkLength, sig.detectionThreshold);
                 oos.writeInt((Integer) vals[0]);

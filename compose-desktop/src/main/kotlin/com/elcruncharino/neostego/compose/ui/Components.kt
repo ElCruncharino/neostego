@@ -6,8 +6,6 @@
  */
 package com.elcruncharino.neostego.compose.ui
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,12 +15,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -31,7 +26,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -45,15 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.awtTransferable
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -61,7 +51,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import java.awt.datatransfer.DataFlavor
 import java.io.File
@@ -176,10 +165,7 @@ fun FilePickCard(label: String, chosen: String?, hint: String, onFileDropped: ((
     }
 }
 
-/**
- * A connected segmented selector — the desktop copy of the Android SegmentedButtonGroup. Each
- * segment is a ≥44dp selectable exposing the radio role.
- */
+/** A connected segmented selector, backed by Material 3's stable segmented button row. */
 @Composable
 fun SegmentedButtonGroup(
     options: List<String>,
@@ -187,57 +173,14 @@ fun SegmentedButtonGroup(
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(4.dp)
-                .selectableGroup()
-                // Arrow keys move the selection (radio-group convention) when a segment is focused.
-                .onKeyEvent { ev ->
-                    if (ev.type != KeyEventType.KeyDown) return@onKeyEvent false
-                    when (ev.key) {
-                        Key.DirectionRight, Key.DirectionDown -> {
-                            if (selectedIndex < options.lastIndex) onSelect(selectedIndex + 1)
-                            true
-                        }
-                        Key.DirectionLeft, Key.DirectionUp -> {
-                            if (selectedIndex > 0) onSelect(selectedIndex - 1)
-                            true
-                        }
-                        else -> false
-                    }
-                },
-        ) {
-            options.forEachIndexed { index, label ->
-                val selected = index == selectedIndex
-                val bg by animateColorAsState(
-                    targetValue = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                    animationSpec = tween(220),
-                    label = "segBg",
-                )
-                val fg = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(44.dp)
-                        .padding(horizontal = 2.dp)
-                        .clip(RoundedCornerShape(16.dp))
-                        .selectable(selected = selected, role = Role.RadioButton) { onSelect(index) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Surface(color = bg, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxSize()) {}
-                    Text(
-                        label,
-                        color = fg,
-                        textAlign = TextAlign.Center,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
+    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, label ->
+            SegmentedButton(
+                selected = index == selectedIndex,
+                onClick = { onSelect(index) },
+                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+            ) {
+                Text(label)
             }
         }
     }

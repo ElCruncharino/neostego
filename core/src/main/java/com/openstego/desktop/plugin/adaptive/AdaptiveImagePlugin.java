@@ -139,7 +139,9 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         for (int c : caps) {
             totalCap += c;
         }
-        if (bodyBits > 0 && totalCap < bodyBits) {
+        // Band 0 must hold the whole bootstrap header, whether or not there is any body to embed
+        int rpb = rowsPerBand(width);
+        if (bandCount(width, height, 0, rpb) < headerElems || totalCap < bodyBits) {
             throw new OpenStegoException(null, NAMESPACE, AdaptiveErrors.IMAGE_SIZE_INSUFFICIENT);
         }
 
@@ -152,7 +154,6 @@ public class AdaptiveImagePlugin extends DHImagePluginTemplate<AdaptiveConfig> {
         SecureRandom dir = new SecureRandom();
 
         // Band 0 permutation also carries the header in its first headerElems entries.
-        int rpb = rowsPerBand(width);
         int numBands = caps.length;
         int[] perm0 = bandPermutation(bandCount(width, height, 0, rpb), this.config.getPassword(), 0);
 

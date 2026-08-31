@@ -5,8 +5,6 @@
 
 package com.elcruncharino.neostego.ui.screens
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -34,16 +32,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.StegoEngine
-import com.elcruncharino.neostego.theme.extractSeedColor
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.AlgorithmOption
-import com.elcruncharino.neostego.ui.components.EmbedMapView
 import com.elcruncharino.neostego.ui.components.FilePickCard
 import com.elcruncharino.neostego.ui.components.OutputResultCard
 import com.elcruncharino.neostego.ui.components.PrimaryActionButton
@@ -51,7 +45,6 @@ import com.elcruncharino.neostego.ui.components.SecurePasswordField
 import com.elcruncharino.neostego.ui.components.ToggleRow
 import com.elcruncharino.neostego.ui.components.readPasswordChars
 import com.elcruncharino.neostego.ui.util.OutputResult
-import com.elcruncharino.neostego.ui.util.computeEmbedMap
 import com.elcruncharino.neostego.ui.util.displayName
 import com.elcruncharino.neostego.ui.util.humanBytes
 import com.elcruncharino.neostego.ui.util.imageDimensions
@@ -97,16 +90,6 @@ fun HideScreen(appState: AppState) {
                     runCatching { StegoEngine.capacityBytes(s.algorithm, w, h, options) }.getOrNull()
                 }
             }
-        }
-    }
-
-    // Cover-derived ("album-art") theming: extract a seed colour from the chosen image cover.
-    LaunchedEffect(s.coverUri, s.algorithm) {
-        val uri = s.coverUri
-        appState.coverSeedArgb = if (uri == null || s.algorithm == StegoEngine.Algorithm.WAV) {
-            null
-        } else {
-            runCatching { extractSeedColor(context, uri) }.getOrNull()
         }
     }
 
@@ -266,19 +249,6 @@ fun HideScreen(appState: AppState) {
                 }
                 val name = StegoEngine.outputName(s.algorithm)
                 setResult(OutputResult(name, mimeForName(name), stegoBytes))
-
-                // Truthful embed map: diff the cover against the produced stego (image covers only).
-                if (StegoEngine.isImageAlgorithm(s.algorithm)) {
-                    val blockBased = s.algorithm == StegoEngine.Algorithm.SI_UNIWARD ||
-                        s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD ||
-                        s.algorithm == StegoEngine.Algorithm.F5
-                    s.embedMap = runCatching { computeEmbedMap(coverBytes, stegoBytes, blockBased) }.getOrNull()
-                    s.embedThumb = withContext(Dispatchers.Default) { decodeThumbnail(coverBytes) }
-                    s.resultStamp++
-                } else {
-                    s.embedMap = null
-                    s.embedThumb = null
-                }
             } catch (e: Exception) {
                 snackbar.showSnackbar(e.message ?: "Failed to hide data")
             } finally {
@@ -532,39 +502,6 @@ fun HideScreen(appState: AppState) {
                 onSave = { saveOutput.launch(r.name) },
                 onShare = { shareResult() },
             )
-            val map = s.embedMap
-            if (map != null && map.changedCells > 0) {
-                EmbedMapView(
-                    coverImage = s.embedThumb,
-                    active = map.active,
-                    cols = map.cols,
-                    rows = map.rows,
-                    accentColor = MaterialTheme.colorScheme.primary,
-                    replayKey = s.resultStamp,
-                )
-                val unit = if (map.blockBased) "blocks" else "cells"
-                Text(
-                    "Embedding touched ${map.changedCells} of ${map.totalCells} $unit " +
-                        "(${"%.0f".format(map.fraction * 100)}%). Brightly lit $unit carry hidden data.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
-}
-
-/** Decodes a small thumbnail (~480px) from image bytes for the embed-map backdrop. */
-private fun decodeThumbnail(bytes: ByteArray, target: Int = 480): ImageBitmap? {
-    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
-    val longer = maxOf(bounds.outWidth, bounds.outHeight)
-    if (longer <= 0) return null
-    var sample = 1
-    while (longer / (sample * 2) >= target) sample *= 2
-    val opts = BitmapFactory.Options().apply {
-        inSampleSize = sample
-        inPreferredConfig = Bitmap.Config.ARGB_8888
-    }
-    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)?.asImageBitmap()
 }

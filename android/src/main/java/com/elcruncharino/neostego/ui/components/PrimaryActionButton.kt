@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -62,8 +63,8 @@ fun PrimaryActionButton(
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) {
             if (busy) {
-                ExpressiveLoadingIndicator(
-                    diameter = 20.dp,
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
                     strokeWidth = 2.dp,
                     color = MaterialTheme.colorScheme.onPrimary,
                 )

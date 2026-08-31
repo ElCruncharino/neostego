@@ -97,8 +97,7 @@ fun SettingsScreen(appState: AppState) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Dynamic colour", fontWeight = FontWeight.SemiBold)
                         Text(
-                            "Recolour from your wallpaper and from the cover image you choose. " +
-                                "Turn off to use a fixed colour below.",
+                            "Recolour from your wallpaper. Turn off to use a fixed colour below.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -112,11 +111,7 @@ fun SettingsScreen(appState: AppState) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 Text("Accent colour", fontWeight = FontWeight.SemiBold)
                 Text(
-                    if (prefs.useDynamicColor && appState.coverSeedArgb != null) {
-                        "Currently following the cover image. Pick a colour to override it."
-                    } else {
-                        "Pick a fixed accent colour for the app."
-                    },
+                    "Pick a fixed accent colour for the app.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

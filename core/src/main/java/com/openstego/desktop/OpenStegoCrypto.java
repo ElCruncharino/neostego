@@ -104,6 +104,13 @@ public class OpenStegoCrypto {
     private static final int V3_ITERATIONS = 210000;
 
     /**
+     * Upper bound on the PBKDF2 iteration count accepted when reading a v3 payload. The count is
+     * attacker-controlled data, so an absurd value would otherwise turn decryption into a denial of
+     * service.
+     */
+    private static final int V3_MAX_ITERATIONS = 10 * V3_ITERATIONS;
+
+    /**
      * Salt length in bytes for v3
      */
     private static final int V3_SALT_LEN = 16;
@@ -366,6 +373,12 @@ public class OpenStegoCrypto {
                     | ((input[idx++] & 0xFF) << 8)
                     | (input[idx++] & 0xFF);
             int keyBytes = input[idx++] & 0xFF;
+            if (iterations < 1 || iterations > V3_MAX_ITERATIONS) {
+                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.CORRUPT_DATA);
+            }
+            if (keyBytes != 16 && keyBytes != 24 && keyBytes != 32) {
+                throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.CORRUPT_DATA);
+            }
             int saltLen = input[idx++] & 0xFF;
             byte[] salt = new byte[saltLen];
             System.arraycopy(input, idx, salt, 0, saltLen);

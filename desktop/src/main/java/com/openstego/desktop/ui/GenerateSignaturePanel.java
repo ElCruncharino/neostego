@@ -21,7 +21,7 @@ public class GenerateSignaturePanel extends JPanel {
      */
     private static final LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);
 
-    private JTextField inputKeyTextField;
+    private JPasswordField inputKeyTextField;
     private JTextField signatureFileTextField;
     private JButton signatureFileButton;
     private JButton runGenSigButton;
@@ -39,9 +39,9 @@ public class GenerateSignaturePanel extends JPanel {
      *
      * @return inputKeyTextField
      */
-    public JTextField getInputKeyTextField() {
+    public JPasswordField getInputKeyTextField() {
         if (this.inputKeyTextField == null) {
-            this.inputKeyTextField = new JTextField();
+            this.inputKeyTextField = new JPasswordField();
         }
         return this.inputKeyTextField;
     }

@@ -18,12 +18,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.ui.AppState
-import com.elcruncharino.neostego.ui.components.EmbedMapView
 import com.elcruncharino.neostego.ui.components.FilePickCard
 import com.elcruncharino.neostego.ui.components.OutputResultCard
 import com.elcruncharino.neostego.ui.components.PrimaryActionButton
 import com.elcruncharino.neostego.ui.components.SecurePasswordField
-import com.elcruncharino.neostego.ui.components.syntheticScanPattern
 import com.elcruncharino.neostego.ui.util.OutputResult
 import com.elcruncharino.neostego.ui.util.displayName
 import com.elcruncharino.neostego.ui.util.mimeForName
@@ -33,10 +31,6 @@ import com.elcruncharino.neostego.ui.util.writeBytes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-/** A coarse decorative grid for the Reveal "scan" sweep; there is no original cover to diff. */
-private const val SCAN_COLS = 40
-private const val SCAN_ROWS = 26
 
 @Composable
 fun RevealScreen(appState: AppState) {
@@ -108,7 +102,6 @@ fun RevealScreen(appState: AppState) {
                 }
                 val name = extracted.fileName.ifBlank { "revealed.dat" }
                 setResult(OutputResult(name, mimeForName(name), extracted.data))
-                s.revealStamp++ // replays the decorative scan sweep
             } catch (e: Exception) {
                 snackbar.showSnackbar(e.message ?: "Failed to reveal data")
             } finally {
@@ -118,8 +111,6 @@ fun RevealScreen(appState: AppState) {
             }
         }
     }
-
-    val scanPattern = remember { syntheticScanPattern(SCAN_COLS, SCAN_ROWS) }
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
@@ -150,16 +141,6 @@ fun RevealScreen(appState: AppState) {
         )
 
         s.result?.let { r ->
-            // A stylized, clearly-decorative scan over a neutral grid: Reveal has no original cover to
-            // diff against, so this is a flourish rather than a truthful map.
-            EmbedMapView(
-                coverImage = null,
-                active = scanPattern,
-                cols = SCAN_COLS,
-                rows = SCAN_ROWS,
-                accentColor = MaterialTheme.colorScheme.primary,
-                replayKey = s.revealStamp,
-            )
             OutputResultCard(
                 name = r.name,
                 onSave = { saveOutput.launch(r.name) },
