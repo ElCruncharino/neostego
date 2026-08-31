@@ -74,10 +74,9 @@ fun verdictColors(level: VerdictLevel): StatusColors {
 /**
  * Application theme. The colour scheme is resolved by priority:
  *
- *  1. [coverSeedArgb] — derived from the cover image in use (the "album-art" analog), when present;
- *  2. [seedColorArgb] — a colour the user picked in Settings;
- *  3. the OS Material You palette, when [useDynamicColor] is on and the device is Android 12+;
- *  4. a fixed brand fallback scheme.
+ *  1. [seedColorArgb] — a colour the user picked in Settings;
+ *  2. the OS Material You palette, when [useDynamicColor] is on and the device is Android 12+;
+ *  3. a fixed brand fallback scheme.
  *
  * Light/dark follows [themeMode] (SYSTEM defers to [isSystemInDarkTheme]).
  *
@@ -90,7 +89,6 @@ fun NeoStegoTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
     useDynamicColor: Boolean = true,
     seedColorArgb: Int? = null,
-    coverSeedArgb: Int? = null,
     content: @Composable () -> Unit,
 ) {
     val dark = when (themeMode) {
@@ -99,9 +97,8 @@ fun NeoStegoTheme(
         ThemeMode.DARK -> true
     }
     val context = LocalContext.current
-    val seed = coverSeedArgb ?: seedColorArgb
     val colorScheme = when {
-        seed != null -> schemeFromSeed(Color(seed), dark)
+        seedColorArgb != null -> schemeFromSeed(Color(seedColorArgb), dark)
         useDynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         else -> if (dark) DarkColors else LightColors
