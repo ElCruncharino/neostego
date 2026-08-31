@@ -5,17 +5,12 @@
 
 package com.openstego.desktop.plugin.dwtsvd;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.openstego.desktop.CmdTest;
 import com.openstego.desktop.OpenStego;
 import com.openstego.desktop.OpenStegoCmd;
-import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.PluginManager;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.PrintStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,7 +22,7 @@ import org.junit.jupiter.api.io.TempDir;
  * {@code checkmark} commands as a user would. Confirms that a freshly generated signature embeds and verifies with a
  * high correlation, and that an unrelated signature reads as absent.
  */
-public class DWTSVDCmdTest {
+public class DWTSVDCmdTest extends CmdTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -72,28 +67,8 @@ public class DWTSVDCmdTest {
         assertTrue(corr < 0.2, "an unrelated signature must read as absent, got " + corr);
     }
 
-    private static Path copyResource(String resource, Path target) throws Exception {
-        try (InputStream is = DWTSVDCmdTest.class.getResourceAsStream(resource)) {
-            assertNotNull(is, "Test resource not found: " + resource);
-            Files.write(target, CommonUtil.streamToBytes(is));
-        }
-        return target;
-    }
-
     private static double parseDouble(String stdout) {
         String[] lines = stdout.trim().split("\\R");
         return Double.parseDouble(lines[lines.length - 1].trim());
-    }
-
-    private static String captureStdout(Runnable action) {
-        PrintStream original = System.out;
-        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-        try {
-            System.setOut(new PrintStream(buffer, true, StandardCharsets.UTF_8));
-            action.run();
-        } finally {
-            System.setOut(original);
-        }
-        return buffer.toString(StandardCharsets.UTF_8);
     }
 }

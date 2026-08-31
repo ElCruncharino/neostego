@@ -6,8 +6,6 @@
 
 package com.openstego.desktop.util.dwt;
 
-import java.util.Map;
-
 /**
  * Class to handle Discrete Wavelet Transforms (DWT).
  * <p>
@@ -18,16 +16,6 @@ import java.util.Map;
  * Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
  */
 public class DWT {
-    /**
-     * Master map of filters
-     */
-    private static Map<Integer, FilterGH> filterGHMap = null;
-
-    /**
-     * URI for the filter file
-     */
-    private static final String FILTER_FILE = "/dwt/filters.xml";
-
     /**
      * List of loaded filters
      */
@@ -63,14 +51,10 @@ public class DWT {
      * @param method   Wavelet filtering method
      */
     public DWT(int cols, int rows, int filterID, int level, int method) {
-        // Read the master filter file if it is not already loaded
-        if (filterGHMap == null) {
-            filterGHMap = FilterXMLReader.parse(FILTER_FILE);
-        }
-
+        // filterID is retained for API compatibility; FilterGH.FILTER_1 is the only filter this library supports
         this.filters = new FilterGH[level + 1];
         for (int i = 0; i <= level; i++) {
-            this.filters[i] = filterGHMap.get(filterID);
+            this.filters[i] = FilterGH.FILTER_1;
         }
 
         this.level = level;

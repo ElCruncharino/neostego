@@ -33,8 +33,10 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from srnet import SRNet
 from srm_cnn import SRMCNN
+from eval_common import auc_score, p_error
 
 
 def build_model(name):
@@ -169,45 +171,6 @@ def split_pairs(pairs, seed, val_frac=0.1, test_frac=0.2):
         return items
 
     return expand(train_ids), expand(val_ids), expand(test_ids)
-
-
-def auc_score(labels, scores):
-    """Mann-Whitney U AUC, no sklearn dependency."""
-    order = np.argsort(scores)
-    ranks = np.empty(len(scores), dtype=np.float64)
-    ranks[order] = np.arange(1, len(scores) + 1)
-    # average ranks for ties
-    s = scores[order]
-    i = 0
-    while i < len(s):
-        j = i
-        while j + 1 < len(s) and s[order[j + 1]] == s[order[i]]:
-            j += 1
-        if j > i:
-            ranks[order[i:j + 1]] = (i + 1 + j + 1) / 2.0
-        i = j + 1
-    pos = labels == 1
-    n_pos = pos.sum()
-    n_neg = len(labels) - n_pos
-    if n_pos == 0 or n_neg == 0:
-        return float("nan")
-    return (ranks[pos].sum() - n_pos * (n_pos + 1) / 2.0) / (n_pos * n_neg)
-
-
-def p_error(labels, scores):
-    """Minimal P_E = min_t 0.5*(P_FA + P_MD) sweeping the decision threshold."""
-    thr = np.unique(scores)
-    best = 1.0
-    pos = labels == 1
-    neg = ~pos
-    n_pos = max(1, pos.sum())
-    n_neg = max(1, neg.sum())
-    for t in thr:
-        pred = scores >= t
-        p_fa = (pred & neg).sum() / n_neg          # false alarm: cover called stego
-        p_md = (~pred & pos).sum() / n_pos         # missed detection: stego called cover
-        best = min(best, 0.5 * (p_fa + p_md))
-    return best
 
 
 @torch.no_grad()

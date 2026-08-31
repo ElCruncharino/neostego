@@ -42,18 +42,6 @@ public class PasswordInput {
         if (System.console() == null) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PASSWORD_REQUIRED);
         }
-        return readPassword(prompt);
-    }
-
-    /**
-     * Method to read password from the console. Only called by {@link #acquirePassword}, which
-     * already guarantees a console is attached before calling this.
-     *
-     * @param prompt Prompt for the password input
-     * @return The password as entered by the user
-     * @throws OpenStegoException Processing issue
-     */
-    public static char[] readPassword(String prompt) throws OpenStegoException {
         char[] password = System.console().readPassword("%s", prompt);
         return (password == null) ? new char[0] : password;
     }

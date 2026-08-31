@@ -13,7 +13,6 @@ Usage:
 """
 
 import argparse
-import hashlib
 import os
 import random
 import sys
@@ -22,55 +21,20 @@ import time
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from srm_features import features_from_path, FEATURE_DIM
 from ensemble import FldEnsemble, auc_score, p_error
+from eval_common import build_pairs as _build_pairs, split_pairs, assemble as _assemble
 
 
 def build_pairs(root, algo, cover_dir, stego_prefix):
     cover_dir = cover_dir or os.path.join(root, "covers_cnn")
     stego_dir = os.path.join(root, stego_prefix + algo)
-    ids = [f for f in os.listdir(cover_dir)
-           if f.endswith(".png") and os.path.exists(os.path.join(stego_dir, f))]
-    ids.sort(key=lambda s: int(os.path.splitext(s)[0]) if os.path.splitext(s)[0].isdigit() else s)
-    return [(os.path.join(cover_dir, f), os.path.join(stego_dir, f)) for f in ids]
-
-
-def split_pairs(pairs, seed, val_frac=0.1, test_frac=0.2):
-    """Identical partition to srnet_eval.split_pairs; train+val are merged for the
-    ensemble so the TEST pairs match the CNN's exactly."""
-    rng = random.Random(seed)
-    idx = list(range(len(pairs)))
-    rng.shuffle(idx)
-    n = len(idx)
-    n_test = int(n * test_frac)
-    n_val = int(n * val_frac)
-    test_ids = idx[:n_test]
-    train_ids = idx[n_test:]                 # train+val merged
-    return train_ids, test_ids
-
-
-def feat_cached(path, channel, cache_dir):
-    if cache_dir is None:
-        return features_from_path(path, channel)
-    key = hashlib.md5(("%s|%d|%d" % (os.path.abspath(path), channel,
-                                     int(os.path.getmtime(path)))).encode()).hexdigest()
-    fp = os.path.join(cache_dir, key + ".npy")
-    if os.path.exists(fp):
-        return np.load(fp)
-    f = features_from_path(path, channel)
-    np.save(fp, f)
-    return f
+    return _build_pairs(cover_dir, stego_dir, ".png")
 
 
 def assemble(pairs, ids, channel, cache_dir):
-    x = np.empty((len(ids) * 2, FEATURE_DIM), dtype=np.float64)
-    y = np.empty(len(ids) * 2, dtype=np.int64)
-    k = 0
-    for i in ids:
-        cover, stego = pairs[i]
-        x[k] = feat_cached(cover, channel, cache_dir); y[k] = 0; k += 1
-        x[k] = feat_cached(stego, channel, cache_dir); y[k] = 1; k += 1
-    return x, y
+    return _assemble(pairs, ids, channel, cache_dir, FEATURE_DIM, features_from_path)
 
 
 def main():

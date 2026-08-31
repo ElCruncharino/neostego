@@ -10,7 +10,6 @@ import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.dwt.Filter;
 import com.openstego.desktop.util.dwt.FilterGH;
-import com.openstego.desktop.util.dwt.FilterXMLReader;
 import com.openstego.desktop.util.dwt.Image;
 import java.util.HashMap;
 import java.util.Map;
@@ -68,13 +67,6 @@ final class DwtSvdTransform {
         void writeYRow(int y, int[] yRow);
     }
 
-    /** Same filter file and ID the legacy DWT path uses. */
-    private static final String FILTER_FILE = "/dwt/filters.xml";
-
-    private static final int FILTER_ID = 1;
-
-    private static Map<Integer, FilterGH> filterCache = null;
-
     /** Forward analysis filters (low-pass H, high-pass G) - identical objects to those the legacy path uses. */
     private final Filter h;
 
@@ -94,10 +86,7 @@ final class DwtSvdTransform {
     private final int coarseH;
 
     DwtSvdTransform(int width, int height) throws OpenStegoException {
-        if (filterCache == null) {
-            filterCache = FilterXMLReader.parse(FILTER_FILE);
-        }
-        FilterGH filterGH = filterCache.get(FILTER_ID);
+        FilterGH filterGH = FilterGH.FILTER_1;
 
         // Reject covers too small for a real level-1 decomposition. waveletTransform would, for such an image,
         // skip the transform entirely (returning the image as the "coarse" band with no detail) - a different

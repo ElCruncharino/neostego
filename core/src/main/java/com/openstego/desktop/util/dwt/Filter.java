@@ -11,21 +11,6 @@ package com.openstego.desktop.util.dwt;
  */
 public class Filter {
     /**
-     * Constant for filter type = NoSymm
-     */
-    public static final int TYPE_NOSYMM = 0;
-
-    /**
-     * Constant for filter type = Symm
-     */
-    public static final int TYPE_SYMM = 1;
-
-    /**
-     * Constant for filter type = AntiSymm
-     */
-    public static final int TYPE_ANTISYMM = 2;
-
-    /**
      * Constant for filter method = cutoff
      */
     public static final int METHOD_CUTOFF = 0;
@@ -56,54 +41,38 @@ public class Filter {
     public static final int METHOD_INVMIRROR = 5;
 
     /**
-     * Type of the filter
-     */
-    private int type = -1;
-
-    /**
      * Start value of the filter
      */
-    private int start = 0;
+    private final int start;
 
     /**
      * End value of the filter
      */
-    private int end = 0;
+    private final int end;
 
     /**
      * Flag to indicate whether this is hi-pass filter or not
      */
-    private boolean hiPass = false;
+    private final boolean hiPass;
 
     /**
      * List of associated data
      */
-    private double[] data = null;
+    private final double[] data;
 
     /**
-     * Get method for type
+     * Constructor
      *
-     * @return type
+     * @param start  Start value of the filter
+     * @param end    End value of the filter
+     * @param hiPass Whether this is a hi-pass filter
+     * @param data   Filter coefficients
      */
-    public int getType() {
-        return this.type;
-    }
-
-    /**
-     * Set method for type
-     *
-     * @param type Value to be set
-     */
-    public void setType(String type) {
-        if (type.equalsIgnoreCase("nosymm")) {
-            this.type = TYPE_NOSYMM;
-        } else if (type.equalsIgnoreCase("symm")) {
-            this.type = TYPE_SYMM;
-        } else if (type.equalsIgnoreCase("antisymm")) {
-            this.type = TYPE_ANTISYMM;
-        } else {
-            this.type = -1;
-        }
+    Filter(int start, int end, boolean hiPass, double[] data) {
+        this.start = start;
+        this.end = end;
+        this.hiPass = hiPass;
+        this.data = data;
     }
 
     /**
@@ -116,30 +85,12 @@ public class Filter {
     }
 
     /**
-     * Set method for start
-     *
-     * @param start Value to be set
-     */
-    public void setStart(int start) {
-        this.start = start;
-    }
-
-    /**
      * Get method for end
      *
      * @return end
      */
     public int getEnd() {
         return this.end;
-    }
-
-    /**
-     * Set method for end
-     *
-     * @param end Value to be set
-     */
-    public void setEnd(int end) {
-        this.end = end;
     }
 
     /**
@@ -152,29 +103,11 @@ public class Filter {
     }
 
     /**
-     * Set method for hiPass
-     *
-     * @param hiPass Value to be set
-     */
-    public void setHiPass(boolean hiPass) {
-        this.hiPass = hiPass;
-    }
-
-    /**
      * Get method for data
      *
      * @return data
      */
     public double[] getData() {
         return this.data;
-    }
-
-    /**
-     * Set method for data
-     *
-     * @param data Value to be set
-     */
-    public void setData(double[] data) {
-        this.data = data;
     }
 }

@@ -19,19 +19,10 @@
 
 package com.openstego.desktop.plugin.f5.crypto;
 
-import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.Assert.assertFail;
-import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.Assert.exclusiveLowerBound;
-import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.Assert.inclusiveLowerBound;
-import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.Assert.inclusiveUpperBound;
 import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.LittleEndian.readInt;
 import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.LittleEndian.readLong;
-import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.LittleEndian.writeInt;
-import static com.openstego.desktop.plugin.f5.crypto.Blake2bHash.Engine.LittleEndian.writeLong;
 
-import java.io.PrintStream;
-import java.security.Key;
 import java.security.spec.AlgorithmParameterSpec;
-import java.util.Arrays;
 
 /**  */
 public interface Blake2bHash {
@@ -141,121 +132,12 @@ public interface Blake2bHash {
 
     /** Generalized Blake2b digest. */
     public static class Digest extends Engine implements Blake2bHash {
-        private Digest(final Param p) {
-            super(p);
-        }
-
         private Digest() {
             super();
         }
 
         public static Digest newInstance() {
             return new Digest();
-        }
-
-        public static Digest newInstance(final int digestLength) {
-            return new Digest(new Param().setDigestLength(digestLength));
-        }
-
-        public static Digest newInstance(Param p) {
-            return new Digest(p);
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // Blake2b Message Authentication Code
-    // ---------------------------------------------------------------------
-
-    /** Message Authentication Code (MAC) digest. */
-    public static class Mac extends Engine implements Blake2bHash {
-        private Mac(final Param p) {
-            super(p);
-        }
-
-        private Mac() {
-            super();
-        }
-
-        /** Blake2b.MAC 512 - using default Blake2b.Spec settings with given key */
-        public static Mac newInstance(final byte[] key) {
-            return new Mac(new Param().setKey(key));
-        }
-        /** Blake2b.MAC - using default Blake2b.Spec settings with given key, with given digest length */
-        public static Mac newInstance(final byte[] key, final int digestLength) {
-            return new Mac(new Param().setKey(key).setDigestLength(digestLength));
-        }
-        /** Blake2b.MAC - using default Blake2b.Spec settings with given java.security.Key, with given digest length */
-        public static Mac newInstance(final Key key, final int digestLength) {
-            return new Mac(new Param().setKey(key).setDigestLength(digestLength));
-        }
-        /** Blake2b.MAC - using the specified Parameters.
-         * @param p asserted valid configured Param with key */
-        public static Mac newInstance(Param p) {
-            assert p != null : "Param (p) is null";
-            assert p.hasKey() : "Param (p) not configured with a key";
-            return new Mac(p);
-        }
-    }
-
-    // ---------------------------------------------------------------------
-    // Blake2b Incremental Message Digest (Tree)
-    // ---------------------------------------------------------------------
-
-    /**
-     *  Note that Tree is just a convenience class; incremental hash (tree)
-     *  can be done directly with the Digest class.
-     *  <br>
-     *  Further node, that tree does NOT accumulate the leaf hashes --
-     *  you need to do that
-     */
-    public static class Tree {
-
-        final int depth;
-        final int fanout;
-        final int leaf_length;
-        final int inner_length;
-        final int digest_length;
-
-        /**
-         *
-         * @param fanout
-         * @param depth
-         * @param leaf_length size of data input for leaf nodes.
-         * @param inner_length note this is used also as digest-length for non-root nodes.
-         * @param digest_length final hash out digest-length for the tree
-         */
-        public Tree(
-                final int depth,
-                final int fanout,
-                final int leaf_length,
-                final int inner_length,
-                final int digest_length) {
-            this.fanout = fanout;
-            this.depth = depth;
-            this.leaf_length = leaf_length;
-            this.inner_length = inner_length;
-            this.digest_length = digest_length;
-        }
-
-        private Param treeParam() {
-            return new Param()
-                    .setDepth(depth)
-                    .setFanout(fanout)
-                    .setLeafLength(leaf_length)
-                    .setInnerLength(inner_length);
-        }
-        /** returns the Digest for tree node @ (depth, offset) */
-        public final Digest getNode(final int depth, final int offset) {
-            final Param nodeParam =
-                    treeParam().setNodeDepth(depth).setNodeOffset(offset).setDigestLength(inner_length);
-            return Digest.newInstance(nodeParam);
-        }
-        /** returns the Digest for root node */
-        public final Digest getRoot() {
-            final int depth = this.depth - 1;
-            final Param rootParam =
-                    treeParam().setNodeDepth(depth).setNodeOffset(0L).setDigestLength(digest_length);
-            return Digest.newInstance(rootParam);
         }
     }
 
@@ -903,67 +785,6 @@ public interface Blake2bHash {
         /// Compression Kernel //////////////////////////////////////////// FINI
         ////////////////////////////////////////////////////////////////////////
 
-        /* TEMP - remove at will */
-        public static class Debug {
-            public static void dumpState(Blake2bHash.Engine e, final String mark) {
-                System.out.format("-- MARK == @ %s @ ===========\n", mark);
-                dumpArray("register t", e.t);
-                dumpArray("register h", e.h);
-                dumpArray("register f", e.f);
-                dumpArray("register offset", new long[] {e.buflen});
-                System.out.format("-- END MARK =================\n");
-            }
-
-            public static void dumpArray(final String label, final long[] b) {
-                System.out.format("-- %s -- :\n{\n", label);
-                for (int j = 0; j < b.length; ++j) {
-                    System.out.format("    [%2d] : %016X\n", j, b[j]);
-                }
-                System.out.format("}\n");
-            }
-
-            public static void dumpBuffer(final PrintStream out, final String label, final byte[] b) {
-                dumpBuffer(out, label, b, 0, b.length);
-            }
-
-            public static void dumpBuffer(final PrintStream out, final byte[] b) {
-                dumpBuffer(out, null, b, 0, b.length);
-            }
-
-            public static void dumpBuffer(final PrintStream out, final byte[] b, final int offset, final int len) {
-                dumpBuffer(out, null, b, offset, len);
-            }
-
-            public static void dumpBuffer(
-                    final PrintStream out, final String label, final byte[] b, final int offset, final int len) {
-                if (label != null) out.format("-- %s -- :\n", label);
-                out.format("{\n    ", label);
-                for (int j = 0; j < len; ++j) {
-                    out.format("%02X", b[j + offset]);
-                    if (j + 1 < len) {
-                        if ((j + 1) % 8 == 0) out.print("\n    ");
-                        else out.print(' ');
-                    }
-                }
-                out.format("\n}\n");
-            }
-        }
-        /* TEMP - remove at will */
-
-        // ---------------------------------------------------------------------
-        // Helper for assert error messages
-        // ---------------------------------------------------------------------
-        public static final class Assert {
-            public static final String exclusiveUpperBound = "'%s' %d is >= %d";
-            public static final String inclusiveUpperBound = "'%s' %d is > %d";
-            public static final String exclusiveLowerBound = "'%s' %d is <= %d";
-            public static final String inclusiveLowerBound = "'%s' %d is < %d";
-
-            static <T extends Number> String assertFail(final String name, final T v, final String err, final T spec) {
-                new Exception().printStackTrace();
-                return String.format(err, name, v, spec);
-            }
-        }
         // ---------------------------------------------------------------------
         // Little Endian Codecs (inlined in the compressor)
         /*
@@ -973,28 +794,6 @@ public interface Blake2bHash {
         // ---------------------------------------------------------------------
 
         public static class LittleEndian {
-            private static final byte[] hex_digits = {
-                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-            };
-            private static final byte[] HEX_digits = {
-                '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-            };
-            /** @return hex rep of byte (lower case). */
-            public static String toHexStr(final byte[] b) {
-                return toHexStr(b, false); // because String class is slower.
-            }
-
-            public static String toHexStr(final byte[] b, boolean upperCase) {
-                final int len = b.length;
-                final byte[] digits = new byte[len * 2];
-                final byte[] hex_rep = upperCase ? HEX_digits : hex_digits;
-                for (int i = 0; i < len; i++) {
-                    digits[i * 2] = hex_rep[(byte) (b[i] >> 4 & 0x0F)];
-                    digits[i * 2 + 1] = hex_rep[(byte) (b[i] & 0x0F)];
-                }
-                return new String(digits);
-            }
-
             public static int readInt(final byte[] b, int off) {
                 int v0 = ((int) b[off++] & 0xFF);
                 v0 |= ((int) b[off++] & 0xFF) << 8;
@@ -1013,35 +812,6 @@ public interface Blake2bHash {
                 v0 |= ((long) b[off++] & 0xFF) << 48;
                 v0 |= ((long) b[off]) << 56;
                 return v0;
-            }
-            /** */
-            /** Little endian - long to byte[] */
-            public static void writeLong(long v, final byte[] b, final int off) {
-                b[off] = (byte) v;
-                v >>>= 8;
-                b[off + 1] = (byte) v;
-                v >>>= 8;
-                b[off + 2] = (byte) v;
-                v >>>= 8;
-                b[off + 3] = (byte) v;
-                v >>>= 8;
-                b[off + 4] = (byte) v;
-                v >>>= 8;
-                b[off + 5] = (byte) v;
-                v >>>= 8;
-                b[off + 6] = (byte) v;
-                v >>>= 8;
-                b[off + 7] = (byte) v;
-            }
-            /** Little endian - int to byte[] */
-            public static void writeInt(int v, final byte[] b, final int off) {
-                b[off] = (byte) v;
-                v >>>= 8;
-                b[off + 1] = (byte) v;
-                v >>>= 8;
-                b[off + 2] = (byte) v;
-                v >>>= 8;
-                b[off + 3] = (byte) v;
             }
         }
     }
@@ -1130,14 +900,6 @@ public interface Blake2bHash {
         public long[] initialized_H() {
             return h;
         }
-        /** package only - copy returned - do not use in functional loops */
-        public byte[] getBytes() {
-            lazyInitBytes();
-            byte[] copy = new byte[bytes.length];
-            System.arraycopy(bytes, 0, copy, 0, bytes.length);
-            return copy;
-        }
-
         final byte getByteParam(final int xoffset) {
             byte[] _bytes = bytes;
             if (_bytes == null) _bytes = Param.default_bytes;
@@ -1192,168 +954,5 @@ public interface Blake2bHash {
             return this.hasKey;
         }
 
-        @Override
-        public Param clone() {
-            final Param clone = new Param();
-            System.arraycopy(this.h, 0, clone.h, 0, h.length);
-            clone.lazyInitBytes();
-            System.arraycopy(this.bytes, 0, clone.bytes, 0, this.bytes.length);
-
-            if (this.hasKey) {
-                clone.hasKey = this.hasKey;
-                clone.key_bytes = new byte[Spec.max_key_bytes * 2];
-                System.arraycopy(this.key_bytes, 0, clone.key_bytes, 0, this.key_bytes.length);
-            }
-            return clone;
-        }
-        ////////////////////////////////////////////////////////////////////////
-        /// lazy setters - write directly to the bytes image of param block ////
-        ////////////////////////////////////////////////////////////////////////
-        final void lazyInitBytes() {
-            if (bytes == null) {
-                bytes = new byte[Spec.param_bytes];
-                System.arraycopy(Param.default_bytes, 0, bytes, 0, Spec.param_bytes);
-            }
-        }
-        /* 0-7 inclusive */
-        public final Param setDigestLength(int len) {
-            assert len > 0 : assertFail("len", len, exclusiveLowerBound, 0);
-            assert len <= Spec.max_digest_bytes : assertFail("len", len, inclusiveUpperBound, Spec.max_digest_bytes);
-
-            lazyInitBytes();
-            bytes[Xoff.digest_length] = (byte) len;
-            h[0] = readLong(bytes, 0);
-            h[0] ^= Spec.IV[0];
-            return this;
-        }
-
-        public final Param setKey(final Key key) {
-            assert key != null : "key is null";
-            final byte[] keybytes = key.getEncoded();
-            assert keybytes != null : "key.encoded() is null";
-
-            return this.setKey(keybytes);
-        }
-
-        public final Param setKey(final byte[] key) {
-            assert key != null : "key is null";
-            assert key.length >= 0 : assertFail("key.length", key.length, inclusiveUpperBound, 0);
-            assert key.length <= Spec.max_key_bytes
-                    : assertFail("key.length", key.length, inclusiveUpperBound, Spec.max_key_bytes);
-
-            // zeropad keybytes
-            this.key_bytes = new byte[Spec.max_key_bytes * 2];
-            System.arraycopy(key, 0, this.key_bytes, 0, key.length);
-            lazyInitBytes();
-            bytes[Xoff.key_length] = (byte) key.length; // checked c ref; this is correct
-            h[0] = readLong(bytes, 0);
-            h[0] ^= Spec.IV[0];
-            this.hasKey = true;
-            return this;
-        }
-
-        public final Param setFanout(int fanout) {
-            assert fanout > 0 : assertFail("fanout", fanout, exclusiveLowerBound, 0);
-
-            lazyInitBytes();
-            bytes[Xoff.fanout] = (byte) fanout;
-            h[0] = readLong(bytes, 0);
-            h[0] ^= Spec.IV[0];
-            return this;
-        }
-
-        public final Param setDepth(int depth) {
-            assert depth > 0 : assertFail("depth", depth, exclusiveLowerBound, 0);
-
-            lazyInitBytes();
-            bytes[Xoff.depth] = (byte) depth;
-            h[0] = readLong(bytes, 0);
-            h[0] ^= Spec.IV[0];
-            return this;
-        }
-
-        public final Param setLeafLength(int leaf_length) {
-            assert leaf_length >= 0 : assertFail("leaf_length", leaf_length, inclusiveLowerBound, 0);
-
-            lazyInitBytes();
-            writeInt(leaf_length, bytes, Xoff.leaf_length);
-            h[0] = readLong(bytes, 0);
-            h[0] ^= Spec.IV[0];
-            return this;
-        }
-
-        /* 8-15 inclusive */
-        public final Param setNodeOffset(long node_offset) {
-            assert node_offset >= 0 : assertFail("node_offset", node_offset, inclusiveLowerBound, 0);
-
-            lazyInitBytes();
-            writeLong(node_offset, bytes, Xoff.node_offset);
-            h[1] = readLong(bytes, Xoff.node_offset);
-            h[1] ^= Spec.IV[1];
-            return this;
-        }
-
-        /* 16-23 inclusive */
-        public final Param setNodeDepth(int node_depth) {
-            assert node_depth >= 0 : assertFail("node_depth", node_depth, inclusiveLowerBound, 0);
-
-            lazyInitBytes();
-            bytes[Xoff.node_depth] = (byte) node_depth;
-            h[2] = readLong(bytes, Xoff.node_depth);
-            h[2] ^= Spec.IV[2];
-            h[3] = readLong(bytes, Xoff.node_depth + 8);
-            h[3] ^= Spec.IV[3];
-            return this;
-        }
-
-        public final Param setInnerLength(int inner_length) {
-            assert inner_length >= 0 : assertFail("inner_length", inner_length, inclusiveLowerBound, 0);
-
-            lazyInitBytes();
-            bytes[Xoff.inner_length] = (byte) inner_length;
-            h[2] = readLong(bytes, Xoff.node_depth);
-            h[2] ^= Spec.IV[2];
-            h[3] = readLong(bytes, Xoff.node_depth + 8);
-            h[3] ^= Spec.IV[3];
-            return this;
-        }
-
-        /* 24-31 masked by reserved and remain unchanged */
-
-        /* 32-47 inclusive */
-        public final Param setSalt(final byte[] salt) {
-            assert salt != null : "salt is null";
-            assert salt.length <= Spec.max_salt_bytes
-                    : assertFail("salt.length", salt.length, inclusiveUpperBound, Spec.max_salt_bytes);
-
-            lazyInitBytes();
-            Arrays.fill(bytes, Xoff.salt, Xoff.salt + Spec.max_salt_bytes, (byte) 0);
-            System.arraycopy(salt, 0, bytes, Xoff.salt, salt.length);
-            h[4] = readLong(bytes, Xoff.salt);
-            h[4] ^= Spec.IV[4];
-            h[5] = readLong(bytes, Xoff.salt + 8);
-            h[5] ^= Spec.IV[5];
-            return this;
-        }
-
-        /* 48-63 inclusive */
-        public final Param setPersonal(byte[] personal) {
-            assert personal != null : "personal is null";
-            assert personal.length <= Spec.max_personalization_bytes
-                    : assertFail(
-                            "personal.length", personal.length, inclusiveUpperBound, Spec.max_personalization_bytes);
-
-            lazyInitBytes();
-            Arrays.fill(bytes, Xoff.personal, Xoff.personal + Spec.max_personalization_bytes, (byte) 0);
-            System.arraycopy(personal, 0, bytes, Xoff.personal, personal.length);
-            h[6] = readLong(bytes, Xoff.personal);
-            h[6] ^= Spec.IV[6];
-            h[7] = readLong(bytes, Xoff.personal + 8);
-            h[7] ^= Spec.IV[7];
-            return this;
-        }
-        ////////////////////////////////////////////////////////////////////////
-        /// lazy setters /////////////////////////////////////////////////// END
-        ////////////////////////////////////////////////////////////////////////
     }
 }

@@ -7,7 +7,6 @@
 package com.openstego.desktop;
 
 import static com.openstego.desktop.OpenStego.NAMESPACE;
-import static com.openstego.desktop.OpenStegoException.addErrorCode;
 
 /**
  * Custom exception class for OpenStego
@@ -162,34 +161,69 @@ public class OpenStegoErrors {
      * Initialize the error code - message key map
      */
     public static void init() {
-        addErrorCode(NAMESPACE, INVALID_PASSWORD, "err.config.password.invalid");
-        addErrorCode(NAMESPACE, INVALID_USE_COMPR_VALUE, "err.config.useCompression.invalid");
-        addErrorCode(NAMESPACE, INVALID_USE_ENCRYPT_VALUE, "err.config.useEncryption.invalid");
-        addErrorCode(NAMESPACE, INVALID_KEY_NAME, "err.config.invalidKey");
-        addErrorCode(NAMESPACE, INVALID_CRYPT_ALGO, "err.config.invalidCryptAlgo");
-        addErrorCode(NAMESPACE, USERPREF_INVALID_INT, "err.userpref.valueNotInteger");
-        addErrorCode(NAMESPACE, USERPREF_INVALID_FLOAT, "err.userpref.valueNotFloat");
-        addErrorCode(NAMESPACE, USERPREF_INVALID_BOOL, "err.userpref.valueNotBoolean");
-        addErrorCode(NAMESPACE, CORRUPT_DATA, "err.corruptData");
-        addErrorCode(NAMESPACE, NO_VALID_PLUGIN, "err.noValidPlugin");
-        addErrorCode(NAMESPACE, IMAGE_TYPE_INVALID, "err.image.type.invalid");
-        addErrorCode(NAMESPACE, IMAGE_FILE_INVALID, "err.image.file.invalid");
-        addErrorCode(NAMESPACE, NO_PLUGIN_SPECIFIED, "err.plugin.notSpecified");
-        addErrorCode(NAMESPACE, PLUGIN_DOES_NOT_SUPPORT_WM, "err.plugin.wmNotSupported");
-        addErrorCode(NAMESPACE, PLUGIN_DOES_NOT_SUPPORT_DH, "err.plugin.dhNotSupported");
-        addErrorCode(NAMESPACE, PLUGIN_NOT_FOUND, "err.plugin.notFound");
-        addErrorCode(NAMESPACE, IMAGE_SIZE_MISMATCH, "err.image.size.mismatch");
-        addErrorCode(NAMESPACE, PWD_MANDATORY_FOR_GENSIG, "err.gensig.pwdMandatory");
-        addErrorCode(NAMESPACE, SPLIT_REQUIRES_MULTIPLE_COVERS, "err.split.requiresMultipleCovers");
-        addErrorCode(NAMESPACE, SPLIT_REQUIRES_MULTIPLE_PARTS, "err.split.requiresMultipleParts");
-        addErrorCode(NAMESPACE, SPLIT_INSUFFICIENT_CAPACITY, "err.split.insufficientCapacity");
-        addErrorCode(NAMESPACE, SPLIT_MANIFEST_CORRUPT, "err.split.manifestCorrupt");
-        addErrorCode(NAMESPACE, SPLIT_MANIFEST_INCOMPLETE, "err.split.manifestIncomplete");
-        addErrorCode(NAMESPACE, SPLIT_MANIFEST_MISMATCH, "err.split.manifestMismatch");
-        addErrorCode(NAMESPACE, SPLIT_REQUIRES_OUTPUT_DIR, "err.split.requiresOutputDir");
-        addErrorCode(NAMESPACE, SPLIT_NOT_SUPPORTED, "err.split.notSupported");
-        addErrorCode(NAMESPACE, PASSWORD_REQUIRED, "err.passwordRequired");
-        addErrorCode(NAMESPACE, COVER_FILE_NOT_FOUND, "cmd.msg.coverFileNotFound");
-        addErrorCode(NAMESPACE, MISSING_REQUIRED_OPTION, "err.cmd.missingRequiredOption");
+        OpenStegoException.addErrorCodes(
+                NAMESPACE,
+                new int[] {
+                    INVALID_PASSWORD,
+                    INVALID_USE_COMPR_VALUE,
+                    INVALID_USE_ENCRYPT_VALUE,
+                    INVALID_KEY_NAME,
+                    INVALID_CRYPT_ALGO,
+                    USERPREF_INVALID_INT,
+                    USERPREF_INVALID_FLOAT,
+                    USERPREF_INVALID_BOOL,
+                    CORRUPT_DATA,
+                    NO_VALID_PLUGIN,
+                    IMAGE_TYPE_INVALID,
+                    IMAGE_FILE_INVALID,
+                    NO_PLUGIN_SPECIFIED,
+                    PLUGIN_DOES_NOT_SUPPORT_WM,
+                    PLUGIN_DOES_NOT_SUPPORT_DH,
+                    PLUGIN_NOT_FOUND,
+                    IMAGE_SIZE_MISMATCH,
+                    PWD_MANDATORY_FOR_GENSIG,
+                    SPLIT_REQUIRES_MULTIPLE_COVERS,
+                    SPLIT_REQUIRES_MULTIPLE_PARTS,
+                    SPLIT_INSUFFICIENT_CAPACITY,
+                    SPLIT_MANIFEST_CORRUPT,
+                    SPLIT_MANIFEST_INCOMPLETE,
+                    SPLIT_MANIFEST_MISMATCH,
+                    SPLIT_REQUIRES_OUTPUT_DIR,
+                    SPLIT_NOT_SUPPORTED,
+                    PASSWORD_REQUIRED,
+                    COVER_FILE_NOT_FOUND,
+                    MISSING_REQUIRED_OPTION
+                },
+                new String[] {
+                    "err.config.password.invalid",
+                    "err.config.useCompression.invalid",
+                    "err.config.useEncryption.invalid",
+                    "err.config.invalidKey",
+                    "err.config.invalidCryptAlgo",
+                    "err.userpref.valueNotInteger",
+                    "err.userpref.valueNotFloat",
+                    "err.userpref.valueNotBoolean",
+                    "err.corruptData",
+                    "err.noValidPlugin",
+                    "err.image.type.invalid",
+                    "err.image.file.invalid",
+                    "err.plugin.notSpecified",
+                    "err.plugin.wmNotSupported",
+                    "err.plugin.dhNotSupported",
+                    "err.plugin.notFound",
+                    "err.image.size.mismatch",
+                    "err.gensig.pwdMandatory",
+                    "err.split.requiresMultipleCovers",
+                    "err.split.requiresMultipleParts",
+                    "err.split.insufficientCapacity",
+                    "err.split.manifestCorrupt",
+                    "err.split.manifestIncomplete",
+                    "err.split.manifestMismatch",
+                    "err.split.requiresOutputDir",
+                    "err.split.notSupported",
+                    "err.passwordRequired",
+                    "cmd.msg.coverFileNotFound",
+                    "err.cmd.missingRequiredOption"
+                });
     }
 }

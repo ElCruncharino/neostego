@@ -9,7 +9,13 @@ decision is the majority vote, and the averaged standardized projection serves a
 a continuous score for ROC AUC. numpy only -- no sklearn.
 """
 
+import os
+import sys
+
 import numpy as np
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from eval_common import auc_score, p_error  # noqa: F401  (re-exported for callers)
 
 
 class FldEnsemble:
@@ -86,42 +92,3 @@ class FldEnsemble:
 
     def predict(self, x):
         return (self.decision_scores(x) >= 0.5).astype(int)
-
-
-def auc_score(labels, scores):
-    """Mann-Whitney U AUC (handles ties by average rank)."""
-    labels = np.asarray(labels)
-    scores = np.asarray(scores, dtype=np.float64)
-    order = np.argsort(scores, kind="mergesort")
-    ranks = np.empty(len(scores), dtype=np.float64)
-    sorted_s = scores[order]
-    i = 0
-    while i < len(sorted_s):
-        j = i
-        while j + 1 < len(sorted_s) and sorted_s[j + 1] == sorted_s[i]:
-            j += 1
-        ranks[order[i:j + 1]] = (i + j) / 2.0 + 1.0
-        i = j + 1
-    pos = labels == 1
-    n_pos = pos.sum()
-    n_neg = len(labels) - n_pos
-    if n_pos == 0 or n_neg == 0:
-        return float("nan")
-    return (ranks[pos].sum() - n_pos * (n_pos + 1) / 2.0) / (n_pos * n_neg)
-
-
-def p_error(labels, scores):
-    """Minimal P_E = min_t 0.5*(P_FA + P_MD)."""
-    labels = np.asarray(labels)
-    scores = np.asarray(scores, dtype=np.float64)
-    pos = labels == 1
-    neg = ~pos
-    n_pos = max(1, pos.sum())
-    n_neg = max(1, neg.sum())
-    best = 1.0
-    for t in np.unique(scores):
-        pred = scores >= t
-        p_fa = (pred & neg).sum() / n_neg
-        p_md = (~pred & pos).sum() / n_pos
-        best = min(best, 0.5 * (p_fa + p_md))
-    return best
