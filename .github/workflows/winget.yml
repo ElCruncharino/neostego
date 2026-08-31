@@ -8,8 +8,6 @@ name: Submit to winget
 # microsoft/winget-pkgs (ElCruncharino/winget-pkgs). See the action docs for scope.
 
 on:
-  release:
-    types: [released]   # fires when a release is published (not on drafts/pre-releases)
   workflow_dispatch:
     inputs:
       tag:

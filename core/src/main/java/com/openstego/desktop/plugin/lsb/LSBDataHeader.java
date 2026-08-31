@@ -9,7 +9,6 @@ package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
-import com.openstego.desktop.util.CommonUtil;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -120,10 +119,10 @@ public class LSBDataHeader {
             if (n < FIXED_HEADER_LENGTH) {
                 throw new OpenStegoException(null, LSBPlugin.NAMESPACE, LSBErrors.INVALID_STEGO_HEADER);
             }
-            this.dataLength = (CommonUtil.byteToInt(header[0])
-                    + (CommonUtil.byteToInt(header[1]) << 8)
-                    + (CommonUtil.byteToInt(header[2]) << 16)
-                    + (CommonUtil.byteToInt(header[3]) << 24));
+            this.dataLength = (Byte.toUnsignedInt(header[0])
+                    + (Byte.toUnsignedInt(header[1]) << 8)
+                    + (Byte.toUnsignedInt(header[2]) << 16)
+                    + (Byte.toUnsignedInt(header[3]) << 24));
             channelBits = header[4];
             // Read filename length as an unsigned byte so that names of 128-255 bytes are handled correctly
             fileNameLen = header[5] & 0xFF;
