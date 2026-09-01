@@ -47,7 +47,7 @@ jobs:
       # Arch, Fedora Rawhide) with a "pure virtual method called" coredump; JDK 25's launcher doesn't.
       # Temurin 25 ships jmods, so jpackage still jlinks a minimal runtime (no size blow-up).
       - name: Set up JDKs (25 for jpackage, 21 for the build)
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: |
             25
@@ -101,7 +101,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: '21'
           distribution: 'temurin'
