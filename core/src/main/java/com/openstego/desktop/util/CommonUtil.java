@@ -135,8 +135,7 @@ public class CommonUtil {
             // case-insensitive semantics of the original hand-rolled regex filter.
             java.nio.file.PathMatcher matcher =
                     FileSystems.getDefault().getPathMatcher("glob:" + fileName.toLowerCase());
-            File[] arrFile =
-                    fileDir.listFiles((dir, name) -> matcher.matches(Paths.get(name.toLowerCase())));
+            File[] arrFile = fileDir.listFiles((dir, name) -> matcher.matches(Paths.get(name.toLowerCase())));
             if (arrFile != null && arrFile.length > 0) {
                 Collections.addAll(output, arrFile);
             } else if (!hasWildcard) {

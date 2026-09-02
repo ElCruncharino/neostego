@@ -3,9 +3,12 @@
 # Pre-push guardrail: run the Kotlin formatting check before pushing, since a ktlint
 # violation slipping to master has broken CI before (see the "unbreak master CI" fixups).
 #
-# Scope is Kotlin only on purpose: the Java/palantir spotless step can't run reliably on a
-# local JDK 25 (it crashes on javac internals), so it stays enforced in CI. This hook catches
-# the failure mode that actually recurs locally.
+# Scope is Kotlin only on purpose: the Java/palantir spotless step needs JDK 16+ module
+# exports (--add-exports for jdk.compiler's javac.* packages) that a stale project-local
+# .gradle/ cache can silently poison after switching JDKs, producing a confusing
+# NoSuchMethodError instead of a real diff. If that happens, `./gradlew --stop && rm -rf
+# .gradle` clears it. Given that fragility, Java formatting stays enforced in CI only; this
+# hook catches the failure mode that actually recurs locally (Kotlin).
 #
 # Enable once per clone:   git config core.hooksPath .githooks
 # Bypass for one push:     git push --no-verify

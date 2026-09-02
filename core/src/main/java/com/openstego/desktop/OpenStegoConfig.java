@@ -136,8 +136,7 @@ public class OpenStegoConfig {
                         && !OpenStegoCrypto.ALGO_AES128.equals(algo)
                         && !OpenStegoCrypto.ALGO_AES256.equals(algo)
                         && !OpenStegoCrypto.ALGO_DES.equals(algo)) {
-                    throw new OpenStegoException(
-                            null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, value);
+                    throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO, value);
                 }
                 this.encryptionAlgorithm = algo;
                 break;

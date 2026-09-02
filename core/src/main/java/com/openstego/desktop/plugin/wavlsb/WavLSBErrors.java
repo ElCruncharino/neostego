@@ -32,7 +32,13 @@ public class WavLSBErrors {
     public static void init() {
         OpenStegoException.addErrorCodes(
                 WavLSBPlugin.NAMESPACE,
-                new int[] {AUDIO_SIZE_INSUFFICIENT, INVALID_WAV_FILE, UNSUPPORTED_WAV_FORMAT, NO_COVER_FILE, ERR_AUDIO_DATA_READ},
+                new int[] {
+                    AUDIO_SIZE_INSUFFICIENT,
+                    INVALID_WAV_FILE,
+                    UNSUPPORTED_WAV_FORMAT,
+                    NO_COVER_FILE,
+                    ERR_AUDIO_DATA_READ
+                },
                 new String[] {
                     "err.audio.insufficientSize",
                     "err.audio.invalidWav",
