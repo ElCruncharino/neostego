@@ -47,7 +47,8 @@ class FileDropTransferHandler extends TransferHandler {
                     return false;
                 }
                 if (this.multiSelect) {
-                    this.target.setText(String.join(";", files.stream().map(File::getPath).toList()));
+                    this.target.setText(
+                            String.join(";", files.stream().map(File::getPath).toList()));
                 } else {
                     this.target.setText(files.get(0).getPath());
                 }

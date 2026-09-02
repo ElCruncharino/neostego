@@ -900,6 +900,7 @@ public interface Blake2bHash {
         public long[] initialized_H() {
             return h;
         }
+
         final byte getByteParam(final int xoffset) {
             byte[] _bytes = bytes;
             if (_bytes == null) _bytes = Param.default_bytes;
@@ -953,6 +954,5 @@ public interface Blake2bHash {
         public final boolean hasKey() {
             return this.hasKey;
         }
-
     }
 }

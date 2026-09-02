@@ -31,6 +31,7 @@ public class F5Errors {
         OpenStegoException.addErrorCodes(
                 F5Plugin.NAMESPACE,
                 new int[] {IMAGE_SIZE_INSUFFICIENT, ERR_IMAGE_DATA_READ, ERR_JPEG, ERR_COVER_REQUIRED},
-                new String[] {"err.image.insufficientSize", "err.image.read", "err.jpeg.invalid", "err.cover.required"});
+                new String[] {"err.image.insufficientSize", "err.image.read", "err.jpeg.invalid", "err.cover.required"
+                });
     }
 }

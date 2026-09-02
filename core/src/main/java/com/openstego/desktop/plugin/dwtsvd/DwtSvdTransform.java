@@ -380,7 +380,10 @@ final class DwtSvdTransform {
             });
         }
 
-        /** Horizontal periodic convolution of one full-width row into a coarseW-length output (matches filterPeriodical). */
+        /**
+         * Horizontal periodic convolution of one full-width row into a coarseW-length output (matches
+         * filterPeriodical).
+         */
         private void horizontal(Filter filter, double[] in, double[] out) {
             int fStart = filter.getStart();
             int fEnd = filter.getEnd();
