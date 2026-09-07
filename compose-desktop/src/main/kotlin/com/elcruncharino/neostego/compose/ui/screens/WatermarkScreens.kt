@@ -47,6 +47,35 @@ import com.elcruncharino.neostego.compose.ui.FilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
 import com.elcruncharino.neostego.compose.ui.ResultCard
 import com.elcruncharino.neostego.compose.ui.SectionLabel
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.action_embed_watermark
+import openstego.compose_desktop.generated.resources.action_generate_signature
+import openstego.compose_desktop.generated.resources.action_verify_watermark
+import openstego.compose_desktop.generated.resources.allowed_extensions_hint
+import openstego.compose_desktop.generated.resources.cover_file_label
+import openstego.compose_desktop.generated.resources.cover_file_watermark_hint_generic
+import openstego.compose_desktop.generated.resources.output_file_label
+import openstego.compose_desktop.generated.resources.output_watermarked_hint_generic
+import openstego.compose_desktop.generated.resources.result_saved_signature_to
+import openstego.compose_desktop.generated.resources.result_wrote_watermarked_file_to
+import openstego.compose_desktop.generated.resources.saved_as_hint
+import openstego.compose_desktop.generated.resources.section_key
+import openstego.compose_desktop.generated.resources.signature_file_embed_hint
+import openstego.compose_desktop.generated.resources.signature_file_label
+import openstego.compose_desktop.generated.resources.signature_file_original_hint
+import openstego.compose_desktop.generated.resources.signature_file_save_hint
+import openstego.compose_desktop.generated.resources.verdict_correlation
+import openstego.compose_desktop.generated.resources.verdict_failed_title
+import openstego.compose_desktop.generated.resources.verdict_verification_failed
+import openstego.compose_desktop.generated.resources.verdict_watermark_absent
+import openstego.compose_desktop.generated.resources.verdict_watermark_present
+import openstego.compose_desktop.generated.resources.verdict_weak_match
+import openstego.compose_desktop.generated.resources.watermark_embed_intro
+import openstego.compose_desktop.generated.resources.watermark_generate_intro
+import openstego.compose_desktop.generated.resources.watermark_verify_intro
+import openstego.compose_desktop.generated.resources.watermarked_file_check_hint_generic
+import openstego.compose_desktop.generated.resources.watermarked_file_label
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 private val SIG = listOf("sig")
@@ -59,24 +88,27 @@ fun GenerateSignatureScreen(algorithms: List<AlgoInfo>) {
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Result<String>?>(null) }
 
+    val savedSignatureToTemplate = stringResource(Res.string.result_saved_signature_to)
+
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
-        ScreenIntro("Create a watermark signature file from a secret key.")
+        ScreenIntro(stringResource(Res.string.watermark_generate_intro))
         AlgorithmSelector(algorithms, algorithm) { algorithm = it }
 
-        SectionLabel("Key")
+        val keyLabel = stringResource(Res.string.section_key)
+        SectionLabel(keyLabel)
         OutlinedTextField(
             value = key,
             onValueChange = { key = it },
-            label = { Text("Key") },
+            label = { Text(keyLabel) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
 
-        FilePickCard("Signature file", sigFile, "Where to save the .sig file") {
+        FilePickCard(stringResource(Res.string.signature_file_label), sigFile, stringResource(Res.string.signature_file_save_hint)) {
             pickFile(save = true, extensions = SIG, filterLabel = "Signature")?.let { sigFile = it }
         }
 
-        PrimaryActionButton("Generate signature", busy = busy, onClick = {
+        PrimaryActionButton(stringResource(Res.string.action_generate_signature), busy = busy, onClick = {
             busy = true
             result = null
             Thread {
@@ -84,7 +116,7 @@ fun GenerateSignatureScreen(algorithms: List<AlgoInfo>) {
                 busy = false
             }.start()
         })
-        result?.let { ResultCard(it) { path -> "Saved signature to $path" } }
+        result?.let { ResultCard(it) { path -> savedSignatureToTemplate.format(path) } }
     }
 }
 
@@ -97,31 +129,33 @@ fun EmbedWatermarkScreen(algorithms: List<AlgoInfo>) {
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Result<String>?>(null) }
 
+    val wroteWatermarkedFileToTemplate = stringResource(Res.string.result_wrote_watermarked_file_to)
+
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
-        ScreenIntro("Embed a signature into a cover file as an invisible watermark.")
+        ScreenIntro(stringResource(Res.string.watermark_embed_intro))
         AlgorithmSelector(algorithms, algorithm) { algorithm = it }
 
         val coverExts = algorithm?.coverExtensions.orEmpty()
         val stegoExts = algorithm?.stegoExtensions.orEmpty()
-        FilePickCard("Signature file", sigFile, "The .sig to embed") {
+        FilePickCard(stringResource(Res.string.signature_file_label), sigFile, stringResource(Res.string.signature_file_embed_hint)) {
             pickFile(save = false, extensions = SIG, filterLabel = "Signature")?.let { sigFile = it }
         }
         FilePickCard(
-            "Cover file",
+            stringResource(Res.string.cover_file_label),
             coverFile,
-            if (coverExts.isEmpty()) "The file to watermark" else "Allowed: ${coverExts.joinToString(", ")}",
+            if (coverExts.isEmpty()) stringResource(Res.string.cover_file_watermark_hint_generic) else stringResource(Res.string.allowed_extensions_hint, coverExts.joinToString(", ")),
         ) {
             pickFile(save = false, extensions = coverExts, filterLabel = "Cover files")?.let { coverFile = it }
         }
         FilePickCard(
-            "Output file",
+            stringResource(Res.string.output_file_label),
             outputFile,
-            if (stegoExts.isEmpty()) "Where to save the watermarked file" else "Saved as: ${stegoExts.joinToString(", ")}",
+            if (stegoExts.isEmpty()) stringResource(Res.string.output_watermarked_hint_generic) else stringResource(Res.string.saved_as_hint, stegoExts.joinToString(", ")),
         ) {
             pickFile(save = true, extensions = stegoExts, filterLabel = "Watermarked")?.let { outputFile = it }
         }
 
-        PrimaryActionButton("Embed watermark", busy = busy, onClick = {
+        PrimaryActionButton(stringResource(Res.string.action_embed_watermark), busy = busy, onClick = {
             busy = true
             result = null
             Thread {
@@ -131,7 +165,7 @@ fun EmbedWatermarkScreen(algorithms: List<AlgoInfo>) {
                 busy = false
             }.start()
         })
-        result?.let { ResultCard(it) { path -> "Wrote watermarked file to $path" } }
+        result?.let { ResultCard(it) { path -> wroteWatermarkedFileToTemplate.format(path) } }
     }
 }
 
@@ -144,22 +178,22 @@ fun VerifyWatermarkScreen(algorithms: List<AlgoInfo>) {
     var verdict by remember { mutableStateOf<Result<Verdict>?>(null) }
 
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
-        ScreenIntro("Check whether a file carries a given watermark signature.")
+        ScreenIntro(stringResource(Res.string.watermark_verify_intro))
         AlgorithmSelector(algorithms, algorithm) { algorithm = it }
 
         val exts = algorithm?.coverExtensions.orEmpty()
         FilePickCard(
-            "Watermarked file",
+            stringResource(Res.string.watermarked_file_label),
             watermarkedFile,
-            if (exts.isEmpty()) "The file to check" else "Allowed: ${exts.joinToString(", ")}",
+            if (exts.isEmpty()) stringResource(Res.string.watermarked_file_check_hint_generic) else stringResource(Res.string.allowed_extensions_hint, exts.joinToString(", ")),
         ) {
             pickFile(save = false, extensions = exts, filterLabel = "Image files")?.let { watermarkedFile = it }
         }
-        FilePickCard("Signature file", sigFile, "The original .sig") {
+        FilePickCard(stringResource(Res.string.signature_file_label), sigFile, stringResource(Res.string.signature_file_original_hint)) {
             pickFile(save = false, extensions = SIG, filterLabel = "Signature")?.let { sigFile = it }
         }
 
-        PrimaryActionButton("Verify watermark", busy = busy, onClick = {
+        PrimaryActionButton(stringResource(Res.string.action_verify_watermark), busy = busy, onClick = {
             busy = true
             verdict = null
             Thread {
@@ -183,17 +217,23 @@ private fun VerdictCard(result: Result<Verdict>) {
     val v = result.getOrNull()
     if (v != null) {
         val sc = verdictColors(v.level)
-        val pct = "Correlation: ${(v.correlation * 100).roundToInt()}%"
+        val pct = stringResource(Res.string.verdict_correlation, (v.correlation * 100).roundToInt())
         // Icon + text + contrast-safe colour so the verdict never depends on colour alone (WCAG 1.4.1).
         val (icon, title) = when (v.level) {
-            VerdictLevel.PRESENT -> Icons.Filled.CheckCircle to "Watermark present"
-            VerdictLevel.WEAK -> Icons.Filled.Warning to "Weak / partial match"
-            VerdictLevel.ABSENT -> Icons.Filled.Cancel to "Watermark absent"
+            VerdictLevel.PRESENT -> Icons.Filled.CheckCircle to stringResource(Res.string.verdict_watermark_present)
+            VerdictLevel.WEAK -> Icons.Filled.Warning to stringResource(Res.string.verdict_weak_match)
+            VerdictLevel.ABSENT -> Icons.Filled.Cancel to stringResource(Res.string.verdict_watermark_absent)
         }
         VerdictBox(icon, sc.container, sc.content, title, pct)
     } else {
         val sc = verdictColors(VerdictLevel.ABSENT)
-        VerdictBox(Icons.Filled.Error, sc.container, sc.content, "Failed", result.exceptionOrNull()?.message ?: "Verification failed")
+        VerdictBox(
+            Icons.Filled.Error,
+            sc.container,
+            sc.content,
+            stringResource(Res.string.verdict_failed_title),
+            result.exceptionOrNull()?.message ?: stringResource(Res.string.verdict_verification_failed),
+        )
     }
 }
 
