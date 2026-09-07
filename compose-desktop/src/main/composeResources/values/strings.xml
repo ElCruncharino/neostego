@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell / navigation (Shell.kt, Main.kt) -->
+    <string name="app_name">NeoStego</string>
+    <string name="app_title_with_destination">NeoStego — %1$s</string>
+    <string name="destination_hide">Hide data</string>
+    <string name="destination_extract">Extract data</string>
+    <string name="destination_generate_signature">Generate signature</string>
+    <string name="destination_embed_watermark">Embed watermark</string>
+    <string name="destination_verify_watermark">Verify watermark</string>
+    <string name="destination_settings">Settings</string>
+    <string name="section_data_hiding">Data hiding</string>
+    <string name="section_digital_watermarking">Digital watermarking</string>
+
+    <!-- Shared components (Components.kt) -->
+    <string name="file_pick_drop_hint">Drop the file to use it</string>
+    <string name="file_pick_choose">Choose</string>
+    <string name="file_pick_change">Change</string>
+    <string name="file_pick_choose_content_description">Choose %1$s</string>
+    <string name="file_pick_change_content_description">Change %1$s</string>
+    <string name="password_field_default_label">Password (optional)</string>
+    <string name="password_field_show">Show</string>
+    <string name="password_field_hide">Hide</string>
+    <string name="action_button_working">Working…</string>
+    <string name="action_button_working_progress">Working… %1$d%%</string>
+    <string name="action_button_state_working">Working</string>
+    <string name="action_button_state_ready">Ready</string>
+    <string name="result_card_done">Done</string>
+    <string name="result_card_failed">Failed</string>
+
+    <!-- Advanced options panel (AdvancedOptionsPanel.kt) -->
+    <string name="advanced_options_header">Advanced options</string>
+    <string name="advanced_options_collapse_content_description">Collapse advanced options</string>
+    <string name="advanced_options_expand_content_description">Expand advanced options</string>
+    <string name="option_lsb_max_bits_label">Maximum bits per color channel</string>
+    <string name="option_lsb_max_bits_explanation">How many least-significant bits of each colour channel to overwrite. Higher hides more data but distorts the image more and is easier to detect. Default 3.</string>
+    <string name="option_adaptive_cmd_label">Cluster changes (CMD)</string>
+    <string name="option_adaptive_cmd_explanation">Groups the +/-1 pixel changes so they reinforce each other, which resists statistical steganalysis. Default on.</string>
+    <string name="option_adaptive_mu_label">Clustering strength (mu)</string>
+    <string name="option_adaptive_mu_explanation">How strongly the changes cluster together. Higher concentrates them more. Default 3.0.</string>
+    <string name="option_jpeg_quality_label">JPEG quality</string>
+    <string name="option_jpeg_quality_explanation">Quality of the output JPEG (50-100). Higher means better image quality and more capacity, but a larger file. Default 90.</string>
+
+    <!-- Algorithm selector (AlgorithmSelector.kt) -->
+    <string name="algorithm_label">Algorithm</string>
+    <string name="algorithm_none_selected">none selected</string>
+    <string name="algorithm_content_description">Algorithm: %1$s</string>
+
+    <!-- Shared across Hide / Extract / Watermark screens -->
+    <string name="section_source">Source</string>
+    <string name="section_cover_mode">Cover mode</string>
+    <string name="section_encryption">Encryption</string>
+    <string name="section_key">Key</string>
+    <string name="section_theme">Theme</string>
+    <string name="section_about">About</string>
+    <string name="encryption_none">None</string>
+    <string name="password_required_label">Password (required for encryption)</string>
+    <string name="password_confirm_label">Confirm password</string>
+    <string name="cover_file_label">Cover file</string>
+    <string name="output_file_label">Output file</string>
+    <string name="signature_file_label">Signature file</string>
+    <string name="saved_as_hint">Saved as: %1$s</string>
+    <string name="allowed_extensions_hint">Allowed: %1$s</string>
+    <string name="selection_summary">%1$d selected: %2$s</string>
+
+    <!-- Hide data screen (HideScreen.kt) -->
+    <string name="hide_screen_intro">Hide secret data inside an innocuous cover file.</string>
+    <string name="hide_message_file_label">Message file</string>
+    <string name="hide_message_file_hint">Choose or drag your secret file to hide here</string>
+    <string name="mode_single_cover">One cover</string>
+    <string name="mode_random_image">Random image</string>
+    <string name="mode_batch">Batch</string>
+    <string name="mode_split">Split</string>
+    <string name="mode_hint_fell_back">This algorithm isn\'t image-based, so only a single cover is available.</string>
+    <string name="mode_hint_single">Hide the message in one cover file.</string>
+    <string name="mode_hint_random">Generate a random-noise image as the cover — no cover file needed.</string>
+    <string name="mode_hint_batch">Hide the same message separately in each chosen cover.</string>
+    <string name="mode_hint_split">Spread one message across several covers. All resulting parts are needed to extract it.</string>
+    <string name="hide_cover_file_hint_generic">Choose or drag the cover file to hide it in here</string>
+    <string name="hide_cover_file_hint_exts">Choose or drag a cover here (%1$s)</string>
+    <string name="hide_output_stego_label">Output stego file</string>
+    <string name="hide_output_stego_hint_generic">Where to save the result</string>
+    <string name="hide_output_random_hint_generic">Where to save the generated image</string>
+    <string name="hide_output_folder_label">Output folder</string>
+    <string name="hide_output_folder_hint">Where to save the stego files</string>
+    <string name="multi_cover_files_label">Cover files</string>
+    <string name="multi_cover_choose_hint">Choose two or more covers</string>
+    <string name="multi_cover_choose">Choose covers</string>
+    <string name="multi_cover_change">Change covers</string>
+    <string name="action_hide_data">Hide data</string>
+    <string name="action_generate_cover_and_hide">Generate cover &amp; hide</string>
+    <string name="action_hide_in_each_cover">Hide in each cover</string>
+    <string name="action_hide_in_n_covers">Hide in %1$d covers</string>
+    <string name="action_split_across_covers">Split across covers</string>
+    <string name="action_split_across_n_covers">Split across %1$d covers</string>
+    <string name="error_passwords_do_not_match">Passwords do not match.</string>
+    <string name="result_wrote_stego_file">Wrote stego file to %1$s</string>
+    <string name="result_wrote_n_stego_files">Wrote %1$d stego files to %2$s</string>
+    <string name="result_split_into_n_parts">Split into %1$d parts in %2$s — keep all parts to extract</string>
+    <string name="capacity_label">Capacity: ~%1$s</string>
+    <string name="capacity_too_small">Message too large for this cover</string>
+    <string name="capacity_message_of_available">Message is %1$s of ~%2$s available.</string>
+
+    <!-- Extract data screen (ExtractScreen.kt) -->
+    <string name="extract_screen_intro">Recover a hidden message from a stego file.</string>
+    <string name="extract_mode_single_file">Single file</string>
+    <string name="extract_mode_reassemble_split">Reassemble split</string>
+    <string name="extract_hint_reassemble">Select all parts of a split payload to reassemble the original message.</string>
+    <string name="extract_hint_single">Recover the message from a single stego file.</string>
+    <string name="extract_stego_file_label">Stego file</string>
+    <string name="extract_stego_file_hint">Choose or drag the file with hidden data here</string>
+    <string name="extract_output_folder_hint">Where to save the extracted message</string>
+    <string name="action_extract_data">Extract data</string>
+    <string name="action_reassemble_and_extract">Reassemble &amp; extract</string>
+    <string name="action_reassemble_n_parts">Reassemble %1$d parts</string>
+    <string name="result_extracted_message_to">Extracted message to %1$s</string>
+    <string name="split_parts_label">Split parts</string>
+    <string name="split_parts_choose_hint">Choose every part of the split</string>
+    <string name="split_parts_choose">Choose parts</string>
+    <string name="split_parts_change">Change parts</string>
+
+    <!-- Settings screen (SettingsScreen.kt) -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="about_app_name_version">NeoStego %1$s</string>
+    <string name="about_tagline">Hide data inside images and audio, and watermark your files.</string>
+    <string name="about_fork_credit">A modernized fork of OpenStego by Samir Vaidya. Maintained by Nick Haghiri.</string>
+    <string name="about_license">Licensed under the GNU General Public License v2.</string>
+    <string name="about_accessibility_note">Using a screen reader on Linux? The classic (Swing) UI and the command-line interface are fully accessible.</string>
+
+    <!-- Watermark screens (WatermarkScreens.kt) -->
+    <string name="watermark_generate_intro">Create a watermark signature file from a secret key.</string>
+    <string name="signature_file_save_hint">Where to save the .sig file</string>
+    <string name="action_generate_signature">Generate signature</string>
+    <string name="result_saved_signature_to">Saved signature to %1$s</string>
+    <string name="watermark_embed_intro">Embed a signature into a cover file as an invisible watermark.</string>
+    <string name="signature_file_embed_hint">The .sig to embed</string>
+    <string name="cover_file_watermark_hint_generic">The file to watermark</string>
+    <string name="output_watermarked_hint_generic">Where to save the watermarked file</string>
+    <string name="action_embed_watermark">Embed watermark</string>
+    <string name="result_wrote_watermarked_file_to">Wrote watermarked file to %1$s</string>
+    <string name="watermark_verify_intro">Check whether a file carries a given watermark signature.</string>
+    <string name="watermarked_file_label">Watermarked file</string>
+    <string name="watermarked_file_check_hint_generic">The file to check</string>
+    <string name="signature_file_original_hint">The original .sig</string>
+    <string name="action_verify_watermark">Verify watermark</string>
+    <string name="verdict_correlation">Correlation: %1$d%%</string>
+    <string name="verdict_watermark_present">Watermark present</string>
+    <string name="verdict_weak_match">Weak / partial match</string>
+    <string name="verdict_watermark_absent">Watermark absent</string>
+    <string name="verdict_failed_title">Failed</string>
+    <string name="verdict_verification_failed">Verification failed</string>
+</resources>

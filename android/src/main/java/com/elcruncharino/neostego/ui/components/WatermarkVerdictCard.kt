@@ -27,8 +27,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.theme.VerdictLevel
 import com.elcruncharino.neostego.theme.verdictColors
@@ -39,9 +41,9 @@ fun WatermarkVerdictCard(verdict: StegoEngine.WmVerdict) {
     // Pair every verdict with a distinct icon as well as a colour, so the result is not conveyed
     // by colour alone (colour-blind / low-vision users) and reads correctly under TalkBack.
     val (label, level, icon) = when {
-        verdict.present -> Triple("Watermark present", VerdictLevel.PRESENT, Icons.Filled.CheckCircle)
-        verdict.weak -> Triple("Weak / uncertain watermark", VerdictLevel.WEAK, Icons.Filled.Warning)
-        else -> Triple("No watermark detected", VerdictLevel.ABSENT, Icons.Filled.Cancel)
+        verdict.present -> Triple(stringResource(R.string.verdict_present), VerdictLevel.PRESENT, Icons.Filled.CheckCircle)
+        verdict.weak -> Triple(stringResource(R.string.verdict_weak), VerdictLevel.WEAK, Icons.Filled.Warning)
+        else -> Triple(stringResource(R.string.verdict_absent), VerdictLevel.ABSENT, Icons.Filled.Cancel)
     }
     // Render the verdict on its own contrast-checked container (see verdictColors) rather than on the
     // dynamic surfaceVariant, so the AA contrast holds regardless of the Material You palette/theme.
@@ -65,7 +67,7 @@ fun WatermarkVerdictCard(verdict: StegoEngine.WmVerdict) {
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                "Correlation %.2f (strong ≥ %.2f, weak ≥ %.2f)".format(verdict.correlation, verdict.high, verdict.low),
+                stringResource(R.string.verdict_correlation_detail, verdict.correlation, verdict.high, verdict.low),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

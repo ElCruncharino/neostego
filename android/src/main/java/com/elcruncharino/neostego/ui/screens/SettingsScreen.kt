@@ -33,8 +33,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.data.ThemeMode
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.SegmentedButtonGroup
@@ -57,17 +59,21 @@ fun SettingsScreen(appState: AppState) {
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            "Personalize the look. Choices are saved on this device.",
+            stringResource(R.string.settings_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("Theme", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.label_theme), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
                 SegmentedButtonGroup(
-                    options = listOf("System", "Light", "Dark"),
+                    options = listOf(
+                        stringResource(R.string.theme_system),
+                        stringResource(R.string.theme_light),
+                        stringResource(R.string.theme_dark),
+                    ),
                     selectedIndex = when (prefs.themeMode) {
                         ThemeMode.SYSTEM -> 0
                         ThemeMode.LIGHT -> 1
@@ -95,9 +101,9 @@ fun SettingsScreen(appState: AppState) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Dynamic colour", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.label_dynamic_color), fontWeight = FontWeight.SemiBold)
                         Text(
-                            "Recolour from your wallpaper. Turn off to use a fixed colour below.",
+                            stringResource(R.string.hint_dynamic_color),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -109,9 +115,9 @@ fun SettingsScreen(appState: AppState) {
 
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("Accent colour", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.label_accent_color), fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Pick a fixed accent colour for the app.",
+                    stringResource(R.string.hint_accent_color),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -121,7 +127,7 @@ fun SettingsScreen(appState: AppState) {
                     SeedSwatch(
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         selected = prefs.seedColorArgb == null,
-                        label = "Default",
+                        label = stringResource(R.string.label_default_color),
                         onClick = { prefs.updateSeedColor(null) },
                     )
                     SEED_PRESETS.forEach { argb ->

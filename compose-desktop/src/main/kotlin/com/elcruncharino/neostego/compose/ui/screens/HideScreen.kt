@@ -41,19 +41,63 @@ import com.elcruncharino.neostego.compose.ui.ResultCard
 import com.elcruncharino.neostego.compose.ui.SectionLabel
 import com.elcruncharino.neostego.compose.ui.SecurePasswordField
 import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
-
-private val ENCRYPTION = listOf("None", "AES128", "AES256")
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.action_generate_cover_and_hide
+import openstego.compose_desktop.generated.resources.action_hide_data
+import openstego.compose_desktop.generated.resources.action_hide_in_each_cover
+import openstego.compose_desktop.generated.resources.action_hide_in_n_covers
+import openstego.compose_desktop.generated.resources.action_split_across_covers
+import openstego.compose_desktop.generated.resources.action_split_across_n_covers
+import openstego.compose_desktop.generated.resources.capacity_label
+import openstego.compose_desktop.generated.resources.capacity_message_of_available
+import openstego.compose_desktop.generated.resources.capacity_too_small
+import openstego.compose_desktop.generated.resources.cover_file_label
+import openstego.compose_desktop.generated.resources.encryption_none
+import openstego.compose_desktop.generated.resources.error_passwords_do_not_match
+import openstego.compose_desktop.generated.resources.hide_cover_file_hint_exts
+import openstego.compose_desktop.generated.resources.hide_cover_file_hint_generic
+import openstego.compose_desktop.generated.resources.hide_message_file_hint
+import openstego.compose_desktop.generated.resources.hide_message_file_label
+import openstego.compose_desktop.generated.resources.hide_output_folder_hint
+import openstego.compose_desktop.generated.resources.hide_output_folder_label
+import openstego.compose_desktop.generated.resources.hide_output_random_hint_generic
+import openstego.compose_desktop.generated.resources.hide_output_stego_hint_generic
+import openstego.compose_desktop.generated.resources.hide_output_stego_label
+import openstego.compose_desktop.generated.resources.hide_screen_intro
+import openstego.compose_desktop.generated.resources.mode_batch
+import openstego.compose_desktop.generated.resources.mode_hint_batch
+import openstego.compose_desktop.generated.resources.mode_hint_fell_back
+import openstego.compose_desktop.generated.resources.mode_hint_random
+import openstego.compose_desktop.generated.resources.mode_hint_single
+import openstego.compose_desktop.generated.resources.mode_hint_split
+import openstego.compose_desktop.generated.resources.mode_random_image
+import openstego.compose_desktop.generated.resources.mode_single_cover
+import openstego.compose_desktop.generated.resources.mode_split
+import openstego.compose_desktop.generated.resources.multi_cover_change
+import openstego.compose_desktop.generated.resources.multi_cover_choose
+import openstego.compose_desktop.generated.resources.multi_cover_choose_hint
+import openstego.compose_desktop.generated.resources.multi_cover_files_label
+import openstego.compose_desktop.generated.resources.password_confirm_label
+import openstego.compose_desktop.generated.resources.password_field_default_label
+import openstego.compose_desktop.generated.resources.password_required_label
+import openstego.compose_desktop.generated.resources.result_split_into_n_parts
+import openstego.compose_desktop.generated.resources.result_wrote_n_stego_files
+import openstego.compose_desktop.generated.resources.result_wrote_stego_file
+import openstego.compose_desktop.generated.resources.saved_as_hint
+import openstego.compose_desktop.generated.resources.section_cover_mode
+import openstego.compose_desktop.generated.resources.section_encryption
+import openstego.compose_desktop.generated.resources.selection_summary
+import org.jetbrains.compose.resources.stringResource
 
 // Cover modes, in selector order. Image-only modes are disabled when the algorithm isn't image-based.
-private enum class Mode(val label: String, val imageOnly: Boolean) {
-    SINGLE("One cover", false),
-    RANDOM("Random image", true),
-    BATCH("Batch", false),
-    SPLIT("Split", true),
+private enum class Mode(val imageOnly: Boolean) {
+    SINGLE(false),
+    RANDOM(true),
+    BATCH(false),
+    SPLIT(true),
 }
 
 private val MODES = Mode.entries
-private val MODE_LABELS = MODES.map { it.label }
 
 @Composable
 fun HideScreen(algorithms: List<AlgoInfo>) {
@@ -91,20 +135,40 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
     }
     val messageSize = remember(messageFile) { messageFile?.let { fileSizeBytes(it) } }
 
+    // Raw templates resolved here (in composition) so background-thread result callbacks can format
+    // them with String.format without calling a @Composable off the main/composition context.
+    val wroteStegoFileTemplate = stringResource(Res.string.result_wrote_stego_file)
+    val wroteNStegoFilesTemplate = stringResource(Res.string.result_wrote_n_stego_files)
+    val splitIntoNPartsTemplate = stringResource(Res.string.result_split_into_n_parts)
+    val passwordsDoNotMatchMessage = stringResource(Res.string.error_passwords_do_not_match)
+
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
-            "Hide secret data inside an innocuous cover file.",
+            stringResource(Res.string.hide_screen_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        FilePickCard("Message file", messageFile, "Choose or drag your secret file to hide here", onFileDropped = { messageFile = it }) {
+        FilePickCard(
+            stringResource(Res.string.hide_message_file_label),
+            messageFile,
+            stringResource(Res.string.hide_message_file_hint),
+            onFileDropped = { messageFile = it },
+        ) {
             pickFile(save = false)?.let { messageFile = it }
         }
 
-        SectionLabel("Cover mode")
+        SectionLabel(stringResource(Res.string.section_cover_mode))
+        val modeLabels = MODES.map {
+            when (it) {
+                Mode.SINGLE -> stringResource(Res.string.mode_single_cover)
+                Mode.RANDOM -> stringResource(Res.string.mode_random_image)
+                Mode.BATCH -> stringResource(Res.string.mode_batch)
+                Mode.SPLIT -> stringResource(Res.string.mode_split)
+            }
+        }
         SegmentedButtonGroup(
-            MODE_LABELS,
+            modeLabels,
             modeIndex,
             onSelect = { modeIndex = it },
         )
@@ -113,34 +177,46 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
         when (effectiveMode) {
             Mode.SINGLE -> {
                 FilePickCard(
-                    "Cover file",
+                    stringResource(Res.string.cover_file_label),
                     coverFile,
-                    if (coverExts.isEmpty()) "Choose or drag the cover file to hide it in here" else "Choose or drag a cover here (${coverExts.joinToString(", ")})",
+                    if (coverExts.isEmpty()) {
+                        stringResource(Res.string.hide_cover_file_hint_generic)
+                    } else {
+                        stringResource(Res.string.hide_cover_file_hint_exts, coverExts.joinToString(", "))
+                    },
                     onFileDropped = { coverFile = it },
                 ) {
                     pickFile(save = false, extensions = coverExts, filterLabel = "Cover files")?.let { coverFile = it }
                 }
                 if (capacity != null) CapacityCard(capacity, messageSize)
                 FilePickCard(
-                    "Output stego file",
+                    stringResource(Res.string.hide_output_stego_label),
                     outputFile,
-                    if (stegoExts.isEmpty()) "Where to save the result" else "Saved as: ${stegoExts.joinToString(", ")}",
+                    if (stegoExts.isEmpty()) {
+                        stringResource(Res.string.hide_output_stego_hint_generic)
+                    } else {
+                        stringResource(Res.string.saved_as_hint, stegoExts.joinToString(", "))
+                    },
                 ) {
                     pickFile(save = true, extensions = stegoExts, filterLabel = "Stego files")?.let { outputFile = it }
                 }
             }
             Mode.RANDOM -> {
                 FilePickCard(
-                    "Output stego file",
+                    stringResource(Res.string.hide_output_stego_label),
                     outputFile,
-                    if (stegoExts.isEmpty()) "Where to save the generated image" else "Saved as: ${stegoExts.joinToString(", ")}",
+                    if (stegoExts.isEmpty()) {
+                        stringResource(Res.string.hide_output_random_hint_generic)
+                    } else {
+                        stringResource(Res.string.saved_as_hint, stegoExts.joinToString(", "))
+                    },
                 ) {
                     pickFile(save = true, extensions = stegoExts, filterLabel = "Stego files")?.let { outputFile = it }
                 }
             }
             Mode.BATCH, Mode.SPLIT -> {
                 MultiCoverCard(coverFiles, coverExts) { coverFiles = it }
-                FilePickCard("Output folder", outputDir, "Where to save the stego files") {
+                FilePickCard(stringResource(Res.string.hide_output_folder_label), outputDir, stringResource(Res.string.hide_output_folder_hint)) {
                     pickDirectory()?.let { outputDir = it }
                 }
             }
@@ -149,15 +225,17 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
         AlgorithmSelector(algorithms, algorithm) { algorithm = it }
         algorithm?.let { algo -> AdvancedOptionsPanel(algo.optionsKind, options) { newOpts -> options = newOpts } }
 
-        SectionLabel("Encryption")
-        SegmentedButtonGroup(ENCRYPTION, encIndex, onSelect = { encIndex = it })
+        SectionLabel(stringResource(Res.string.section_encryption))
+        val encryptionValues = listOf(null, "AES128", "AES256")
+        val encryptionLabels = listOf(stringResource(Res.string.encryption_none), "AES128", "AES256")
+        SegmentedButtonGroup(encryptionLabels, encIndex, onSelect = { encIndex = it })
 
         SecurePasswordField(
             value = password,
             onValueChange = { password = it },
             show = showPw,
             onToggleShow = { showPw = !showPw },
-            label = if (encIndex == 0) "Password (optional)" else "Password (required for encryption)",
+            label = if (encIndex == 0) stringResource(Res.string.password_field_default_label) else stringResource(Res.string.password_required_label),
         )
         if (encIndex != 0) {
             SecurePasswordField(
@@ -165,24 +243,24 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
                 onValueChange = { confirmPassword = it },
                 show = showPw,
                 onToggleShow = { showPw = !showPw },
-                label = "Confirm password",
+                label = stringResource(Res.string.password_confirm_label),
             )
         }
 
         val actionLabel = when (effectiveMode) {
-            Mode.SINGLE -> "Hide data"
-            Mode.RANDOM -> "Generate cover & hide"
-            Mode.BATCH -> if (coverFiles.isEmpty()) "Hide in each cover" else "Hide in ${coverFiles.size} covers"
-            Mode.SPLIT -> if (coverFiles.isEmpty()) "Split across covers" else "Split across ${coverFiles.size} covers"
+            Mode.SINGLE -> stringResource(Res.string.action_hide_data)
+            Mode.RANDOM -> stringResource(Res.string.action_generate_cover_and_hide)
+            Mode.BATCH -> if (coverFiles.isEmpty()) stringResource(Res.string.action_hide_in_each_cover) else stringResource(Res.string.action_hide_in_n_covers, coverFiles.size)
+            Mode.SPLIT -> if (coverFiles.isEmpty()) stringResource(Res.string.action_split_across_covers) else stringResource(Res.string.action_split_across_n_covers, coverFiles.size)
         }
         PrimaryActionButton(actionLabel, busy = busy, progress = progress, onClick = {
             if (encIndex != 0 && password != confirmPassword) {
-                result = Result.failure(IllegalArgumentException("Passwords do not match."))
+                result = Result.failure(IllegalArgumentException(passwordsDoNotMatchMessage))
             } else {
                 busy = true
                 result = null
                 progress = 0f
-                val enc = if (encIndex == 0) null else ENCRYPTION[encIndex]
+                val enc = encryptionValues[encIndex]
                 val algoName = algorithm?.name.orEmpty()
                 val msg = messageFile.orEmpty()
                 Thread {
@@ -190,18 +268,18 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
                         when (effectiveMode) {
                             Mode.SINGLE -> embed(
                                 EmbedRequest(algoName, msg, coverFile.orEmpty(), outputFile.orEmpty(), enc, password, options),
-                            ) { f -> progress = f.toFloat() }.let { "Wrote stego file to $it" }
+                            ) { f -> progress = f.toFloat() }.let { wroteStegoFileTemplate.format(it) }
                             Mode.RANDOM -> embed(
                                 EmbedRequest(algoName, msg, "", outputFile.orEmpty(), enc, password, options, useRandomImage = true),
-                            ) { f -> progress = f.toFloat() }.let { "Wrote stego file to $it" }
+                            ) { f -> progress = f.toFloat() }.let { wroteStegoFileTemplate.format(it) }
                             Mode.BATCH -> {
                                 val outs = embedBatch(algoName, msg, coverFiles, outputDir.orEmpty(), enc, password, options) { f -> progress = f.toFloat() }
-                                "Wrote ${outs.size} stego files to ${outputDir.orEmpty()}"
+                                wroteNStegoFilesTemplate.format(outs.size, outputDir.orEmpty())
                             }
                             Mode.SPLIT -> {
                                 progress = null // splitter has no incremental progress
                                 val outs = embedSplitCovers(algoName, msg, coverFiles, outputDir.orEmpty(), enc, password, options)
-                                "Split into ${outs.size} parts in ${outputDir.orEmpty()} — keep all parts to extract"
+                                splitIntoNPartsTemplate.format(outs.size, outputDir.orEmpty())
                             }
                         }
                     }
@@ -219,11 +297,11 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
 @Composable
 private fun ModeHint(mode: Mode, isImageAlgo: Boolean, fellBack: Boolean) {
     val text = when {
-        fellBack -> "This algorithm isn't image-based, so only a single cover is available."
-        mode == Mode.SINGLE -> "Hide the message in one cover file."
-        mode == Mode.RANDOM -> "Generate a random-noise image as the cover — no cover file needed."
-        mode == Mode.BATCH -> "Hide the same message separately in each chosen cover."
-        else -> "Spread one message across several covers. All resulting parts are needed to extract it."
+        fellBack -> stringResource(Res.string.mode_hint_fell_back)
+        mode == Mode.SINGLE -> stringResource(Res.string.mode_hint_single)
+        mode == Mode.RANDOM -> stringResource(Res.string.mode_hint_random)
+        mode == Mode.BATCH -> stringResource(Res.string.mode_hint_batch)
+        else -> stringResource(Res.string.mode_hint_split)
     }
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
@@ -233,16 +311,22 @@ private fun ModeHint(mode: Mode, isImageAlgo: Boolean, fellBack: Boolean) {
 private fun MultiCoverCard(covers: List<String>, coverExts: List<String>, onChange: (List<String>) -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Cover files", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.multi_cover_files_label), fontWeight = FontWeight.SemiBold)
             Text(
-                if (covers.isEmpty()) "Choose two or more covers" else "${covers.size} selected: " + covers.joinToString(", ") { it.substringAfterLast('/') },
+                if (covers.isEmpty()) {
+                    stringResource(Res.string.multi_cover_choose_hint)
+                } else {
+                    stringResource(Res.string.selection_summary, covers.size, covers.joinToString(", ") { it.substringAfterLast('/') })
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            val chooseLabel = stringResource(Res.string.multi_cover_choose)
+            val changeLabel = stringResource(Res.string.multi_cover_change)
             androidx.compose.material3.OutlinedButton(onClick = {
                 val picked = pickFiles(extensions = coverExts, filterLabel = "Cover files")
                 if (picked.isNotEmpty()) onChange(picked)
-            }) { Text(if (covers.isEmpty()) "Choose covers" else "Change covers") }
+            }) { Text(if (covers.isEmpty()) chooseLabel else changeLabel) }
         }
     }
 }
@@ -255,12 +339,16 @@ private fun CapacityCard(capacity: Long, messageSize: Long?) {
     Card(colors = CardDefaults.cardColors(containerColor = container)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                if (fits) "Capacity: ~${formatBytes(capacity)}" else "Message too large for this cover",
+                if (fits) stringResource(Res.string.capacity_label, formatBytes(capacity)) else stringResource(Res.string.capacity_too_small),
                 fontWeight = FontWeight.SemiBold,
                 color = content,
             )
             if (messageSize != null) {
-                Text("Message is ${formatBytes(messageSize)} of ~${formatBytes(capacity)} available.", style = MaterialTheme.typography.bodySmall, color = content)
+                Text(
+                    stringResource(Res.string.capacity_message_of_available, formatBytes(messageSize), formatBytes(capacity)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = content,
+                )
             }
         }
     }

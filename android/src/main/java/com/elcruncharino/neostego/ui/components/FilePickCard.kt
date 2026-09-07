@@ -18,13 +18,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 
 @Composable
 fun FilePickCard(label: String, chosen: String?, hint: String, onPick: () -> Unit) {
+    val pickButtonLabel = if (chosen == null) stringResource(R.string.btn_choose) else stringResource(R.string.btn_change)
+    val pickButtonDescription = if (chosen == null) {
+        stringResource(R.string.cd_choose_item, label)
+    } else {
+        stringResource(R.string.cd_change_item, label)
+    }
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Row(
             modifier = Modifier
@@ -47,10 +55,8 @@ fun FilePickCard(label: String, chosen: String?, hint: String, onPick: () -> Uni
             }
             OutlinedButton(
                 onClick = onPick,
-                modifier = Modifier.semantics {
-                    contentDescription = (if (chosen == null) "Choose " else "Change ") + label
-                },
-            ) { Text(if (chosen == null) "Choose" else "Change") }
+                modifier = Modifier.semantics { contentDescription = pickButtonDescription },
+            ) { Text(pickButtonLabel) }
         }
     }
 }

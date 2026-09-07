@@ -25,8 +25,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.AlgorithmOption
@@ -54,6 +56,20 @@ fun WatermarkScreen(appState: AppState) {
     val snackbar = appState.snackbar
     val s = appState.watermark
 
+    val toastSavedFileTemplate = stringResource(R.string.toast_saved_file)
+    val errorSavingTemplate = stringResource(R.string.error_saving)
+    val shareChooserTitle = stringResource(R.string.share_chooser_title)
+    val errorSharingTemplate = stringResource(R.string.error_sharing)
+    val errorEnterPasswordSignature = stringResource(R.string.error_enter_password_signature)
+    val errorFailedGenerateSignature = stringResource(R.string.error_failed_generate_signature)
+    val errorChooseImageWatermark = stringResource(R.string.error_choose_image_watermark)
+    val errorChooseSignatureFile = stringResource(R.string.error_choose_signature_file)
+    val errorImageTooLargeWatermark = stringResource(R.string.error_image_too_large_watermark)
+    val errorFailedEmbedWatermark = stringResource(R.string.error_failed_embed_watermark)
+    val errorChooseImageCheck = stringResource(R.string.error_choose_image_check)
+    val errorImageTooLargeCheck = stringResource(R.string.error_image_too_large_check)
+    val errorFailedVerifyWatermark = stringResource(R.string.error_failed_verify_watermark)
+
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
     fun setResult(r: OutputResult?) {
         s.result?.bytes?.fill(0)
@@ -70,9 +86,9 @@ fun WatermarkScreen(appState: AppState) {
             scope.launch {
                 try {
                     withContext(Dispatchers.IO) { writeBytes(context, uri, r.bytes) }
-                    snackbar.showSnackbar("Saved ${r.name}")
+                    snackbar.showSnackbar(String.format(toastSavedFileTemplate, r.name))
                 } catch (e: Exception) {
-                    snackbar.showSnackbar("Error saving: ${e.message ?: e}")
+                    snackbar.showSnackbar(String.format(errorSavingTemplate, e.message ?: e))
                 }
             }
         }
@@ -85,9 +101,9 @@ fun WatermarkScreen(appState: AppState) {
                 val intent = withContext(Dispatchers.IO) {
                     com.elcruncharino.neostego.ui.util.buildShareIntent(context, r.name, r.mime, r.bytes)
                 }
-                context.startActivity(android.content.Intent.createChooser(intent, "Share"))
+                context.startActivity(android.content.Intent.createChooser(intent, shareChooserTitle))
             } catch (e: Exception) {
-                snackbar.showSnackbar("Unable to share: ${e.message ?: e}")
+                snackbar.showSnackbar(String.format(errorSharingTemplate, e.message ?: e))
             }
         }
     }
@@ -100,7 +116,7 @@ fun WatermarkScreen(appState: AppState) {
     fun runGenerate() {
         val pw = readPasswordChars(s.passwordView)
         if (pw == null) {
-            toast("Enter a password to key the signature")
+            toast(errorEnterPasswordSignature)
             return
         }
         s.busy = true
@@ -109,7 +125,7 @@ fun WatermarkScreen(appState: AppState) {
                 val sig = withContext(Dispatchers.IO) { StegoEngine.generateSignature(s.algo, pw) }
                 setResult(OutputResult("watermark.sig", "application/octet-stream", sig))
             } catch (e: Exception) {
-                snackbar.showSnackbar(e.message ?: "Failed to generate signature")
+                snackbar.showSnackbar(e.message ?: errorFailedGenerateSignature)
             } finally {
                 pw.fill(' ')
                 s.busy = false
@@ -121,11 +137,11 @@ fun WatermarkScreen(appState: AppState) {
         val cover = s.coverUri
         val sig = s.sigUri
         if (cover == null) {
-            toast("Choose an image to watermark")
+            toast(errorChooseImageWatermark)
             return
         }
         if (sig == null) {
-            toast("Choose the signature file")
+            toast(errorChooseSignatureFile)
             return
         }
         s.busy = true
@@ -149,9 +165,9 @@ fun WatermarkScreen(appState: AppState) {
             } catch (e: OutOfMemoryError) {
                 // Watermarking decodes the image at full resolution and runs a wavelet transform over it, so a very
                 // large photo can exhaust the heap. Recover gracefully instead of letting the Error crash the app.
-                snackbar.showSnackbar("This image is too large to watermark on this device. Try a smaller image.")
+                snackbar.showSnackbar(errorImageTooLargeWatermark)
             } catch (e: Exception) {
-                snackbar.showSnackbar(e.message ?: "Failed to embed watermark")
+                snackbar.showSnackbar(e.message ?: errorFailedEmbedWatermark)
             } finally {
                 s.busy = false
                 s.progress = null
@@ -163,11 +179,11 @@ fun WatermarkScreen(appState: AppState) {
         val marked = s.markedUri
         val sig = s.sigUri
         if (marked == null) {
-            toast("Choose the image to check")
+            toast(errorChooseImageCheck)
             return
         }
         if (sig == null) {
-            toast("Choose the signature file")
+            toast(errorChooseSignatureFile)
             return
         }
         s.busy = true
@@ -186,9 +202,9 @@ fun WatermarkScreen(appState: AppState) {
                     )
                 }
             } catch (e: OutOfMemoryError) {
-                snackbar.showSnackbar("This image is too large to check on this device. Try a smaller image.")
+                snackbar.showSnackbar(errorImageTooLargeCheck)
             } catch (e: Exception) {
-                snackbar.showSnackbar(e.message ?: "Failed to verify watermark")
+                snackbar.showSnackbar(e.message ?: errorFailedVerifyWatermark)
             } finally {
                 s.busy = false
                 s.progress = null
@@ -198,7 +214,11 @@ fun WatermarkScreen(appState: AppState) {
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         SegmentedButtonGroup(
-            options = listOf("Generate", "Embed", "Verify"),
+            options = listOf(
+                stringResource(R.string.watermark_mode_generate),
+                stringResource(R.string.watermark_mode_embed),
+                stringResource(R.string.watermark_mode_verify),
+            ),
             selectedIndex = s.mode,
             onSelect = { s.mode = it },
             modifier = Modifier.fillMaxWidth(),
@@ -206,9 +226,9 @@ fun WatermarkScreen(appState: AppState) {
 
         Text(
             when (s.mode) {
-                0 -> "Create a password-keyed signature file to watermark with"
-                1 -> "Embed a signature into an image as a robust watermark"
-                else -> "Check whether an image carries a watermark"
+                0 -> stringResource(R.string.watermark_desc_generate)
+                1 -> stringResource(R.string.watermark_desc_embed)
+                else -> stringResource(R.string.watermark_desc_verify)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -216,24 +236,24 @@ fun WatermarkScreen(appState: AppState) {
 
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp).selectableGroup()) {
-                Text("Algorithm", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.label_algorithm), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(8.dp))
                 AlgorithmOption(
                     selected = s.algo == StegoEngine.WmAlgorithm.DWT_SVD,
-                    title = "DWT-SVD (recommended)",
-                    subtitle = "Modern blind, multi-bit watermark. Survives JPEG re-compression, noise, blur and small crops.",
+                    title = stringResource(R.string.algo_dwt_svd_title),
+                    subtitle = stringResource(R.string.algo_dwt_svd_subtitle),
                     onClick = { s.algo = StegoEngine.WmAlgorithm.DWT_SVD },
                 )
                 AlgorithmOption(
                     selected = s.algo == StegoEngine.WmAlgorithm.DUGAD,
-                    title = "DWT-Dugad",
-                    subtitle = "Classic wavelet spread-spectrum watermark detected by correlation.",
+                    title = stringResource(R.string.algo_dwt_dugad_title),
+                    subtitle = stringResource(R.string.algo_dwt_dugad_subtitle),
                     onClick = { s.algo = StegoEngine.WmAlgorithm.DUGAD },
                 )
                 AlgorithmOption(
                     selected = s.algo == StegoEngine.WmAlgorithm.XIE,
-                    title = "DWT-Xie",
-                    subtitle = "Wavelet watermark embedded in the approximation sub-band.",
+                    title = stringResource(R.string.algo_dwt_xie_title),
+                    subtitle = stringResource(R.string.algo_dwt_xie_subtitle),
                     onClick = { s.algo = StegoEngine.WmAlgorithm.XIE },
                 )
             }
@@ -247,36 +267,35 @@ fun WatermarkScreen(appState: AppState) {
                     onViewCreated = { s.passwordView = it },
                 )
                 Text(
-                    "The same password always produces the same signature. Save the .sig file - you need it to " +
-                        "embed and to verify.",
+                    stringResource(R.string.hint_signature_password),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             1 -> {
                 FilePickCard(
-                    label = "Image to watermark",
+                    label = stringResource(R.string.label_image_to_watermark),
                     chosen = s.coverUri?.let { displayName(context, it) },
-                    hint = "The image the watermark is embedded into",
+                    hint = stringResource(R.string.hint_image_to_watermark),
                     onPick = { pickCover.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 )
                 FilePickCard(
-                    label = "Signature file",
+                    label = stringResource(R.string.label_signature_file),
                     chosen = s.sigUri?.let { displayName(context, it) },
-                    hint = "The .sig produced by Generate",
+                    hint = stringResource(R.string.hint_signature_file_generate),
                     onPick = { openSig.launch(arrayOf("*/*")) },
                 )
                 Card(shape = RoundedCornerShape(24.dp)) {
                     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                         ToggleRow(
-                            title = "Output JPEG",
-                            subtitle = "Robust watermarks survive JPEG, so a smaller JPEG is fine. Off saves a lossless PNG.",
+                            title = stringResource(R.string.label_output_jpeg),
+                            subtitle = stringResource(R.string.hint_output_jpeg),
                             checked = s.outputJpeg,
                             onCheckedChange = { s.outputJpeg = it },
                         )
                         if (s.outputJpeg) {
                             Spacer(Modifier.height(8.dp))
-                            Text("JPEG quality: ${s.jpegQuality}", fontWeight = FontWeight.SemiBold)
+                            Text(stringResource(R.string.label_jpeg_quality, s.jpegQuality), fontWeight = FontWeight.SemiBold)
                             Slider(
                                 value = s.jpegQuality.toFloat(),
                                 onValueChange = { s.jpegQuality = it.toInt() },
@@ -288,15 +307,15 @@ fun WatermarkScreen(appState: AppState) {
             }
             else -> {
                 FilePickCard(
-                    label = "Image to check",
+                    label = stringResource(R.string.label_image_to_check),
                     chosen = s.markedUri?.let { displayName(context, it) },
-                    hint = "The image you want to test for a watermark",
+                    hint = stringResource(R.string.hint_image_to_check),
                     onPick = { pickMarked.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 )
                 FilePickCard(
-                    label = "Signature file",
+                    label = stringResource(R.string.label_signature_file),
                     chosen = s.sigUri?.let { displayName(context, it) },
-                    hint = "The .sig the image should carry",
+                    hint = stringResource(R.string.hint_signature_file_verify),
                     onPick = { openSig.launch(arrayOf("*/*")) },
                 )
                 s.verdict?.let { WatermarkVerdictCard(it) }
@@ -305,9 +324,9 @@ fun WatermarkScreen(appState: AppState) {
 
         PrimaryActionButton(
             label = when (s.mode) {
-                0 -> "Generate"
-                1 -> "Embed"
-                else -> "Verify"
+                0 -> stringResource(R.string.watermark_mode_generate)
+                1 -> stringResource(R.string.watermark_mode_embed)
+                else -> stringResource(R.string.watermark_mode_verify)
             },
             busy = s.busy,
             onClick = {
