@@ -14,7 +14,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 
 @Composable
 fun AboutDialog(onDismiss: () -> Unit) {
@@ -24,17 +26,20 @@ fun AboutDialog(onDismiss: () -> Unit) {
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
-        title = { Text("NeoStego${if (version.isNotEmpty()) " $version" else ""}") },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.btn_close)) } },
+        title = {
+            Text(
+                if (version.isNotEmpty()) stringResource(R.string.about_title_versioned, version) else stringResource(R.string.about_title),
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Hide files inside images or audio, and embed/verify robust watermarks. All processing " +
-                        "happens on-device.",
+                    stringResource(R.string.about_description),
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Text(
-                    "Based on OpenStego by Samir Vaidya. Licensed under the GNU General Public License v2.",
+                    stringResource(R.string.about_license),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

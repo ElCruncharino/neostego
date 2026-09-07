@@ -24,11 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.elcruncharino.neostego.R
 
 /**
  * Reads the password directly from the EditText as a char[], without ever creating a String, so it
@@ -55,6 +57,8 @@ fun SecurePasswordField(
     onToggleShow: () -> Unit,
     onViewCreated: (EditText) -> Unit,
 ) {
+    val passwordOptionalLabel = stringResource(R.string.label_password_optional)
+    val passwordOptionalDescription = stringResource(R.string.cd_password_optional)
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     val accentColor = MaterialTheme.colorScheme.primary.toArgb()
@@ -64,13 +68,15 @@ fun SecurePasswordField(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text("Password (optional)", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                TextButton(onClick = onToggleShow) { Text(if (show) "Hide" else "Show") }
+                Text(passwordOptionalLabel, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                TextButton(onClick = onToggleShow) {
+                    Text(if (show) stringResource(R.string.btn_hide_password) else stringResource(R.string.btn_show_password))
+                }
             }
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .semantics { contentDescription = "Password, optional" },
+                    .semantics { contentDescription = passwordOptionalDescription },
                 factory = { ctx ->
                     EditText(ctx).apply {
                         setSingleLine(true)
@@ -79,8 +85,8 @@ fun SecurePasswordField(
                         transformationMethod = PasswordTransformationMethod.getInstance()
                         // Label the native field for TalkBack; the visual "Password (optional)"
                         // header above is a separate composable and is not otherwise associated.
-                        hint = "Password (optional)"
-                        contentDescription = "Password, optional"
+                        hint = passwordOptionalLabel
+                        contentDescription = passwordOptionalDescription
                         onViewCreated(this)
                     }
                 },

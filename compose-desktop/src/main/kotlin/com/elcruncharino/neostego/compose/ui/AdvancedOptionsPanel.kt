@@ -36,6 +36,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.AdvancedOptions
 import com.elcruncharino.neostego.compose.engine.OptionsKind
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.advanced_options_collapse_content_description
+import openstego.compose_desktop.generated.resources.advanced_options_expand_content_description
+import openstego.compose_desktop.generated.resources.advanced_options_header
+import openstego.compose_desktop.generated.resources.option_adaptive_cmd_explanation
+import openstego.compose_desktop.generated.resources.option_adaptive_cmd_label
+import openstego.compose_desktop.generated.resources.option_adaptive_mu_explanation
+import openstego.compose_desktop.generated.resources.option_adaptive_mu_label
+import openstego.compose_desktop.generated.resources.option_jpeg_quality_explanation
+import openstego.compose_desktop.generated.resources.option_jpeg_quality_label
+import openstego.compose_desktop.generated.resources.option_lsb_max_bits_explanation
+import openstego.compose_desktop.generated.resources.option_lsb_max_bits_label
+import org.jetbrains.compose.resources.stringResource
 import kotlin.math.roundToInt
 
 @Composable
@@ -60,10 +73,14 @@ fun AdvancedOptionsPanel(kind: OptionsKind, options: AdvancedOptions, onChange: 
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Advanced options", fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(stringResource(Res.string.advanced_options_header), fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 Icon(
                     if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                    contentDescription = if (expanded) "Collapse advanced options" else "Expand advanced options",
+                    contentDescription = if (expanded) {
+                        stringResource(Res.string.advanced_options_collapse_content_description)
+                    } else {
+                        stringResource(Res.string.advanced_options_expand_content_description)
+                    },
                 )
             }
         }
@@ -73,42 +90,39 @@ fun AdvancedOptionsPanel(kind: OptionsKind, options: AdvancedOptions, onChange: 
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                     when (kind) {
                         OptionsKind.LSB -> SliderOption(
-                            "Maximum bits per color channel",
+                            stringResource(Res.string.option_lsb_max_bits_label),
                             options.maxBitsPerChannel.toString(),
                             options.maxBitsPerChannel.toFloat(),
                             1f..8f,
                             6,
-                            "How many least-significant bits of each colour channel to overwrite. Higher hides more " +
-                                "data but distorts the image more and is easier to detect. Default 3.",
+                            stringResource(Res.string.option_lsb_max_bits_explanation),
                         ) { onChange(options.copy(maxBitsPerChannel = it.roundToInt())) }
 
                         OptionsKind.ADAPTIVE -> {
                             ToggleOption(
-                                "Cluster changes (CMD)",
+                                stringResource(Res.string.option_adaptive_cmd_label),
                                 options.cmd,
-                                "Groups the +/-1 pixel changes so they reinforce each other, which resists statistical " +
-                                    "steganalysis. Default on.",
+                                stringResource(Res.string.option_adaptive_cmd_explanation),
                             ) { onChange(options.copy(cmd = it)) }
                             if (options.cmd) {
                                 SliderOption(
-                                    "Clustering strength (mu)",
+                                    stringResource(Res.string.option_adaptive_mu_label),
                                     formatMu(options.cmdMu),
                                     options.cmdMu.toFloat(),
                                     1f..9f,
                                     15,
-                                    "How strongly the changes cluster together. Higher concentrates them more. Default 3.0.",
+                                    stringResource(Res.string.option_adaptive_mu_explanation),
                                 ) { onChange(options.copy(cmdMu = Math.round(it * 2.0) / 2.0)) }
                             }
                         }
 
                         OptionsKind.JPEG -> SliderOption(
-                            "JPEG quality",
+                            stringResource(Res.string.option_jpeg_quality_label),
                             options.quality.toString(),
                             options.quality.toFloat(),
                             50f..100f,
                             49,
-                            "Quality of the output JPEG (50-100). Higher means better image quality and more capacity, " +
-                                "but a larger file. Default 90.",
+                            stringResource(Res.string.option_jpeg_quality_explanation),
                         ) { onChange(options.copy(quality = it.roundToInt())) }
 
                         OptionsKind.NONE -> Unit

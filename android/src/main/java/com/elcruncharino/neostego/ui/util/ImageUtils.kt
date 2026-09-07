@@ -8,6 +8,7 @@ package com.elcruncharino.neostego.ui.util
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import com.elcruncharino.neostego.R
 
 /** Reads just the dimensions of an image without decoding its pixels. Returns 0 if unknown. */
 internal fun imagePixelCount(context: Context, uri: Uri): Long {
@@ -23,10 +24,10 @@ internal fun imageDimensions(context: Context, uri: Uri): Pair<Int, Int>? {
 }
 
 /** Formats a byte count as a short human-readable string (e.g. "12 KB", "3.4 MB"). */
-internal fun humanBytes(bytes: Int): String = when {
-    bytes >= 1_000_000 -> "%.1f MB".format(bytes / 1_000_000.0)
-    bytes >= 1_000 -> "%d KB".format(bytes / 1_000)
-    else -> "$bytes bytes"
+internal fun humanBytes(context: Context, bytes: Int): String = when {
+    bytes >= 1_000_000 -> context.getString(R.string.bytes_mb, bytes / 1_000_000.0)
+    bytes >= 1_000 -> context.getString(R.string.bytes_kb, bytes / 1_000)
+    else -> context.getString(R.string.bytes_raw, bytes)
 }
 
 /**
@@ -43,6 +44,5 @@ internal fun oversizeWarning(context: Context, uri: Uri): String? {
     val heap = Runtime.getRuntime().maxMemory()
     if (estPeakBytes <= heap * 0.8) return null
     val megapixels = pixels / 1_000_000.0
-    return "This image is extremely large (about %.0f megapixels) and is bigger than the memory available to the app. ".format(megapixels) +
-        "Try a smaller image."
+    return context.getString(R.string.error_image_too_large_generic, megapixels)
 }
