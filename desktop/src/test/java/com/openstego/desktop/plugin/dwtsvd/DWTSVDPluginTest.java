@@ -123,7 +123,7 @@ public class DWTSVDPluginTest {
     // Attack / metric helpers
     // ------------------------------------------------------------------
 
-    private static byte[] recompressJpeg(byte[] pngData, float quality) throws Exception {
+    static byte[] recompressJpeg(byte[] pngData, float quality) throws Exception {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(pngData));
         // The shared codec normalizes covers to TYPE_INT_ARGB, so the stego PNG carries an (opaque) alpha
         // channel. The baseline JPEG writer cannot encode alpha, so flatten to RGB first - this mirrors what
@@ -149,7 +149,7 @@ public class DWTSVDPluginTest {
         return baos.toByteArray();
     }
 
-    private static byte[] addGaussianNoise(byte[] pngData, double sigma, long seed) throws Exception {
+    static byte[] addGaussianNoise(byte[] pngData, double sigma, long seed) throws Exception {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(pngData));
         Random rnd = new Random(seed);
         for (int y = 0; y < img.getHeight(); y++) {
@@ -166,7 +166,7 @@ public class DWTSVDPluginTest {
         return baos.toByteArray();
     }
 
-    private static byte[] scaleBrightness(byte[] pngData, double gain) throws Exception {
+    static byte[] scaleBrightness(byte[] pngData, double gain) throws Exception {
         BufferedImage img = ImageIO.read(new ByteArrayInputStream(pngData));
         for (int y = 0; y < img.getHeight(); y++) {
             for (int x = 0; x < img.getWidth(); x++) {
@@ -182,11 +182,11 @@ public class DWTSVDPluginTest {
         return baos.toByteArray();
     }
 
-    private static int clamp(int v) {
+    static int clamp(int v) {
         return v < 0 ? 0 : (v > 255 ? 255 : v);
     }
 
-    private static double psnr(byte[] aPng, byte[] bPng) throws Exception {
+    static double psnr(byte[] aPng, byte[] bPng) throws Exception {
         BufferedImage a = ImageIO.read(new ByteArrayInputStream(aPng));
         BufferedImage b = ImageIO.read(new ByteArrayInputStream(bPng));
         long sse = 0;

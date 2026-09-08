@@ -13,7 +13,6 @@ import com.openstego.desktop.util.LabelUtil;
 import com.openstego.desktop.util.StringUtil;
 import com.openstego.desktop.util.dwt.Image;
 import com.openstego.desktop.util.ecc.ReedSolomon;
-import com.openstego.desktop.util.svd.Svd;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -51,9 +50,6 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
 
     /** Marker that identifies this plugin's signature/watermark structures. */
     private static final String SIG_MARKER = "WSVD";
-
-    /** Side of the square block used for the SVD (in LL sub-band pixels). */
-    private static final int BLOCK = 8;
 
     /** Defaults for newly generated signatures. */
     private static final int DEFAULT_PAYLOAD_BITS = 64;
@@ -121,68 +117,12 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         Image[] bands = transform.forward(DwtSvdTransform.pixelSource(image), true);
         Image ll = bands[0];
 
-        embedIntoLL(ll, sig, codeBits);
+        SvdQimChannel.embedCodeBits(
+                ll, codeBits, sig.seed, sig.strength, this::reportProgress, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
 
         transform.inverse(bands, DwtSvdTransform.pixelSink(image));
 
         return ImageCodecRegistry.get().encode(image, stegoFileName);
-    }
-
-    private void embedIntoLL(Image ll, Signature sig, int[] codeBits) throws OpenStegoException {
-        int blocksW = ll.getWidth() / BLOCK;
-        int blocksH = ll.getHeight() / BLOCK;
-        int numBlocks = blocksW * blocksH;
-        if (numBlocks < codeBits.length) {
-            throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
-        }
-
-        // Pass 1: derive the global reference mu = mean(S0). The QIM step is scaled by mu so that a global
-        // brightness/contrast gain (which multiplies every S0 and mu alike) leaves the parity intact. Keep only the
-        // scalar largest singular value per block - not the whole decomposition - so a large cover does not pin one
-        // Svd object per block (tens of thousands on a multi-megapixel photo) in memory at once.
-        double sum = 0.0;
-        for (int br = 0; br < blocksH; br++) {
-            for (int bc = 0; bc < blocksW; bc++) {
-                sum += Svd.largestSingularValue(getBlock(ll, br, bc));
-            }
-            reportProgress(0.5 * (br + 1.0) / blocksH);
-        }
-        double mu = sum / numBlocks;
-        if (mu < 1e-6) {
-            throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
-        }
-        double step = sig.strength * mu;
-
-        // Pass 2: recompute each block's SVD, quantize its largest singular value to embed the code bit, and rebuild
-        // the block. Each block is assigned a code-bit index from a password-keyed hash of its ABSOLUTE (row, col).
-        // Unlike a global permutation over the block count, this mapping does not change when the image is later
-        // cropped/resized: blocks that survive a crop still carry the same code index, which (together with the
-        // alignment search in extractData) is what lets the watermark survive small crops/translations (#69).
-        for (int br = 0; br < blocksH; br++) {
-            for (int bc = 0; bc < blocksW; bc++) {
-                int idx = codeIndexForBlock(sig.seed, br, bc, codeBits.length);
-                int bit = codeBits[idx];
-                Svd svd = new Svd(getBlock(ll, br, bc));
-                double newS0 = quantize(svd.getSingularValue(0), step, bit);
-                svd.setSingularValue(0, newS0);
-                putBlock(ll, br, bc, svd.reconstruct());
-            }
-            reportProgress(0.5 + 0.5 * (br + 1.0) / blocksH);
-        }
-    }
-
-    /**
-     * Deterministic, password-keyed, <em>position-absolute</em> mapping from a block's (row, col) to a code-bit
-     * index. SplitMix64-style avalanche gives a near-uniform spread of code indices across blocks (so each bit
-     * is repetition-tiled many times) while depending only on the absolute coordinates - not on the image size -
-     * so a crop that removes border blocks leaves the remaining assignments intact.
-     */
-    private static int codeIndexForBlock(long seed, int row, int col, int codeLen) {
-        long h = seed + 0x9E3779B97F4A7C15L * (row + 1) + 0xC2B2AE3D27D4EB4FL * (col + 1);
-        h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
-        h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
-        h = h ^ (h >>> 31);
-        return (int) Math.floorMod(h, (long) codeLen);
     }
 
     // ------------------------------------------------------------------
@@ -217,7 +157,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         Image ll = transform.forward(DwtSvdTransform.pixelSource(image), false)[0];
 
         int codeLen = codeBitLength(sig);
-        if ((ll.getWidth() / BLOCK) * (ll.getHeight() / BLOCK) < codeLen) {
+        if ((ll.getWidth() / SvdQimChannel.BLOCK) * (ll.getHeight() / SvdQimChannel.BLOCK) < codeLen) {
             throw new OpenStegoException(null, NAMESPACE, DWTSVDErrors.ERR_FILE_TOO_SMALL);
         }
 
@@ -234,22 +174,22 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         if ((double) baselineScore / codeLen < FASTPATH_MATCH) {
             int[] searchBest = null;
             int searchBestScore = -1;
-            for (int phaseY = 0; phaseY < BLOCK; phaseY++) {
-                for (int phaseX = 0; phaseX < BLOCK; phaseX++) {
-                    reportProgress((phaseY * BLOCK + phaseX + 1.0) / (BLOCK * BLOCK));
+            for (int phaseY = 0; phaseY < SvdQimChannel.BLOCK; phaseY++) {
+                for (int phaseX = 0; phaseX < SvdQimChannel.BLOCK; phaseX++) {
+                    reportProgress((phaseY * SvdQimChannel.BLOCK + phaseX + 1.0) / (SvdQimChannel.BLOCK * SvdQimChannel.BLOCK));
                     // The SVD grid (and hence the QIM step) depends only on the grid PHASE, not on the block-origin
                     // offset, which merely shifts the code-index mapping. So decompose each phase's grid once here and
                     // reuse it across all (offR, offC) candidates - the block-origin search then costs only cheap
                     // re-votes instead of re-running an SVD over every block 25x (the dominant cost when verifying an
                     // unwatermarked image, which always falls through to this full search).
-                    double[][] s0 = computeS0Grid(ll, phaseY, phaseX);
-                    double step = stepFor(s0, sig.strength);
+                    double[][] s0 = SvdQimChannel.computeS0Grid(ll, phaseY, phaseX);
+                    double step = SvdQimChannel.stepFor(s0, sig.strength);
                     for (int offR = 0; offR <= MAX_BLOCK_OFFSET; offR++) {
                         for (int offC = 0; offC <= MAX_BLOCK_OFFSET; offC++) {
                             if (phaseY == 0 && phaseX == 0 && offR == 0 && offC == 0) {
                                 continue; // already evaluated as the baseline
                             }
-                            int[] cand = voteCodeBits(s0, step, sig.seed, offR, offC, codeLen);
+                            int[] cand = SvdQimChannel.voteCodeBits(s0, step, sig.seed, offR, offC, codeLen);
                             int score = matchCount(cand, expected);
                             if (score > searchBestScore) {
                                 searchBestScore = score;
@@ -270,7 +210,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
         reportProgress(1.0);
 
         ReedSolomon rs = new ReedSolomon(sig.parityBytes);
-        byte[] payload = rs.decode(bitsToBytes(best));
+        byte[] payload = rs.decode(SvdQimChannel.bitsToBytes(best));
 
         // Wrap with marker so getWatermarkCorrelation can validate and compare.
         byte[] out = new byte[SIG_MARKER.length() + payload.length];
@@ -286,67 +226,9 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
      * index; the majority over all repetitions gives the bit.
      */
     private int[] decodeCodeBits(Image ll, Signature sig, int phaseY, int phaseX, int offR, int offC, int codeLen) {
-        double[][] s0 = computeS0Grid(ll, phaseY, phaseX);
-        double step = stepFor(s0, sig.strength);
-        return voteCodeBits(s0, step, sig.seed, offR, offC, codeLen);
-    }
-
-    /**
-     * Decomposes every 8x8 block at grid phase {@code (phaseY, phaseX)} and returns its largest singular value. This is
-     * the expensive part of a decode (one SVD per block) and depends only on the phase, so the alignment search
-     * computes it once per phase and reuses it across all block-origin offsets.
-     */
-    private static double[][] computeS0Grid(Image ll, int phaseY, int phaseX) {
-        int gridH = (ll.getHeight() - phaseY) / BLOCK;
-        int gridW = (ll.getWidth() - phaseX) / BLOCK;
-        double[][] s0 = new double[gridH][gridW];
-        for (int r = 0; r < gridH; r++) {
-            for (int c = 0; c < gridW; c++) {
-                s0[r][c] = Svd.largestSingularValue(getBlockAt(ll, phaseY + r * BLOCK, phaseX + c * BLOCK));
-            }
-        }
-        return s0;
-    }
-
-    /** The QIM step for a grid: {@code strength} times the mean largest singular value over its blocks. */
-    private static double stepFor(double[][] s0, double strength) {
-        double sum = 0.0;
-        int n = 0;
-        for (double[] row : s0) {
-            for (double v : row) {
-                sum += v;
-                n++;
-            }
-        }
-        return strength * (sum / n);
-    }
-
-    /**
-     * Recovers the code bits from a precomputed singular-value grid: each block votes (by the parity of its QIM-decoded
-     * largest singular value) for the absolutely-addressed code index it carries, shifted by the block-origin offset
-     * {@code (offR, offC)}; the majority over all repetitions gives each bit.
-     */
-    private static int[] voteCodeBits(double[][] s0, double step, long seed, int offR, int offC, int codeLen) {
-        int gridH = s0.length;
-        int gridW = s0[0].length;
-        int[] votesFor1 = new int[codeLen];
-        int[] votesFor0 = new int[codeLen];
-        for (int r = 0; r < gridH; r++) {
-            for (int c = 0; c < gridW; c++) {
-                int idx = codeIndexForBlock(seed, r + offR, c + offC, codeLen);
-                if (decodeBit(s0[r][c], step) == 1) {
-                    votesFor1[idx]++;
-                } else {
-                    votesFor0[idx]++;
-                }
-            }
-        }
-
-        int[] codeBits = new int[codeLen];
-        for (int i = 0; i < codeLen; i++) {
-            codeBits[i] = (votesFor1[i] > votesFor0[i]) ? 1 : 0;
-        }
-        return codeBits;
+        double[][] s0 = SvdQimChannel.computeS0Grid(ll, phaseY, phaseX);
+        double step = SvdQimChannel.stepFor(s0, sig.strength);
+        return SvdQimChannel.voteCodeBits(s0, step, sig.seed, offR, offC, codeLen);
     }
 
     private static int matchCount(int[] a, int[] b) {
@@ -413,78 +295,7 @@ public class DWTSVDPlugin extends WMImagePluginTemplate {
     private int[] buildCodeBits(Signature sig) {
         ReedSolomon rs = new ReedSolomon(sig.parityBytes);
         byte[] code = rs.encode(sig.payload);
-        return bytesToBits(code);
-    }
-
-    private static int[] bytesToBits(byte[] bytes) {
-        int[] bits = new int[bytes.length * 8];
-        for (int i = 0; i < bytes.length; i++) {
-            int b = bytes[i] & 0xff;
-            for (int j = 0; j < 8; j++) {
-                bits[i * 8 + j] = (b >> (7 - j)) & 1;
-            }
-        }
-        return bits;
-    }
-
-    private static byte[] bitsToBytes(int[] bits) {
-        byte[] bytes = new byte[bits.length / 8];
-        for (int i = 0; i < bytes.length; i++) {
-            int b = 0;
-            for (int j = 0; j < 8; j++) {
-                b = (b << 1) | (bits[i * 8 + j] & 1);
-            }
-            bytes[i] = (byte) b;
-        }
-        return bytes;
-    }
-
-    /** QIM embed: return the nearest multiple of {@code step} whose index parity equals {@code bit}. */
-    private static double quantize(double value, double step, int bit) {
-        long q = Math.round(value / step);
-        if ((q & 1L) != (bit & 1)) {
-            double lower = (q - 1) * step;
-            double upper = (q + 1) * step;
-            q += (Math.abs(value - lower) <= Math.abs(value - upper)) ? -1 : 1;
-        }
-        return q * step;
-    }
-
-    /** QIM decode: the parity of the nearest quantizer index gives the bit. */
-    private static int decodeBit(double value, double step) {
-        long q = Math.round(value / step);
-        return (int) (q & 1L);
-    }
-
-    private static double[][] getBlock(Image ll, int br, int bc) {
-        return getBlockAt(ll, br * BLOCK, bc * BLOCK);
-    }
-
-    /** Reads an 8x8 block whose top-left corner is at LL pixel ({@code originY}, {@code originX}). */
-    private static double[][] getBlockAt(Image ll, int originY, int originX) {
-        int width = ll.getWidth();
-        double[] data = ll.getData();
-        double[][] blk = new double[BLOCK][BLOCK];
-        for (int i = 0; i < BLOCK; i++) {
-            int y = originY + i;
-            for (int j = 0; j < BLOCK; j++) {
-                int x = originX + j;
-                blk[i][j] = data[y * width + x];
-            }
-        }
-        return blk;
-    }
-
-    private static void putBlock(Image ll, int br, int bc, double[][] blk) {
-        int width = ll.getWidth();
-        double[] data = ll.getData();
-        for (int i = 0; i < BLOCK; i++) {
-            int y = br * BLOCK + i;
-            for (int j = 0; j < BLOCK; j++) {
-                int x = bc * BLOCK + j;
-                data[y * width + x] = blk[i][j];
-            }
-        }
+        return SvdQimChannel.bytesToBits(code);
     }
 
     // ------------------------------------------------------------------
