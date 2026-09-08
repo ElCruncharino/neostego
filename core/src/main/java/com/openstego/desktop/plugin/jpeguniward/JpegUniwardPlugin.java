@@ -202,7 +202,9 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             int r0 = bands[b][1];
             int r1 = bands[b][2];
             double[][] rounding = plain ? null : jpg.roundingStrip(c, r0, r1);
-            double[][] cost = uniwardCostsBand(jpg, c, r0, r1, rounding);
+            double[][] cost = this.config.isUseUerd()
+                    ? uerdCostsBand(jpg, c, r0, r1, rounding)
+                    : uniwardCostsBand(jpg, c, r0, r1, rounding);
             Elements el = enumerateBand(jpg, c, r0, r1, cost, rounding);
             int[] perm = bandPermutation(el.count, this.config.getPassword(), b);
 
@@ -471,6 +473,24 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             }
         }
         return out;
+    }
+
+    /** Same SI-scaling as {@link #uniwardCostsBand}, but with {@link UerdCost}'s cheaper base cost. */
+    private static double[][] uerdCostsBand(JpegImage jpg, int c, int r0, int r1, double[][] rounding) {
+        int bw = jpg.getBlocksWide(c);
+        double[][] base = UerdCost.compute(jpg, c, r0, r1, bw);
+        if (rounding != null) {
+            for (int br = r0; br < r1; br++) {
+                for (int bc = 0; bc < bw; bc++) {
+                    double[] rho = base[(br - r0) * bw + bc];
+                    double[] e = rounding[(br - r0) * bw + bc];
+                    for (int k = 1; k < 64; k++) {
+                        rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
+                    }
+                }
+            }
+        }
+        return base;
     }
 
     /**
