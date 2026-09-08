@@ -139,6 +139,7 @@
     <string name="theme_system">システム</string>
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
+    <string name="label_language">言語</string>
     <string name="label_dynamic_color">ダイナミックカラー</string>
     <string name="hint_dynamic_color">壁紙に合わせて配色します。オフにすると下で固定色を選べます。</string>
     <string name="label_accent_color">アクセントカラー</string>

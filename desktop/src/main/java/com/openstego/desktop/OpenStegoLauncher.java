@@ -8,6 +8,7 @@
 package com.openstego.desktop;
 
 import com.openstego.desktop.ui.OpenStegoUI;
+import com.openstego.desktop.ui.UILocale;
 import com.openstego.desktop.ui.UITheme;
 import com.openstego.desktop.util.PluginManager;
 import com.openstego.desktop.util.UserPreferences;
@@ -38,12 +39,14 @@ public class OpenStegoLauncher {
         // because the Swing UI keeps running on the event-dispatch thread after main() returns.
         boolean cli = args.length > 0;
         try {
+            // Initialize preferences first so the saved language preference can be read
+            UserPreferences.init();
+            // Install the saved UI language before anything loads a resource bundle
+            UILocale.install(UILocale.current());
             // Ensure core label namespaces and error codes are registered before anything else
             OpenStego.init();
             // Load the stego plugins
             PluginManager.loadPlugins();
-            // Initialize preferences
-            UserPreferences.init();
 
             if (!cli) { // Start GUI
                 // Apply the modern FlatLaf look-and-feel using the saved theme preference

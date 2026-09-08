@@ -41,6 +41,7 @@ import com.elcruncharino.neostego.compose.theme.ThemeMode
 import com.elcruncharino.neostego.compose.ui.AppShell
 import com.elcruncharino.neostego.compose.ui.Destination
 import com.openstego.desktop.OpenStego
+import com.openstego.desktop.ui.UILocale
 import com.openstego.desktop.OpenStegoCmd
 import com.openstego.desktop.OpenStegoException
 import com.openstego.desktop.OpenStegoLauncher
@@ -118,6 +119,7 @@ private fun launchComposeUi() {
     }
     application {
         var themeMode by remember { mutableStateOf(loadThemeMode()) }
+        var languageMode by remember { mutableStateOf(UILocale.current()) }
         var dest by remember { mutableStateOf(Destination.HIDE) }
         val dark = when (themeMode) {
             ThemeMode.SYSTEM -> isSystemInDarkTheme()
@@ -178,6 +180,11 @@ private fun launchComposeUi() {
                             onThemeChange = {
                                 themeMode = it
                                 saveThemeMode(it)
+                            },
+                            languageMode = languageMode,
+                            onLanguageChange = {
+                                languageMode = it
+                                UILocale.switchTo(it)
                             },
                             dest = dest,
                             onSelect = { dest = it },

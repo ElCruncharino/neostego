@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,6 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,10 +41,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
 import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.data.ThemeMode
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.SegmentedButtonGroup
+
+/** Language tags offered by the in-app language switcher, in display order (System first). */
+private val LANGUAGE_TAGS = listOf(null, "en", "zh", "ja")
 
 /** Preset seed colours offered in the palette picker. */
 private val SEED_PRESETS = listOf(
@@ -86,6 +95,28 @@ fun SettingsScreen(appState: AppState) {
                                 1 -> ThemeMode.LIGHT
                                 else -> ThemeMode.DARK
                             },
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        Card(shape = RoundedCornerShape(24.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(stringResource(R.string.label_language), fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(12.dp))
+                var appLocaleTag by remember {
+                    mutableStateOf(AppCompatDelegate.getApplicationLocales().toLanguageTags().takeIf { it.isNotEmpty() })
+                }
+                SegmentedButtonGroup(
+                    options = listOf(stringResource(R.string.theme_system), "English", "中文", "日本語"),
+                    selectedIndex = LANGUAGE_TAGS.indexOf(appLocaleTag).coerceAtLeast(0),
+                    onSelect = { index ->
+                        val tag = LANGUAGE_TAGS[index]
+                        appLocaleTag = tag
+                        AppCompatDelegate.setApplicationLocales(
+                            if (tag == null) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag),
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),

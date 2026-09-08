@@ -139,6 +139,7 @@
     <string name="theme_system">跟随系统</string>
     <string name="theme_light">浅色</string>
     <string name="theme_dark">深色</string>
+    <string name="label_language">语言</string>
     <string name="label_dynamic_color">动态取色</string>
     <string name="hint_dynamic_color">根据壁纸重新配色。关闭后可在下方选择固定颜色。</string>
     <string name="label_accent_color">强调色</string>
