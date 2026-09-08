@@ -10,9 +10,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,7 +39,10 @@ data class LaunchTarget(
     val wavCover: Boolean = false,
 )
 
-class MainActivity : ComponentActivity() {
+// AppCompatActivity, not the plain ComponentActivity a Compose-only app would otherwise use: the
+// in-app language switcher (Settings) needs AppCompatDelegate.setApplicationLocales() to actually
+// take effect, which per Android's own docs requires an AppCompatActivity even in Compose apps.
+class MainActivity : AppCompatActivity() {
     // Drives the initial screen + preselection; updated when a new share/shortcut arrives.
     private val launchTarget = mutableStateOf(LaunchTarget())
 
