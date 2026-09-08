@@ -464,10 +464,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
                 // Plain mode (rounding == null) uses the raw UNIWARD cost; SI mode scales by (1 - 2|e|),
                 // making coefficients near a rounding boundary cheaper to change.
                 if (rounding != null) {
-                    double[] e = rounding[(br - r0) * bw + bc];
-                    for (int k = 1; k < 64; k++) {
-                        rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
-                    }
+                    applySideInfoScale(rho, rounding[(br - r0) * bw + bc]);
                 }
                 out[(br - r0) * bw + bc] = rho;
             }
@@ -482,15 +479,18 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         if (rounding != null) {
             for (int br = r0; br < r1; br++) {
                 for (int bc = 0; bc < bw; bc++) {
-                    double[] rho = base[(br - r0) * bw + bc];
-                    double[] e = rounding[(br - r0) * bw + bc];
-                    for (int k = 1; k < 64; k++) {
-                        rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
-                    }
+                    applySideInfoScale(base[(br - r0) * bw + bc], rounding[(br - r0) * bw + bc]);
                 }
             }
         }
         return base;
+    }
+
+    /** Scales a block's raw cost by {@code (1 - 2|e|)}: cheaper to change a coefficient near a rounding boundary. */
+    private static void applySideInfoScale(double[] rho, double[] e) {
+        for (int k = 1; k < 64; k++) {
+            rho[k] *= (1.0 - 2.0 * Math.abs(e[k]));
+        }
     }
 
     /**
