@@ -50,12 +50,12 @@ object StegoEngine {
         val adaptiveCmd: Boolean = true,
         val adaptiveCmdMu: Double = 3.0,
         val lsbBitsPerChannel: Int = 3,
-        /** Use the cheaper UERD cost function instead of UNIWARD for SI_UNIWARD/PLAIN_UNIWARD. */
-        val useUerd: Boolean = false,
         /** Whether to compress the payload before embedding (desktop parity: user-toggleable). */
         val useCompression: Boolean = true,
         /** Use AES-256 instead of the default AES-128 when a password is supplied. */
         val encryptionAes256: Boolean = false,
+        /** Use the cheaper UERD cost function instead of UNIWARD for SI_UNIWARD/PLAIN_UNIWARD. */
+        val useUerd: Boolean = false,
     )
 
     /** Default output file name (and thus extension) the plugin should produce for [algorithm]. */
