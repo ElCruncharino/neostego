@@ -97,6 +97,37 @@ public class CLITest extends CmdTest {
     }
 
     @Test
+    public void testEmbedExtractWithUerdFlag(@TempDir Path dir) throws Exception {
+        byte[] message = "uerd via the command line".getBytes(StandardCharsets.UTF_8);
+        Path cover = copyResource("/compat/cover.png", dir.resolve("cover.png"));
+        Path msg = dir.resolve("msg.txt");
+        Files.write(msg, message);
+        Path stego = dir.resolve("stego.jpg");
+        Path outDir = dir.resolve("out");
+        Files.createDirectories(outDir);
+
+        OpenStegoCmd.execute(new String[] {
+            "embed",
+            "-a",
+            "JpegUniward",
+            "-mf",
+            msg.toString(),
+            "-cf",
+            cover.toString(),
+            "-sf",
+            stego.toString(),
+            "-uerd"
+        });
+        assertTrue(Files.exists(stego), "Stego file should be created by embed");
+
+        OpenStegoCmd.execute(
+                new String[] {"extract", "-a", "JpegUniward", "-sf", stego.toString(), "-xd", outDir.toString()});
+
+        byte[] extracted = Files.readAllBytes(outDir.resolve("msg.txt"));
+        assertArrayEquals(message, extracted, "Extracted bytes should match when embedded with -uerd");
+    }
+
+    @Test
     public void testSplitEmbedExtractRoundTrip(@TempDir Path dir) throws Exception {
         byte[] message = "payload split across several covers via the CLI".getBytes(StandardCharsets.UTF_8);
         Path c0 = copyResource("/compat/cover.png", dir.resolve("c0.png"));

@@ -41,6 +41,11 @@ public class JpegUniwardEmbedOptionsUI extends PluginEmbedOptionsUI {
     private final JLabel qualityValueLabel;
 
     /**
+     * Checkbox to use the faster UERD cost function instead of UNIWARD
+     */
+    private final JCheckBox useUerdCheckBox;
+
+    /**
      * Reference to the parent UI object
      */
     private final OpenStegoFrame stegoUI;
@@ -78,6 +83,13 @@ public class JpegUniwardEmbedOptionsUI extends PluginEmbedOptionsUI {
         gridBagConstraints.gridx = 2;
         gridBagConstraints.weightx = 0.0;
         add(this.qualityValueLabel, gridBagConstraints);
+
+        this.useUerdCheckBox = new JCheckBox(labelUtil.getString("gui.label.option.useUerd"));
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.gridwidth = 3;
+        gridBagConstraints.weightx = 0.0;
+        add(this.useUerdCheckBox, gridBagConstraints);
     }
 
     /**
@@ -106,6 +118,7 @@ public class JpegUniwardEmbedOptionsUI extends PluginEmbedOptionsUI {
     @Override
     public void setGUIFromConfig(OpenStegoConfig config) {
         this.qualitySlider.setValue(((JpegUniwardConfig) config).getQuality());
+        this.useUerdCheckBox.setSelected(((JpegUniwardConfig) config).isUseUerd());
     }
 
     /**
@@ -116,5 +129,6 @@ public class JpegUniwardEmbedOptionsUI extends PluginEmbedOptionsUI {
     @Override
     public void setConfigFromGUI(OpenStegoConfig config) {
         ((JpegUniwardConfig) config).setQuality(this.qualitySlider.getValue());
+        ((JpegUniwardConfig) config).setUseUerd(this.useUerdCheckBox.isSelected());
     }
 }

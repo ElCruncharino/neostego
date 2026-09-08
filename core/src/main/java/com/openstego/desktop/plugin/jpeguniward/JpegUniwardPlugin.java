@@ -6,6 +6,7 @@
 package com.openstego.desktop.plugin.jpeguniward;
 
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.PluginCmdLineOption;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.image.jpeg.JpegCodec;
@@ -19,7 +20,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -358,6 +361,19 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
     @Override
     public String getUsage() {
         return labelUtil.getString("plugin.usage");
+    }
+
+    @Override
+    public List<PluginCmdLineOption> getPluginCmdLineOptions() {
+        return Collections.singletonList(
+                new PluginCmdLineOption("-uerd", "--useUerd", "Use the faster UERD cost function instead of UNIWARD", false));
+    }
+
+    @Override
+    public void addPluginConfigValues(Map<String, Object> configMap, Map<String, String> parsedValues) {
+        if (parsedValues.containsKey("-uerd")) {
+            configMap.put(JpegUniwardConfig.USE_UERD, true);
+        }
     }
 
     // ---------------- embeddable-element model ----------------

@@ -93,7 +93,8 @@ fun HideScreen(appState: AppState) {
     val splitEligible = s.algorithm == StegoEngine.Algorithm.ADAPTIVE || s.algorithm == StegoEngine.Algorithm.MATCHING
     if (!splitEligible && s.splitMode) s.splitMode = false
 
-    val options = StegoEngine.Options(s.jpegQuality, s.adaptiveCmd, s.adaptiveCmdMu, s.lsbBits, s.useCompression, s.useAes256)
+    val options =
+        StegoEngine.Options(s.jpegQuality, s.adaptiveCmd, s.adaptiveCmdMu, s.lsbBits, s.useCompression, s.useAes256, s.useUerd)
 
     // Capacity estimate for the chosen cover/algorithm.
     LaunchedEffect(s.coverUri, s.algorithm, s.lsbBits, s.jpegQuality, s.splitMode) {
@@ -389,6 +390,16 @@ fun HideScreen(appState: AppState) {
                         stringResource(R.string.hint_jpeg_quality),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+
+                if (s.algorithm == StegoEngine.Algorithm.SI_UNIWARD || s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD) {
+                    Spacer(Modifier.height(8.dp))
+                    ToggleRow(
+                        title = stringResource(R.string.label_use_uerd),
+                        subtitle = stringResource(R.string.hint_use_uerd),
+                        checked = s.useUerd,
+                        onCheckedChange = { s.useUerd = it },
                     )
                 }
 

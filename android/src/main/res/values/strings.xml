@@ -67,6 +67,8 @@
     <string name="algo_audio_wav_subtitle">Hides data in the samples of an uncompressed PCM WAV file. Output is a WAV; pick an audio cover above.</string>
     <string name="label_jpeg_quality">JPEG quality: %1$d</string>
     <string name="hint_jpeg_quality">Higher quality keeps the image crisper but enlarges the file; 90 is a good default.</string>
+    <string name="label_use_uerd">Use UERD</string>
+    <string name="hint_use_uerd">Faster embedding, slightly less resistant to detection than UNIWARD.</string>
     <string name="btn_advanced_expanded">Advanced ▴</string>
     <string name="btn_advanced_collapsed">Advanced ▾</string>
     <string name="label_cluster_changes">Cluster changes (CMD)</string>
