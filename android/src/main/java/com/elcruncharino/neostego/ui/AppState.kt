@@ -35,6 +35,7 @@ class HideState {
     var algorithm by mutableStateOf(StegoEngine.Algorithm.ADAPTIVE)
     var embedFileName by mutableStateOf(false)
     var jpegQuality by mutableStateOf(90)
+    var useUerd by mutableStateOf(false)
     var adaptiveCmd by mutableStateOf(true)
     var adaptiveCmdMu by mutableStateOf(3.0)
     var lsbBits by mutableStateOf(3)

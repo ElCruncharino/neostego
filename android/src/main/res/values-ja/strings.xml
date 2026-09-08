@@ -67,6 +67,8 @@
     <string name="algo_audio_wav_subtitle">非圧縮 PCM WAV ファイルのサンプルにデータを隠します。出力は WAV です。上でカバー音声を選んでください。</string>
     <string name="label_jpeg_quality">JPEG 品質: %1$d</string>
     <string name="hint_jpeg_quality">品質を上げるほど画像は鮮明になりますが、ファイルも大きくなります。90 が良い初期値です。</string>
+    <string name="label_use_uerd">UERDを使用</string>
+    <string name="hint_use_uerd">埋め込みが高速になりますが、UNIWARDより検出耐性がやや低下します。</string>
     <string name="btn_advanced_expanded">詳細設定 ▴</string>
     <string name="btn_advanced_collapsed">詳細設定 ▾</string>
     <string name="label_cluster_changes">変更のクラスタ化(CMD)</string>
