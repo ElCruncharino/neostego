@@ -344,8 +344,7 @@ public class OpenStegoTest {
                 .getPurposes();
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(true);
-        // Simulates a file written by an older version of this codebase, before CompressionCodec
-        // existed: those files always used plain GZIP framing, never the current codec.
+        // simulates a pre-CompressionCodec file, which always used plain gzip
         config.setCompressionMethod(CompressionCodec.METHOD_GZIP_LEGACY);
         config.setUseEncryption(true);
         config.setPassword("test");

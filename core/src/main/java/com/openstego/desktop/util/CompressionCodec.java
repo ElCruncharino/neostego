@@ -18,45 +18,24 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.Inflater;
 
 /**
- * Compresses/decompresses the message payload before embedding.
- * <p>
- * The payload a steganography channel carries is almost always tiny (a sentence, a short file), and
- * every byte spent on framing is a byte spent on extra cover modifications. A full GZIP stream pays a
- * fixed 18-byte wrapper (10-byte header + 8-byte CRC32/ISIZE trailer) that a short message can't earn
- * back, and generic compressors have no head start on the kind of short text this channel typically
- * carries. So new data is compressed as zlib-wrapped DEFLATE (RFC 1950: a 2-byte header plus a 4-byte
- * Adler-32 trailer, 6 bytes total instead of GZIP's 18), primed with a preset dictionary built from
- * this project's own localized UI strings (i.e. real, varied, non-user, already-shipped multilingual
- * text) &mdash; both sides already have the dictionary bytes, so priming it costs nothing on the wire.
- * The zlib wrapper (rather than fully headerless raw DEFLATE) is deliberate: its header and checksum
- * are what let decompression reliably reject corrupt or non-DEFLATE input instead of silently
- * producing garbage. If compressing still doesn't shrink the payload (e.g. it's already dense binary),
- * the data is stored as-is rather than paying any compression overhead at all.
- * <p>
- * The chosen method is recorded by the caller (see {@link com.openstego.desktop.OpenStegoConfig
- * #setCompressionMethod}) so it round-trips through the stego header; {@link #METHOD_GZIP_LEGACY}
- * exists purely so files written by older versions of this codebase keep decoding correctly.
+ * Compresses the message payload with zlib-DEFLATE (6-byte overhead vs. GZIP's 18) primed with a
+ * preset dictionary built from this project's own localized UI strings, falling back to storing the
+ * payload as-is if that doesn't shrink it. {@link #METHOD_GZIP_LEGACY} is read-only, for files written
+ * before this codec existed.
  */
 public final class CompressionCodec {
 
-    /** No compression: the payload is stored as-is. */
     public static final int METHOD_NONE = 0;
-
-    /** Legacy full-GZIP framing, kept read-only for files written before this codec existed. */
     public static final int METHOD_GZIP_LEGACY = 1;
-
-    /** Headerless DEFLATE primed with {@link #dictionary()}. Used for all new writes. */
     public static final int METHOD_DEFLATE_DICT = 2;
 
     private static final String DICTIONARY_RESOURCE = "/compression/message.dict";
 
     private static volatile byte[] dictionary;
 
-    private CompressionCodec() {
-        // Utility class
-    }
+    private CompressionCodec() {}
 
-    /** The result of {@link #compress}: which method was actually used, and the resulting bytes. */
+    /** Which method was actually used, and the resulting bytes. */
     public static final class Result {
         public final int method;
         public final byte[] data;
@@ -67,10 +46,6 @@ public final class CompressionCodec {
         }
     }
 
-    /**
-     * Compresses {@code raw} with {@link #METHOD_DEFLATE_DICT}, falling back to storing it unchanged
-     * (as {@link #METHOD_NONE}) if that doesn't actually shrink it.
-     */
     public static Result compress(byte[] raw) {
         if (raw.length == 0) {
             return new Result(METHOD_NONE, raw);
@@ -79,7 +54,6 @@ public final class CompressionCodec {
         return (compressed.length < raw.length) ? new Result(METHOD_DEFLATE_DICT, compressed) : new Result(METHOD_NONE, raw);
     }
 
-    /** Reverses {@link #compress}, dispatching on the method recorded at embed time. */
     public static byte[] decompress(byte[] data, int method) throws OpenStegoException {
         switch (method) {
             case METHOD_NONE:
@@ -119,8 +93,6 @@ public final class CompressionCodec {
             while (!inflater.finished()) {
                 int n = inflater.inflate(buf);
                 if (n == 0) {
-                    // The zlib header's FDICT flag is what tells us a dictionary is expected -- this
-                    // only fires once, right after the 2-byte header is parsed.
                     if (inflater.needsDictionary()) {
                         inflater.setDictionary(dictionary());
                         continue;

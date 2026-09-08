@@ -140,8 +140,8 @@ public class LSBDataHeader {
             }
             // Read filename length as an unsigned byte so that names of 128-255 bytes are handled correctly
             fileNameLen = header[5] & 0xFF;
-            // Byte 6 used to be a strict 0/1 compression flag; it now doubles as the CompressionCodec
-            // method id. Old files only ever wrote 0 or 1, so this reads them identically to before.
+            // byte 6 was a strict 0/1 flag; old files only ever wrote 0 or 1, so this still reads them
+            // the same way while newer values select a CompressionCodec method.
             int compressionMethod = header[6] & 0xFF;
             config.setCompressionMethod(compressionMethod);
             config.setUseCompression(compressionMethod != CompressionCodec.METHOD_NONE);
