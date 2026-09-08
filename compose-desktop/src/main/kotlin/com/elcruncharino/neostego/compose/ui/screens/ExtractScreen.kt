@@ -34,8 +34,27 @@ import com.elcruncharino.neostego.compose.ui.ResultCard
 import com.elcruncharino.neostego.compose.ui.SectionLabel
 import com.elcruncharino.neostego.compose.ui.SecurePasswordField
 import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
-
-private val MODE_LABELS = listOf("Single file", "Reassemble split")
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.action_extract_data
+import openstego.compose_desktop.generated.resources.action_reassemble_and_extract
+import openstego.compose_desktop.generated.resources.action_reassemble_n_parts
+import openstego.compose_desktop.generated.resources.extract_hint_reassemble
+import openstego.compose_desktop.generated.resources.extract_hint_single
+import openstego.compose_desktop.generated.resources.extract_mode_reassemble_split
+import openstego.compose_desktop.generated.resources.extract_mode_single_file
+import openstego.compose_desktop.generated.resources.extract_output_folder_hint
+import openstego.compose_desktop.generated.resources.extract_screen_intro
+import openstego.compose_desktop.generated.resources.extract_stego_file_hint
+import openstego.compose_desktop.generated.resources.extract_stego_file_label
+import openstego.compose_desktop.generated.resources.hide_output_folder_label
+import openstego.compose_desktop.generated.resources.result_extracted_message_to
+import openstego.compose_desktop.generated.resources.section_source
+import openstego.compose_desktop.generated.resources.selection_summary
+import openstego.compose_desktop.generated.resources.split_parts_change
+import openstego.compose_desktop.generated.resources.split_parts_choose
+import openstego.compose_desktop.generated.resources.split_parts_choose_hint
+import openstego.compose_desktop.generated.resources.split_parts_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun ExtractScreen() {
@@ -50,20 +69,23 @@ fun ExtractScreen() {
 
     val reassemble = modeIndex == 1
 
+    val extractedMessageToTemplate = stringResource(Res.string.result_extracted_message_to)
+
     Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
         Text(
-            "Recover a hidden message from a stego file.",
+            stringResource(Res.string.extract_screen_intro),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        SectionLabel("Source")
-        SegmentedButtonGroup(MODE_LABELS, modeIndex, onSelect = { modeIndex = it })
+        SectionLabel(stringResource(Res.string.section_source))
+        val modeLabels = listOf(stringResource(Res.string.extract_mode_single_file), stringResource(Res.string.extract_mode_reassemble_split))
+        SegmentedButtonGroup(modeLabels, modeIndex, onSelect = { modeIndex = it })
         Text(
             if (reassemble) {
-                "Select all parts of a split payload to reassemble the original message."
+                stringResource(Res.string.extract_hint_reassemble)
             } else {
-                "Recover the message from a single stego file."
+                stringResource(Res.string.extract_hint_single)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -72,20 +94,25 @@ fun ExtractScreen() {
         if (reassemble) {
             SplitPartsCard(stegoParts) { stegoParts = it }
         } else {
-            FilePickCard("Stego file", stegoFile, "Choose or drag the file with hidden data here", onFileDropped = { stegoFile = it }) {
+            FilePickCard(
+                stringResource(Res.string.extract_stego_file_label),
+                stegoFile,
+                stringResource(Res.string.extract_stego_file_hint),
+                onFileDropped = { stegoFile = it },
+            ) {
                 pickFile(save = false)?.let { stegoFile = it }
             }
         }
-        FilePickCard("Output folder", outputDir, "Where to save the extracted message") {
+        FilePickCard(stringResource(Res.string.hide_output_folder_label), outputDir, stringResource(Res.string.extract_output_folder_hint)) {
             pickDirectory()?.let { outputDir = it }
         }
 
         SecurePasswordField(value = password, onValueChange = { password = it }, show = showPw, onToggleShow = { showPw = !showPw })
 
         val actionLabel = if (reassemble) {
-            if (stegoParts.isEmpty()) "Reassemble & extract" else "Reassemble ${stegoParts.size} parts"
+            if (stegoParts.isEmpty()) stringResource(Res.string.action_reassemble_and_extract) else stringResource(Res.string.action_reassemble_n_parts, stegoParts.size)
         } else {
-            "Extract data"
+            stringResource(Res.string.action_extract_data)
         }
         PrimaryActionButton(actionLabel, busy = busy, onClick = {
             busy = true
@@ -105,7 +132,7 @@ fun ExtractScreen() {
             }.start()
         })
 
-        result?.let { ResultCard(it) { path -> "Extracted message to $path" } }
+        result?.let { ResultCard(it) { path -> extractedMessageToTemplate.format(path) } }
     }
 }
 
@@ -114,16 +141,22 @@ fun ExtractScreen() {
 private fun SplitPartsCard(parts: List<String>, onChange: (List<String>) -> Unit) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Split parts", fontWeight = FontWeight.SemiBold)
+            Text(stringResource(Res.string.split_parts_label), fontWeight = FontWeight.SemiBold)
             Text(
-                if (parts.isEmpty()) "Choose every part of the split" else "${parts.size} selected: " + parts.joinToString(", ") { it.substringAfterLast('/') },
+                if (parts.isEmpty()) {
+                    stringResource(Res.string.split_parts_choose_hint)
+                } else {
+                    stringResource(Res.string.selection_summary, parts.size, parts.joinToString(", ") { it.substringAfterLast('/') })
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            val chooseLabel = stringResource(Res.string.split_parts_choose)
+            val changeLabel = stringResource(Res.string.split_parts_change)
             OutlinedButton(onClick = {
                 val picked = pickFiles(filterLabel = "Stego parts")
                 if (picked.isNotEmpty()) onChange(picked)
-            }) { Text(if (parts.isEmpty()) "Choose parts" else "Change parts") }
+            }) { Text(if (parts.isEmpty()) chooseLabel else changeLabel) }
         }
     }
 }

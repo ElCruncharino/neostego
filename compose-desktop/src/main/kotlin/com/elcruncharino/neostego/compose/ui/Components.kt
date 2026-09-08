@@ -52,6 +52,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.action_button_state_ready
+import openstego.compose_desktop.generated.resources.action_button_state_working
+import openstego.compose_desktop.generated.resources.action_button_working
+import openstego.compose_desktop.generated.resources.action_button_working_progress
+import openstego.compose_desktop.generated.resources.file_pick_change
+import openstego.compose_desktop.generated.resources.file_pick_change_content_description
+import openstego.compose_desktop.generated.resources.file_pick_choose
+import openstego.compose_desktop.generated.resources.file_pick_choose_content_description
+import openstego.compose_desktop.generated.resources.file_pick_drop_hint
+import openstego.compose_desktop.generated.resources.password_field_default_label
+import openstego.compose_desktop.generated.resources.password_field_hide
+import openstego.compose_desktop.generated.resources.password_field_show
+import openstego.compose_desktop.generated.resources.result_card_done
+import openstego.compose_desktop.generated.resources.result_card_failed
+import org.jetbrains.compose.resources.stringResource
 import java.awt.datatransfer.DataFlavor
 import java.io.File
 import kotlin.math.roundToInt
@@ -130,7 +146,7 @@ fun FilePickCard(label: String, chosen: String?, hint: String, onFileDropped: ((
     val canDrop = onFileDropped != null
     val subtitle = when {
         chosen != null -> chosen
-        canDrop && dragOver -> "Drop the file to use it"
+        canDrop && dragOver -> stringResource(Res.string.file_pick_drop_hint)
         else -> hint
     }
     Card(
@@ -155,12 +171,17 @@ fun FilePickCard(label: String, chosen: String?, hint: String, onFileDropped: ((
                     color = if (canDrop && dragOver) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            val pickContentDescription = if (chosen == null) {
+                stringResource(Res.string.file_pick_choose_content_description, label)
+            } else {
+                stringResource(Res.string.file_pick_change_content_description, label)
+            }
             OutlinedButton(
                 onClick = onPick,
                 modifier = Modifier.semantics {
-                    contentDescription = (if (chosen == null) "Choose " else "Change ") + label
+                    contentDescription = pickContentDescription
                 },
-            ) { Text(if (chosen == null) "Choose" else "Change") }
+            ) { Text(if (chosen == null) stringResource(Res.string.file_pick_choose) else stringResource(Res.string.file_pick_change)) }
         }
     }
 }
@@ -197,13 +218,13 @@ fun SecurePasswordField(
     onValueChange: (String) -> Unit,
     show: Boolean,
     onToggleShow: () -> Unit,
-    label: String = "Password (optional)",
+    label: String = stringResource(Res.string.password_field_default_label),
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(label, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                TextButton(onClick = onToggleShow) { Text(if (show) "Hide" else "Show") }
+                TextButton(onClick = onToggleShow) { Text(if (show) stringResource(Res.string.password_field_hide) else stringResource(Res.string.password_field_show)) }
             }
             OutlinedTextField(
                 value = value,
@@ -228,9 +249,11 @@ fun PrimaryActionButton(
     modifier: Modifier = Modifier,
     progress: Float? = null,
 ) {
+    val workingState = stringResource(Res.string.action_button_state_working)
+    val readyState = stringResource(Res.string.action_button_state_ready)
     Column(
         // Announce the busy state to screen readers when it changes.
-        modifier = modifier.fillMaxWidth().semantics { stateDescription = if (busy) "Working" else "Ready" },
+        modifier = modifier.fillMaxWidth().semantics { stateDescription = if (busy) workingState else readyState },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (busy) {
@@ -249,7 +272,8 @@ fun PrimaryActionButton(
             shape = RoundedCornerShape(20.dp),
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) {
-            val busyText = progress?.let { "Working… ${(it * 100).roundToInt()}%" } ?: "Working…"
+            val busyText = progress?.let { stringResource(Res.string.action_button_working_progress, (it * 100).roundToInt()) }
+                ?: stringResource(Res.string.action_button_working)
             Text(if (busy) busyText else label)
         }
     }
@@ -267,7 +291,7 @@ fun ResultCard(result: Result<String>, successMessage: (String) -> String) {
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(if (ok) "Done" else "Failed", fontWeight = FontWeight.SemiBold, color = content)
+            Text(if (ok) stringResource(Res.string.result_card_done) else stringResource(Res.string.result_card_failed), fontWeight = FontWeight.SemiBold, color = content)
             Text(
                 result.fold(successMessage, { it.message ?: it.toString() }),
                 style = MaterialTheme.typography.bodyMedium,

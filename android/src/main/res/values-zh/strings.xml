@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NeoStego</string>
+    <!-- Labels shown in another app's share sheet (one per labeled share target) -->
+    <string name="share_target_hide">使用NeoStego隐藏</string>
+    <string name="share_target_reveal">使用NeoStego提取</string>
+    <!-- Long-press launcher shortcuts -->
+    <string name="shortcut_hide_short">隐藏</string>
+    <string name="shortcut_hide_long">隐藏文件</string>
+    <string name="shortcut_reveal_short">提取</string>
+    <string name="shortcut_reveal_long">提取文件</string>
+
+    <!-- Top bar / bottom nav (StegoScaffold) -->
+    <string name="cd_more_options">更多</string>
+    <string name="menu_about">关于</string>
+    <string name="nav_hide">隐藏</string>
+    <string name="nav_reveal">提取</string>
+    <string name="nav_mark">水印</string>
+    <string name="nav_settings">设置</string>
+
+    <!-- About dialog -->
+    <string name="about_title">NeoStego</string>
+    <string name="about_title_versioned">NeoStego %1$s</string>
+    <string name="about_description">在图片或音频中隐藏文件,并嵌入/验证强健的水印。所有处理均在设备本地完成。</string>
+    <string name="about_license">基于 Samir Vaidya 开发的 OpenStego。遵循 GNU 通用公共许可证第 2 版授权。</string>
+    <string name="btn_close">关闭</string>
+
+    <!-- Shared toasts / errors (Hide, Reveal, Watermark screens) -->
+    <string name="toast_saved_file">已保存 %1$s</string>
+    <string name="error_saving">保存出错:%1$s</string>
+    <string name="error_sharing">无法分享:%1$s</string>
+    <string name="share_chooser_title">分享</string>
+
+    <!-- Hide screen -->
+    <string name="hide_screen_subtitle">将文件隐藏到载体中</string>
+    <string name="error_need_two_covers">请选择至少两张用于分割的载体图片</string>
+    <string name="error_choose_file_to_hide">请先选择要隐藏的文件</string>
+    <string name="toast_saved_stego_images">已保存 %1$d 张隐写图片</string>
+    <string name="error_failed_to_hide">隐藏数据失败</string>
+    <string name="error_choose_cover">请先选择载体%1$s</string>
+    <string name="cover_kind_audio_file">音频文件</string>
+    <string name="cover_kind_image">图片</string>
+    <string name="label_cover_images_split">载体图片(分割)</string>
+    <string name="split_images_selected">已选择 %1$d 张图片</string>
+    <string name="hint_split_covers">选择两张或以上图片,文件将分散隐藏在这些图片中</string>
+    <string name="label_cover_audio_wav">载体音频(WAV)</string>
+    <string name="label_cover_image_jpeg">载体图片(JPEG)</string>
+    <string name="label_cover_image">载体图片</string>
+    <string name="hint_cover_wav">未压缩的 PCM WAV 文件</string>
+    <string name="hint_cover_jpeg">用于隐藏数据的现有 JPEG 图片</string>
+    <string name="hint_cover_image">数据将被隐藏到的图片</string>
+    <string name="capacity_estimate">此图片最多可隐藏约 %1$s</string>
+    <string name="label_file_to_hide">要隐藏的文件</string>
+    <string name="hint_file_to_hide">任意文件(文档、照片等)</string>
+    <string name="hide_method_title">隐藏方式</string>
+    <string name="algo_si_uniward_title">SI-UNIWARD(JPEG)</string>
+    <string name="algo_si_uniward_subtitle">侧信息 JPEG 隐写术。输出为 JPEG,在低嵌入率下对抗现代检测器是最强的选择。</string>
+    <string name="algo_j_uniward_title">J-UNIWARD(JPEG 载体)</string>
+    <string name="algo_j_uniward_subtitle">直接隐藏在现有的 JPEG 中。速度更快,无需原始未压缩图片,但隐蔽性不及 SI-UNIWARD。</string>
+    <string name="algo_f5_title">F5(JPEG 载体)</string>
+    <string name="algo_f5_subtitle">使用矩阵编码的经典快速 JPEG 隐写术。适合在现有 JPEG 中隐藏少量数据。</string>
+    <string name="algo_adaptive_title">自适应(PNG)</string>
+    <string name="algo_adaptive_subtitle">HILL + STC:将改动隐藏在纹理区域,同时抵御统计与 AI 隐写分析。输出为无损 PNG,容量较低。</string>
+    <string name="algo_lsb_matching_title">LSB 匹配(PNG)</string>
+    <string name="algo_lsb_matching_subtitle">容量更大、速度更快,可抵御传统隐写分析。输出为无损 PNG。</string>
+    <string name="algo_audio_wav_title">音频(WAV)</string>
+    <string name="algo_audio_wav_subtitle">将数据隐藏在未压缩 PCM WAV 文件的采样中。输出为 WAV;请在上方选择音频载体。</string>
+    <string name="label_jpeg_quality">JPEG 质量:%1$d</string>
+    <string name="hint_jpeg_quality">质量越高图片越清晰,但文件也越大;90 是不错的默认值。</string>
+    <string name="btn_advanced_expanded">高级选项 ▴</string>
+    <string name="btn_advanced_collapsed">高级选项 ▾</string>
+    <string name="label_cluster_changes">聚类更改(CMD)</string>
+    <string name="hint_cluster_changes">同步相邻的修改以略微提升抗检测性。除非要复现旧版输出,否则请保持开启。</string>
+    <string name="label_clustering_strength">聚类强度(mu):%1$s</string>
+    <string name="label_bits_per_channel">每通道比特数:%1$d</string>
+    <string name="hint_bits_per_channel">比特数越多可存储的数据越多,但也更易被检测;3 是较好的平衡点。</string>
+    <string name="label_compress_payload">压缩数据</string>
+    <string name="hint_compress_payload">隐藏前对数据进行 GZIP 压缩。通常能减小体积;若文件已经压缩过,请关闭此选项。</string>
+    <string name="label_use_aes256">使用 AES-256</string>
+    <string name="hint_use_aes256">密钥长度强于默认的 AES-128。仅在设置了密码时生效。</string>
+    <string name="label_split_across_covers">分散到多个载体</string>
+    <string name="hint_split_across_covers">将一个文件分散隐藏到多张图片中(请在上方选择 2 张以上)。每张图片保存一部分;需保留全部图片才能提取。</string>
+    <string name="label_store_filename">保存原始文件名</string>
+    <string name="hint_store_filename">文件名会以未加密方式保存。关闭此项以保护隐私;提取时将使用通用文件名。</string>
+    <string name="note_jpeg_share">请原样分享保存的 JPEG。切勿再次打开并重新保存——重新压缩 JPEG 会破坏隐藏的数据。</string>
+    <string name="note_wav_share">请原样保存 WAV 文件用于分享。转换为 MP3/AAC 等有损音频格式会破坏隐藏的数据。</string>
+    <string name="note_png_share">请原样保存 PNG 文件用于分享。重新保存或以 JPEG 等有损格式发送会破坏隐藏的数据。</string>
+    <string name="btn_hide">隐藏</string>
+
+    <!-- Reveal screen -->
+    <string name="reveal_screen_subtitle">从载体中提取隐藏的文件</string>
+    <string name="error_choose_stego_file">请先选择隐写文件</string>
+    <string name="error_failed_to_reveal">提取数据失败</string>
+    <string name="label_stego_file">隐写文件</string>
+    <string name="hint_stego_file">隐藏有数据的图片或 WAV 文件</string>
+    <string name="btn_reveal">提取</string>
+
+    <!-- Watermark screen -->
+    <string name="error_enter_password_signature">请输入密码以生成签名</string>
+    <string name="error_failed_generate_signature">生成签名失败</string>
+    <string name="error_choose_image_watermark">请选择要添加水印的图片</string>
+    <string name="error_choose_signature_file">请选择签名文件</string>
+    <string name="error_image_too_large_watermark">此图片过大,当前设备无法为其添加水印。请尝试使用较小的图片。</string>
+    <string name="error_failed_embed_watermark">嵌入水印失败</string>
+    <string name="error_choose_image_check">请选择要检测的图片</string>
+    <string name="error_image_too_large_check">此图片过大,当前设备无法进行检测。请尝试使用较小的图片。</string>
+    <string name="error_failed_verify_watermark">验证水印失败</string>
+    <string name="watermark_mode_generate">生成</string>
+    <string name="watermark_mode_embed">嵌入</string>
+    <string name="watermark_mode_verify">验证</string>
+    <string name="watermark_desc_generate">创建一个由密码生成的签名文件,用于制作水印</string>
+    <string name="watermark_desc_embed">将签名作为强健水印嵌入到图片中</string>
+    <string name="watermark_desc_verify">检测图片中是否带有水印</string>
+    <string name="label_algorithm">算法</string>
+    <string name="algo_dwt_svd_title">DWT-SVD(推荐)</string>
+    <string name="algo_dwt_svd_subtitle">现代盲检测多比特水印。可抵御 JPEG 重新压缩、噪声、模糊和小范围裁剪。</string>
+    <string name="algo_dwt_dugad_title">DWT-Dugad</string>
+    <string name="algo_dwt_dugad_subtitle">经典小波扩频水印,通过相关性检测。</string>
+    <string name="algo_dwt_xie_title">DWT-Xie</string>
+    <string name="algo_dwt_xie_subtitle">嵌入在近似子带中的小波水印。</string>
+    <string name="hint_signature_password">相同的密码始终生成相同的签名。请保存 .sig 文件——嵌入和验证时都需要用到它。</string>
+    <string name="label_image_to_watermark">要添加水印的图片</string>
+    <string name="hint_image_to_watermark">水印将被嵌入的图片</string>
+    <string name="label_signature_file">签名文件</string>
+    <string name="hint_signature_file_generate">由“生成”步骤产生的 .sig 文件</string>
+    <string name="label_output_jpeg">输出为 JPEG</string>
+    <string name="hint_output_jpeg">强健水印可以抵御 JPEG 压缩,因此使用较小的 JPEG 也没问题。关闭则保存为无损 PNG。</string>
+    <string name="label_image_to_check">要检测的图片</string>
+    <string name="hint_image_to_check">要测试是否带有水印的图片</string>
+    <string name="hint_signature_file_verify">图片应携带的 .sig 文件</string>
+    <string name="verdict_present">检测到水印</string>
+    <string name="verdict_weak">水印较弱/不确定</string>
+    <string name="verdict_absent">未检测到水印</string>
+    <string name="verdict_correlation_detail">相关性 %1$.2f(强 ≥ %2$.2f,弱 ≥ %3$.2f)</string>
+
+    <!-- Settings screen -->
+    <string name="settings_subtitle">个性化外观。所选设置将保存在此设备上。</string>
+    <string name="label_theme">主题</string>
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="label_dynamic_color">动态取色</string>
+    <string name="hint_dynamic_color">根据壁纸重新配色。关闭后可在下方选择固定颜色。</string>
+    <string name="label_accent_color">强调色</string>
+    <string name="hint_accent_color">为应用选择固定的强调色。</string>
+    <string name="label_default_color">默认</string>
+
+    <!-- Shared components -->
+    <string name="btn_choose">选择</string>
+    <string name="btn_change">更改</string>
+    <string name="cd_choose_item">选择%1$s</string>
+    <string name="cd_change_item">更改%1$s</string>
+    <string name="output_ready">已就绪:%1$s</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_share">分享</string>
+    <string name="label_password_optional">密码(可选)</string>
+    <string name="cd_password_optional">密码,可选</string>
+    <string name="btn_show_password">显示</string>
+    <string name="btn_hide_password">隐藏</string>
+    <string name="label_working">处理中…</string>
+    <string name="label_working_pct">处理中… %1$d%%</string>
+    <string name="label_working_pct_eta">处理中… %1$d%% · %2$s</string>
+    <string name="eta_seconds">约 %1$d 秒</string>
+    <string name="eta_minutes_seconds">约 %1$d 分 %2$d 秒</string>
+    <string name="bytes_mb">%1$.1f MB</string>
+    <string name="bytes_kb">%1$d KB</string>
+    <string name="bytes_raw">%1$d 字节</string>
+    <string name="error_image_too_large_generic">此图片过大(约 %1$.0f 百万像素),超出了应用可用的内存。请尝试使用较小的图片。</string>
+    <string name="error_unable_to_read_file">无法读取所选文件</string>
+    <string name="error_unable_to_write_location">无法写入所选位置</string>
+</resources>
