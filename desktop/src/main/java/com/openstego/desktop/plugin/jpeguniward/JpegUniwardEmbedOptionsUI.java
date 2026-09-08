@@ -40,9 +40,6 @@ public class JpegUniwardEmbedOptionsUI extends PluginEmbedOptionsUI {
      */
     private final JLabel qualityValueLabel;
 
-    /**
-     * Checkbox to use the faster UERD cost function instead of UNIWARD
-     */
     private final JCheckBox useUerdCheckBox;
 
     /**
