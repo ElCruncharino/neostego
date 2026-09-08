@@ -50,7 +50,9 @@ object StegoEngine {
         val adaptiveCmd: Boolean = true,
         val adaptiveCmdMu: Double = 3.0,
         val lsbBitsPerChannel: Int = 3,
-        /** Whether to GZIP-compress the payload before embedding (desktop parity: user-toggleable). */
+        /** Use the cheaper UERD cost function instead of UNIWARD for SI_UNIWARD/PLAIN_UNIWARD. */
+        val useUerd: Boolean = false,
+        /** Whether to compress the payload before embedding (desktop parity: user-toggleable). */
         val useCompression: Boolean = true,
         /** Use AES-256 instead of the default AES-128 when a password is supplied. */
         val encryptionAes256: Boolean = false,
@@ -88,6 +90,7 @@ object StegoEngine {
                 // PLAIN_UNIWARD reuses JpegUniwardPlugin but embeds into an already-compressed JPEG
                 // cover (no side information); SI_UNIWARD takes an uncompressed precover.
                 config.isPlainMode = (algorithm == Algorithm.PLAIN_UNIWARD)
+                config.isUseUerd = options.useUerd
             }
             is AdaptiveConfig -> {
                 config.isCmd = options.adaptiveCmd

@@ -28,12 +28,17 @@ public class JpegUniwardConfig extends OpenStegoConfig {
     /** Configuration key for plain (non-side-informed) J-UNIWARD mode. */
     public static final String PLAIN_MODE = "plainMode";
 
+    /** Configuration key selecting the cheaper UERD cost function instead of UNIWARD. */
+    public static final String USE_UERD = "useUerd";
+
     /** Default JPEG quality when neither the environment nor the caller overrides it. */
     private static final int DEFAULT_QUALITY = 90;
 
     private int quality = parseQuality();
 
     private boolean plainMode = "true".equalsIgnoreCase(System.getenv("NEOSTEGO_PLAIN_MODE"));
+
+    private boolean useUerd = false;
 
     private static int parseQuality() {
         String s = System.getenv("NEOSTEGO_JPEG_QUALITY");
@@ -72,6 +77,16 @@ public class JpegUniwardConfig extends OpenStegoConfig {
             }
             return;
         }
+        if (USE_UERD.equals(key)) {
+            if (value != null) {
+                if (value instanceof Boolean) {
+                    setUseUerd((Boolean) value);
+                } else {
+                    setUseUerd(Boolean.parseBoolean(value.toString().trim()));
+                }
+            }
+            return;
+        }
         super.processConfigItem(key, value);
     }
 
@@ -96,5 +111,15 @@ public class JpegUniwardConfig extends OpenStegoConfig {
     /** @param plainMode whether to embed into an existing JPEG cover without side information. */
     public void setPlainMode(boolean plainMode) {
         this.plainMode = plainMode;
+    }
+
+    /** @return {@code true} to use the cheaper UERD cost function instead of UNIWARD (embedding only). */
+    public boolean isUseUerd() {
+        return this.useUerd;
+    }
+
+    /** @param useUerd whether to use UERD instead of UNIWARD for embedding costs. */
+    public void setUseUerd(boolean useUerd) {
+        this.useUerd = useUerd;
     }
 }

@@ -71,6 +71,20 @@ public class JpegUniwardPluginTest {
     }
 
     @Test
+    public void uerdRoundTrip() throws Exception {
+        byte[] msg = "UERD cost function round-trip.".getBytes(StandardCharsets.UTF_8);
+        OpenStegoPlugin<?> embedPlugin = PluginManager.getPluginByName("JpegUniward");
+        embedPlugin.resetConfig();
+        ((JpegUniwardConfig) embedPlugin.getConfig()).setUseUerd(true);
+        byte[] stego = new OpenStego(embedPlugin, embedPlugin.getConfig())
+                .embedData(msg, "note.txt", coverBytes, "cover.png", "stego.jpg");
+
+        List<?> out = newStego(false, false, null, 90).extractData(stego, "stego.jpg");
+        assertEquals("note.txt", out.get(0));
+        assertArrayEquals(msg, (byte[]) out.get(1));
+    }
+
+    @Test
     public void outputIsADecodableJpeg() throws Exception {
         byte[] msg = "hi".getBytes(StandardCharsets.UTF_8);
         byte[] stego = newStego(false, false, null, 90).embedData(msg, "m.txt", coverBytes, "cover.png", "stego.jpg");
