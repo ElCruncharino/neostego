@@ -85,6 +85,22 @@ public class JpegUniwardPluginTest {
     }
 
     @Test
+    public void extractsPreShadowFormatFile() throws Exception {
+        // Embedded by the code as it stood immediately before shadow-message support was added (see
+        // ShadowMessage's javadoc): band 0's permutation wasn't excluding a reserved shadow slot yet.
+        // Reading must still work -- only new embeds are required to use the current format.
+        byte[] stego;
+        try (InputStream is = JpegUniwardPluginTest.class.getResourceAsStream("/compat/jpeguniward-pre-shadow.jpg")) {
+            assertNotNull(is, "jpeguniward-pre-shadow.jpg test resource must exist");
+            stego = CommonUtil.streamToBytes(is);
+        }
+        List<?> out = newStego(false, false, null, 90).extractData(stego, "stego.jpg");
+        assertEquals("note.txt", out.get(0));
+        assertArrayEquals(
+                "legacy pre-shadow format message".getBytes(StandardCharsets.UTF_8), (byte[]) out.get(1));
+    }
+
+    @Test
     public void shadowMessageRoundTrip() throws Exception {
         byte[] msg = "primary message".getBytes(StandardCharsets.UTF_8);
         byte[] shadowMsg = "deniable message".getBytes(StandardCharsets.UTF_8);
