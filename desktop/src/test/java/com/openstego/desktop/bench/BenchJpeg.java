@@ -283,8 +283,15 @@ public final class BenchJpeg {
         }
     }
 
+    /**
+     * "JpegUniwardUerd" is not a separate plugin: it resolves to the JpegUniward plugin with
+     * {@link JpegUniwardConfig#setUseUerd} on, so the existing directory/label naming (which threads
+     * this string straight through as {@code $ALGO}) gets a distinct, self-explanatory name for free.
+     */
     private static OpenStego newStego(String algo, int quality, String password) throws OpenStegoException {
-        OpenStegoPlugin<?> plugin = PluginManager.getPluginByName(algo);
+        boolean uerd = "JpegUniwardUerd".equals(algo);
+        String pluginName = uerd ? "JpegUniward" : algo;
+        OpenStegoPlugin<?> plugin = PluginManager.getPluginByName(pluginName);
         if (plugin == null) {
             throw new IllegalArgumentException("Unknown algorithm: " + algo);
         }
@@ -296,6 +303,7 @@ public final class BenchJpeg {
         }
         if (plugin.getConfig() instanceof JpegUniwardConfig) {
             ((JpegUniwardConfig) plugin.getConfig()).setQuality(quality);
+            ((JpegUniwardConfig) plugin.getConfig()).setUseUerd(uerd);
         }
         return new OpenStego(plugin, plugin.getConfig());
     }
