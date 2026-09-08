@@ -6,6 +6,7 @@
 package com.elcruncharino.neostego.ui.screens
 
 import android.os.Build
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,12 +20,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -109,18 +112,39 @@ fun SettingsScreen(appState: AppState) {
                 var appLocaleTag by remember {
                     mutableStateOf(AppCompatDelegate.getApplicationLocales().toLanguageTags().takeIf { it.isNotEmpty() })
                 }
-                SegmentedButtonGroup(
-                    options = listOf(stringResource(R.string.theme_system), "English", "中文", "日本語"),
-                    selectedIndex = LANGUAGE_TAGS.indexOf(appLocaleTag).coerceAtLeast(0),
-                    onSelect = { index ->
-                        val tag = LANGUAGE_TAGS[index]
-                        appLocaleTag = tag
-                        AppCompatDelegate.setApplicationLocales(
-                            if (tag == null) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag),
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                var expanded by remember { mutableStateOf(false) }
+                // A dropdown rather than a segmented row: this list only grows as more languages
+                // are translated, and a row of segments doesn't scale past a handful of options.
+                val labels = listOf(stringResource(R.string.theme_system), "English", "中文", "日本語")
+                val shape = RoundedCornerShape(8.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+                        .clickable { expanded = true }
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(labels[LANGUAGE_TAGS.indexOf(appLocaleTag).coerceAtLeast(0)], modifier = Modifier.weight(1f))
+                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        labels.forEachIndexed { index, label ->
+                            DropdownMenuItem(text = { Text(label) }, onClick = {
+                                expanded = false
+                                val tag = LANGUAGE_TAGS[index]
+                                appLocaleTag = tag
+                                // MainActivity is an AppCompatActivity, so this recreates it
+                                // automatically to apply the change; a plain ComponentActivity
+                                // would silently no-op here instead.
+                                AppCompatDelegate.setApplicationLocales(
+                                    if (tag == null) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag),
+                                )
+                            })
+                        }
+                    }
+                }
             }
         }
 

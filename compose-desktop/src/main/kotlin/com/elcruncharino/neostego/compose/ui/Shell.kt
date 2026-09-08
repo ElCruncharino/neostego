@@ -44,7 +44,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.selected
@@ -67,9 +66,11 @@ import openstego.compose_desktop.generated.resources.destination_generate_signat
 import openstego.compose_desktop.generated.resources.destination_hide
 import openstego.compose_desktop.generated.resources.destination_settings
 import openstego.compose_desktop.generated.resources.destination_verify_watermark
+import openstego.compose_desktop.generated.resources.neostego
 import openstego.compose_desktop.generated.resources.section_data_hiding
 import openstego.compose_desktop.generated.resources.section_digital_watermarking
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 enum class Destination(val titleRes: StringResource, val sectionRes: StringResource?, val icon: ImageVector) {
@@ -133,7 +134,7 @@ private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             ) {
-                Image(painterResource("neostego.png"), contentDescription = null, modifier = Modifier.size(28.dp))
+                Image(painterResource(Res.drawable.neostego), contentDescription = null, modifier = Modifier.size(28.dp))
                 Text(stringResource(Res.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
             val grouped = Destination.entries.filter { it.sectionRes != null }.groupBy { it.sectionRes!! }

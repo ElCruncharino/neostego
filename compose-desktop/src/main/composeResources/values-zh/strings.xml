@@ -124,7 +124,6 @@
     <string name="theme_system">跟随系统</string>
     <string name="theme_light">浅色</string>
     <string name="theme_dark">深色</string>
-    <string name="language_restart_required">请重启NeoStego以使语言更改生效</string>
     <string name="about_app_name_version">NeoStego %1$s</string>
     <string name="about_tagline">将数据隐藏在图片和音频中，并为文件添加水印。</string>
     <string name="about_fork_credit">改进自 Samir Vaidya 的 OpenStego 分支，由 Nick Haghiri 维护。</string>
