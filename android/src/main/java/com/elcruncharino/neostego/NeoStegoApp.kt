@@ -8,7 +8,7 @@ package com.elcruncharino.neostego
 import android.app.Application
 import com.openstego.desktop.OpenStego
 import com.openstego.desktop.image.ImageCodecRegistry
-import com.openstego.desktop.plugin.jpeguniward.UniwardCostAccelerator
+import com.openstego.desktop.plugin.jpeguniward.UniwardCostAccelerator as CoreUniwardCostAccelerator
 
 /**
  * Application entry point. Registers the Android image codec for the core steganography engine and
@@ -22,8 +22,8 @@ class NeoStegoApp : Application() {
         ImageCodecRegistry.set(BitmapImageCodec())
         // Optional NEON fast path for UNIWARD costs; the pure-Java path runs unchanged if the native
         // library failed to load (unsupported ABI, older device, etc.)
-        if (com.elcruncharino.neostego.UniwardCostAccelerator.available) {
-            UniwardCostAccelerator.set(com.elcruncharino.neostego.UniwardCostAccelerator)
+        if (UniwardCostAccelerator.available) {
+            CoreUniwardCostAccelerator.set(UniwardCostAccelerator)
         }
         // Ensure core label namespaces / error codes are registered
         OpenStego.init()
