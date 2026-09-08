@@ -139,6 +139,7 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
+    <string name="label_language">Language</string>
     <string name="label_dynamic_color">Dynamic colour</string>
     <string name="hint_dynamic_color">Recolour from your wallpaper. Turn off to use a fixed colour below.</string>
     <string name="label_accent_color">Accent colour</string>

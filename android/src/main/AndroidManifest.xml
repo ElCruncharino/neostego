@@ -68,6 +68,16 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
+        <!-- Lets AndroidX persist the per-app language chosen via AppCompatDelegate. -->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
     </application>
 
 </manifest>
