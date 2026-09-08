@@ -87,6 +87,8 @@ fun AppShell(
     wmAlgorithms: List<AlgoInfo>,
     themeMode: ThemeMode,
     onThemeChange: (ThemeMode) -> Unit,
+    languageMode: String,
+    onLanguageChange: (String) -> Unit,
     dest: Destination,
     onSelect: (Destination) -> Unit,
 ) {
@@ -109,7 +111,7 @@ fun AppShell(
                     Destination.GENERATE_SIGNATURE -> GenerateSignatureScreen(wmAlgorithms)
                     Destination.EMBED_WATERMARK -> EmbedWatermarkScreen(wmAlgorithms)
                     Destination.VERIFY_WATERMARK -> VerifyWatermarkScreen(wmAlgorithms)
-                    Destination.SETTINGS -> SettingsScreen(themeMode, onThemeChange)
+                    Destination.SETTINGS -> SettingsScreen(themeMode, onThemeChange, languageMode, onLanguageChange)
                 }
             }
         }
