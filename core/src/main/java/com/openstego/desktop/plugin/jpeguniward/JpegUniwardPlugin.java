@@ -268,8 +268,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         JpegImage jpg = decode(stegoData);
         int[][] bands = bandList(jpg);
         Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
-        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0, ShadowMessage.reservedIndices(el0.count));
-        return readHeader(el0, perm0).getFileName();
+        return resolveBand0(el0).header.getFileName();
     }
 
     @Override
@@ -277,30 +276,17 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         JpegImage jpg = decode(stegoData);
         int[][] bands = bandList(jpg);
 
-        // Band 0 carries the bootstrap + variable header in its permuted prefix; the shadow slot (see
-        // ShadowMessage) is always excluded, whether or not this file actually uses it.
         Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
-        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0, ShadowMessage.reservedIndices(el0.count));
+        Band0Header b0 = resolveBand0(el0);
+        int[] perm0 = b0.perm0;
+        LSBDataHeader header = b0.header;
 
-        int[] bootBits = stcExtractRegion(el0, perm0, 0, BOOT_BYTES * 8, BOOT_WIDTH);
-        byte[] boot = new byte[BOOT_BYTES];
-        bitsToBytes(bootBits, boot);
-        int headerByteLen = getInt(boot, 0);
-
-        int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
-        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > perm0.length) {
-            throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
-        }
-        int headerElems = headerByteLen * 8 * HEADER_WIDTH;
-        int[] headerBitsArr = stcExtractRegion(el0, perm0, bootElems, headerByteLen * 8, HEADER_WIDTH);
-        byte[] headerBytes = new byte[headerByteLen];
-        bitsToBytes(headerBitsArr, headerBytes);
-
-        LSBDataHeader header = new LSBDataHeader(new ByteArrayInputStream(headerBytes), this.config);
         int dataLength = header.getDataLength();
         if (dataLength < 0) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
+        int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
+        int headerElems = header.getHeaderSize() * 8 * HEADER_WIDTH;
         int reserve = bootElems + headerElems;
         int bodyBits = dataLength * 8;
         byte[] data = new byte[dataLength];
@@ -309,8 +295,10 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         }
 
         // Recompute the identical capacity split, then extract each band's slice. Band 0's body
-        // starts past its reserved header prefix; later bands use their whole permuted range.
-        int[] caps = bandCaps(jpg, bands, reserve + ShadowMessage.RS_BLOCK_BITS);
+        // starts past its reserved header prefix; later bands use their whole permuted range. Only
+        // shadow-capable (current-format) files reserved the shadow slot out of band 0's capacity.
+        int shadowReserve = b0.shadowCapable ? ShadowMessage.RS_BLOCK_BITS : 0;
+        int[] caps = bandCaps(jpg, bands, reserve + shadowReserve);
         long totalCap = 0;
         for (int cap : caps) {
             totalCap += cap;
@@ -342,6 +330,43 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         reportProgress(1.0);
         bitsToBytes(allBits, data);
         return data;
+    }
+
+    /** Band 0's resolved permutation and header, plus which format version produced them. */
+    private static final class Band0Header {
+        final int[] perm0;
+        final LSBDataHeader header;
+        final boolean shadowCapable;
+
+        Band0Header(int[] perm0, LSBDataHeader header, boolean shadowCapable) {
+            this.perm0 = perm0;
+            this.header = header;
+            this.shadowCapable = shadowCapable;
+        }
+    }
+
+    /**
+     * Locates band 0's bootstrap/header, trying the current shadow-capable format first and falling
+     * back to the pre-shadow legacy layout. The two formats permute band 0 differently (the current one
+     * structurally excludes {@link ShadowMessage#reservedIndices}), so a file written by the older
+     * format must be tried with the unexcluded permutation to read correctly; {@link #readHeader}'s
+     * existing validation (bootstrap bounds, then {@link LSBDataHeader}'s magic stamp) is what tells the
+     * two apart, the same way {@link com.openstego.desktop.OpenStegoCrypto} auto-detects its own v2/v3
+     * formats. New embeds always write the shadow-capable format; only reading stays backward compatible.
+     */
+    private Band0Header resolveBand0(Elements el0) throws OpenStegoException {
+        OpenStegoException lastError = null;
+        for (boolean shadowCapable : new boolean[] {true, false}) {
+            try {
+                int[] exclude = shadowCapable ? ShadowMessage.reservedIndices(el0.count) : null;
+                int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0, exclude);
+                LSBDataHeader header = readHeader(el0, perm0);
+                return new Band0Header(perm0, header, shadowCapable);
+            } catch (OpenStegoException ex) {
+                lastError = ex;
+            }
+        }
+        throw lastError;
     }
 
     /**
