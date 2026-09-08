@@ -109,17 +109,83 @@ final class SvdQimChannel {
         if (blocksW * blocksH < codeBits.length) {
             throw new OpenStegoException(null, namespace, tooSmallErrorCode);
         }
-        double qimStep = strength * mean(computeS0Grid(ll, 0, 0));
-        embedBlocks(
-                ll,
-                codeBits,
-                codeBits.length,
-                strength,
-                progress,
-                namespace,
-                tooSmallErrorCode,
-                (row, col) -> codeIndexForBlock(seed, row, col, codeBits.length));
-        dctEmbed(ll, codeBits, seed, blocksH, blocksW, qimStep);
+        double[][] s0 = computeS0Grid(ll, 0, 0);
+        double[][] qimStepGrid = localStepGrid(s0, strength);
+
+        for (int br = 0; br < blocksH; br++) {
+            for (int bc = 0; bc < blocksW; bc++) {
+                if (isRisky(s0[br][bc], qimStepGrid[br][bc])) {
+                    continue; // near black/white: quantizing here risks the final 0..255 pixel clamp
+                }
+                int idx = codeIndexForBlock(seed, br, bc, codeBits.length);
+                int bit = codeBits[idx];
+                Svd svd = new Svd(getBlock(ll, br, bc));
+                double newS0 = quantize(svd.getSingularValue(0), qimStepGrid[br][bc], bit);
+                svd.setSingularValue(0, newS0);
+                putBlock(ll, br, bc, svd.reconstruct());
+            }
+            progress.accept(0.5 * (br + 1.0) / blocksH);
+        }
+        dctEmbed(ll, codeBits, seed, blocksH, blocksW, qimStepGrid);
+        progress.accept(1.0);
+    }
+
+    /**
+     * True when a block's own largest singular value is small enough, relative to its own quantization
+     * step, that {@link #quantize} could plausibly need to push it through (or very close to) zero to
+     * reach the nearest correctly-paritied grid point. A block that dark or that flat has essentially no
+     * room to absorb that move: the final inverse-DWT pixel clamp to [0, 255] corrupts it instead of
+     * reproducing the intended value, and unlike ordinary attack noise this isn't a small, randomly
+     * distributed error rate that redundancy and Reed-Solomon can outvote -- real photos can have this
+     * happen to a large, systematic fraction of all blocks (a flat sky, a shadowed background). Leaving
+     * such a block unmodified sacrifices its one vote/bit but avoids planting a wrong one; there is no
+     * corresponding case for the *bright* end because a block's largest singular value has no fixed
+     * upper bound to run into.
+     */
+    private static boolean isRisky(double s0Value, double step) {
+        return s0Value < 2.0 * step;
+    }
+
+    /**
+     * Neighborhood-averaged step per block: {@code strength} times the mean largest singular value over a
+     * small window centered on that block, instead of one global mean over the whole grid. A real photo's
+     * block energy is wildly uneven -- a dark, flat background block's own singular value can be a tiny
+     * fraction of a single global mean skewed high by a few bright, detailed blocks. Quantizing such a
+     * block against that oversized global step forces it through a change many multiples of its own
+     * natural scale to reach the nearest correctly-paritied grid point; the inverse DWT's final 0..255
+     * pixel clamp then corrupts that block irrecoverably (a synthetic, evenly-textured test cover never
+     * exercises this). A local step tracks each block's own neighborhood instead, so the forced change
+     * stays proportional to what that neighborhood can actually absorb. Both embed and decode compute this
+     * fresh from whatever grid they can see, so it needs no side information, and stays robust to a
+     * brightness/gain attack over the whole image exactly like the single-step version did.
+     */
+    private static final int STEP_WINDOW = 15;
+
+    static double[][] localStepGrid(double[][] s0, double strength) {
+        int h = s0.length;
+        int w = s0[0].length;
+        double[][] prefix = new double[h + 1][w + 1];
+        for (int r = 0; r < h; r++) {
+            for (int c = 0; c < w; c++) {
+                prefix[r + 1][c + 1] = s0[r][c] + prefix[r][c + 1] + prefix[r + 1][c] - prefix[r][c];
+            }
+        }
+        int half = STEP_WINDOW / 2;
+        double[][] stepGrid = new double[h][w];
+        for (int r = 0; r < h; r++) {
+            int r0 = Math.max(0, r - half);
+            int r1 = Math.min(h - 1, r + half);
+            for (int c = 0; c < w; c++) {
+                int c0 = Math.max(0, c - half);
+                int c1 = Math.min(w - 1, c + half);
+                double sum = prefix[r1 + 1][c1 + 1] - prefix[r0][c1 + 1] - prefix[r1 + 1][c0] + prefix[r0][c0];
+                int count = (r1 - r0 + 1) * (c1 - c0 + 1);
+                // Floored: an all-zero (pure black) neighborhood would otherwise give a zero step, and
+                // dividing by it in quantize()/decodeBit() blows up to NaN/Infinity.
+                stepGrid[r][c] = Math.max(strength * (sum / count), 1e-6);
+            }
+        }
+        return stepGrid;
     }
 
     private static void embedBlocks(
@@ -219,15 +285,17 @@ final class SvdQimChannel {
      * block is then nudged <em>towards</em> that target, not onto it -- see {@code qimStep} below.
      * <p>
      * Run after {@link #embedCodeBitsDualAddress}'s per-block QIM layer, every block already sits on a
-     * value whose parity (relative to {@code qimStep}) encodes that layer's bit. Moving a block straight to
-     * its DCT target would land on an arbitrary point and likely flip that parity, erasing the QIM layer.
-     * Instead each block moves by {@code round((target - current) / (2 * qimStep)) * (2 * qimStep)} -- the
-     * nearest whole number of full QIM periods -- which by construction preserves the exact value modulo
-     * {@code 2 * qimStep}, and therefore its QIM parity, while approximating the DCT target to within one
-     * {@code qimStep}: negligible as long as the DCT step is chosen well above it (see {@link #DCT_STRENGTH}
-     * relative to {@link RobustPlugin}'s own QIM strength).
+     * value whose parity (relative to that block's own entry in {@code qimStepGrid}) encodes that layer's
+     * bit. Moving a block straight to its DCT target would land on an arbitrary point and likely flip that
+     * parity, erasing the QIM layer. Instead each block moves by {@code round((target - current) / (2 *
+     * qimStepGrid[r][c])) * (2 * qimStepGrid[r][c])} -- the nearest whole number of full QIM periods for
+     * that block -- which by construction preserves the exact value modulo its own period, and therefore
+     * its QIM parity, while approximating the DCT target to within one local QIM step: negligible as long
+     * as the DCT step is chosen well above it (see {@link #DCT_STRENGTH} relative to {@link RobustPlugin}'s
+     * own QIM strength).
      */
-    private static void dctEmbed(Image ll, int[] codeBits, long seed, int blocksH, int blocksW, double qimStep) {
+    private static void dctEmbed(
+            Image ll, int[] codeBits, long seed, int blocksH, int blocksW, double[][] qimStepGrid) {
         double[][] s0 = new double[blocksH][blocksW];
         for (int r = 0; r < blocksH; r++) {
             for (int c = 0; c < blocksW; c++) {
@@ -247,9 +315,12 @@ final class SvdQimChannel {
         }
         double[][] target = idct2d(coeff);
 
-        double period = 2.0 * qimStep;
         for (int r = 0; r < blocksH; r++) {
             for (int c = 0; c < blocksW; c++) {
+                if (isRisky(s0[r][c], qimStepGrid[r][c])) {
+                    continue; // same near-black/white exclusion as the QIM layer -- see isRisky
+                }
+                double period = 2.0 * qimStepGrid[r][c];
                 double delta = Math.round((target[r][c] - s0[r][c]) / period) * period;
                 Svd svd = new Svd(getBlock(ll, r, c));
                 svd.setSingularValue(0, s0[r][c] + delta);
@@ -413,20 +484,24 @@ final class SvdQimChannel {
      * than one deep in a bin's interior; a hard-decision majority vote treats both the same. This is a
      * standard soft-decision refinement (not this project's invention), applied to our own repetition
      * scheme rather than copied from any specific tool's implementation of it.
+     * <p>
+     * Uses a {@link #localStepGrid} exactly as the dual-address embed does, recomputed fresh from the
+     * received grid -- needs no side information about the original cover.
      */
-    static int[] voteCodeBitsWeighted(double[][] s0, double step, long seed, int offR, int offC, int codeLen) {
-        return voteWeighted(s0, step, codeLen, (r, c) -> codeIndexForBlock(seed, r + offR, c + offC, codeLen));
-    }
-
-    private static int[] voteWeighted(double[][] s0, double step, int codeLen, BlockAddressing addressing) {
+    static int[] voteCodeBitsWeighted(double[][] s0, double strength, long seed, int offR, int offC, int codeLen) {
+        double[][] stepGrid = localStepGrid(s0, strength);
         int gridH = s0.length;
         int gridW = gridH == 0 ? 0 : s0[0].length;
         double[] scoreFor1 = new double[codeLen];
         double[] scoreFor0 = new double[codeLen];
         for (int r = 0; r < gridH; r++) {
             for (int c = 0; c < gridW; c++) {
-                int idx = addressing.indexFor(r, c);
                 double value = s0[r][c];
+                double step = stepGrid[r][c];
+                if (isRisky(value, step)) {
+                    continue; // same exclusion embed applied; this block was never carrying real signal
+                }
+                int idx = codeIndexForBlock(seed, r + offR, c + offC, codeLen);
                 long q = Math.round(value / step);
                 double distanceFromBoundary = Math.abs(value / step - q); // in [0, 0.5]
                 double confidence = 2.0 * distanceFromBoundary; // in [0, 1]
