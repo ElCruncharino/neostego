@@ -20,28 +20,34 @@ import java.io.ByteArrayInputStream;
 
 /**
  * Robust data-hiding plugin: an arbitrary short message, recoverable after JPEG re-compression,
- * additive noise, valumetric (brightness/contrast gain) scaling, and small crops/translations -- the
- * same QIM-on-largest-singular-value channel {@link DWTSVDPlugin} uses for watermarking (see
- * {@link SvdQimChannel}), exposed here as an actual byte channel instead of a fixed watermark checked
- * by correlation. Verified with byte-exact recovery on a 12MP cover down to JPEG quality 20 -- well
- * past the QF~62 threshold competing tools advertise surviving -- with no resize.
- * <p>
- * Known limitation, stated plainly rather than glossed over: this does <em>not</em> yet survive genuine
- * geometric resizing (as opposed to a pixel-aligned crop). The code-index-per-block addressing is
- * position-absolute in the original pixel grid; resizing changes that grid entirely, and the current
- * resynchronization search only covers integer block-phase/offset shifts, not scale. A tool using a
- * frequency-domain synchronization template is built to survive exactly this case; this one is not,
- * yet -- a real, disclosed gap, not a claim to compete on until it's actually solved.
+ * additive noise, valumetric (brightness/contrast gain) scaling, a moderate geometric resize, and small
+ * crops/translations -- the same QIM-on-largest-singular-value channel {@link DWTSVDPlugin} uses for
+ * watermarking (see {@link SvdQimChannel}), exposed here as an actual byte channel instead of a fixed
+ * watermark checked by correlation. Verified with byte-exact recovery on a 12MP cover down to JPEG
+ * quality 20 with no resize -- well past the QF~62 threshold a competing tool advertises surviving -- and,
+ * separately, through a resize to 80-110% of the original size (either direction, no crop) followed by
+ * that same recompression at a milder quality, without ever encoding a synchronization template.
  * <p>
  * Fixed-size payload (like {@code GanStegPlugin} and the JpegUniward shadow message): the framed message
  * ({@link LSBDataHeader} + payload) is padded to {@link #RS_MESSAGE_BYTES} and Reed-Solomon encoded as
  * one block, so the code length embedded is always the same regardless of the actual message size.
  * <p>
- * Resynchronization after a crop uses neither a separately-embedded template (a DFT peak, say) nor
- * foreknowledge of the payload (comparing against a known-expected bit pattern, as the watermark path
- * does): a candidate alignment is accepted the moment it happens to be Reed-Solomon correctable, which
- * only the true alignment is, overwhelmingly, ever going to be. The payload's own error-correcting
- * structure doubles as the synchronization signal, at no extra distortion cost.
+ * Resynchronization uses neither a separately-embedded template (a DFT peak, say) nor foreknowledge of
+ * the payload (comparing against a known-expected bit pattern, as the watermark path does): a candidate
+ * decode is accepted the moment it happens to be Reed-Solomon correctable, which only a genuinely aligned
+ * one is, overwhelmingly, ever going to be. The payload's own error-correcting structure doubles as the
+ * synchronization signal, at no extra distortion cost -- and it is applied twice over, under two
+ * independent, nested mechanisms layered on the very same blocks (see
+ * {@link SvdQimChannel#embedCodeBitsDualAddress}): position-absolute per-block QIM, searched over an
+ * integer phase/offset grid, for a crop or translation; and low-frequency 2-D DCT coefficients of the
+ * whole block-energy grid, needing no search since that layer has no phase to lose, for a rescale.
+ * <p>
+ * Known limits, stated plainly rather than glossed over: a resize beyond roughly 80-110% of the original
+ * size is not yet reliably recovered -- past that range the resample destroys more of the block-energy
+ * grid's low-frequency content than the DCT layer's redundancy can outvote, a fundamentally different
+ * failure mode than a bad synchronization guess and not fixed by searching harder. And a resize
+ * <em>combined with</em> a crop (as opposed to either alone) is not yet covered -- the DCT layer has no
+ * phase/offset search to recover the crop's translation, and adding one is future work, not a solved case.
  */
 public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
 
@@ -56,8 +62,13 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
     private static final int RS_BLOCK_BYTES = RS_MESSAGE_BYTES + RS_PARITY_BYTES;
     private static final int RS_BLOCK_BITS = RS_BLOCK_BYTES * 8;
 
-    /** Default relative QIM step; see {@link DWTSVDPlugin}'s identical constant for the rationale. */
-    private static final double DEFAULT_STRENGTH = 0.035;
+    /**
+     * Default relative QIM step; see {@link DWTSVDPlugin}'s own constant of the same purpose for the
+     * general rationale. Deliberately smaller than that one: {@link SvdQimChannel#embedCodeBitsDualAddress}
+     * layers a second, DCT-domain signal on top of this one, and needs this step small relative to that
+     * layer's own step for the nested quantizer to keep both signals intact.
+     */
+    private static final double DEFAULT_STRENGTH = 0.02;
 
     /** Max LL blocks a crop may have removed from the top/left that resynchronization will recover. */
     private static final int MAX_BLOCK_OFFSET = 4;
@@ -147,7 +158,7 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
         Image ll = bands[0];
 
         long seed = StringUtil.passwordHash(this.config.getPassword());
-        SvdQimChannel.embedCodeBits(
+        SvdQimChannel.embedCodeBitsDualAddress(
                 ll, codeBits, seed, strength(), this::reportProgress, NAMESPACE, RobustErrors.ERR_FILE_TOO_SMALL);
 
         transform.inverse(bands, DwtSvdTransform.pixelSink(image));
@@ -202,9 +213,17 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
         double strength = strength();
 
         double[][] baselineS0 = SvdQimChannel.computeS0Grid(ll, 0, 0);
-        byte[] baseline = tryDecode(baselineS0, SvdQimChannel.stepFor(baselineS0, strength), seed, 0, 0);
+        double baselineStep = SvdQimChannel.stepFor(baselineS0, strength);
+        byte[] baseline = tryDecode(baselineS0, baselineStep, seed, 0, 0);
         if (baseline != null) {
             return baseline;
+        }
+
+        // Cheap (no phase/offset search) before the expensive crop search below: a resize with no crop
+        // resolves on the first try, since the DCT scheme has no phase to search over.
+        byte[] resized = tryDecodeDct(baselineS0, seed);
+        if (resized != null) {
+            return resized;
         }
 
         for (int phaseY = 0; phaseY < SvdQimChannel.BLOCK; phaseY++) {
@@ -232,6 +251,16 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
     /** Soft-decision votes, RS-decodes, and returns the payload iff the block is RS-correctable; else {@code null}. */
     private byte[] tryDecode(double[][] s0, double step, long seed, int offR, int offC) {
         int[] codeBits = SvdQimChannel.voteCodeBitsWeighted(s0, step, seed, offR, offC, RS_BLOCK_BITS);
+        byte[] block = SvdQimChannel.bitsToBytes(codeBits);
+        if (!this.reedSolomon.isCorrectable(block)) {
+            return null;
+        }
+        return this.reedSolomon.decode(block);
+    }
+
+    /** As {@link #tryDecode}, but against the DCT scheme that survives a resize. */
+    private byte[] tryDecodeDct(double[][] s0, long seed) {
+        int[] codeBits = SvdQimChannel.voteCodeBitsDct(s0, seed, RS_BLOCK_BITS);
         byte[] block = SvdQimChannel.bitsToBytes(codeBits);
         if (!this.reedSolomon.isCorrectable(block)) {
             return null;
