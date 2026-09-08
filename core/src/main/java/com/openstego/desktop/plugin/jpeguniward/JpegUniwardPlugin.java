@@ -151,6 +151,10 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
     @Override
     public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
             throws OpenStegoException {
+        if (this.config.getShadowMessage() != null
+                && (this.config.getShadowPassword() == null || this.config.getShadowPassword().length == 0)) {
+            throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_SHADOW_PASSWORD_REQUIRED);
+        }
         boolean plain = this.config.isPlainMode();
         JpegImage jpg;
         if (plain) {
@@ -181,12 +185,17 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         byte[] headerBytes = header.getHeaderData();
         int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
         int headerElems = headerBytes.length * 8 * HEADER_WIDTH;
+        // bodyStart indexes the FILTERED band-0 permutation, which has already had the shadow slot's
+        // carriers removed entirely (see below) -- so it excludes ShadowMessage.RS_BLOCK_BITS. Capacity
+        // must additionally account for that removal, since every embed reserves the shadow slot in
+        // band 0 whether or not a shadow message is actually set (see ShadowMessage's javadoc for why
+        // this has to be unconditional).
         int reserve = bootElems + headerElems;
 
         // Band 0 reserves its permuted prefix for the bootstrap + variable header; every band's
         // remaining carriers form the body capacity. The split is proportional and deterministic, so
         // extract reproduces it from geometry + the decoded header alone.
-        int[] caps = bandCaps(jpg, bands, reserve);
+        int[] caps = bandCaps(jpg, bands, reserve + ShadowMessage.RS_BLOCK_BITS);
         int bodyBits = msg.length * 8;
         long totalCap = 0;
         for (int cap : caps) {
@@ -209,7 +218,11 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
                     ? uerdCostsBand(jpg, c, r0, r1, rounding)
                     : uniwardCostsBand(jpg, c, r0, r1, rounding);
             Elements el = enumerateBand(jpg, c, r0, r1, cost, rounding);
-            int[] perm = bandPermutation(el.count, this.config.getPassword(), b);
+
+            int[] shadowIdx = (b == 0) ? ShadowMessage.reservedIndices(el.count) : null;
+            int[] perm = (b == 0)
+                    ? bandPermutation(el.count, this.config.getPassword(), b, shadowIdx)
+                    : bandPermutation(el.count, this.config.getPassword(), b);
 
             int bodyStart;
             if (b == 0) {
@@ -233,6 +246,17 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
                 stcEmbedRegion(el, perm, bodyStart, seg, w);
                 off += segBits;
             }
+
+            if (b == 0 && this.config.getShadowMessage() != null) {
+                byte[] shadowBlock = ShadowMessage.encode(this.config.getShadowMessage(), this.config.getShadowPassword());
+                int[] shadowBits = bytesToBits(shadowBlock);
+                for (int i = 0; i < shadowIdx.length; i++) {
+                    int e = shadowIdx[i];
+                    if (parity(el, e) != shadowBits[i]) {
+                        flip(el, e);
+                    }
+                }
+            }
         }
         reportProgress(1.0);
 
@@ -244,7 +268,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         JpegImage jpg = decode(stegoData);
         int[][] bands = bandList(jpg);
         Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
-        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0);
+        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0, ShadowMessage.reservedIndices(el0.count));
         return readHeader(el0, perm0).getFileName();
     }
 
@@ -253,9 +277,10 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         JpegImage jpg = decode(stegoData);
         int[][] bands = bandList(jpg);
 
-        // Band 0 carries the bootstrap + variable header in its permuted prefix.
+        // Band 0 carries the bootstrap + variable header in its permuted prefix; the shadow slot (see
+        // ShadowMessage) is always excluded, whether or not this file actually uses it.
         Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
-        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0);
+        int[] perm0 = bandPermutation(el0.count, this.config.getPassword(), 0, ShadowMessage.reservedIndices(el0.count));
 
         int[] bootBits = stcExtractRegion(el0, perm0, 0, BOOT_BYTES * 8, BOOT_WIDTH);
         byte[] boot = new byte[BOOT_BYTES];
@@ -263,7 +288,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         int headerByteLen = getInt(boot, 0);
 
         int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
-        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > el0.count) {
+        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > perm0.length) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
         int headerElems = headerByteLen * 8 * HEADER_WIDTH;
@@ -285,7 +310,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
 
         // Recompute the identical capacity split, then extract each band's slice. Band 0's body
         // starts past its reserved header prefix; later bands use their whole permuted range.
-        int[] caps = bandCaps(jpg, bands, reserve);
+        int[] caps = bandCaps(jpg, bands, reserve + ShadowMessage.RS_BLOCK_BITS);
         long totalCap = 0;
         for (int cap : caps) {
             totalCap += cap;
@@ -307,7 +332,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             int[] perm = (b == 0) ? perm0 : bandPermutation(el.count, this.config.getPassword(), b);
             int w = caps[b] / segBits;
             int bodyStart = (b == 0) ? reserve : 0;
-            if (w < 1 || (long) bodyStart + (long) segBits * w > el.count) {
+            if (w < 1 || (long) bodyStart + (long) segBits * w > perm.length) {
                 throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
             }
             int[] seg = stcExtractRegion(el, perm, bodyStart, segBits, w);
@@ -319,6 +344,26 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         return data;
     }
 
+    /**
+     * Recovers a {@link ShadowMessage} embedded alongside the primary one, using only
+     * {@code shadowPassword} &mdash; no knowledge of the primary password or message is needed, since
+     * the reserved carriers are located purely from band&nbsp;0's (public) geometry and the shadow
+     * password's own permutation.
+     */
+    public byte[] extractShadow(byte[] stegoData, String stegoFileName, char[] shadowPassword) throws OpenStegoException {
+        JpegImage jpg = decode(stegoData);
+        int[][] bands = bandList(jpg);
+        Elements el0 = enumerateBand(jpg, bands[0][0], bands[0][1], bands[0][2], null, null);
+        int[] shadowIdx = ShadowMessage.reservedIndices(el0.count);
+        int[] bits = new int[shadowIdx.length];
+        for (int i = 0; i < shadowIdx.length; i++) {
+            bits[i] = parity(el0, shadowIdx[i]);
+        }
+        byte[] block = new byte[shadowIdx.length / 8];
+        bitsToBytes(bits, block);
+        return ShadowMessage.decode(block, shadowPassword);
+    }
+
     /** Reads the bootstrap field then the variable {@link LSBDataHeader} from band&nbsp;0. */
     private LSBDataHeader readHeader(Elements el, int[] perm) throws OpenStegoException {
         int[] bootBits = stcExtractRegion(el, perm, 0, BOOT_BYTES * 8, BOOT_WIDTH);
@@ -326,7 +371,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         bitsToBytes(bootBits, boot);
         int headerByteLen = getInt(boot, 0);
         int bootElems = BOOT_BYTES * 8 * BOOT_WIDTH;
-        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > el.count) {
+        if (headerByteLen < 0 || (long) bootElems + (long) headerByteLen * 8 * HEADER_WIDTH > perm.length) {
             throw new OpenStegoException(null, NAMESPACE, JpegUniwardErrors.ERR_IMAGE_DATA_READ);
         }
         int[] headerBitsArr = stcExtractRegion(el, perm, bootElems, headerByteLen * 8, HEADER_WIDTH);
@@ -348,7 +393,7 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
         long blocks = (long) mcuCols * mcuRows * (4 + 1 + 1);
         long n = blocks * 63;
         int headerBytes = new LSBDataHeader(0, 1, null, getConfig()).getHeaderData().length;
-        long used = (long) BOOT_BYTES * 8 * BOOT_WIDTH + (long) headerBytes * 8 * HEADER_WIDTH;
+        long used = (long) BOOT_BYTES * 8 * BOOT_WIDTH + (long) headerBytes * 8 * HEADER_WIDTH + ShadowMessage.RS_BLOCK_BITS;
         long body = n - used;
         return (int) Math.max(0, body / 8);
     }
@@ -640,7 +685,18 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
      * The seed is mixed with the band index so each band draws an independent ordering, yet both
      * embed and extract reproduce it from the password and band index alone.
      */
-    private static int[] bandPermutation(int count, char[] password, int bandIndex) throws OpenStegoException {
+    static int[] bandPermutation(int count, char[] password, int bandIndex) throws OpenStegoException {
+        return bandPermutation(count, password, bandIndex, null);
+    }
+
+    /**
+     * As {@link #bandPermutation(int, char[], int)}, but with {@code exclude} (e.g.
+     * {@link ShadowMessage#reservedIndices}) removed from the result entirely -- not merely
+     * cost-penalized -- so the excluded carriers can never be selected for a fixed-width region like
+     * the bootstrap even when the syndrome would otherwise force it. The returned array has length
+     * {@code count - exclude.length}.
+     */
+    static int[] bandPermutation(int count, char[] password, int bandIndex, int[] exclude) throws OpenStegoException {
         int[] perm = new int[count];
         for (int i = 0; i < count; i++) {
             perm[i] = i;
@@ -652,7 +708,21 @@ public class JpegUniwardPlugin extends DHImagePluginTemplate<JpegUniwardConfig> 
             perm[i] = perm[j];
             perm[j] = t;
         }
-        return perm;
+        if (exclude == null || exclude.length == 0) {
+            return perm;
+        }
+        boolean[] excluded = new boolean[count];
+        for (int e : exclude) {
+            excluded[e] = true;
+        }
+        int[] filtered = new int[count - exclude.length];
+        int idx = 0;
+        for (int p : perm) {
+            if (!excluded[p]) {
+                filtered[idx++] = p;
+            }
+        }
+        return filtered;
     }
 
     private static int ceilDiv(int a, int b) {
