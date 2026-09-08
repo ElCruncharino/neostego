@@ -98,7 +98,6 @@ public class OpenStego {
         }
 
         try {
-            // Compress data, if requested (falls back to storing it as-is if that doesn't help)
             if (this.config.isUseCompression()) {
                 CompressionCodec.Result compressed = CompressionCodec.compress(msg);
                 msg = compressed.data;
