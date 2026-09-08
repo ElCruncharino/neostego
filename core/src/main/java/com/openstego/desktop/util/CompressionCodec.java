@@ -31,7 +31,7 @@ public final class CompressionCodec {
 
     private static final String DICTIONARY_RESOURCE = "/compression/message.dict";
 
-    private static volatile byte[] dictionary;
+    private static final byte[] DICTIONARY = loadDictionary();
 
     private CompressionCodec() {}
 
@@ -70,7 +70,7 @@ public final class CompressionCodec {
     private static byte[] deflate(byte[] raw) {
         Deflater deflater = new Deflater(Deflater.BEST_COMPRESSION);
         try {
-            deflater.setDictionary(dictionary());
+            deflater.setDictionary(DICTIONARY);
             deflater.setInput(raw);
             deflater.finish();
             ByteArrayOutputStream out = new ByteArrayOutputStream(raw.length);
@@ -94,7 +94,7 @@ public final class CompressionCodec {
                 int n = inflater.inflate(buf);
                 if (n == 0) {
                     if (inflater.needsDictionary()) {
-                        inflater.setDictionary(dictionary());
+                        inflater.setDictionary(DICTIONARY);
                         continue;
                     }
                     if (inflater.needsInput() || inflater.finished()) {
@@ -118,19 +118,6 @@ public final class CompressionCodec {
         } catch (IOException ex) {
             throw new OpenStegoException(ex, OpenStego.NAMESPACE, OpenStegoErrors.CORRUPT_DATA);
         }
-    }
-
-    private static byte[] dictionary() {
-        byte[] d = dictionary;
-        if (d == null) {
-            synchronized (CompressionCodec.class) {
-                d = dictionary;
-                if (d == null) {
-                    dictionary = d = loadDictionary();
-                }
-            }
-        }
-        return d;
     }
 
     private static byte[] loadDictionary() {
