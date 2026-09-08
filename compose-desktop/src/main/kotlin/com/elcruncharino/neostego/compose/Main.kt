@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -18,7 +19,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -30,8 +30,10 @@ import androidx.compose.ui.window.rememberWindowState
 import com.elcruncharino.neostego.compose.engine.WindowBounds
 import com.elcruncharino.neostego.compose.engine.dataHidingAlgorithms
 import com.elcruncharino.neostego.compose.engine.detectUiScale
+import com.elcruncharino.neostego.compose.engine.loadLanguageMode
 import com.elcruncharino.neostego.compose.engine.loadThemeMode
 import com.elcruncharino.neostego.compose.engine.loadWindowBounds
+import com.elcruncharino.neostego.compose.engine.saveLanguageMode
 import com.elcruncharino.neostego.compose.engine.saveThemeMode
 import com.elcruncharino.neostego.compose.engine.saveWindowBounds
 import com.elcruncharino.neostego.compose.engine.watermarkingAlgorithms
@@ -41,14 +43,16 @@ import com.elcruncharino.neostego.compose.theme.ThemeMode
 import com.elcruncharino.neostego.compose.ui.AppShell
 import com.elcruncharino.neostego.compose.ui.Destination
 import com.openstego.desktop.OpenStego
-import com.openstego.desktop.ui.UILocale
 import com.openstego.desktop.OpenStegoCmd
 import com.openstego.desktop.OpenStegoException
 import com.openstego.desktop.OpenStegoLauncher
+import com.openstego.desktop.ui.UILocale
 import com.openstego.desktop.util.PluginManager
 import com.openstego.desktop.util.UserPreferences
 import openstego.compose_desktop.generated.resources.Res
 import openstego.compose_desktop.generated.resources.app_title_with_destination
+import openstego.compose_desktop.generated.resources.neostego
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 // Flags that launch the classic Swing UI — the accessible fallback (full AT-SPI/screen-reader support)
@@ -103,6 +107,9 @@ private fun runCli(args: Array<String>): Int = try {
 }
 
 private fun launchComposeUi() {
+    // Apply the saved language before plugins/resources load: Compose's resource system and the
+    // core plugin labels both derive their language from the JVM default locale at load time.
+    UILocale.install(loadLanguageMode())
     PluginManager.loadPlugins()
     val dhAlgorithms = dataHidingAlgorithms()
     val wmAlgorithms = watermarkingAlgorithms()
@@ -119,7 +126,7 @@ private fun launchComposeUi() {
     }
     application {
         var themeMode by remember { mutableStateOf(loadThemeMode()) }
-        var languageMode by remember { mutableStateOf(UILocale.current()) }
+        var languageMode by remember { mutableStateOf(loadLanguageMode()) }
         var dest by remember { mutableStateOf(Destination.HIDE) }
         val dark = when (themeMode) {
             ThemeMode.SYSTEM -> isSystemInDarkTheme()
@@ -165,30 +172,41 @@ private fun launchComposeUi() {
                 exitApplication()
             },
             state = windowState,
-            title = stringResource(Res.string.app_title_with_destination, stringResource(dest.titleRes)),
-            icon = painterResource("neostego.png"),
+            // Wrapped in key(languageMode): Compose Multiplatform's resource loading resolves
+            // strings against the JVM default locale once per composition and doesn't observe it
+            // reactively, so a language change alone wouldn't update already-composed text. key()
+            // forces this whole subtree to be discarded and rebuilt from scratch on language change,
+            // which re-evaluates every stringResource() call against the newly installed locale
+            // (this is JetBrains' own documented workaround, not an internal API).
+            title = key(languageMode) {
+                stringResource(Res.string.app_title_with_destination, stringResource(dest.titleRes))
+            },
+            icon = painterResource(Res.drawable.neostego),
         ) {
-            NeoStegoTheme(dark = dark) {
-                // Drive Compose's density from the detected desktop scale so the UI matches native apps.
-                val density = uiScale?.let { Density(it, 1f) } ?: LocalDensity.current
-                CompositionLocalProvider(LocalDensity provides density) {
-                    Surface(modifier = Modifier.fillMaxSize()) {
-                        AppShell(
-                            dhAlgorithms = dhAlgorithms,
-                            wmAlgorithms = wmAlgorithms,
-                            themeMode = themeMode,
-                            onThemeChange = {
-                                themeMode = it
-                                saveThemeMode(it)
-                            },
-                            languageMode = languageMode,
-                            onLanguageChange = {
-                                languageMode = it
-                                UILocale.switchTo(it)
-                            },
-                            dest = dest,
-                            onSelect = { dest = it },
-                        )
+            key(languageMode) {
+                NeoStegoTheme(dark = dark) {
+                    // Drive Compose's density from the detected desktop scale so the UI matches native apps.
+                    val density = uiScale?.let { Density(it, 1f) } ?: LocalDensity.current
+                    CompositionLocalProvider(LocalDensity provides density) {
+                        Surface(modifier = Modifier.fillMaxSize()) {
+                            AppShell(
+                                dhAlgorithms = dhAlgorithms,
+                                wmAlgorithms = wmAlgorithms,
+                                themeMode = themeMode,
+                                onThemeChange = {
+                                    themeMode = it
+                                    saveThemeMode(it)
+                                },
+                                languageMode = languageMode,
+                                onLanguageChange = {
+                                    UILocale.install(it)
+                                    languageMode = it
+                                    saveLanguageMode(it)
+                                },
+                                dest = dest,
+                                onSelect = { dest = it },
+                            )
+                        }
                     }
                 }
             }

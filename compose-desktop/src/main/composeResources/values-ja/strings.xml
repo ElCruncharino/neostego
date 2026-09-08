@@ -124,7 +124,6 @@
     <string name="theme_system">システムに合わせる</string>
     <string name="theme_light">ライト</string>
     <string name="theme_dark">ダーク</string>
-    <string name="language_restart_required">言語の変更を反映するにはNeoStegoを再起動してください</string>
     <string name="about_app_name_version">NeoStego %1$s</string>
     <string name="about_tagline">画像や音声にデータを隠し、ファイルに電子透かしを付けます。</string>
     <string name="about_fork_credit">Samir Vaidya 氏による OpenStego のフォークを近代化したものです。Nick Haghiri がメンテナンスしています。</string>

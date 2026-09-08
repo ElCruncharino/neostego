@@ -124,7 +124,6 @@
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
-    <string name="language_restart_required">Restart NeoStego for the language change to take effect</string>
     <string name="about_app_name_version">NeoStego %1$s</string>
     <string name="about_tagline">Hide data inside images and audio, and watermark your files.</string>
     <string name="about_fork_credit">A modernized fork of OpenStego by Samir Vaidya. Maintained by Nick Haghiri.</string>

@@ -19,6 +19,18 @@ fun saveThemeMode(mode: ThemeMode) {
     }
 }
 
+/** Saved UI language ("system", "en", "zh" or "ja"), kept in this module's own prefs node rather
+ * than the Swing app's UserPreferences properties file (same reasoning as [saveThemeMode]: the
+ * two UIs deliberately don't share settings storage). */
+fun loadLanguageMode(): String = prefs.get("language", "system")
+
+fun saveLanguageMode(mode: String) {
+    runCatching {
+        prefs.put("language", mode)
+        prefs.flush()
+    }
+}
+
 /** Saved window geometry. Coordinates/size are in the window's logical units (dp at platform density). */
 data class WindowBounds(val x: Int, val y: Int, val width: Int, val height: Int, val maximized: Boolean)
 
