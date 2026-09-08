@@ -519,10 +519,34 @@ final class SvdQimChannel {
         return codeBits;
     }
 
-    /** QIM embed: return the nearest multiple of {@code step} whose index parity equals {@code bit}. */
+    /**
+     * QIM embed: if {@code value} already decodes to {@code bit} with a comfortable margin, return it
+     * completely untouched; otherwise move it to the nearest multiple of {@code step} with the right
+     * parity -- correcting it if the parity was wrong, or just re-centering it in its bin for margin if
+     * the parity was already right but too close to the edge to trust.
+     * <p>
+     * Snapping <em>every</em> block onto an exact grid point regardless of whether it needed to move --
+     * the original behavior here -- is a real, previously-unnoticed detectability cost with no
+     * corresponding benefit for a block that was already comfortably correct: forcing it onto the
+     * lattice anyway just adds a needless source of the kind of regular, grid-like clustering a
+     * residual-based detector (SRM and friends) is specifically built to notice -- the same underlying
+     * tell that makes naive LSB replacement so easy to catch. Skipping it is exact-safe for decode
+     * (which recomputes the identical {@code round(value / step)}, so parity is unchanged, not just
+     * approximately preserved), but a block sitting right at the edge of the correct bin still needs the
+     * full {@code step/2} margin re-established: not just against future attack noise, but because
+     * {@link #embedCodeBitsDualAddress} runs the DCT layer's own SVD reconstruction over the very same
+     * block again afterward, and a bare, unsnapped margin didn't reliably survive that second pass.
+     * {@link #QUANTIZE_SKIP_MARGIN} is how close to the bin center "comfortable" means.
+     */
+    private static final double QUANTIZE_SKIP_MARGIN = 0.15;
+
     static double quantize(double value, double step, int bit) {
         long q = Math.round(value / step);
-        if ((q & 1L) != (bit & 1)) {
+        boolean parityOk = (q & 1L) == (bit & 1);
+        if (parityOk && Math.abs(value / step - q) <= QUANTIZE_SKIP_MARGIN) {
+            return value;
+        }
+        if (!parityOk) {
             double lower = (q - 1) * step;
             double upper = (q + 1) * step;
             q += (Math.abs(value - lower) <= Math.abs(value - upper)) ? -1 : 1;
