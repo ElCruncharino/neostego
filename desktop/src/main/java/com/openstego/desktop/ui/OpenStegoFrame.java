@@ -215,8 +215,7 @@ public class OpenStegoFrame extends JFrame {
      */
     public JRadioButtonMenuItem getLanguageSystemMenuItem() {
         if (this.languageSystemMenuItem == null) {
-            this.languageSystemMenuItem =
-                    new JRadioButtonMenuItem(labelUtil.getString("gui.menu.view.theme.system"));
+            this.languageSystemMenuItem = new JRadioButtonMenuItem(labelUtil.getString("gui.menu.view.theme.system"));
             this.languageSystemMenuItem.setSelected(UILocale.SYSTEM.equals(UILocale.current()));
             this.languageSystemMenuItem.addActionListener(e -> switchLanguage(UILocale.SYSTEM));
         }
