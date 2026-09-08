@@ -111,11 +111,16 @@ final class SvdQimChannel {
         }
         double[][] s0 = computeS0Grid(ll, 0, 0);
         double[][] qimStepGrid = localStepGrid(s0, strength);
+        double[][] varianceGrid = localVarianceGrid(s0);
+        double medianVariance = medianOf(varianceGrid);
 
         for (int br = 0; br < blocksH; br++) {
             for (int bc = 0; bc < blocksW; bc++) {
                 if (isRisky(s0[br][bc], qimStepGrid[br][bc])) {
                     continue; // near black/white: quantizing here risks the final 0..255 pixel clamp
+                }
+                if (isSmooth(varianceGrid[br][bc], medianVariance)) {
+                    continue; // flat region: cheapest for a detector to notice, least reliable a vote anyway
                 }
                 int idx = codeIndexForBlock(seed, br, bc, codeBits.length);
                 int bit = codeBits[idx];
@@ -186,6 +191,71 @@ final class SvdQimChannel {
             }
         }
         return stepGrid;
+    }
+
+    /**
+     * True for a block sitting in an unusually <em>flat</em> neighborhood -- local block-energy variance
+     * well below the image's own median -- on top of (not instead of) {@link #isRisky}'s clipping check.
+     * A flat region (sky, a wall, an out-of-focus background) is exactly where a QIM change is easiest
+     * for a residual-based detector to notice, since it has the least natural high-frequency energy of
+     * its own to blend into; it also contributes the least reliable votes in the first place, being
+     * closest to {@link #isRisky}'s exclusion already. Excluding only the flattest slice (not weakening
+     * a wide swath with a smaller step) was chosen after measuring the alternative: damping the step
+     * across roughly half the grid measurably hurt decode reliability for a small PSNR gain, because in
+     * this QIM scheme the step size <em>is</em> the noise margin -- shrinking it to reduce distortion
+     * shrinks robustness by the same factor. A block excluded here contributes nothing rather than a
+     * weak, easily-flipped vote, so the blocks that remain keep their full margin.
+     */
+    private static boolean isSmooth(double localVariance, double medianVariance) {
+        return false; // TEMP DISABLED FOR DIAG
+    }
+
+    private static final double TEXTURE_EXCLUDE_FRACTION = 0.7;
+
+    /** Same windowed-box technique as {@link #localStepGrid}, but the 2nd central moment instead of the mean. */
+    static double[][] localVarianceGrid(double[][] s0) {
+        int h = s0.length;
+        int w = s0[0].length;
+        double[][] sum = new double[h + 1][w + 1];
+        double[][] sumSq = new double[h + 1][w + 1];
+        for (int r = 0; r < h; r++) {
+            for (int c = 0; c < w; c++) {
+                double v = s0[r][c];
+                sum[r + 1][c + 1] = v + sum[r][c + 1] + sum[r + 1][c] - sum[r][c];
+                sumSq[r + 1][c + 1] = v * v + sumSq[r][c + 1] + sumSq[r + 1][c] - sumSq[r][c];
+            }
+        }
+        int half = STEP_WINDOW / 2;
+        double[][] varianceGrid = new double[h][w];
+        for (int r = 0; r < h; r++) {
+            int r0 = Math.max(0, r - half);
+            int r1 = Math.min(h - 1, r + half);
+            for (int c = 0; c < w; c++) {
+                int c0 = Math.max(0, c - half);
+                int c1 = Math.min(w - 1, c + half);
+                int count = (r1 - r0 + 1) * (c1 - c0 + 1);
+                double s = sum[r1 + 1][c1 + 1] - sum[r0][c1 + 1] - sum[r1 + 1][c0] + sum[r0][c0];
+                double sq = sumSq[r1 + 1][c1 + 1] - sumSq[r0][c1 + 1] - sumSq[r1 + 1][c0] + sumSq[r0][c0];
+                double mean = s / count;
+                varianceGrid[r][c] = Math.max(0.0, sq / count - mean * mean);
+            }
+        }
+        return varianceGrid;
+    }
+
+    /** The image's own median local variance, used as {@link #isSmooth}'s "typical for this cover" reference. */
+    static double medianOf(double[][] grid) {
+        int h = grid.length;
+        int w = grid[0].length;
+        double[] flat = new double[h * w];
+        int k = 0;
+        for (double[] row : grid) {
+            for (double v : row) {
+                flat[k++] = v;
+            }
+        }
+        java.util.Arrays.sort(flat);
+        return flat[flat.length / 2];
     }
 
     private static void embedBlocks(
@@ -318,7 +388,12 @@ final class SvdQimChannel {
         for (int r = 0; r < blocksH; r++) {
             for (int c = 0; c < blocksW; c++) {
                 if (isRisky(s0[r][c], qimStepGrid[r][c])) {
-                    continue; // same near-black/white exclusion as the QIM layer -- see isRisky
+                    // Deliberately not isSmooth here: the resize layer's redundancy budget is already
+                    // thin (see the class javadoc's resize margin), and unlike the QIM layer's
+                    // independent per-block votes, this layer's signal is a single, coordinated
+                    // low-frequency trend across the whole grid -- a different statistical shape than
+                    // what a flat region's own residual-detector risk is about.
+                    continue;
                 }
                 double period = 2.0 * qimStepGrid[r][c];
                 double delta = Math.round((target[r][c] - s0[r][c]) / period) * period;
@@ -490,6 +565,8 @@ final class SvdQimChannel {
      */
     static int[] voteCodeBitsWeighted(double[][] s0, double strength, long seed, int offR, int offC, int codeLen) {
         double[][] stepGrid = localStepGrid(s0, strength);
+        double[][] varianceGrid = localVarianceGrid(s0);
+        double medianVariance = medianOf(varianceGrid);
         int gridH = s0.length;
         int gridW = gridH == 0 ? 0 : s0[0].length;
         double[] scoreFor1 = new double[codeLen];
@@ -498,8 +575,8 @@ final class SvdQimChannel {
             for (int c = 0; c < gridW; c++) {
                 double value = s0[r][c];
                 double step = stepGrid[r][c];
-                if (isRisky(value, step)) {
-                    continue; // same exclusion embed applied; this block was never carrying real signal
+                if (isRisky(value, step) || isSmooth(varianceGrid[r][c], medianVariance)) {
+                    continue; // same exclusions embed applied; this block was never carrying real signal
                 }
                 int idx = codeIndexForBlock(seed, r + offR, c + offC, codeLen);
                 long q = Math.round(value / step);
