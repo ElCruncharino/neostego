@@ -167,9 +167,13 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
         // Escalating strength: most covers survive the base strength on the first try (see
         // STRENGTH_ESCALATION below for why some don't). Each attempt re-decodes the cover fresh and
         // re-embeds from scratch -- reusing a partially-embedded LL band across attempts would compound
-        // instead of retrying -- and verifies against a real, simulated recompression (see
-        // survivesRecompression): the plugin's own purpose is surviving that, so that -- not just a clean
-        // readback -- is the bar escalation has to actually clear.
+        // instead of retrying -- and verifies both a clean readback and a real, simulated recompression
+        // (see cleanRoundTripDecodes and survivesRecompression). Both, not just the recompression check
+        // alone: JPEG's own block quantization can, for a block that landed near a decision boundary,
+        // coincidentally round it the *right* way even though a plain lossless readback of the exact
+        // same embed would not have -- surviving the harder-looking attack doesn't imply surviving the
+        // easier one, so accepting on the recompression check alone let a handful of covers through with
+        // a stego image that doesn't actually decode cleanly, only "by accident" post-JPEG.
         double strength = strength();
         for (int attempt = 0; ; attempt++) {
             PixelImage image = ImageCodecRegistry.get().decode(cover, coverFileName);
@@ -184,7 +188,10 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
             transform.inverse(bands, DwtSvdTransform.pixelSink(image));
 
             boolean lastAttempt = attempt == STRENGTH_ESCALATION.length - 1;
-            if (lastAttempt || survivesRecompression(image, cols, rows, strength, seed)) {
+            boolean verified = lastAttempt
+                    || (cleanRoundTripDecodes(image, cols, rows, strength, seed)
+                            && survivesRecompression(image, cols, rows, strength, seed));
+            if (verified) {
                 return ImageCodecRegistry.get().encode(image, stegoFileName);
             }
             strength = STRENGTH_ESCALATION[attempt + 1];
@@ -233,6 +240,15 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
         }
         DwtSvdTransform verify = new DwtSvdTransform(cols, rows);
         Image ll = verify.forward(DwtSvdTransform.pixelSource(recompressed), false)[0];
+        double[][] s0 = SvdQimChannel.computeS0Grid(ll, 0, 0);
+        return tryDecode(s0, strength, seed, 0, 0) != null;
+    }
+
+    /** As {@link #survivesRecompression}, but no attack at all -- a plain re-derivation of the block grid. */
+    private boolean cleanRoundTripDecodes(PixelImage stegoImage, int cols, int rows, double strength, long seed)
+            throws OpenStegoException {
+        DwtSvdTransform verify = new DwtSvdTransform(cols, rows);
+        Image ll = verify.forward(DwtSvdTransform.pixelSource(stegoImage), false)[0];
         double[][] s0 = SvdQimChannel.computeS0Grid(ll, 0, 0);
         return tryDecode(s0, strength, seed, 0, 0) != null;
     }
