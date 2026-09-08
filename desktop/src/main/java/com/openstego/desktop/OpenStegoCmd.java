@@ -353,9 +353,8 @@ public class OpenStegoCmd {
             map.put(OpenStegoConfig.EMBED_FILE_NAME, false);
         }
 
-        // Plugin-specific options. A flag-only option (isTakesArg() == false) is stored by picocli as a
-        // Boolean, not a String, so matchedOptionValue's String cast would throw for it; its presence
-        // alone is the signal, so record a sentinel instead of reading a value that doesn't exist.
+        // A flag-only option (isTakesArg() == false) is stored by picocli as a Boolean, not a String,
+        // so matchedOptionValue's String cast would throw for it; use a sentinel instead.
         Map<String, String> pluginValues = new HashMap<>();
         for (PluginCmdLineOption pluginOption : plugin.getPluginCmdLineOptions()) {
             if (parseResult.hasMatchedOption(pluginOption.getName())) {
