@@ -56,7 +56,7 @@
     <string name="algo_si_uniward_title">SI-UNIWARD(JPEG)</string>
     <string name="algo_si_uniward_subtitle">侧信息 JPEG 隐写术。输出为 JPEG,在低嵌入率下对抗现代检测器是最强的选择。</string>
     <string name="algo_j_uniward_title">J-UNIWARD(JPEG 载体)</string>
-    <string name="algo_j_uniward_subtitle">直接隐藏在现有的 JPEG 中。速度更快,无需原始无损图片,但隐蔽性不及 SI-UNIWARD。</string>
+    <string name="algo_j_uniward_subtitle">直接隐藏在现有的 JPEG 中。速度更快,无需原始未压缩图片,但隐蔽性不及 SI-UNIWARD。</string>
     <string name="algo_f5_title">F5(JPEG 载体)</string>
     <string name="algo_f5_subtitle">使用矩阵编码的经典快速 JPEG 隐写术。适合在现有 JPEG 中隐藏少量数据。</string>
     <string name="algo_adaptive_title">自适应(PNG)</string>
@@ -74,7 +74,7 @@
     <string name="label_clustering_strength">聚类强度(mu):%1$s</string>
     <string name="label_bits_per_channel">每通道比特数:%1$d</string>
     <string name="hint_bits_per_channel">比特数越多可存储的数据越多,但也更易被检测;3 是较好的平衡点。</string>
-    <string name="label_compress_payload">压缩负载</string>
+    <string name="label_compress_payload">压缩数据</string>
     <string name="hint_compress_payload">隐藏前对数据进行 GZIP 压缩。通常能减小体积;若文件已经压缩过,请关闭此选项。</string>
     <string name="label_use_aes256">使用 AES-256</string>
     <string name="hint_use_aes256">密钥长度强于默认的 AES-128。仅在设置了密码时生效。</string>
