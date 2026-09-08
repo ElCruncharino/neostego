@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell / navigation (Shell.kt, Main.kt) -->
+    <string name="app_name">NeoStego</string>
+    <string name="app_title_with_destination">NeoStego — %1$s</string>
+    <string name="destination_hide">データを隠す</string>
+    <string name="destination_extract">データを抽出</string>
+    <string name="destination_generate_signature">署名を生成</string>
+    <string name="destination_embed_watermark">電子透かしを埋め込む</string>
+    <string name="destination_verify_watermark">電子透かしを検証</string>
+    <string name="destination_settings">設定</string>
+    <string name="section_data_hiding">データ隠蔽</string>
+    <string name="section_digital_watermarking">電子透かし</string>
+
+    <!-- Shared components (Components.kt) -->
+    <string name="file_pick_drop_hint">ドロップしてこのファイルを使用</string>
+    <string name="file_pick_choose">選択</string>
+    <string name="file_pick_change">変更</string>
+    <string name="file_pick_choose_content_description">%1$sを選択</string>
+    <string name="file_pick_change_content_description">%1$sを変更</string>
+    <string name="password_field_default_label">パスワード（任意）</string>
+    <string name="password_field_show">表示</string>
+    <string name="password_field_hide">非表示</string>
+    <string name="action_button_working">処理中…</string>
+    <string name="action_button_working_progress">処理中… %1$d%%</string>
+    <string name="action_button_state_working">処理中</string>
+    <string name="action_button_state_ready">準備完了</string>
+    <string name="result_card_done">完了</string>
+    <string name="result_card_failed">失敗</string>
+
+    <!-- Advanced options panel (AdvancedOptionsPanel.kt) -->
+    <string name="advanced_options_header">詳細オプション</string>
+    <string name="advanced_options_collapse_content_description">詳細オプションを折りたたむ</string>
+    <string name="advanced_options_expand_content_description">詳細オプションを展開する</string>
+    <string name="option_lsb_max_bits_label">カラーチャンネルごとの最大ビット数</string>
+    <string name="option_lsb_max_bits_explanation">各カラーチャンネルの最下位ビットを何ビット上書きするか。値を大きくするとより多くのデータを隠せますが、画像の劣化が大きくなり検出されやすくなります。既定値は 3 です。</string>
+    <string name="option_adaptive_cmd_label">変化をクラスタリング（CMD）</string>
+    <string name="option_adaptive_cmd_explanation">±1 のピクセル変化をまとめてクラスタリングすることで互いを強め合い、統計的ステガナリシスへの耐性を高めます。既定でオンです。</string>
+    <string name="option_adaptive_mu_label">クラスタリング強度（mu）</string>
+    <string name="option_adaptive_mu_explanation">変化がどれだけ強くクラスタリングされるか。値を大きくするとより集中します。既定値は 3.0 です。</string>
+    <string name="option_jpeg_quality_label">JPEG 品質</string>
+    <string name="option_jpeg_quality_explanation">出力する JPEG の品質（50〜100）。値を大きくすると画質と容量は向上しますが、ファイルサイズも大きくなります。既定値は 90 です。</string>
+
+    <!-- Algorithm selector (AlgorithmSelector.kt) -->
+    <string name="algorithm_label">アルゴリズム</string>
+    <string name="algorithm_none_selected">未選択</string>
+    <string name="algorithm_content_description">アルゴリズム: %1$s</string>
+
+    <!-- Shared across Hide / Extract / Watermark screens -->
+    <string name="section_source">ソース</string>
+    <string name="section_cover_mode">カバーモード</string>
+    <string name="section_encryption">暗号化</string>
+    <string name="section_key">鍵</string>
+    <string name="section_theme">テーマ</string>
+    <string name="section_about">アプリについて</string>
+    <string name="encryption_none">なし</string>
+    <string name="password_required_label">パスワード（暗号化時は必須）</string>
+    <string name="password_confirm_label">パスワードの確認</string>
+    <string name="cover_file_label">カバーファイル</string>
+    <string name="output_file_label">出力ファイル</string>
+    <string name="signature_file_label">署名ファイル</string>
+    <string name="saved_as_hint">保存形式: %1$s</string>
+    <string name="allowed_extensions_hint">対応形式: %1$s</string>
+    <string name="selection_summary">%1$d 件選択: %2$s</string>
+
+    <!-- Hide data screen (HideScreen.kt) -->
+    <string name="hide_screen_intro">秘密のデータを何気ないカバーファイルの中に隠します。</string>
+    <string name="hide_message_file_label">メッセージファイル</string>
+    <string name="hide_message_file_hint">隠したい秘密のファイルをここで選択またはドラッグ</string>
+    <string name="mode_single_cover">単一カバー</string>
+    <string name="mode_random_image">ランダム画像</string>
+    <string name="mode_batch">バッチ</string>
+    <string name="mode_split">分割</string>
+    <string name="mode_hint_fell_back">このアルゴリズムは画像ベースではないため、単一カバーのみ使用できます。</string>
+    <string name="mode_hint_single">メッセージを 1 つのカバーファイルに隠します。</string>
+    <string name="mode_hint_random">カバーとしてランダムノイズ画像を生成します——カバーファイルは不要です。</string>
+    <string name="mode_hint_batch">選択した各カバーに同じメッセージをそれぞれ隠します。</string>
+    <string name="mode_hint_split">1 つのメッセージを複数のカバーに分散させます。抽出には生成されたすべての部分が必要です。</string>
+    <string name="hide_cover_file_hint_generic">データを隠すカバーファイルをここで選択またはドラッグ</string>
+    <string name="hide_cover_file_hint_exts">カバーをここで選択またはドラッグ（%1$s）</string>
+    <string name="hide_output_stego_label">出力ステゴファイル</string>
+    <string name="hide_output_stego_hint_generic">結果の保存先を選択</string>
+    <string name="hide_output_random_hint_generic">生成された画像の保存先を選択</string>
+    <string name="hide_output_folder_label">出力フォルダ</string>
+    <string name="hide_output_folder_hint">ステゴファイルの保存先を選択</string>
+    <string name="multi_cover_files_label">カバーファイル</string>
+    <string name="multi_cover_choose_hint">カバーを 2 つ以上選択してください</string>
+    <string name="multi_cover_choose">カバーを選択</string>
+    <string name="multi_cover_change">カバーを変更</string>
+    <string name="action_hide_data">データを隠す</string>
+    <string name="action_generate_cover_and_hide">カバーを生成して隠す</string>
+    <string name="action_hide_in_each_cover">各カバーに隠す</string>
+    <string name="action_hide_in_n_covers">%1$d 件のカバーに隠す</string>
+    <string name="action_split_across_covers">複数のカバーに分割</string>
+    <string name="action_split_across_n_covers">%1$d 件のカバーに分割</string>
+    <string name="error_passwords_do_not_match">パスワードが一致しません。</string>
+    <string name="result_wrote_stego_file">ステゴファイルを %1$s に書き込みました</string>
+    <string name="result_wrote_n_stego_files">%1$d 件のステゴファイルを %2$s に書き込みました</string>
+    <string name="result_split_into_n_parts">%1$d 個の部分に分割し、%2$s に保存しました——抽出にはすべての部分が必要です</string>
+    <string name="capacity_label">容量: 約 %1$s</string>
+    <string name="capacity_too_small">メッセージがこのカバーには大きすぎます</string>
+    <string name="capacity_message_of_available">メッセージのサイズは %1$s、利用可能な容量は約 %2$s です。</string>
+
+    <!-- Extract data screen (ExtractScreen.kt) -->
+    <string name="extract_screen_intro">ステゴファイルから隠されたメッセージを復元します。</string>
+    <string name="extract_mode_single_file">単一ファイル</string>
+    <string name="extract_mode_reassemble_split">分割を再構成</string>
+    <string name="extract_hint_reassemble">分割されたペイロードのすべての部分を選択して、元のメッセージを再構成します。</string>
+    <string name="extract_hint_single">1 つのステゴファイルからメッセージを復元します。</string>
+    <string name="extract_stego_file_label">ステゴファイル</string>
+    <string name="extract_stego_file_hint">隠しデータを含むファイルをここで選択またはドラッグ</string>
+    <string name="extract_output_folder_hint">抽出したメッセージの保存先を選択</string>
+    <string name="action_extract_data">データを抽出</string>
+    <string name="action_reassemble_and_extract">再構成して抽出</string>
+    <string name="action_reassemble_n_parts">%1$d 個の部分を再構成</string>
+    <string name="result_extracted_message_to">メッセージを %1$s に抽出しました</string>
+    <string name="split_parts_label">分割された部分</string>
+    <string name="split_parts_choose_hint">分割されたすべての部分を選択してください</string>
+    <string name="split_parts_choose">部分を選択</string>
+    <string name="split_parts_change">部分を変更</string>
+
+    <!-- Settings screen (SettingsScreen.kt) -->
+    <string name="theme_system">システムに合わせる</string>
+    <string name="theme_light">ライト</string>
+    <string name="theme_dark">ダーク</string>
+    <string name="about_app_name_version">NeoStego %1$s</string>
+    <string name="about_tagline">画像や音声にデータを隠し、ファイルに電子透かしを付けます。</string>
+    <string name="about_fork_credit">Samir Vaidya 氏による OpenStego のフォークを近代化したものです。Nick Haghiri がメンテナンスしています。</string>
+    <string name="about_license">GNU General Public License v2 のもとでライセンスされています。</string>
+    <string name="about_accessibility_note">Linux でスクリーンリーダーをご利用ですか？クラシック（Swing）UI とコマンドラインインターフェースは完全にアクセシビリティに対応しています。</string>
+
+    <!-- Watermark screens (WatermarkScreens.kt) -->
+    <string name="watermark_generate_intro">秘密の鍵から電子透かしの署名ファイルを作成します。</string>
+    <string name="signature_file_save_hint">.sig ファイルの保存先を選択</string>
+    <string name="action_generate_signature">署名を生成</string>
+    <string name="result_saved_signature_to">署名を %1$s に保存しました</string>
+    <string name="watermark_embed_intro">署名を見えない電子透かしとしてカバーファイルに埋め込みます。</string>
+    <string name="signature_file_embed_hint">埋め込む .sig ファイル</string>
+    <string name="cover_file_watermark_hint_generic">電子透かしを付けるファイル</string>
+    <string name="output_watermarked_hint_generic">電子透かし付きファイルの保存先を選択</string>
+    <string name="action_embed_watermark">電子透かしを埋め込む</string>
+    <string name="result_wrote_watermarked_file_to">電子透かし付きファイルを %1$s に書き込みました</string>
+    <string name="watermark_verify_intro">ファイルに指定した電子透かしの署名が含まれているかを確認します。</string>
+    <string name="watermarked_file_label">電子透かし付きファイル</string>
+    <string name="watermarked_file_check_hint_generic">確認するファイル</string>
+    <string name="signature_file_original_hint">元の .sig ファイル</string>
+    <string name="action_verify_watermark">電子透かしを検証</string>
+    <string name="verdict_correlation">相関度: %1$d%%</string>
+    <string name="verdict_watermark_present">電子透かしを検出しました</string>
+    <string name="verdict_weak_match">弱い一致 / 部分一致</string>
+    <string name="verdict_watermark_absent">電子透かしが見つかりません</string>
+    <string name="verdict_failed_title">失敗</string>
+    <string name="verdict_verification_failed">検証に失敗しました</string>
+</resources>

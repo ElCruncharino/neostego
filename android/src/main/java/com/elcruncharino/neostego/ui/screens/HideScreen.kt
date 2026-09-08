@@ -33,8 +33,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.AlgorithmOption
@@ -62,6 +64,20 @@ fun HideScreen(appState: AppState) {
     val scope = rememberCoroutineScope()
     val snackbar = appState.snackbar
     val s = appState.hide
+
+    // Resource strings looked up once here (composition-aware) and reused, with runtime values applied via
+    // String.format, in callbacks that run outside composition (launcher callbacks, coroutines).
+    val toastSavedFileTemplate = stringResource(R.string.toast_saved_file)
+    val errorSavingTemplate = stringResource(R.string.error_saving)
+    val shareChooserTitle = stringResource(R.string.share_chooser_title)
+    val errorSharingTemplate = stringResource(R.string.error_sharing)
+    val toastSavedStegoImagesTemplate = stringResource(R.string.toast_saved_stego_images)
+    val errorNeedTwoCovers = stringResource(R.string.error_need_two_covers)
+    val errorChooseFileToHide = stringResource(R.string.error_choose_file_to_hide)
+    val errorFailedToHide = stringResource(R.string.error_failed_to_hide)
+    val coverKindAudioFile = stringResource(R.string.cover_kind_audio_file)
+    val coverKindImage = stringResource(R.string.cover_kind_image)
+    val errorChooseCoverTemplate = stringResource(R.string.error_choose_cover)
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
@@ -110,9 +126,9 @@ fun HideScreen(appState: AppState) {
             scope.launch {
                 try {
                     withContext(Dispatchers.IO) { writeBytes(context, uri, r.bytes) }
-                    snackbar.showSnackbar("Saved ${r.name}")
+                    snackbar.showSnackbar(String.format(toastSavedFileTemplate, r.name))
                 } catch (e: Exception) {
-                    snackbar.showSnackbar("Error saving: ${e.message ?: e}")
+                    snackbar.showSnackbar(String.format(errorSavingTemplate, e.message ?: e))
                 }
             }
         }
@@ -125,9 +141,9 @@ fun HideScreen(appState: AppState) {
                 val intent = withContext(Dispatchers.IO) {
                     com.elcruncharino.neostego.ui.util.buildShareIntent(context, r.name, r.mime, r.bytes)
                 }
-                context.startActivity(android.content.Intent.createChooser(intent, "Share"))
+                context.startActivity(android.content.Intent.createChooser(intent, shareChooserTitle))
             } catch (e: Exception) {
-                snackbar.showSnackbar("Unable to share: ${e.message ?: e}")
+                snackbar.showSnackbar(String.format(errorSharingTemplate, e.message ?: e))
             }
         }
     }
@@ -143,7 +159,7 @@ fun HideScreen(appState: AppState) {
                     parts[idx].fill(0)
                     splitPartIndex = idx + 1
                 } catch (e: Exception) {
-                    snackbar.showSnackbar("Error saving: ${e.message ?: e}")
+                    snackbar.showSnackbar(String.format(errorSavingTemplate, e.message ?: e))
                 }
             }
         } else {
@@ -161,7 +177,7 @@ fun HideScreen(appState: AppState) {
                 val count = parts.size
                 splitParts = emptyList()
                 splitPartIndex = -1
-                snackbar.showSnackbar("Saved $count stego images")
+                snackbar.showSnackbar(String.format(toastSavedStegoImagesTemplate, count))
             }
         }
     }
@@ -169,11 +185,11 @@ fun HideScreen(appState: AppState) {
     fun runHideSplit() {
         val message = s.messageUri
         if (s.splitCovers.size < 2) {
-            toast("Choose at least two cover images to split across")
+            toast(errorNeedTwoCovers)
             return
         }
         if (message == null) {
-            toast("Choose a file to hide first")
+            toast(errorChooseFileToHide)
             return
         }
         val pw = readPasswordChars(s.passwordView)
@@ -197,7 +213,7 @@ fun HideScreen(appState: AppState) {
                 splitParts = parts
                 splitPartIndex = 0 // triggers the LaunchedEffect to open the first save dialog
             } catch (e: Exception) {
-                snackbar.showSnackbar(e.message ?: "Failed to hide data")
+                snackbar.showSnackbar(e.message ?: errorFailedToHide)
             } finally {
                 pw?.fill(' ')
                 s.busy = false
@@ -212,13 +228,13 @@ fun HideScreen(appState: AppState) {
         }
         val cover = s.coverUri
         val message = s.messageUri
-        val coverKind = if (s.algorithm == StegoEngine.Algorithm.WAV) "audio file" else "image"
+        val coverKind = if (s.algorithm == StegoEngine.Algorithm.WAV) coverKindAudioFile else coverKindImage
         if (cover == null) {
-            toast("Choose a cover $coverKind first")
+            toast(String.format(errorChooseCoverTemplate, coverKind))
             return
         }
         if (message == null) {
-            toast("Choose a file to hide first")
+            toast(errorChooseFileToHide)
             return
         }
         if (StegoEngine.isImageAlgorithm(s.algorithm)) {
@@ -250,7 +266,7 @@ fun HideScreen(appState: AppState) {
                 val name = StegoEngine.outputName(s.algorithm)
                 setResult(OutputResult(name, mimeForName(name), stegoBytes))
             } catch (e: Exception) {
-                snackbar.showSnackbar(e.message ?: "Failed to hide data")
+                snackbar.showSnackbar(e.message ?: errorFailedToHide)
             } finally {
                 pw?.fill(' ')
                 s.busy = false
@@ -261,7 +277,7 @@ fun HideScreen(appState: AppState) {
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            "Hide a file inside a cover",
+            stringResource(R.string.hide_screen_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -271,25 +287,25 @@ fun HideScreen(appState: AppState) {
             s.algorithm == StegoEngine.Algorithm.F5
         if (s.splitMode) {
             FilePickCard(
-                label = "Cover images (split)",
-                chosen = if (s.splitCovers.isEmpty()) null else "${s.splitCovers.size} images selected",
-                hint = "Pick two or more images; the file is spread across them",
+                label = stringResource(R.string.label_cover_images_split),
+                chosen = if (s.splitCovers.isEmpty()) null else stringResource(R.string.split_images_selected, s.splitCovers.size),
+                hint = stringResource(R.string.hint_split_covers),
                 onPick = { pickCovers.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             )
         } else {
             FilePickCard(
                 label = if (isWav) {
-                    "Cover audio (WAV)"
+                    stringResource(R.string.label_cover_audio_wav)
                 } else if (needsJpegCover) {
-                    "Cover image (JPEG)"
+                    stringResource(R.string.label_cover_image_jpeg)
                 } else {
-                    "Cover image"
+                    stringResource(R.string.label_cover_image)
                 },
                 chosen = s.coverUri?.let { displayName(context, it) },
                 hint = when {
-                    isWav -> "An uncompressed PCM WAV file"
-                    needsJpegCover -> "An existing JPEG to hide the data in"
-                    else -> "The image the data will be hidden in"
+                    isWav -> stringResource(R.string.hint_cover_wav)
+                    needsJpegCover -> stringResource(R.string.hint_cover_jpeg)
+                    else -> stringResource(R.string.hint_cover_image)
                 },
                 onPick = {
                     if (isWav) {
@@ -301,16 +317,16 @@ fun HideScreen(appState: AppState) {
             )
             s.capacity?.let {
                 Text(
-                    "Can hide up to about ${humanBytes(it)} in this image",
+                    stringResource(R.string.capacity_estimate, humanBytes(context, it)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
         FilePickCard(
-            label = "File to hide",
+            label = stringResource(R.string.label_file_to_hide),
             chosen = s.messageUri?.let { displayName(context, it) },
-            hint = "Any file (document, photo, etc.)",
+            hint = stringResource(R.string.hint_file_to_hide),
             onPick = { openMessage.launch(arrayOf("*/*")) },
         )
 
@@ -322,55 +338,55 @@ fun HideScreen(appState: AppState) {
 
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp).selectableGroup()) {
-                Text("Hiding method", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.hide_method_title), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(8.dp))
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.SI_UNIWARD,
-                    title = "SI-UNIWARD (JPEG)",
-                    subtitle = "Side-informed JPEG steganography. Saves a JPEG and is the strongest choice at low embedding rates against modern detectors.",
+                    title = stringResource(R.string.algo_si_uniward_title),
+                    subtitle = stringResource(R.string.algo_si_uniward_subtitle),
                     onClick = { s.algorithm = StegoEngine.Algorithm.SI_UNIWARD },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD,
-                    title = "J-UNIWARD (JPEG cover)",
-                    subtitle = "Hides directly in an existing JPEG. Faster and works without the original uncompressed image, but less stealthy than SI-UNIWARD.",
+                    title = stringResource(R.string.algo_j_uniward_title),
+                    subtitle = stringResource(R.string.algo_j_uniward_subtitle),
                     onClick = { s.algorithm = StegoEngine.Algorithm.PLAIN_UNIWARD },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.F5,
-                    title = "F5 (JPEG cover)",
-                    subtitle = "Fast, classic JPEG steganography using matrix encoding. Good for small payloads in an existing JPEG.",
+                    title = stringResource(R.string.algo_f5_title),
+                    subtitle = stringResource(R.string.algo_f5_subtitle),
                     onClick = { s.algorithm = StegoEngine.Algorithm.F5 },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.ADAPTIVE,
-                    title = "Adaptive (PNG)",
-                    subtitle = "HILL + STC: hides changes in textured areas to resist both statistical and AI steganalysis. Lossless PNG, lower capacity.",
+                    title = stringResource(R.string.algo_adaptive_title),
+                    subtitle = stringResource(R.string.algo_adaptive_subtitle),
                     onClick = { s.algorithm = StegoEngine.Algorithm.ADAPTIVE },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.MATCHING,
-                    title = "LSB matching (PNG)",
-                    subtitle = "Higher capacity and faster; resists classical steganalysis. Lossless PNG.",
+                    title = stringResource(R.string.algo_lsb_matching_title),
+                    subtitle = stringResource(R.string.algo_lsb_matching_subtitle),
                     onClick = { s.algorithm = StegoEngine.Algorithm.MATCHING },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.WAV,
-                    title = "Audio (WAV)",
-                    subtitle = "Hides data in the samples of an uncompressed PCM WAV file. Output is a WAV; pick an audio cover above.",
+                    title = stringResource(R.string.algo_audio_wav_title),
+                    subtitle = stringResource(R.string.algo_audio_wav_subtitle),
                     onClick = { s.algorithm = StegoEngine.Algorithm.WAV },
                 )
 
                 if (s.algorithm == StegoEngine.Algorithm.SI_UNIWARD) {
                     Spacer(Modifier.height(12.dp))
-                    Text("JPEG quality: ${s.jpegQuality}", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.label_jpeg_quality, s.jpegQuality), fontWeight = FontWeight.SemiBold)
                     Slider(
                         value = s.jpegQuality.toFloat(),
                         onValueChange = { s.jpegQuality = it.toInt() },
                         valueRange = 50f..100f,
                     )
                     Text(
-                        "Higher quality keeps the image crisper but enlarges the file; 90 is a good default.",
+                        stringResource(R.string.hint_jpeg_quality),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -379,7 +395,7 @@ fun HideScreen(appState: AppState) {
                 if (s.algorithm == StegoEngine.Algorithm.ADAPTIVE || s.algorithm == StegoEngine.Algorithm.MATCHING) {
                     Spacer(Modifier.height(8.dp))
                     TextButton(onClick = { s.showAdvanced = !s.showAdvanced }) {
-                        Text(if (s.showAdvanced) "Advanced ▴" else "Advanced ▾")
+                        Text(if (s.showAdvanced) stringResource(R.string.btn_advanced_expanded) else stringResource(R.string.btn_advanced_collapsed))
                     }
                     if (s.showAdvanced) {
                         if (s.algorithm == StegoEngine.Algorithm.ADAPTIVE) {
@@ -389,9 +405,9 @@ fun HideScreen(appState: AppState) {
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Cluster changes (CMD)", fontWeight = FontWeight.SemiBold)
+                                    Text(stringResource(R.string.label_cluster_changes), fontWeight = FontWeight.SemiBold)
                                     Text(
-                                        "Synchronizes neighbouring edits for slightly better resistance. Leave on unless reproducing legacy output.",
+                                        stringResource(R.string.hint_cluster_changes),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     )
@@ -400,7 +416,7 @@ fun HideScreen(appState: AppState) {
                             }
                             if (s.adaptiveCmd) {
                                 Spacer(Modifier.height(8.dp))
-                                Text("Clustering strength (mu): ${"%.1f".format(s.adaptiveCmdMu)}")
+                                Text(stringResource(R.string.label_clustering_strength, "%.1f".format(s.adaptiveCmdMu)))
                                 Slider(
                                     value = s.adaptiveCmdMu.toFloat(),
                                     onValueChange = { s.adaptiveCmdMu = it.toDouble() },
@@ -410,7 +426,7 @@ fun HideScreen(appState: AppState) {
                             }
                         } else { // LSB matching
                             Spacer(Modifier.height(8.dp))
-                            Text("Bits per channel: ${s.lsbBits}")
+                            Text(stringResource(R.string.label_bits_per_channel, s.lsbBits))
                             Slider(
                                 value = s.lsbBits.toFloat(),
                                 onValueChange = { s.lsbBits = it.toInt() },
@@ -418,7 +434,7 @@ fun HideScreen(appState: AppState) {
                                 steps = 6,
                             )
                             Text(
-                                "More bits store more data but are easier to detect; 3 balances the two.",
+                                stringResource(R.string.hint_bits_per_channel),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -430,15 +446,15 @@ fun HideScreen(appState: AppState) {
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                 ToggleRow(
-                    title = "Compress payload",
-                    subtitle = "GZIP the data before hiding. Usually shrinks it; turn off for already-compressed files.",
+                    title = stringResource(R.string.label_compress_payload),
+                    subtitle = stringResource(R.string.hint_compress_payload),
                     checked = s.useCompression,
                     onCheckedChange = { s.useCompression = it },
                 )
                 Spacer(Modifier.height(8.dp))
                 ToggleRow(
-                    title = "Use AES-256",
-                    subtitle = "Stronger key size than the default AES-128. Only applies when a password is set.",
+                    title = stringResource(R.string.label_use_aes256),
+                    subtitle = stringResource(R.string.hint_use_aes256),
                     checked = s.useAes256,
                     onCheckedChange = { s.useAes256 = it },
                 )
@@ -448,9 +464,8 @@ fun HideScreen(appState: AppState) {
             Card(shape = RoundedCornerShape(24.dp)) {
                 Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
                     ToggleRow(
-                        title = "Split across covers",
-                        subtitle = "Spread one file across several images (pick 2+ above). Each image holds one part; " +
-                            "keep all of them to reveal.",
+                        title = stringResource(R.string.label_split_across_covers),
+                        subtitle = stringResource(R.string.hint_split_across_covers),
                         checked = s.splitMode,
                         onCheckedChange = { s.splitMode = it },
                     )
@@ -464,10 +479,9 @@ fun HideScreen(appState: AppState) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Store original file name", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.label_store_filename), fontWeight = FontWeight.SemiBold)
                     Text(
-                        "The name is saved unencrypted. Leave off to keep it private; " +
-                            "the file is revealed with a generic name.",
+                        stringResource(R.string.hint_store_filename),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -478,18 +492,18 @@ fun HideScreen(appState: AppState) {
         Text(
             when (s.algorithm) {
                 StegoEngine.Algorithm.SI_UNIWARD, StegoEngine.Algorithm.PLAIN_UNIWARD, StegoEngine.Algorithm.F5 ->
-                    "Share the saved JPEG as-is. Do not open and re-save it — re-compressing the JPEG destroys the hidden data."
+                    stringResource(R.string.note_jpeg_share)
                 StegoEngine.Algorithm.WAV ->
-                    "Keep the saved WAV as-is to share. Converting it to MP3/AAC or any lossy audio format destroys the hidden data."
+                    stringResource(R.string.note_wav_share)
                 else ->
-                    "Keep the saved PNG as-is to share. Re-saving or sending it as JPEG (or any other lossy format) destroys the hidden data."
+                    stringResource(R.string.note_png_share)
             },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         PrimaryActionButton(
-            label = "Hide",
+            label = stringResource(R.string.btn_hide),
             busy = s.busy,
             onClick = { runHide() },
             progress = s.progress,

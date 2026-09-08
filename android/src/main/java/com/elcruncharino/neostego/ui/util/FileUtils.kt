@@ -10,6 +10,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
+import com.elcruncharino.neostego.R
 import java.io.File
 
 /** A produced output (stego/watermarked image, revealed file, or signature) ready to save or share. */
@@ -17,11 +18,11 @@ data class OutputResult(val name: String, val mime: String, val bytes: ByteArray
 
 internal fun readBytes(context: Context, uri: Uri): ByteArray =
     context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
-        ?: throw IllegalStateException("Unable to read the selected file")
+        ?: throw IllegalStateException(context.getString(R.string.error_unable_to_read_file))
 
 internal fun writeBytes(context: Context, uri: Uri, bytes: ByteArray) {
     context.contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
-        ?: throw IllegalStateException("Unable to write to the selected location")
+        ?: throw IllegalStateException(context.getString(R.string.error_unable_to_write_location))
 }
 
 internal fun displayName(context: Context, uri: Uri): String {

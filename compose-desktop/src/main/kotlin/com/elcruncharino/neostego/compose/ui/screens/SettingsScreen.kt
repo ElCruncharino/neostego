@@ -21,6 +21,18 @@ import com.elcruncharino.neostego.compose.engine.appVersion
 import com.elcruncharino.neostego.compose.theme.ThemeMode
 import com.elcruncharino.neostego.compose.ui.SectionLabel
 import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.about_accessibility_note
+import openstego.compose_desktop.generated.resources.about_app_name_version
+import openstego.compose_desktop.generated.resources.about_fork_credit
+import openstego.compose_desktop.generated.resources.about_license
+import openstego.compose_desktop.generated.resources.about_tagline
+import openstego.compose_desktop.generated.resources.section_about
+import openstego.compose_desktop.generated.resources.section_theme
+import openstego.compose_desktop.generated.resources.theme_dark
+import openstego.compose_desktop.generated.resources.theme_light
+import openstego.compose_desktop.generated.resources.theme_system
+import org.jetbrains.compose.resources.stringResource
 import java.awt.Desktop
 import java.net.URI
 
@@ -29,24 +41,24 @@ private const val HOMEPAGE = "https://github.com/ElCruncharino/neostego"
 @Composable
 fun SettingsScreen(themeMode: ThemeMode, onThemeChange: (ThemeMode) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.fillMaxWidth()) {
-        SectionLabel("Theme")
+        SectionLabel(stringResource(Res.string.section_theme))
         SegmentedButtonGroup(
-            options = listOf("System", "Light", "Dark"),
+            options = listOf(stringResource(Res.string.theme_system), stringResource(Res.string.theme_light), stringResource(Res.string.theme_dark)),
             selectedIndex = themeMode.ordinal,
             onSelect = { onThemeChange(ThemeMode.entries[it]) },
         )
 
-        SectionLabel("About")
+        SectionLabel(stringResource(Res.string.section_about))
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
             Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val muted = MaterialTheme.colorScheme.onSurfaceVariant
-                Text("NeoStego ${appVersion()}", fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
-                Text("Hide data inside images and audio, and watermark your files.", style = MaterialTheme.typography.bodyMedium, color = muted)
-                Text("A modernized fork of OpenStego by Samir Vaidya. Maintained by Nick Haghiri.", style = MaterialTheme.typography.bodySmall, color = muted)
-                Text("Licensed under the GNU General Public License v2.", style = MaterialTheme.typography.bodySmall, color = muted)
+                Text(stringResource(Res.string.about_app_name_version, appVersion()), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(Res.string.about_tagline), style = MaterialTheme.typography.bodyMedium, color = muted)
+                Text(stringResource(Res.string.about_fork_credit), style = MaterialTheme.typography.bodySmall, color = muted)
+                Text(stringResource(Res.string.about_license), style = MaterialTheme.typography.bodySmall, color = muted)
                 TextButton(onClick = { openUrl(HOMEPAGE) }) { Text(HOMEPAGE) }
                 Text(
-                    "Using a screen reader on Linux? The classic (Swing) UI and the command-line interface are fully accessible.",
+                    stringResource(Res.string.about_accessibility_note),
                     style = MaterialTheme.typography.bodySmall,
                     color = muted,
                 )
