@@ -16,6 +16,7 @@ import com.openstego.desktop.plugin.adaptive.AdaptiveConfig
 import com.openstego.desktop.plugin.adaptive.AdaptiveImagePlugin
 import com.openstego.desktop.plugin.dwtdugad.DWTDugadPlugin
 import com.openstego.desktop.plugin.dwtsvd.DWTSVDPlugin
+import com.openstego.desktop.plugin.dwtsvd.RobustPlugin
 import com.openstego.desktop.plugin.dwtxie.DWTXiePlugin
 import com.openstego.desktop.plugin.f5.F5Plugin
 import com.openstego.desktop.plugin.jpeguniward.JpegUniwardConfig
@@ -35,7 +36,7 @@ import com.openstego.desktop.util.AutoExtractor
 object StegoEngine {
 
     /** Embedding algorithm the user can choose for hiding. */
-    enum class Algorithm { ADAPTIVE, MATCHING, SI_UNIWARD, PLAIN_UNIWARD, F5, WAV }
+    enum class Algorithm { ADAPTIVE, MATCHING, SI_UNIWARD, PLAIN_UNIWARD, F5, WAV, ROBUST }
 
     /** Robust watermarking algorithm the user can choose. (DWT-Kim is omitted: its detector is an
      *  upstream stub that never verifies, so it is not exposed.) */
@@ -74,6 +75,7 @@ object StegoEngine {
         Algorithm.SI_UNIWARD, Algorithm.PLAIN_UNIWARD -> JpegUniwardPlugin()
         Algorithm.F5 -> F5Plugin()
         Algorithm.WAV -> WavLSBPlugin()
+        Algorithm.ROBUST -> RobustPlugin()
     }
 
     private fun newWatermarkPlugin(algorithm: WmAlgorithm): WatermarkingPlugin<*> = when (algorithm) {
@@ -189,6 +191,9 @@ object StegoEngine {
                 JpegUniwardPlugin(),
                 F5Plugin(),
                 WavLSBPlugin(),
+                // Tried last: a wrong-password/non-match attempt falls through to a full phase/offset
+                // resynchronization search, far costlier than the bit-level checks above.
+                RobustPlugin(),
             )
         val listener: ProgressListener? =
             onProgress?.let { cb -> ProgressListener { f -> cb(f.toFloat()) } }

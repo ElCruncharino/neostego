@@ -5,4 +5,5 @@ com.openstego.desktop.plugin.jpeguniward.JpegUniwardPlugin
 com.openstego.desktop.plugin.f5.F5Plugin
 com.openstego.desktop.plugin.wavlsb.WavLSBPlugin
 com.openstego.desktop.plugin.dwtsvd.DWTSVDPlugin
+com.openstego.desktop.plugin.dwtsvd.RobustPlugin
 com.openstego.desktop.plugin.dwtdugad.DWTDugadPlugin
