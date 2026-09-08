@@ -67,6 +67,11 @@ public class GanStegPlugin extends DHImagePluginTemplate<GanStegConfig> {
     private final ReedSolomon reedSolomon = new ReedSolomon(RS_PARITY_BYTES);
     private final OnnxSteganoGanCodec codec;
 
+    // extractMsgFileName and extractData are always called back-to-back on the same stegoData array
+    // (see OpenStego#extractData); caching by reference avoids paying for the ONNX decoder pass twice.
+    private byte[] cachedStegoData;
+    private byte[] cachedFull;
+
     /**
      * Default constructor.
      */
@@ -163,6 +168,16 @@ public class GanStegPlugin extends DHImagePluginTemplate<GanStegConfig> {
      * vote among them.
      */
     private byte[] extractFull(byte[] stegoData, String stegoFileName) throws OpenStegoException {
+        if (stegoData == this.cachedStegoData) {
+            return this.cachedFull;
+        }
+        byte[] full = decodeFull(stegoData, stegoFileName);
+        this.cachedStegoData = stegoData;
+        this.cachedFull = full;
+        return full;
+    }
+
+    private byte[] decodeFull(byte[] stegoData, String stegoFileName) throws OpenStegoException {
         PixelImage image = ImageCodecRegistry.get().decode(stegoData, stegoFileName);
         int width = image.getWidth();
         int height = image.getHeight();
