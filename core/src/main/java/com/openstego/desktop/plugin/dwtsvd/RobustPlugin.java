@@ -7,6 +7,7 @@ package com.openstego.desktop.plugin.dwtsvd;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.image.ImageCodec;
 import com.openstego.desktop.image.ImageCodecRegistry;
 import com.openstego.desktop.image.PixelImage;
 import com.openstego.desktop.plugin.lsb.LSBDataHeader;
@@ -27,7 +28,10 @@ import java.io.ByteArrayInputStream;
  * unretouched photograph, not just an evenly-textured synthetic one -- see {@code isRisky} below) down to
  * JPEG quality 20 with no resize -- well past the QF~62 threshold a competing tool advertises surviving --
  * and, separately, through a resize to around 90% of the original size followed by that same recompression
- * at a milder quality, without ever encoding a synchronization template.
+ * at a milder quality, without ever encoding a synchronization template. QF~62 specifically is also the
+ * bar {@link #embedData}'s strength escalation verifies against (see {@link #survivesRecompression}) --
+ * a hard cover doesn't just get a strength that survives a clean readback, it gets one proven, by an
+ * actual simulated recompression at embed time, to survive the exact degradation this plugin exists for.
  * <p>
  * Fixed-size payload (like {@code GanStegPlugin} and the JpegUniward shadow message): the framed message
  * ({@link LSBDataHeader} + payload) is padded to {@link #RS_MESSAGE_BYTES} and Reed-Solomon encoded as
@@ -51,11 +55,11 @@ import java.io.ByteArrayInputStream;
  * block-energy grid's low-frequency content than the DCT layer's reduced redundancy can outvote -- a
  * fundamentally different failure mode than a bad synchronization guess, and not fixed by searching
  * harder. Second, a resize <em>combined with</em> a crop (as opposed to either alone) is not covered at
- * all -- the DCT layer has no phase/offset search to recover the crop's translation. Third, a cover whose
- * content is both extreme (spanning the full 0..255 range) <em>and</em> highly locally varied can still
- * fail a clean round trip even after {@link #STRENGTH_ESCALATION}'s highest rung -- verified against a
- * real, unretouched photograph with large areas of deep shadow, which now round-trips correctly, but not
- * yet stress-tested against a wider range of such content.
+ * all -- the DCT layer has no phase/offset search to recover the crop's translation. Third,
+ * {@link #STRENGTH_ESCALATION}'s highest rung is not provably sufficient for an arbitrarily extreme
+ * cover -- the real, unretouched photograph with large areas of deep shadow used to verify this (both the
+ * clean round trip and, since {@link #survivesRecompression}, JPEG recompression on top of it) now
+ * survives, but that is one real cover, not a guarantee against every possible one.
  */
 public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
 
@@ -160,12 +164,12 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
 
         long seed = StringUtil.passwordHash(this.config.getPassword());
 
-        // Escalating strength: most covers round-trip cleanly at the base strength on the first try (see
+        // Escalating strength: most covers survive the base strength on the first try (see
         // STRENGTH_ESCALATION below for why some don't). Each attempt re-decodes the cover fresh and
         // re-embeds from scratch -- reusing a partially-embedded LL band across attempts would compound
-        // instead of retrying -- and verifies in-memory (no real codec round trip needed; PNG is lossless,
-        // so the only loss between embed and this check is the inverse-DWT's own pixel clamp, which is
-        // exactly what a higher strength is trying to survive).
+        // instead of retrying -- and verifies against a real, simulated recompression (see
+        // survivesRecompression): the plugin's own purpose is surviving that, so that -- not just a clean
+        // readback -- is the bar escalation has to actually clear.
         double strength = strength();
         for (int attempt = 0; ; attempt++) {
             PixelImage image = ImageCodecRegistry.get().decode(cover, coverFileName);
@@ -180,7 +184,7 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
             transform.inverse(bands, DwtSvdTransform.pixelSink(image));
 
             boolean lastAttempt = attempt == STRENGTH_ESCALATION.length - 1;
-            if (lastAttempt || cleanRoundTripVerifies(image, cols, rows, strength, seed)) {
+            if (lastAttempt || survivesRecompression(image, cols, rows, strength, seed)) {
                 return ImageCodecRegistry.get().encode(image, stegoFileName);
             }
             strength = STRENGTH_ESCALATION[attempt + 1];
@@ -188,7 +192,7 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
     }
 
     /**
-     * Successive embed strengths to try until a clean (unattacked) round trip verifies -- see
+     * Successive embed strengths to try until {@link #survivesRecompression} passes -- see
      * {@link #embedData}. A block whose own signal is small relative to the embedding step gets excluded
      * rather than corrupted (see {@link SvdQimChannel#embedCodeBitsDualAddress}'s {@code isRisky}), which
      * handles most covers at the base strength; a cover with a very large fraction of such blocks (a real
@@ -201,10 +205,34 @@ public class RobustPlugin extends DHImagePluginTemplate<OpenStegoConfig> {
      */
     private static final double[] STRENGTH_ESCALATION = {DEFAULT_STRENGTH, 0.04, 0.07, 0.1, 0.15, 0.2};
 
-    private boolean cleanRoundTripVerifies(PixelImage stegoImage, int cols, int rows, double strength, long seed)
+    /**
+     * The JPEG quality a candidate embed must survive during escalation -- matching the QF~62 a competing
+     * tool advertises surviving (see the class javadoc), rather than a milder bar that would let escalation
+     * declare victory without actually proving the thing this plugin exists to prove.
+     */
+    private static final float VERIFY_JPEG_QUALITY = 0.62f;
+
+    /**
+     * Simulates the recompression a real cover would go through, in memory, and checks the embed still
+     * decodes: encodes {@code stegoImage} to an actual JPEG at {@link #VERIFY_JPEG_QUALITY} through the
+     * platform codec (real compression, not a proxy for it), decodes it straight back, and re-derives the
+     * block-energy grid from that. No file I/O beyond the codec's own byte-array encode/decode, and no
+     * dependency on either platform module: {@link ImageCodec#setJpegQuality} reaches each platform's
+     * existing JPEG-quality knob through the shared interface.
+     */
+    private boolean survivesRecompression(PixelImage stegoImage, int cols, int rows, double strength, long seed)
             throws OpenStegoException {
+        ImageCodec codec = ImageCodecRegistry.get();
+        codec.setJpegQuality(VERIFY_JPEG_QUALITY);
+        PixelImage recompressed;
+        try {
+            byte[] jpegBytes = codec.encode(stegoImage, "verify.jpg");
+            recompressed = codec.decode(jpegBytes, "verify.jpg");
+        } finally {
+            codec.setJpegQuality(null);
+        }
         DwtSvdTransform verify = new DwtSvdTransform(cols, rows);
-        Image ll = verify.forward(DwtSvdTransform.pixelSource(stegoImage), false)[0];
+        Image ll = verify.forward(DwtSvdTransform.pixelSource(recompressed), false)[0];
         double[][] s0 = SvdQimChannel.computeS0Grid(ll, 0, 0);
         return tryDecode(s0, strength, seed, 0, 0) != null;
     }

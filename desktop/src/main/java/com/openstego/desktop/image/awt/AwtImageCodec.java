@@ -60,6 +60,11 @@ public class AwtImageCodec implements ImageCodec {
     }
 
     @Override
+    public void setJpegQuality(Float quality) {
+        ImageUtil.setJpegQuality(quality);
+    }
+
+    @Override
     public PixelImage createRandomImage(int numOfPixels) throws OpenStegoException {
         ImageHolder holder = ImageUtil.generateRandomImage(numOfPixels);
         return new BufferedImagePixelImage(holder.getImage());

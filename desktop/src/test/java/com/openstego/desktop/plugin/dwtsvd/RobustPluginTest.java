@@ -132,6 +132,25 @@ public class RobustPluginTest {
         return out.toByteArray();
     }
 
+    /**
+     * Regression test for the gap {@link #survivesLargeNearBlackRegion} didn't cover: escalation used to
+     * verify against a clean readback only, so a hard cover that needed escalation to round-trip at all
+     * could still fail as soon as real JPEG recompression was added on top -- found by comparing against a
+     * real photograph, not this synthetic stand-in, but reproduced here so it stays caught. Fixed by
+     * verifying escalation against a simulated recompression (see {@link RobustPlugin}'s {@code
+     * survivesRecompression}) instead of just the inverse-DWT's own pixel clamp.
+     */
+    @Test
+    public void survivesLargeNearBlackRegionThenJpegRecompression() throws Exception {
+        byte[] shadowedCover = coverWithShadow(3200, 2400);
+        byte[] msg = "still here despite the shadow and jpeg".getBytes(StandardCharsets.UTF_8);
+        byte[] stego = newStego("robust-key").embedData(msg, "note.txt", shadowedCover, "cover.png", "stego.png");
+
+        byte[] jpeg = DWTSVDPluginTest.recompressJpeg(stego, 0.6f); // QF~62, this plugin's own escalation bar
+        List<?> out = newStego("robust-key").extractData(jpeg, "stego.jpg");
+        assertArrayEquals(msg, (byte[]) out.get(1));
+    }
+
     @Test
     public void survivesJpegRecompression() throws Exception {
         byte[] msg = "still here after jpeg".getBytes(StandardCharsets.UTF_8);
