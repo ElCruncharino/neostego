@@ -301,9 +301,9 @@ public final class BenchJpeg {
         if (password != null) {
             plugin.getConfig().setPassword(password);
         }
-        if (plugin.getConfig() instanceof JpegUniwardConfig) {
-            ((JpegUniwardConfig) plugin.getConfig()).setQuality(quality);
-            ((JpegUniwardConfig) plugin.getConfig()).setUseUerd(uerd);
+        if (plugin.getConfig() instanceof JpegUniwardConfig cfg) {
+            cfg.setQuality(quality);
+            cfg.setUseUerd(uerd);
         }
         return new OpenStego(plugin, plugin.getConfig());
     }
