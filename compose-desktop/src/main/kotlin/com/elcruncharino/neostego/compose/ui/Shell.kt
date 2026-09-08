@@ -59,14 +59,26 @@ import com.elcruncharino.neostego.compose.ui.screens.GenerateSignatureScreen
 import com.elcruncharino.neostego.compose.ui.screens.HideScreen
 import com.elcruncharino.neostego.compose.ui.screens.SettingsScreen
 import com.elcruncharino.neostego.compose.ui.screens.VerifyWatermarkScreen
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.app_name
+import openstego.compose_desktop.generated.resources.destination_embed_watermark
+import openstego.compose_desktop.generated.resources.destination_extract
+import openstego.compose_desktop.generated.resources.destination_generate_signature
+import openstego.compose_desktop.generated.resources.destination_hide
+import openstego.compose_desktop.generated.resources.destination_settings
+import openstego.compose_desktop.generated.resources.destination_verify_watermark
+import openstego.compose_desktop.generated.resources.section_data_hiding
+import openstego.compose_desktop.generated.resources.section_digital_watermarking
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 
-enum class Destination(val title: String, val section: String, val icon: ImageVector) {
-    HIDE("Hide data", "Data hiding", Icons.Filled.Lock),
-    EXTRACT("Extract data", "Data hiding", Icons.Filled.LockOpen),
-    GENERATE_SIGNATURE("Generate signature", "Digital watermarking", Icons.Filled.VpnKey),
-    EMBED_WATERMARK("Embed watermark", "Digital watermarking", Icons.Filled.Verified),
-    VERIFY_WATERMARK("Verify watermark", "Digital watermarking", Icons.Filled.Shield),
-    SETTINGS("Settings", "", Icons.Filled.Settings),
+enum class Destination(val titleRes: StringResource, val sectionRes: StringResource?, val icon: ImageVector) {
+    HIDE(Res.string.destination_hide, Res.string.section_data_hiding, Icons.Filled.Lock),
+    EXTRACT(Res.string.destination_extract, Res.string.section_data_hiding, Icons.Filled.LockOpen),
+    GENERATE_SIGNATURE(Res.string.destination_generate_signature, Res.string.section_digital_watermarking, Icons.Filled.VpnKey),
+    EMBED_WATERMARK(Res.string.destination_embed_watermark, Res.string.section_digital_watermarking, Icons.Filled.Verified),
+    VERIFY_WATERMARK(Res.string.destination_verify_watermark, Res.string.section_digital_watermarking, Icons.Filled.Shield),
+    SETTINGS(Res.string.destination_settings, null, Icons.Filled.Settings),
 }
 
 @Composable
@@ -86,7 +98,7 @@ fun AppShell(
                 verticalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 Text(
-                    dest.title,
+                    stringResource(dest.titleRes),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.semantics { heading() },
@@ -120,12 +132,12 @@ private fun Sidebar(selected: Destination, onSelect: (Destination) -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
             ) {
                 Image(painterResource("neostego.png"), contentDescription = null, modifier = Modifier.size(28.dp))
-                Text("NeoStego", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(stringResource(Res.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             }
-            val grouped = Destination.entries.filter { it.section.isNotEmpty() }.groupBy { it.section }
+            val grouped = Destination.entries.filter { it.sectionRes != null }.groupBy { it.sectionRes!! }
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
-                grouped.forEach { (section, items) ->
-                    SectionLabel(section, modifier = Modifier.padding(start = 12.dp, top = 14.dp, bottom = 4.dp))
+                grouped.forEach { (sectionRes, items) ->
+                    SectionLabel(stringResource(sectionRes), modifier = Modifier.padding(start = 12.dp, top = 14.dp, bottom = 4.dp))
                     items.forEach { d ->
                         NavItem(
                             d,
@@ -165,7 +177,7 @@ private fun NavItem(dest: Destination, selected: Boolean, modifier: Modifier = M
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Icon(dest.icon, contentDescription = null, tint = fg)
-            Text(dest.title, color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+            Text(stringResource(dest.titleRes), color = fg, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
         }
     }
 }

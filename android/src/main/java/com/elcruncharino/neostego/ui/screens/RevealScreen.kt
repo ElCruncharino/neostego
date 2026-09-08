@@ -14,7 +14,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.FilePickCard
@@ -38,6 +40,13 @@ fun RevealScreen(appState: AppState) {
     val snackbar = appState.snackbar
     val s = appState.reveal
 
+    val toastSavedFileTemplate = stringResource(R.string.toast_saved_file)
+    val errorSavingTemplate = stringResource(R.string.error_saving)
+    val shareChooserTitle = stringResource(R.string.share_chooser_title)
+    val errorSharingTemplate = stringResource(R.string.error_sharing)
+    val errorChooseStegoFile = stringResource(R.string.error_choose_stego_file)
+    val errorFailedToReveal = stringResource(R.string.error_failed_to_reveal)
+
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
     fun setResult(r: OutputResult?) {
@@ -53,9 +62,9 @@ fun RevealScreen(appState: AppState) {
             scope.launch {
                 try {
                     withContext(Dispatchers.IO) { writeBytes(context, uri, r.bytes) }
-                    snackbar.showSnackbar("Saved ${r.name}")
+                    snackbar.showSnackbar(String.format(toastSavedFileTemplate, r.name))
                 } catch (e: Exception) {
-                    snackbar.showSnackbar("Error saving: ${e.message ?: e}")
+                    snackbar.showSnackbar(String.format(errorSavingTemplate, e.message ?: e))
                 }
             }
         }
@@ -68,9 +77,9 @@ fun RevealScreen(appState: AppState) {
                 val intent = withContext(Dispatchers.IO) {
                     com.elcruncharino.neostego.ui.util.buildShareIntent(context, r.name, r.mime, r.bytes)
                 }
-                context.startActivity(android.content.Intent.createChooser(intent, "Share"))
+                context.startActivity(android.content.Intent.createChooser(intent, shareChooserTitle))
             } catch (e: Exception) {
-                snackbar.showSnackbar("Unable to share: ${e.message ?: e}")
+                snackbar.showSnackbar(String.format(errorSharingTemplate, e.message ?: e))
             }
         }
     }
@@ -78,7 +87,7 @@ fun RevealScreen(appState: AppState) {
     fun runReveal() {
         val stego = s.stegoUri
         if (stego == null) {
-            toast("Choose a stego file first")
+            toast(errorChooseStegoFile)
             return
         }
         oversizeWarning(context, stego)?.let {
@@ -102,7 +111,7 @@ fun RevealScreen(appState: AppState) {
                 val name = extracted.fileName.ifBlank { "revealed.dat" }
                 setResult(OutputResult(name, mimeForName(name), extracted.data))
             } catch (e: Exception) {
-                snackbar.showSnackbar(e.message ?: "Failed to reveal data")
+                snackbar.showSnackbar(e.message ?: errorFailedToReveal)
             } finally {
                 pw?.fill(' ')
                 s.busy = false
@@ -113,15 +122,15 @@ fun RevealScreen(appState: AppState) {
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            "Reveal a hidden file from a cover",
+            stringResource(R.string.reveal_screen_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         FilePickCard(
-            label = "Stego file",
+            label = stringResource(R.string.label_stego_file),
             chosen = s.stegoUri?.let { displayName(context, it) },
-            hint = "An image or WAV that has data hidden in it",
+            hint = stringResource(R.string.hint_stego_file),
             onPick = { openStegoDoc.launch(arrayOf("image/*", "audio/*")) },
         )
 
@@ -132,7 +141,7 @@ fun RevealScreen(appState: AppState) {
         )
 
         PrimaryActionButton(
-            label = "Reveal",
+            label = stringResource(R.string.btn_reveal),
             busy = s.busy,
             onClick = { runReveal() },
             progress = s.progress,

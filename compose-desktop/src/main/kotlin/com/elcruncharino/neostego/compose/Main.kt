@@ -46,6 +46,9 @@ import com.openstego.desktop.OpenStegoException
 import com.openstego.desktop.OpenStegoLauncher
 import com.openstego.desktop.util.PluginManager
 import com.openstego.desktop.util.UserPreferences
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.app_title_with_destination
+import org.jetbrains.compose.resources.stringResource
 
 // Flags that launch the classic Swing UI — the accessible fallback (full AT-SPI/screen-reader support)
 // for users whose setup the Compose UI doesn't serve well.
@@ -160,7 +163,7 @@ private fun launchComposeUi() {
                 exitApplication()
             },
             state = windowState,
-            title = "NeoStego — ${dest.title}",
+            title = stringResource(Res.string.app_title_with_destination, stringResource(dest.titleRes)),
             icon = painterResource("neostego.png"),
         ) {
             NeoStegoTheme(dark = dark) {

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NeoStego</string>
+    <!-- Labels shown in another app's share sheet (one per labeled share target) -->
+    <string name="share_target_hide">NeoStegoで隠す</string>
+    <string name="share_target_reveal">NeoStegoで抽出</string>
+    <!-- Long-press launcher shortcuts -->
+    <string name="shortcut_hide_short">隠す</string>
+    <string name="shortcut_hide_long">ファイルを隠す</string>
+    <string name="shortcut_reveal_short">抽出</string>
+    <string name="shortcut_reveal_long">ファイルを抽出</string>
+
+    <!-- Top bar / bottom nav (StegoScaffold) -->
+    <string name="cd_more_options">その他</string>
+    <string name="menu_about">アプリについて</string>
+    <string name="nav_hide">隠す</string>
+    <string name="nav_reveal">抽出</string>
+    <string name="nav_mark">透かし</string>
+    <string name="nav_settings">設定</string>
+
+    <!-- About dialog -->
+    <string name="about_title">NeoStego</string>
+    <string name="about_title_versioned">NeoStego %1$s</string>
+    <string name="about_description">画像や音声にファイルを隠し、堅牢な電子透かしの埋め込みと検証を行います。処理はすべて端末内で完結します。</string>
+    <string name="about_license">Samir Vaidya 氏による OpenStego をベースにしています。GNU General Public License v2 のもとで提供されています。</string>
+    <string name="btn_close">閉じる</string>
+
+    <!-- Shared toasts / errors (Hide, Reveal, Watermark screens) -->
+    <string name="toast_saved_file">%1$s を保存しました</string>
+    <string name="error_saving">保存エラー: %1$s</string>
+    <string name="error_sharing">共有できません: %1$s</string>
+    <string name="share_chooser_title">共有</string>
+
+    <!-- Hide screen -->
+    <string name="hide_screen_subtitle">カバーにファイルを隠す</string>
+    <string name="error_need_two_covers">分割用に2枚以上のカバー画像を選んでください</string>
+    <string name="error_choose_file_to_hide">まず隠すファイルを選んでください</string>
+    <string name="toast_saved_stego_images">%1$d 枚のステゴ画像を保存しました</string>
+    <string name="error_failed_to_hide">データの隠蔽に失敗しました</string>
+    <string name="error_choose_cover">まずカバー%1$sを選んでください</string>
+    <string name="cover_kind_audio_file">音声ファイル</string>
+    <string name="cover_kind_image">画像</string>
+    <string name="label_cover_images_split">カバー画像(分割)</string>
+    <string name="split_images_selected">%1$d 枚の画像を選択済み</string>
+    <string name="hint_split_covers">2枚以上の画像を選ぶと、ファイルがそれらに分散して隠されます</string>
+    <string name="label_cover_audio_wav">カバー音声(WAV)</string>
+    <string name="label_cover_image_jpeg">カバー画像(JPEG)</string>
+    <string name="label_cover_image">カバー画像</string>
+    <string name="hint_cover_wav">非圧縮の PCM WAV ファイル</string>
+    <string name="hint_cover_jpeg">データを隠す既存の JPEG ファイル</string>
+    <string name="hint_cover_image">データを隠す対象の画像</string>
+    <string name="capacity_estimate">この画像には約 %1$s まで隠せます</string>
+    <string name="label_file_to_hide">隠すファイル</string>
+    <string name="hint_file_to_hide">任意のファイル(文書、写真など)</string>
+    <string name="hide_method_title">隠し方</string>
+    <string name="algo_si_uniward_title">SI-UNIWARD(JPEG)</string>
+    <string name="algo_si_uniward_subtitle">サイド情報を利用した JPEG ステガノグラフィー。出力は JPEG で、低い埋め込み率において最新の検出手法に対して最も強力です。</string>
+    <string name="algo_j_uniward_title">J-UNIWARD(JPEG カバー)</string>
+    <string name="algo_j_uniward_subtitle">既存の JPEG に直接隠します。高速で元の非圧縮画像が不要ですが、SI-UNIWARD より秘匿性は劣ります。</string>
+    <string name="algo_f5_title">F5(JPEG カバー)</string>
+    <string name="algo_f5_subtitle">マトリックス符号化を用いた高速で古典的な JPEG ステガノグラフィー。既存の JPEG への少量のデータ埋め込みに向いています。</string>
+    <string name="algo_adaptive_title">Adaptive(PNG)</string>
+    <string name="algo_adaptive_subtitle">HILL + STC: テクスチャの多い領域に変更を隠し、統計的解析と AI によるステガノ解析の両方に耐えます。出力は可逆圧縮の PNG で、容量はやや小さめです。</string>
+    <string name="algo_lsb_matching_title">LSB マッチング(PNG)</string>
+    <string name="algo_lsb_matching_subtitle">容量が大きく高速で、従来型のステガノ解析に耐えます。出力は可逆圧縮の PNG です。</string>
+    <string name="algo_audio_wav_title">音声(WAV)</string>
+    <string name="algo_audio_wav_subtitle">非圧縮 PCM WAV ファイルのサンプルにデータを隠します。出力は WAV です。上でカバー音声を選んでください。</string>
+    <string name="label_jpeg_quality">JPEG 品質: %1$d</string>
+    <string name="hint_jpeg_quality">品質を上げるほど画像は鮮明になりますが、ファイルも大きくなります。90 が良い初期値です。</string>
+    <string name="btn_advanced_expanded">詳細設定 ▴</string>
+    <string name="btn_advanced_collapsed">詳細設定 ▾</string>
+    <string name="label_cluster_changes">変更のクラスタ化(CMD)</string>
+    <string name="hint_cluster_changes">隣接する変更を同期させ、耐性をわずかに高めます。旧バージョンの出力を再現する場合を除き、オンのままにしてください。</string>
+    <string name="label_clustering_strength">クラスタ強度(mu): %1$s</string>
+    <string name="label_bits_per_channel">チャンネルあたりのビット数: %1$d</string>
+    <string name="hint_bits_per_channel">ビット数が多いほど多くのデータを保存できますが検出されやすくなります。3 が良いバランスです。</string>
+    <string name="label_compress_payload">ペイロードを圧縮</string>
+    <string name="hint_compress_payload">隠す前にデータを GZIP 圧縮します。通常はサイズが小さくなります。すでに圧縮済みのファイルではオフにしてください。</string>
+    <string name="label_use_aes256">AES-256 を使用</string>
+    <string name="hint_use_aes256">デフォルトの AES-128 より強力な鍵長です。パスワードを設定している場合のみ有効です。</string>
+    <string name="label_split_across_covers">複数のカバーに分割</string>
+    <string name="hint_split_across_covers">1つのファイルを複数の画像に分散して隠します(上で2枚以上を選択)。各画像は一部分のみを保持するため、すべての画像を保管する必要があります。</string>
+    <string name="label_store_filename">元のファイル名を保存</string>
+    <string name="hint_store_filename">ファイル名は暗号化されずに保存されます。プライバシーを守るにはオフにしてください。その場合、抽出時には汎用的な名前になります。</string>
+    <string name="note_jpeg_share">保存した JPEG はそのまま共有してください。開いて再保存しないでください。JPEG を再圧縮すると隠したデータが破壊されます。</string>
+    <string name="note_wav_share">保存した WAV はそのまま共有してください。MP3/AAC など非可逆な音声形式に変換すると隠したデータが破壊されます。</string>
+    <string name="note_png_share">保存した PNG はそのまま共有してください。再保存したり JPEG など非可逆な形式で送信すると隠したデータが破壊されます。</string>
+    <string name="btn_hide">隠す</string>
+
+    <!-- Reveal screen -->
+    <string name="reveal_screen_subtitle">カバーから隠したファイルを抽出する</string>
+    <string name="error_choose_stego_file">まずステゴファイルを選んでください</string>
+    <string name="error_failed_to_reveal">データの抽出に失敗しました</string>
+    <string name="label_stego_file">ステゴファイル</string>
+    <string name="hint_stego_file">データが隠された画像または WAV ファイル</string>
+    <string name="btn_reveal">抽出</string>
+
+    <!-- Watermark screen -->
+    <string name="error_enter_password_signature">署名の鍵となるパスワードを入力してください</string>
+    <string name="error_failed_generate_signature">署名の生成に失敗しました</string>
+    <string name="error_choose_image_watermark">電子透かしを埋め込む画像を選んでください</string>
+    <string name="error_choose_signature_file">署名ファイルを選んでください</string>
+    <string name="error_image_too_large_watermark">この画像は大きすぎるため、この端末では電子透かしを埋め込めません。より小さな画像でお試しください。</string>
+    <string name="error_failed_embed_watermark">電子透かしの埋め込みに失敗しました</string>
+    <string name="error_choose_image_check">確認する画像を選んでください</string>
+    <string name="error_image_too_large_check">この画像は大きすぎるため、この端末では確認できません。より小さな画像でお試しください。</string>
+    <string name="error_failed_verify_watermark">電子透かしの検証に失敗しました</string>
+    <string name="watermark_mode_generate">生成</string>
+    <string name="watermark_mode_embed">埋め込み</string>
+    <string name="watermark_mode_verify">検証</string>
+    <string name="watermark_desc_generate">電子透かしに使う、パスワードを鍵とした署名ファイルを作成します</string>
+    <string name="watermark_desc_embed">署名を堅牢な電子透かしとして画像に埋め込みます</string>
+    <string name="watermark_desc_verify">画像に電子透かしが入っているか確認します</string>
+    <string name="label_algorithm">アルゴリズム</string>
+    <string name="algo_dwt_svd_title">DWT-SVD(推奨)</string>
+    <string name="algo_dwt_svd_subtitle">最新のブラインド・マルチビット電子透かし。JPEG再圧縮、ノイズ、ぼかし、軽いトリミングに耐えます。</string>
+    <string name="algo_dwt_dugad_title">DWT-Dugad</string>
+    <string name="algo_dwt_dugad_subtitle">相関により検出する、古典的なウェーブレット拡散スペクトル電子透かし。</string>
+    <string name="algo_dwt_xie_title">DWT-Xie</string>
+    <string name="algo_dwt_xie_subtitle">近似サブバンドに埋め込むウェーブレット電子透かし。</string>
+    <string name="hint_signature_password">同じパスワードからは常に同じ署名が生成されます。.sig ファイルを保存してください。埋め込みと検証の両方に必要です。</string>
+    <string name="label_image_to_watermark">電子透かしを埋め込む画像</string>
+    <string name="hint_image_to_watermark">電子透かしを埋め込む画像</string>
+    <string name="label_signature_file">署名ファイル</string>
+    <string name="hint_signature_file_generate">「生成」で作成した .sig ファイル</string>
+    <string name="label_output_jpeg">JPEG として出力</string>
+    <string name="hint_output_jpeg">堅牢な電子透かしは JPEG 圧縮に耐えるため、サイズの小さい JPEG でも問題ありません。オフにすると可逆圧縮の PNG として保存します。</string>
+    <string name="label_image_to_check">確認する画像</string>
+    <string name="hint_image_to_check">電子透かしの有無をテストしたい画像</string>
+    <string name="hint_signature_file_verify">画像が持っているはずの .sig ファイル</string>
+    <string name="verdict_present">電子透かしを検出しました</string>
+    <string name="verdict_weak">電子透かしが弱い、または不確実です</string>
+    <string name="verdict_absent">電子透かしは検出されませんでした</string>
+    <string name="verdict_correlation_detail">相関値 %1$.2f(強い ≥ %2$.2f、弱い ≥ %3$.2f)</string>
+
+    <!-- Settings screen -->
+    <string name="settings_subtitle">外観をカスタマイズします。設定はこの端末に保存されます。</string>
+    <string name="label_theme">テーマ</string>
+    <string name="theme_system">システム</string>
+    <string name="theme_light">ライト</string>
+    <string name="theme_dark">ダーク</string>
+    <string name="label_dynamic_color">ダイナミックカラー</string>
+    <string name="hint_dynamic_color">壁紙に合わせて配色します。オフにすると下で固定色を選べます。</string>
+    <string name="label_accent_color">アクセントカラー</string>
+    <string name="hint_accent_color">アプリの固定アクセントカラーを選びます。</string>
+    <string name="label_default_color">デフォルト</string>
+
+    <!-- Shared components -->
+    <string name="btn_choose">選択</string>
+    <string name="btn_change">変更</string>
+    <string name="cd_choose_item">%1$sを選択</string>
+    <string name="cd_change_item">%1$sを変更</string>
+    <string name="output_ready">準備完了: %1$s</string>
+    <string name="btn_save">保存</string>
+    <string name="btn_share">共有</string>
+    <string name="label_password_optional">パスワード(任意)</string>
+    <string name="cd_password_optional">パスワード、任意</string>
+    <string name="btn_show_password">表示</string>
+    <string name="btn_hide_password">非表示</string>
+    <string name="label_working">処理中…</string>
+    <string name="label_working_pct">処理中… %1$d%%</string>
+    <string name="label_working_pct_eta">処理中… %1$d%% ・ %2$s</string>
+    <string name="eta_seconds">残り約%1$d秒</string>
+    <string name="eta_minutes_seconds">残り約%1$d分%2$d秒</string>
+    <string name="bytes_mb">%1$.1f MB</string>
+    <string name="bytes_kb">%1$d KB</string>
+    <string name="bytes_raw">%1$d バイト</string>
+    <string name="error_image_too_large_generic">この画像は非常に大きく(約 %1$.0f メガピクセル)、アプリが利用できるメモリを超えています。より小さな画像でお試しください。</string>
+    <string name="error_unable_to_read_file">選択したファイルを読み込めません</string>
+    <string name="error_unable_to_write_location">選択した保存先に書き込めません</string>
+</resources>

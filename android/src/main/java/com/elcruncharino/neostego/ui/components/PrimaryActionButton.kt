@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.ui.util.workingLabel
 import kotlinx.coroutines.delay
@@ -42,6 +43,7 @@ fun PrimaryActionButton(
     progress: Float? = null,
     startedAtMs: Long = 0L,
 ) {
+    val context = LocalContext.current
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -76,7 +78,7 @@ fun PrimaryActionButton(
                         delay(1000)
                     }
                 }
-                Text(workingLabel(progress, startedAtMs, now))
+                Text(workingLabel(context, progress, startedAtMs, now))
             } else {
                 Text(label)
             }

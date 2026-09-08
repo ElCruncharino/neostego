@@ -49,9 +49,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.LaunchTarget
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.StegoEngine
 import com.elcruncharino.neostego.ui.screens.AboutDialog
 import com.elcruncharino.neostego.ui.screens.HideScreen
@@ -85,15 +87,15 @@ fun StegoScaffold(target: LaunchTarget, appState: AppState) {
         containerColor = Color.Transparent,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("NeoStego") },
+                title = { Text(stringResource(R.string.app_name)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     IconButton(onClick = { showOverflow = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                        Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.cd_more_options))
                     }
                     DropdownMenu(expanded = showOverflow, onDismissRequest = { showOverflow = false }) {
                         DropdownMenuItem(
-                            text = { Text("About") },
+                            text = { Text(stringResource(R.string.menu_about)) },
                             leadingIcon = { Icon(Icons.Filled.Info, contentDescription = null) },
                             onClick = {
                                 showOverflow = false
@@ -162,10 +164,10 @@ private fun FloatingNavBar(dest: Int, onSelect: (Int) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                NavPill(selected = dest == DEST_HIDE, icon = Icons.Filled.Lock, label = "Hide") { onSelect(DEST_HIDE) }
-                NavPill(selected = dest == DEST_REVEAL, icon = Icons.Filled.LockOpen, label = "Reveal") { onSelect(DEST_REVEAL) }
-                NavPill(selected = dest == DEST_WATERMARK, icon = Icons.Filled.Verified, label = "Mark") { onSelect(DEST_WATERMARK) }
-                NavPill(selected = dest == DEST_SETTINGS, icon = Icons.Filled.Settings, label = "Settings") { onSelect(DEST_SETTINGS) }
+                NavPill(selected = dest == DEST_HIDE, icon = Icons.Filled.Lock, label = stringResource(R.string.nav_hide)) { onSelect(DEST_HIDE) }
+                NavPill(selected = dest == DEST_REVEAL, icon = Icons.Filled.LockOpen, label = stringResource(R.string.nav_reveal)) { onSelect(DEST_REVEAL) }
+                NavPill(selected = dest == DEST_WATERMARK, icon = Icons.Filled.Verified, label = stringResource(R.string.nav_mark)) { onSelect(DEST_WATERMARK) }
+                NavPill(selected = dest == DEST_SETTINGS, icon = Icons.Filled.Settings, label = stringResource(R.string.nav_settings)) { onSelect(DEST_SETTINGS) }
             }
         }
     }
