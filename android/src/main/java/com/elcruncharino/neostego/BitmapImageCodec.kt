@@ -17,6 +17,7 @@ import com.openstego.desktop.image.PixelImage
 import com.openstego.desktop.util.ExifUtil
 import java.io.ByteArrayOutputStream
 import java.security.SecureRandom
+import kotlin.math.roundToInt
 
 /**
  * Android [ImageCodec] backed by [Bitmap] / [BitmapFactory]. Data-hiding output is always lossless PNG
@@ -105,6 +106,10 @@ class BitmapImageCodec : ImageCodec {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
         }
         return out.toByteArray()
+    }
+
+    override fun setJpegQuality(quality: Float?) {
+        jpegQuality = quality?.let { (it * 100).roundToInt().coerceIn(1, 100) } ?: DEFAULT_JPEG_QUALITY
     }
 
     override fun createRandomImage(numOfPixels: Int): PixelImage {

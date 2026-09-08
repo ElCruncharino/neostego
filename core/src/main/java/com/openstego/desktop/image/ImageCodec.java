@@ -48,6 +48,20 @@ public interface ImageCodec {
     PixelImage createRandomImage(int numOfPixels) throws OpenStegoException;
 
     /**
+     * Sets a JPEG output quality override for subsequent {@link #encode} calls that produce a JPEG, or
+     * clears it when {@code quality} is null. Both platforms already carry a quality knob for
+     * watermarking's JPEG output ({@code ImageUtil.setJpegQuality} on desktop, {@code jpegQuality} on
+     * Android); this exposes that existing mechanism through the platform-agnostic interface so
+     * core-module code (robust-mode embed verification, simulating a specific recompression) can drive
+     * it without depending on either platform module directly. Codecs that never write JPEG may no-op.
+     *
+     * @param quality Quality in [0.0, 1.0], or null to clear the override
+     */
+    default void setJpegQuality(Float quality) {
+        // no-op by default
+    }
+
+    /**
      * @return List of file extensions that can be read as cover images
      */
     List<String> getReadableFormats();
