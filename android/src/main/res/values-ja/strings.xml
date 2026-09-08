@@ -59,13 +59,13 @@
     <string name="algo_j_uniward_subtitle">既存の JPEG に直接隠します。高速で元の非圧縮画像が不要ですが、SI-UNIWARD より秘匿性は劣ります。</string>
     <string name="algo_f5_title">F5(JPEG カバー)</string>
     <string name="algo_f5_subtitle">マトリックス符号化を用いた高速で古典的な JPEG ステガノグラフィー。既存の JPEG への少量のデータ埋め込みに向いています。</string>
-    <string name="algo_adaptive_title">アダプティブ(PNG)</string>
+    <string name="algo_adaptive_title">Adaptive(PNG)</string>
     <string name="algo_adaptive_subtitle">HILL + STC: テクスチャの多い領域に変更を隠し、統計的解析と AI によるステガノ解析の両方に耐えます。出力は可逆圧縮の PNG で、容量はやや小さめです。</string>
     <string name="algo_lsb_matching_title">LSB マッチング(PNG)</string>
     <string name="algo_lsb_matching_subtitle">容量が大きく高速で、従来型のステガノ解析に耐えます。出力は可逆圧縮の PNG です。</string>
     <string name="algo_audio_wav_title">音声(WAV)</string>
     <string name="algo_audio_wav_subtitle">非圧縮 PCM WAV ファイルのサンプルにデータを隠します。出力は WAV です。上でカバー音声を選んでください。</string>
-    <string name="label_jpeg_quality">JPEG品質: %1$d</string>
+    <string name="label_jpeg_quality">JPEG 品質: %1$d</string>
     <string name="hint_jpeg_quality">品質を上げるほど画像は鮮明になりますが、ファイルも大きくなります。90 が良い初期値です。</string>
     <string name="btn_advanced_expanded">詳細設定 ▴</string>
     <string name="btn_advanced_collapsed">詳細設定 ▾</string>
@@ -98,7 +98,7 @@
     <!-- Watermark screen -->
     <string name="error_enter_password_signature">署名の鍵となるパスワードを入力してください</string>
     <string name="error_failed_generate_signature">署名の生成に失敗しました</string>
-    <string name="error_choose_image_watermark">電子透かしを入れる画像を選んでください</string>
+    <string name="error_choose_image_watermark">電子透かしを埋め込む画像を選んでください</string>
     <string name="error_choose_signature_file">署名ファイルを選んでください</string>
     <string name="error_image_too_large_watermark">この画像は大きすぎるため、この端末では電子透かしを埋め込めません。より小さな画像でお試しください。</string>
     <string name="error_failed_embed_watermark">電子透かしの埋め込みに失敗しました</string>
@@ -119,11 +119,11 @@
     <string name="algo_dwt_xie_title">DWT-Xie</string>
     <string name="algo_dwt_xie_subtitle">近似サブバンドに埋め込むウェーブレット電子透かし。</string>
     <string name="hint_signature_password">同じパスワードからは常に同じ署名が生成されます。.sig ファイルを保存してください。埋め込みと検証の両方に必要です。</string>
-    <string name="label_image_to_watermark">透かしを入れる画像</string>
+    <string name="label_image_to_watermark">電子透かしを埋め込む画像</string>
     <string name="hint_image_to_watermark">電子透かしを埋め込む画像</string>
     <string name="label_signature_file">署名ファイル</string>
     <string name="hint_signature_file_generate">「生成」で作成した .sig ファイル</string>
-    <string name="label_output_jpeg">JPEGとして出力</string>
+    <string name="label_output_jpeg">JPEG として出力</string>
     <string name="hint_output_jpeg">堅牢な電子透かしは JPEG 圧縮に耐えるため、サイズの小さい JPEG でも問題ありません。オフにすると可逆圧縮の PNG として保存します。</string>
     <string name="label_image_to_check">確認する画像</string>
     <string name="hint_image_to_check">電子透かしの有無をテストしたい画像</string>
@@ -150,7 +150,7 @@
     <string name="btn_change">変更</string>
     <string name="cd_choose_item">%1$sを選択</string>
     <string name="cd_change_item">%1$sを変更</string>
-    <string name="output_ready">完了: %1$s</string>
+    <string name="output_ready">準備完了: %1$s</string>
     <string name="btn_save">保存</string>
     <string name="btn_share">共有</string>
     <string name="label_password_optional">パスワード(任意)</string>
