@@ -18,6 +18,13 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    // GanStegPlugin (experimental): compiles against the ONNX Runtime Java API without bundling it,
+    // since desktop/JVM and Android need different (but API-compatible) runtime artifacts. See
+    // OnnxSteganoGanCodec's Javadoc.
+    compileOnly 'com.microsoft.onnxruntime:onnxruntime:1.22.0'
+}
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
