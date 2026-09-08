@@ -85,6 +85,38 @@ public class JpegUniwardPluginTest {
     }
 
     @Test
+    public void shadowMessageRoundTrip() throws Exception {
+        byte[] msg = "primary message".getBytes(StandardCharsets.UTF_8);
+        byte[] shadowMsg = "deniable message".getBytes(StandardCharsets.UTF_8);
+
+        OpenStegoPlugin<?> embedPlugin = PluginManager.getPluginByName("JpegUniward");
+        embedPlugin.resetConfig();
+        embedPlugin.getConfig().setUseEncryption(true);
+        embedPlugin.getConfig().setPassword("primary-pw");
+        JpegUniwardConfig embedConfig = (JpegUniwardConfig) embedPlugin.getConfig();
+        embedConfig.setShadowMessage(shadowMsg);
+        embedConfig.setShadowPassword("shadow-pw".toCharArray());
+
+        byte[] stego = new OpenStego(embedPlugin, embedPlugin.getConfig())
+                .embedData(msg, "note.txt", coverBytes, "cover.png", "stego.jpg");
+
+        // The primary message extracts exactly as it would with no shadow present.
+        List<?> out = newStego(false, true, "primary-pw", 90).extractData(stego, "stego.jpg");
+        assertEquals("note.txt", out.get(0));
+        assertArrayEquals(msg, (byte[]) out.get(1));
+
+        // The shadow needs only its own password -- not the primary password or message.
+        JpegUniwardPlugin extractPlugin = (JpegUniwardPlugin) PluginManager.getPluginByName("JpegUniward");
+        extractPlugin.resetConfig();
+        assertArrayEquals(shadowMsg, extractPlugin.extractShadow(stego, "stego.jpg", "shadow-pw".toCharArray()));
+
+        // A wrong shadow password fails cleanly instead of returning garbage.
+        assertThrows(
+                OpenStegoException.class,
+                () -> extractPlugin.extractShadow(stego, "stego.jpg", "wrong-pw".toCharArray()));
+    }
+
+    @Test
     public void outputIsADecodableJpeg() throws Exception {
         byte[] msg = "hi".getBytes(StandardCharsets.UTF_8);
         byte[] stego = newStego(false, false, null, 90).embedData(msg, "m.txt", coverBytes, "cover.png", "stego.jpg");

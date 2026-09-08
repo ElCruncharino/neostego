@@ -40,6 +40,10 @@ public class JpegUniwardConfig extends OpenStegoConfig {
 
     private boolean useUerd = false;
 
+    private byte[] shadowMessage;
+
+    private char[] shadowPassword;
+
     private static int parseQuality() {
         String s = System.getenv("NEOSTEGO_JPEG_QUALITY");
         if (s != null) {
@@ -121,5 +125,29 @@ public class JpegUniwardConfig extends OpenStegoConfig {
     /** @param useUerd whether to use UERD instead of UNIWARD for embedding costs. */
     public void setUseUerd(boolean useUerd) {
         this.useUerd = useUerd;
+    }
+
+    /** @return the plausible-deniability shadow message to embed alongside the primary one, or {@code null}. */
+    public byte[] getShadowMessage() {
+        return this.shadowMessage;
+    }
+
+    /**
+     * @param shadowMessage plaintext of a second message (up to {@link ShadowMessage#PLAINTEXT_MAX}
+     *     bytes) to hide alongside the primary one, recoverable only with {@link #shadowPassword}; or
+     *     {@code null} (default) to embed no shadow message.
+     */
+    public void setShadowMessage(byte[] shadowMessage) {
+        this.shadowMessage = shadowMessage;
+    }
+
+    /** @return the password protecting {@link #getShadowMessage}, or {@code null}. */
+    public char[] getShadowPassword() {
+        return this.shadowPassword;
+    }
+
+    /** @param shadowPassword password for the shadow message; required whenever a shadow message is set. */
+    public void setShadowPassword(char[] shadowPassword) {
+        this.shadowPassword = shadowPassword;
     }
 }

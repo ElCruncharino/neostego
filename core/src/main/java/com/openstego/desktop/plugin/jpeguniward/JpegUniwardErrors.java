@@ -24,14 +24,38 @@ public class JpegUniwardErrors {
     /** Error Code - Plain mode invoked without a JPEG cover */
     public static final int ERR_COVER_REQUIRED = 4;
 
+    /** Error Code - Shadow message too long for the fixed shadow capacity */
+    public static final int ERR_SHADOW_TOO_LONG = 5;
+
+    /** Error Code - No shadow message found (wrong password, or none was embedded) */
+    public static final int ERR_SHADOW_NOT_FOUND = 6;
+
+    /** Error Code - Shadow message set without a shadow password */
+    public static final int ERR_SHADOW_PASSWORD_REQUIRED = 7;
+
     /**
      * Registers the error-code to message-key mappings.
      */
     public static void init() {
         OpenStegoException.addErrorCodes(
                 JpegUniwardPlugin.NAMESPACE,
-                new int[] {IMAGE_SIZE_INSUFFICIENT, ERR_IMAGE_DATA_READ, ERR_JPEG, ERR_COVER_REQUIRED},
-                new String[] {"err.image.insufficientSize", "err.image.read", "err.jpeg.invalid", "err.cover.required"
+                new int[] {
+                    IMAGE_SIZE_INSUFFICIENT,
+                    ERR_IMAGE_DATA_READ,
+                    ERR_JPEG,
+                    ERR_COVER_REQUIRED,
+                    ERR_SHADOW_TOO_LONG,
+                    ERR_SHADOW_NOT_FOUND,
+                    ERR_SHADOW_PASSWORD_REQUIRED
+                },
+                new String[] {
+                    "err.image.insufficientSize",
+                    "err.image.read",
+                    "err.jpeg.invalid",
+                    "err.cover.required",
+                    "err.shadow.tooLong",
+                    "err.shadow.notFound",
+                    "err.shadow.passwordRequired"
                 });
     }
 }
