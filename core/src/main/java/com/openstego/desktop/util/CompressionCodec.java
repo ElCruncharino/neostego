@@ -51,7 +51,9 @@ public final class CompressionCodec {
             return new Result(METHOD_NONE, raw);
         }
         byte[] compressed = deflate(raw);
-        return (compressed.length < raw.length) ? new Result(METHOD_DEFLATE_DICT, compressed) : new Result(METHOD_NONE, raw);
+        return (compressed.length < raw.length)
+                ? new Result(METHOD_DEFLATE_DICT, compressed)
+                : new Result(METHOD_NONE, raw);
     }
 
     public static byte[] decompress(byte[] data, int method) throws OpenStegoException {
