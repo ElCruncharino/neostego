@@ -83,6 +83,14 @@ final class UniwardCost {
      *         (index 0) is left at 0 and is not embeddable
      */
     static double[][] compute(double[][] plane, int planeH, int planeW, int blocksWide, int blocksHigh, int[] quant) {
+        UniwardCostAccelerator.Impl accel = UniwardCostAccelerator.get();
+        if (accel != null) {
+            double[][] result = accel.compute(plane, planeH, planeW, blocksWide, blocksHigh, quant);
+            if (result != null) {
+                return result;
+            }
+        }
+
         // Low-pass decomposition filter from db8 high-pass via the QMF relation. Only relative signs
         // matter (costs use absolute values), so a global sign is irrelevant.
         double[] lpdf = new double[LF];
