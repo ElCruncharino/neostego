@@ -24,6 +24,25 @@ android {
         targetSdk = 35
         versionCode = 4
         versionName = project.version.toString()
+
+        ndk {
+            // NEON is mandatory on arm64-v8a and present on effectively all armeabi-v7a devices still
+            // receiving updates; x86_64 covers emulators. UniwardCostAccelerator falls back to the pure
+            // Java path (see :core) on any ABI without a loadable native library.
+            abiFilters "arm64-v8a", "armeabi-v7a", "x86_64"
+        }
+        externalNativeBuild {
+            cmake {
+                cppFlags ""
+            }
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "src/main/cpp/CMakeLists.txt"
+            version "3.22.1"
+        }
     }
 
     buildFeatures {
