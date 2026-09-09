@@ -7,6 +7,7 @@
 
 package com.openstego.desktop;
 
+import com.openstego.desktop.plugin.lsb.MultiPartSplitManifest;
 import com.openstego.desktop.util.CommonUtil;
 import com.openstego.desktop.util.CompressionCodec;
 import com.openstego.desktop.util.LabelUtil;
@@ -239,6 +240,21 @@ public class OpenStego {
             // Add file name as first element of output list
             output.add(this.plugin.extractMsgFileName(stegoData, stegoFileName));
             msg = this.plugin.extractData(stegoData, stegoFileName, null);
+
+            // A lone part of a multi-cover split looks like this: its manifest was embedded as
+            // ordinary (uncompressed/unencrypted) payload, so without this check it would silently
+            // fall through to the decrypt/decompress logic below and come out corrupted instead of
+            // producing a clear error.
+            MultiPartSplitManifest splitManifest = null;
+            try {
+                splitManifest = MultiPartSplitManifest.parse(msg);
+            } catch (OpenStegoException notAManifest) {
+                // Not a split part; fall through to ordinary extraction below.
+            }
+            if (splitManifest != null) {
+                throw new OpenStegoException(
+                        null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, splitManifest.getTotalParts(), 1);
+            }
 
             // Decrypt data, if required
             if (this.config.isUseEncryption()) {
