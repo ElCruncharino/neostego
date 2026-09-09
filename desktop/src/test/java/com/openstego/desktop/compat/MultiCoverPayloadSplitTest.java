@@ -251,9 +251,8 @@ public class MultiCoverPayloadSplitTest {
                 payload, MSG_FILE_NAME, covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
 
         plugin.resetConfig();
-        OpenStegoException ex = assertThrows(
-                OpenStegoException.class,
-                () -> new OpenStego(plugin, plugin.getConfig()).extractData(stego.get(0), "stego0.png"));
+        OpenStegoException ex = assertThrows(OpenStegoException.class, () -> new OpenStego(plugin, plugin.getConfig())
+                .extractData(stego.get(0), "stego0.png"));
         assertEquals(OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, ex.getErrorCode());
         assertTrue(
                 ex.getMessage() != null && ex.getMessage().contains("3"),
