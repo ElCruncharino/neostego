@@ -91,8 +91,13 @@
     <string name="reveal_screen_subtitle">从载体中提取隐藏的文件</string>
     <string name="error_choose_stego_file">请先选择隐写文件</string>
     <string name="error_failed_to_reveal">提取数据失败</string>
+    <string name="error_need_two_stego_files">请选择至少两张用于重组的隐写图片</string>
     <string name="label_stego_file">隐写文件</string>
     <string name="hint_stego_file">隐藏有数据的图片或 WAV 文件</string>
+    <string name="label_stego_files_split">隐写图片(分割)</string>
+    <string name="hint_stego_files_split">选择文件被分割隐藏到的所有图片(顺序不限)</string>
+    <string name="label_reassemble_split">从多张图片重组</string>
+    <string name="hint_reassemble_split">如果文件不是隐藏在单张图片中,而是分散隐藏在多张图片中,请开启此选项并在下方选择这些图片</string>
     <string name="btn_reveal">提取</string>
 
     <!-- Watermark screen -->

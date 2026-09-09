@@ -22,8 +22,10 @@ import java.util.List;
  *   <li><b>Container gating</b> ({@link OpenStegoPlugin#canExtractFrom}): plugins that physically
  *       cannot read the container are skipped, so e.g. extracting from a PNG with a wrong password
  *       no longer reports the WAV plugin's "not a RIFF/WAVE container" error.
- *   <li><b>Invalid-password short-circuit</b>: once a plugin recognizes the container but rejects the
- *       password, that is the real error - stop trying the others and surface it immediately.
+ *   <li><b>Definitive-match short-circuit</b>: once a plugin recognizes the container and either
+ *       rejects the password or recognizes the payload as one part of a multi-cover split, that is
+ *       the real error - stop trying the others (which would otherwise fail the container's own
+ *       header check and mask it with a less useful error) and surface it immediately.
  * </ol>
  *
  * <p>The candidate plugin list is supplied by the caller rather than discovered here, because plugin
@@ -44,9 +46,10 @@ public final class AutoExtractor {
      * @param candidates Ordered candidate data-hiding plugins to try
      * @param listener   Optional progress listener wired into each attempt (may be {@code null})
      * @return Extracted output (element 0 is the file name, element 1 is the message bytes)
-     * @throws OpenStegoException If no candidate could decode the file. An invalid-password failure is
-     *                            propagated as-is; otherwise the last format error, or
-     *                            {@link OpenStegoErrors#NO_VALID_PLUGIN} when nothing was applicable.
+     * @throws OpenStegoException If no candidate could decode the file. An invalid-password or
+     *                            incomplete-split failure is propagated as-is; otherwise the last
+     *                            format error, or {@link OpenStegoErrors#NO_VALID_PLUGIN} when nothing
+     *                            was applicable.
      */
     public static List<?> extract(
             byte[] stegoData,
@@ -70,8 +73,9 @@ public final class AutoExtractor {
                 }
                 return stego.extractData(stegoData, stegoName);
             } catch (OpenStegoException e) {
-                if (e.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD) {
-                    throw e; // right plugin matched the container, wrong password - no point trying others
+                if (e.getErrorCode() == OpenStegoErrors.INVALID_PASSWORD
+                        || e.getErrorCode() == OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE) {
+                    throw e; // right plugin matched the container - no point trying others
                 }
                 last = e;
             } finally {

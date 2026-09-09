@@ -91,8 +91,13 @@
     <string name="reveal_screen_subtitle">カバーから隠したファイルを抽出する</string>
     <string name="error_choose_stego_file">まずステゴファイルを選んでください</string>
     <string name="error_failed_to_reveal">データの抽出に失敗しました</string>
+    <string name="error_need_two_stego_files">再構成するには2枚以上のステゴ画像を選んでください</string>
     <string name="label_stego_file">ステゴファイル</string>
     <string name="hint_stego_file">データが隠された画像または WAV ファイル</string>
+    <string name="label_stego_files_split">ステゴ画像(分割)</string>
+    <string name="hint_stego_files_split">ファイルが分割されたすべての画像を選んでください(順不同)</string>
+    <string name="label_reassemble_split">複数画像から再構成</string>
+    <string name="hint_reassemble_split">ファイルが1枚ではなく複数の画像に分散して隠されている場合はオンにし、下でそれらを選んでください</string>
     <string name="btn_reveal">抽出</string>
 
     <!-- Watermark screen -->

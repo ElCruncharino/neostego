@@ -56,6 +56,8 @@ class HideState {
 @Stable
 class RevealState {
     var stegoUri by mutableStateOf<Uri?>(null)
+    var splitMode by mutableStateOf(false)
+    val splitStegoUris = mutableStateListOf<Uri>()
     var showPassword by mutableStateOf(false)
     var passwordView by mutableStateOf<EditText?>(null)
     var busy by mutableStateOf(false)

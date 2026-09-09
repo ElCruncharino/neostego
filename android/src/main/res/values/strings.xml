@@ -91,8 +91,13 @@
     <string name="reveal_screen_subtitle">Reveal a hidden file from a cover</string>
     <string name="error_choose_stego_file">Choose a stego file first</string>
     <string name="error_failed_to_reveal">Failed to reveal data</string>
+    <string name="error_need_two_stego_files">Choose at least two stego images to reassemble</string>
     <string name="label_stego_file">Stego file</string>
     <string name="hint_stego_file">An image or WAV that has data hidden in it</string>
+    <string name="label_stego_files_split">Stego images (split)</string>
+    <string name="hint_stego_files_split">Pick every image the file was split across; order doesn\'t matter</string>
+    <string name="label_reassemble_split">Reassemble from multiple images</string>
+    <string name="hint_reassemble_split">Turn on if this file was hidden across several images (pick them below), not just one</string>
     <string name="btn_reveal">Reveal</string>
 
     <!-- Watermark screen -->

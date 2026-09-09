@@ -13,12 +13,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.openstego.desktop.OpenStego;
+import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
+import com.openstego.desktop.image.ImageCodecRegistry;
+import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter;
+import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -83,6 +89,45 @@ public class AutoExtractorTest {
         assertTrue(
                 ex.getMessage() != null && ex.getMessage().toLowerCase().contains("password"),
                 "the surfaced error should name an invalid password as a possible cause");
+    }
+
+    /**
+     * Regression for issue #46: extracting a single image out of a multi-cover split through the
+     * full auto-detect candidate list must report the split-specific error, not a red herring from
+     * one of the other image plugins tried afterward on the same PNG (which would fail their own
+     * header check for an unrelated reason and, before the {@link OpenStegoErrors#SPLIT_MANIFEST_INCOMPLETE}
+     * short-circuit, silently overwrite the real diagnosis).
+     */
+    @Test
+    @SuppressWarnings("unchecked")
+    public void singlePartOfSplitReportsIncompleteSplitNotSomeOtherPluginError() throws Exception {
+        OpenStegoPlugin<?> plugin = PluginManager.getPluginByName("RandomLSB");
+        assertNotNull(plugin, "RandomLSB plugin must be registered");
+        plugin.resetConfig();
+        DHImagePluginTemplate<OpenStegoConfig> imagePlugin = (DHImagePluginTemplate<OpenStegoConfig>) plugin;
+        OpenStegoConfig config = imagePlugin.getConfig();
+        config.setUseCompression(false);
+        config.setUseEncryption(false);
+
+        List<byte[]> covers = new ArrayList<>();
+        List<String> coverNames = new ArrayList<>();
+        List<String> stegoNames = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            covers.add(ImageCodecRegistry.get().encode(ImageCodecRegistry.get().createRandomImage(8000), "cover.png"));
+            coverNames.add("cover" + i + ".png");
+            stegoNames.add("stego" + i + ".png");
+        }
+        byte[] payload = new byte[6000];
+        new Random(42).nextBytes(payload);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, "secret.bin", covers, coverNames, stegoNames, config, imagePlugin);
+
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class,
+                () -> AutoExtractor.extract(
+                        stego.get(0), "stego0.png", null, PluginManager.getDataHidingPlugins(), null));
+
+        assertEquals(OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, ex.getErrorCode());
     }
 
     /** With the right password, auto-detection across the full plugin set still round-trips a PNG. */
