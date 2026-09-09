@@ -25,8 +25,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.R
 
 /** Shows a produced output with Save and Share actions. */
 @Composable
@@ -37,7 +39,7 @@ fun OutputResultCard(name: String, onSave: () -> Unit, onShare: () -> Unit) {
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(20.dp)) {
             Text(
-                "Ready: $name",
+                stringResource(R.string.output_ready, name),
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
@@ -46,12 +48,12 @@ fun OutputResultCard(name: String, onSave: () -> Unit, onShare: () -> Unit) {
                 Button(onClick = onSave, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Filled.Save, contentDescription = null)
                     androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
-                    Text("Save")
+                    Text(stringResource(R.string.btn_save))
                 }
                 OutlinedButton(onClick = onShare, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Filled.Share, contentDescription = null)
                     androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
-                    Text("Share")
+                    Text(stringResource(R.string.btn_share))
                 }
             }
         }

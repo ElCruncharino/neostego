@@ -9,6 +9,7 @@ package com.openstego.desktop.plugin.lsb;
 
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
+import com.openstego.desktop.util.CompressionCodec;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -139,7 +140,11 @@ public class LSBDataHeader {
             }
             // Read filename length as an unsigned byte so that names of 128-255 bytes are handled correctly
             fileNameLen = header[5] & 0xFF;
-            config.setUseCompression(header[6] == 1);
+            // byte 6 was a strict 0/1 flag; old files only ever wrote 0 or 1, so this still reads them
+            // the same way while newer values select a CompressionCodec method.
+            int compressionMethod = header[6] & 0xFF;
+            config.setCompressionMethod(compressionMethod);
+            config.setUseCompression(compressionMethod != CompressionCodec.METHOD_NONE);
             config.setUseEncryption(header[7] == 1);
 
             n = dataInStream.read(cryptAlgo, 0, CRYPT_ALGO_LENGTH);
@@ -194,7 +199,7 @@ public class LSBDataHeader {
         out[currIndex++] = (byte) ((this.dataLength & 0xFF000000) >> 24);
         out[currIndex++] = (byte) this.channelBitsUsed;
         out[currIndex++] = (byte) this.fileName.length;
-        out[currIndex++] = (byte) (this.config.isUseCompression() ? 1 : 0);
+        out[currIndex++] = (byte) this.config.getCompressionMethod();
         out[currIndex++] = (byte) (this.config.isUseEncryption() ? 1 : 0);
 
         if (this.config.getEncryptionAlgorithm() != null) {

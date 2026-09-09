@@ -1,0 +1,521 @@
+入力された値：
+NeoStego用色データの最下位ビット「LSB」アルゴリズム\n\
+）\n\
+ランダムなノイズ画像をカバーファイルとする
+各色チャンネルに最大使用するビット
+使用最低有效位（LSB）算法的图像隐写插件
+提供的图像值为 Null
+嵌入的数据已损坏，或提供的密码无效，或找不到能处理该隐写文件的算法
+数据是使用旧版本的 NeoStego 嵌入的，现已不受支持
+配置项 ''maxBitsUsedPerChannel'' 的值无效\: 
+配置项 ''maxBitsUsedPerChannel'' 必须介于 1 到 8 之间。提供的值\: 
+NeoStego 最低有效位（LSB）插件。\n\
+使用随机图像作为来源（载体文件）
+每个颜色通道最多使用的位数
+@app.name@
+v@app.version@
+Copyright (c) 2007-@time.year@ Samir Vaidya and @author.name@
+@homepage.url@
+Invalid value for configuration item ''useCompression''\: 
+Invalid value for configuration item ''useEncryption''\: 
+Invalid password
+This operation requires a password. Pass -p <password>, or set the NEOSTEGO_PASSWORD environment variable (no interactive terminal is available for a prompt).
+Missing a required option. Run 'neostego <command> --help' for usage.
+Invalid configuration item provided\: 
+Invalid encryption algorithm provided\: . Possible values are AES128 or AES256
+Invalid value in neostego.cfg file for key\: . Must be a valid integer
+Invalid value in neostego.cfg file for key\: . Must be a valid floating point number
+Invalid value in neostego.cfg file for key\: . Must be one of\: true, false, t, f, yes, no, y, n, 1, 0
+Embedded data is corrupt OR invalid password has been provided
+Invalid or unsupported image format: 
+Invalid or unsupported image file: 
+No plugin specified
+No plugin found with name: 
+Selected plugin does not support watermarking
+Selected plugin does not support data hiding
+The dimensions of the two input images do not match
+NeoStego ran out of memory while performing the operation. Data hiding stores the payload in the cover's pixels, so a large file needs both a proportionally large cover (roughly 1 byte of payload per ~3 pixels) and enough heap. Try a smaller payload or a larger cover.
+Password is mandatory to generate a signature
+Splitting a payload across covers needs at least 2 cover files (provided\: )
+Extracting a split payload needs at least 2 stego files (provided\: )
+The provided cover files cannot hold the -byte payload. Use more or larger covers.
+A stego file is not a valid multi-cover split part\: 
+Incomplete multi-cover split\: expected  parts but  stego file(s) were provided
+The provided stego files belong to different splits
+Splitting a payload across covers needs the output stego file to be a directory
+The selected algorithm does not support splitting a payload across multiple covers
+File
+Exit
+View
+Theme
+System
+Light
+Dark
+Help
+About
+Leave blank to embed without encryption
+Output format, determined by the selected algorithm
+Re-enter the password to confirm
+Enter the password used when the data was embedded
+Browse for message file
+Browse for cover file
+Browse for output stego file
+Browse for input stego file
+Browse for output folder
+Browse for output signature file
+Browse for file to be watermarked
+Browse for signature file
+Browse for output watermarked file
+Browse for file to be checked for watermark
+Browse for original signature file
+JPEG output quality, 1 to 100
+@app.name@ is a fork of <a href='https://www.openstego.com'>OpenStego</a> by Samir Vaidya.
+Acknowledgements:
+The digital watermarking code in this product is based on the code provided by Peter Meerwald. Refer to his excellent thesis on <a href='http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/'>watermarking</a>: Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
+Data hiding
+Digital watermarking
+Hide data
+Extract data
+Generate signature
+Embed watermark
+Verify watermark
+Hide data in harmless looking files
+Extract hidden data
+Generate signature to watermark your files
+Embed watermark using your signature
+Verify files for existence of your watermark
+Message file
+Cover file
+(Drag and drop files, or select/enter multiple files separated by ';' or a wildcard (*, ?) to embed the same message in multiple files)
+Output stego file
+Split across covers
+Spread one message across all the selected cover files (one stego image per cover, written to the output folder) instead of embedding the same message into each. Needs at least two covers and a folder as the output.
+Options
+Algorithm
+Encryption algorithm
+Password
+Confirm password
+Algorithm options
+SI-UNIWARD — JPEG, strongest at low rates
+Adaptive — PNG, most secure
+LSB matching — PNG, higher capacity
+Random LSB — PNG, high capacity
+LSB — PNG, legacy
+WAV LSB — audio, lossless PCM
+<html><b>SI-UNIWARD (JPEG)</b><br>Content-adaptive embedding that hides data in JPEG coefficients, concentrating changes in noisy, hard-to-model regions.<br><br><b>Format:</b> JPEG &nbsp; <b>Capacity:</b> low &nbsp; <b>Detectability:</b> lowest<br><i>Best when secrecy matters most and the payload is small.</i></html>
+<html><b>Adaptive (PNG)</b><br>Steers embedding toward busy, high-variance pixels where changes are hardest to detect, while keeping output lossless.<br><br><b>Format:</b> PNG &nbsp; <b>Capacity:</b> moderate &nbsp; <b>Detectability:</b> low<br><i>The most secure lossless option — a strong general-purpose default.</i></html>
+<html><b>LSB matching (PNG)</b><br>Randomly spreads the payload across pixels, incrementing/decrementing values rather than overwriting the last bit — harder to detect than plain LSB.<br><br><b>Format:</b> PNG &nbsp; <b>Capacity:</b> high &nbsp; <b>Detectability:</b> moderate<br><i>Good balance of capacity and stealth.</i></html>
+<html><b>Random LSB (PNG)</b><br>Overwrites least-significant bits at pseudo-random, password-seeded positions across the image.<br><br><b>Format:</b> PNG &nbsp; <b>Capacity:</b> high &nbsp; <b>Detectability:</b> higher<br><i>Use when you need to fit a large payload and detectability is less of a concern.</i></html>
+<html><b>LSB (PNG)</b><br>Classic sequential least-significant-bit embedding. Simple and high-capacity, but the easiest to detect.<br><br><b>Format:</b> PNG &nbsp; <b>Capacity:</b> highest &nbsp; <b>Detectability:</b> highest<br><i>Legacy/compatibility option — prefer the others for real secrecy.</i></html>
+<html><b>WAV LSB (audio)</b><br>Hides data in the least-significant bit of each integer PCM sample of an uncompressed WAV. Output is a same-format WAV that still plays normally.<br><br><b>Format:</b> WAV (lossless PCM) &nbsp; <b>Capacity:</b> high &nbsp; <b>Detectability:</b> higher<br><i>For hiding data in audio. Lossy formats (MP3, AAC) cannot carry LSB data.</i></html>
+Input stego file
+Split parts
+The input is several parts of one message that was split across multiple covers. Select all the parts; they will be reassembled.
+Output folder for message file
+Passphrase to be used to generate signature
+Output signature file
+File to be watermarked
+(Drag and drop files, or select/enter multiple files separated by ';' or a wildcard (*, ?) to watermark multiple files)
+Signature file
+Output watermarked file
+JPEG output quality
+(Only applies when the output file is a JPEG; higher means better quality and larger files)
+File to be checked for watermark
+(Select multiple files or provide wildcard (*, ?) to verify watermark in multiple files)
+Original signature file
+File name
+Strength
+Processing
+Cancel
+Success
+Warning
+Error
+Results
+Error occurred while launching browser
+Please provide the value for 
+File  already exists. Overwrite?
+Password does not match the Confirm password
+No match found for cover file: 
+Selected output stego file is a directory. Please select a file
+Output stego file should be a directory when multiple cover files are selected
+Splitting a message across covers needs at least two cover files
+Message embedded into  cover file(s). Skipped  file(s)
+Message file successfully extracted from the cover file: 
+Signature file successfully generated
+No match found for input file: 
+Selected output watermarked file is a directory. Please select a file
+Output watermarked file should be a directory when multiple input files are selected
+Watermarked  file(s). Skipped  file(s)
+The watermark strength check results are:
+Open - Select message file
+Open - Select cover file
+Save - Select output stego file
+Open - Select input stego file
+Select output folder for message file
+Save - Select signature file
+Open - Select file to be watermarked
+Open - Select signature file
+Save - Select output watermarked file
+Open - Select file to be checked for watermark
+Open - Select original signature file
+Cover files ()
+Stego files ()
+Files for watermarking ()
+Watermarked files ()
+Signature files ()
+@app.name@ is a steganography application that provides two functionalities:\n\
+RandomLSB \\\n\
+secret.txt --coverfile=wallpaper.png --stegofile=test.png\n\
+test.png --extractdir=/data\n\
+DWTSVD \\\n\
+my.sig\n\
+my.sig --coverfile=owned.png --stegofile=out.png\n\
+my.sig --stegofile=test.png\n\
+Extracted file: 
+Cover file processed and stego file written: 
+Enter Password:
+WARNING: Stegofile name has been ignored, because multiple coverfiles are provided. Each \
+Purpose:
+Data Hiding
+Watermarking
+Some files failed processing:
+設定項目「useCompression」の値は無効です：
+設定項目「useEncryption」の値は無効です：
+パスワードが無効です
+この操作にはパスワードが必要です。-p <password> で指定するか、環境変数 NEOSTEGO_PASSWORD を設定してください（入力を促す対話型端末が利用できません）。
+必須のオプションが指定されていません。'neostego <command> --help' を実行して使用方法を確認してください。
+入力された設定項目「」は無効です
+入力された暗号化アルゴリズム「」は無効です。指定できる値は AES128 または AES256 です
+neostego.cfg ファイルのキー「」の値が無効です。有効な整数を指定してください
+neostego.cfg ファイルのキー「」の値が無効です。有効な浮動小数点数を指定してください
+neostego.cfg ファイルのキー「」の値が無効です。true、false、t、f、yes、no、y、n、1、0 のいずれかを指定してください
+埋め込まれたデータは壊れている、または入力されたパスワードが無効です
+埋め込まれたデータは壊れている、または入力されたパスワードが無効である、またはこのステゴファイルを扱えるアルゴリズムが見つかりません
+無効またはサポートされていない画像フォーマットです：
+無効またはサポートされていない画像ファイルです：
+プラグインが指定されていません
+「」という名前のプラグインが見つかりません
+選択されたプラグインは電子透かしをサポートしていません
+選択されたプラグインはデータ隠蔽をサポートしていません
+入力された2つの画像の寸法が一致しません
+操作の実行中にNeoStegoのメモリが不足しました。データ隠蔽はペイロードをカバーファイルの画素内に格納するため、大きなファイルには相応に大きなカバーファイル（ペイロード1バイトにつき約3画素が目安）と十分なヒープの両方が必要です。より小さいペイロードか、より大きなカバーファイルをお試しください。
+署名を生成するにはパスワードが必須です
+ペイロードを複数のカバーファイルに分割するには少なくとも2つのカバーファイルが必要です（指定された数：）
+分割されたペイロードを抽出するには少なくとも2つのステゴファイルが必要です（指定された数：）
+指定されたカバーファイルではバイトのペイロードを格納できません。より多く、またはより大きなカバーファイルを使用してください。
+ステゴファイルが有効な複数カバーファイル分割のパートではありません：
+複数カバーファイル分割が不完全です：個のパートが必要ですが、個のステゴファイルしか指定されていません
+指定されたステゴファイルは異なる分割に属しています
+ペイロードを複数のカバーファイルに分割するには、出力ステゴファイルをディレクトリにする必要があります
+選択されたアルゴリズムはペイロードを複数のカバーファイルに分割することをサポートしていません
+ファイル
+終了
+表示
+テーマ
+システム
+ライト
+ダーク
+ヘルプ
+バージョン情報
+空欄のままにすると暗号化せずに埋め込みます
+選択されたアルゴリズムによって決まる出力フォーマット
+確認のためパスワードを再入力してください
+データの埋め込み時に使用したパスワードを入力してください
+メッセージファイルを参照
+カバーファイルを参照
+出力ステゴファイルを参照
+入力ステゴファイルを参照
+出力フォルダーを参照
+出力署名ファイルを参照
+電子透かしを埋め込むファイルを参照
+署名ファイルを参照
+出力される電子透かし付きファイルを参照
+電子透かしを検証するファイルを参照
+元の署名ファイルを参照
+JPEG出力品質、1から100
+@app.name@は、Samir Vaidyaによる<a href='https://www.openstego.com'>OpenStego</a>のフォークです。
+謝辞：
+本製品のデジタル電子透かしのコードは、Peter Meerwaldによって提供されたコードに基づいています。詳しくは、彼の優れた論文である<a href='http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/'>電子透かし</a>に関する研究をご覧ください：Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
+データ隠蔽
+電子透かし
+データを隠す
+データを抽出
+署名を生成
+電子透かしを埋め込む
+電子透かしを検証
+無害に見えるファイルにデータを隠す
+隠されたデータを抽出する
+ファイルに電子透かしを入れるための署名を生成する
+署名を使って電子透かしを埋め込む
+ファイルに自分の電子透かしが存在するか検証する
+メッセージファイル
+カバーファイル
+（ファイルをドラッグ＆ドロップするか、';'で区切って複数選択、またはワイルドカード（*、?）を入力すると、同じメッセージを複数のファイルに埋め込みます）
+出力ステゴファイル
+複数のカバーファイルに分割
+同じメッセージを各カバーファイルに埋め込むのではなく、選択したすべてのカバーファイルに1つのメッセージを分割して埋め込みます（カバーファイルごとに1つのステゴ画像が出力フォルダーに書き出されます）。少なくとも2つのカバーファイルと、出力先としてフォルダーが必要です。
+オプション
+アルゴリズム
+暗号化アルゴリズム
+パスワード
+パスワードの確認
+アルゴリズムのオプション
+SI-UNIWARD — JPEG、低埋め込み率で最強
+Adaptive — PNG、最も安全
+LSBマッチング — PNG、より高容量
+ランダムLSB — PNG、高容量
+LSB — PNG、レガシー
+WAV LSB — オーディオ、可逆PCM
+<html><b>SI-UNIWARD（JPEG）</b><br>JPEG係数にデータを隠すコンテンツ適応型の埋め込み方式で、変更をノイズが多くモデル化しにくい領域に集中させます。<br><br><b>フォーマット：</b>JPEG &nbsp; <b>容量：</b>低 &nbsp; <b>検出されにくさ：</b>最高<br><i>秘匿性が最も重要で、ペイロードが小さい場合に最適です。</i></html>
+<html><b>Adaptive（PNG）</b><br>変化が激しく高分散な画素に埋め込みを誘導することで検出を困難にしつつ、出力を可逆に保ちます。<br><br><b>フォーマット：</b>PNG &nbsp; <b>容量：</b>中程度 &nbsp; <b>検出されにくさ：</b>高<br><i>可逆方式の中で最も安全な、強力な汎用デフォルトです。</i></html>
+<html><b>LSBマッチング（PNG）</b><br>最下位ビットを上書きするのではなく値を増減させることでペイロードを画素全体にランダムに分散させ、通常のLSBより検出が困難です。<br><br><b>フォーマット：</b>PNG &nbsp; <b>容量：</b>高 &nbsp; <b>検出されにくさ：</b>中程度<br><i>容量と秘匿性のバランスが良好です。</i></html>
+<html><b>ランダムLSB（PNG）</b><br>パスワードをシードとした画像内の疑似ランダムな位置で最下位ビットを上書きします。<br><br><b>フォーマット：</b>PNG &nbsp; <b>容量：</b>高 &nbsp; <b>検出されにくさ：</b>低<br><i>大きなペイロードを収める必要があり、検出されにくさをあまり気にしない場合に使用してください。</i></html>
+<html><b>LSB（PNG）</b><br>古典的な逐次最下位ビット埋め込み方式です。シンプルで容量は大きいですが、最も検出されやすい方式です。<br><br><b>フォーマット：</b>PNG &nbsp; <b>容量：</b>最高 &nbsp; <b>検出されにくさ：</b>最低<br><i>レガシー／互換性のためのオプションです。真の秘匿性が必要な場合は他の方式を選んでください。</i></html>
+<html><b>WAV LSB（オーディオ）</b><br>非圧縮WAVの各整数PCMサンプルの最下位ビットにデータを隠します。出力は同じ形式のWAVで、通常どおり再生できます。<br><br><b>フォーマット：</b>WAV（可逆PCM） &nbsp; <b>容量：</b>高 &nbsp; <b>検出されにくさ：</b>低<br><i>オーディオにデータを隠す場合に使用します。非可逆フォーマット（MP3、AAC）はLSBデータを保持できません。</i></html>
+入力ステゴファイル
+分割されたパート
+入力は、複数のカバーファイルに分割された1つのメッセージの複数のパートです。すべてのパートを選択すると、再結合されます。
+メッセージファイルの出力フォルダー
+署名の生成に使用するパスフレーズ
+出力署名ファイル
+電子透かしを埋め込むファイル
+（ファイルをドラッグ＆ドロップするか、';'で区切って複数選択、またはワイルドカード（*、?）を入力すると、複数のファイルに電子透かしを埋め込みます）
+署名ファイル
+出力される電子透かし付きファイル
+JPEG出力品質
+（出力ファイルがJPEGの場合のみ適用されます。値が高いほど品質が上がり、ファイルサイズも大きくなります）
+電子透かしを検証するファイル
+（複数のファイルを選択するか、ワイルドカード（*、?）を指定すると、複数のファイルの電子透かしを検証します）
+元の署名ファイル
+ファイル名
+強度
+処理中
+キャンセル
+成功
+警告
+エラー
+結果
+ブラウザの起動中にエラーが発生しました
+の値を入力してください
+ファイル「」は既に存在しています。上書きしますか？
+パスワードが確認用のパスワードと一致していません
+カバーファイルに一致するものが見つかりません：
+選択された出力ステゴファイルはディレクトリです。ファイルを選択してください
+複数のカバーファイルを選択した場合、出力ステゴファイルはディレクトリである必要があります
+メッセージを複数のカバーファイルに分割するには少なくとも2つのカバーファイルが必要です
+メッセージを個のカバーファイルに埋め込みました。個のファイルをスキップしました
+カバーファイルからメッセージファイルの抽出に成功しました：
+署名ファイルの生成に成功しました
+入力ファイルに一致するものが見つかりません：
+選択された出力電子透かしファイルはディレクトリです。ファイルを選択してください
+複数の入力ファイルを選択した場合、出力電子透かしファイルはディレクトリである必要があります
+個のファイルに電子透かしを埋め込みました。個のファイルをスキップしました
+電子透かし強度チェックの結果は次のとおりです：
+開く - メッセージファイルを選択
+開く - カバーファイルを選択
+保存 - 出力ステゴファイルを選択
+開く - 入力ステゴファイルを選択
+メッセージファイルの出力フォルダーを選択
+保存 - 署名ファイルを選択
+開く - 電子透かしを埋め込むファイルを選択
+開く - 署名ファイルを選択
+保存 - 出力される電子透かし付きファイルを選択
+開く - 電子透かしを検証するファイルを選択
+開く - 元の署名ファイルを選択
+カバーファイル ()
+ステゴファイル ()
+電子透かし用ファイル ()
+電子透かし付きファイル ()
+署名ファイル ()
+@app.name@は、次の2つの機能を提供するステガノグラフィアプリケーションです：\n\
+ファイルを抽出しました：
+カバーファイルを処理し、ステゴファイルを書き込みました：
+パスワードを入力：
+警告：複数のカバーファイルが指定されたため、ステゴファイル名は無視されます。\
+目的：
+一部のファイルの処理に失敗しました：
+配置项 ''useCompression'' 的值无效\: 
+配置项 ''useEncryption'' 的值无效\: 
+密码无效
+此操作需要密码。请通过 -p <password> 传入，或设置 NEOSTEGO_PASSWORD 环境变量（当前没有可用于提示输入的交互式终端）。
+缺少必需的选项。运行 'neostego <command> --help' 查看用法。
+提供的配置项无效\: 
+提供的加密算法无效\: 。可用值为 AES128 或 AES256
+neostego.cfg 文件中键\:  的值无效。必须是有效的整数
+neostego.cfg 文件中键\:  的值无效。必须是有效的浮点数
+neostego.cfg 文件中键\:  的值无效。必须是以下之一\: true、false、t、f、yes、no、y、n、1、0
+嵌入的数据已损坏，或提供的密码无效
+无效或不受支持的图像格式：
+无效或不受支持的图像文件：
+未指定插件
+找不到名为  的插件
+所选插件不支持水印功能
+所选插件不支持数据隐藏功能
+两个输入图像的尺寸不一致
+NeoStego 在执行操作时内存耗尽。数据隐藏是将载荷存放在载体的像素中，因此较大的文件既需要相应更大的载体（大约每 3 个像素承载 1 字节载荷），也需要足够的堆内存。请尝试使用更小的载荷或更大的载体。
+生成签名必须提供密码
+将载荷拆分到多个载体中至少需要 2 个载体文件（当前提供\: ）
+提取拆分的载荷至少需要 2 个隐写文件（当前提供\: ）
+提供的载体文件无法容纳  字节的载荷。请使用更多或更大的载体。
+该隐写文件不是有效的多载体拆分部分\: 
+多载体拆分不完整\: 应有  个部分，但只提供了  个隐写文件
+提供的隐写文件属于不同的拆分
+将载荷拆分到多个载体中时，输出隐写文件必须是一个目录
+所选算法不支持将载荷拆分到多个载体中
+文件
+退出
+视图
+主题
+系统
+浅色
+深色
+帮助
+关于
+留空表示不加密嵌入
+输出格式由所选算法决定
+再次输入密码以确认
+输入嵌入数据时使用的密码
+浏览消息文件
+浏览载体文件
+浏览输出隐写文件
+浏览输入隐写文件
+浏览输出文件夹
+浏览输出签名文件
+浏览要添加水印的文件
+浏览签名文件
+浏览输出的水印文件
+浏览要检查水印的文件
+浏览原始签名文件
+JPEG 输出质量，1 到 100
+@app.name@ 是 Samir Vaidya 所创 <a href='https://www.openstego.com'>OpenStego</a> 的一个分支。
+致谢：
+本产品中的数字水印代码基于 Peter Meerwald 提供的代码。请参阅他关于<a href='http://www.cosy.sbg.ac.at/~pmeerw/Watermarking/'>水印技术</a>的出色论文：Peter Meerwald, Digital Image Watermarking in the Wavelet Transfer Domain, Master's Thesis, Department of Scientific Computing, University of Salzburg, Austria, January 2001.
+数据隐藏
+数字水印
+隐藏数据
+提取数据
+生成签名
+嵌入水印
+验证水印
+将数据隐藏在看似无害的文件中
+提取隐藏的数据
+生成用于给文件添加水印的签名
+使用你的签名嵌入水印
+验证文件中是否存在你的水印
+消息文件
+载体文件
+（可拖放文件，或输入/选择多个以 ';' 分隔的文件，或使用通配符 (*, ?)，将同一条消息嵌入到多个文件中）
+输出隐写文件
+拆分到多个载体
+将一条消息拆分到所有已选载体文件中（每个载体生成一个隐写图像，写入输出文件夹），而不是把同一条消息嵌入每个文件。至少需要两个载体，且输出必须是一个文件夹。
+选项
+算法
+加密算法
+密码
+确认密码
+算法选项
+SI-UNIWARD — JPEG，低嵌入率下最强
+Adaptive — PNG，最安全
+LSB 匹配 — PNG，容量更高
+随机 LSB — PNG，高容量
+LSB — PNG，旧版
+WAV LSB — 音频，无损 PCM
+<html><b>SI-UNIWARD（JPEG）</b><br>内容自适应嵌入算法，将数据隐藏在 JPEG 系数中，把改动集中在噪声多、难以建模的区域。<br><br><b>格式：</b>JPEG &nbsp; <b>容量：</b>低 &nbsp; <b>可检测性：</b>最低<br><i>当保密性最重要且载荷较小时的最佳选择。</i></html>
+<html><b>Adaptive（PNG）</b><br>将嵌入引导至变化剧烈、内容繁杂的像素处，使改动最难被察觉，同时保持输出无损。<br><br><b>格式：</b>PNG &nbsp; <b>容量：</b>中等 &nbsp; <b>可检测性：</b>低<br><i>最安全的无损方案——强有力的通用默认选择。</i></html>
+<html><b>LSB 匹配（PNG）</b><br>将载荷随机分散到各个像素中，通过对数值加一或减一来设置最低位，而不是直接覆盖它——比普通 LSB 更难检测。<br><br><b>格式：</b>PNG &nbsp; <b>容量：</b>高 &nbsp; <b>可检测性：</b>中等<br><i>在容量与隐蔽性之间取得良好平衡。</i></html>
+<html><b>随机 LSB（PNG）</b><br>在图像中以密码为种子的伪随机位置覆盖最低有效位。<br><br><b>格式：</b>PNG &nbsp; <b>容量：</b>高 &nbsp; <b>可检测性：</b>较高<br><i>适用于需要容纳大载荷、且不太在意可检测性的场景。</i></html>
+<html><b>LSB（PNG）</b><br>经典的顺序最低有效位嵌入。简单且高容量，但最容易被检测出来。<br><br><b>格式：</b>PNG &nbsp; <b>容量：</b>最高 &nbsp; <b>可检测性：</b>最高<br><i>旧版/兼容性选项——追求真正的保密性时请选择其他算法。</i></html>
+<html><b>WAV LSB（音频）</b><br>将数据隐藏在未压缩 WAV 文件每个整数 PCM 采样的最低有效位中。输出是格式相同的 WAV，仍可正常播放。<br><br><b>格式：</b>WAV（无损 PCM） &nbsp; <b>容量：</b>高 &nbsp; <b>可检测性：</b>较高<br><i>用于在音频中隐藏数据。有损格式（MP3、AAC）无法承载 LSB 数据。</i></html>
+输入隐写文件
+拆分部分
+输入是一条被拆分到多个载体中的消息的若干部分。请选择所有部分，它们将被重新组合。
+消息文件的输出文件夹
+用于生成签名的密码短语
+输出签名文件
+要添加水印的文件
+（可拖放文件，或输入/选择多个以 ';' 分隔的文件，或使用通配符 (*, ?)，为多个文件添加水印）
+签名文件
+输出的水印文件
+JPEG 输出质量
+（仅当输出文件为 JPEG 时适用；值越高质量越好、文件也越大）
+要检查水印的文件
+（选择多个文件或使用通配符 (*, ?) 以验证多个文件中的水印）
+原始签名文件
+文件名
+强度
+处理中
+取消
+错误
+结果
+启动浏览器时发生错误
+请提供  的值
+文件  已存在。是否覆盖？
+密码与确认密码不一致
+未找到匹配的载体文件：
+所选的输出隐写文件是一个目录。请选择一个文件
+选择多个载体文件时，输出隐写文件应为一个目录
+将消息拆分到多个载体中至少需要两个载体文件
+消息已嵌入到  个载体文件中。跳过了  个文件
+已成功从载体文件中提取消息文件：
+签名文件已成功生成
+未找到匹配的输入文件：
+所选的输出水印文件是一个目录。请选择一个文件
+选择多个输入文件时，输出水印文件应为一个目录
+已为  个文件添加水印。跳过了  个文件
+水印强度检查结果如下：
+打开 - 选择消息文件
+打开 - 选择载体文件
+保存 - 选择输出隐写文件
+打开 - 选择输入隐写文件
+选择消息文件的输出文件夹
+保存 - 选择签名文件
+打开 - 选择要添加水印的文件
+打开 - 选择签名文件
+保存 - 选择输出的水印文件
+打开 - 选择要检查水印的文件
+打开 - 选择原始签名文件
+载体文件 ()
+隐写文件 ()
+待添加水印的文件 ()
+已添加水印的文件 ()
+签名文件 ()
+@app.name@ 是一款提供两种功能的隐写工具：\n\
+已提取文件：
+载体文件已处理，隐写文件已写入：
+请输入密码：
+警告：由于提供了多个载体文件，隐写文件名已被忽略。每个 \
+用途：
+部分文件处理失败：
+Image based steganography plugin using Random LSB matching (+/-1) algorithm, which is more resistant to statistical steganalysis than plain LSB
+Random LSB Matching (RandomLSBMatch) Plugin for NeoStego.\n\
+ランダムLSBマッチング（±1）アルゴリズムを使用した画像用ステガノグラフィプラグイン。通常のLSBより統計的解析への耐性が高い
+NeoStego用ランダムLSBマッチング（RandomLSBMatch）プラグイン。\n\
+使用随机 LSB 匹配（±1）算法的图像隐写插件，比普通 LSB 更能抵御统计隐写分析
+NeoStego 随机 LSB 匹配（RandomLSBMatch）插件。\n\
+Image based steganography plugin using Random Least Significant Bit algorithm
+Random Least Significant Bit (RandomLSB) Plugin for NeoStego.\n\
+ランダムな色データの最下位ビットを使用する画像用ステガノグラフィプラグイン
+NeoStego用ランダムな色データの最下位ビット「RandomLSB」アルゴリズム\n\
+使用随机最低有效位（Random LSB）算法的图像隐写插件
+NeoStego 随机最低有效位（RandomLSB）插件。\n\
+Audio steganography plugin hiding data in the LSBs of WAV (PCM) samples
+WAV LSB (WavLSB) audio plugin for NeoStego.\n\
+The WAV cover is too small to hold the data. Use a longer audio clip or a smaller (or compressed) payload.
+Invalid or unsupported audio file: not a RIFF/WAVE container
+Unsupported WAV format: only uncompressed integer PCM is supported
+A cover WAV file is required for embedding
+Error reading the embedded data from the audio file
+WAV（PCM）サンプルの最下位ビットにデータを隠す音声用ステガノグラフィプラグイン
+NeoStego用WAV LSB（WavLSB）音声プラグイン。\n\
+WAVカバーファイルが小さすぎてデータを保持できません。より長い音声クリップ、または小さい（もしくは圧縮された）ペイロードを使用してください。
+無効または未対応の音声ファイルです：RIFF/WAVEコンテナではありません
+未対応のWAV形式です：非圧縮の整数PCMのみサポートされています
+埋め込みにはWAVカバーファイルが必要です
+音声ファイルから埋め込まれたデータを読み込み中にエラーが発生しました
+在 WAV（PCM）采样最低有效位中隐藏数据的音频隐写插件
+NeoStego WAV LSB（WavLSB）音频插件。\n\
+WAV 载体太小，无法容纳数据。请使用更长的音频片段或更小（或已压缩）的载荷。
+无效或不受支持的音频文件：不是 RIFF/WAVE 容器
+不受支持的 WAV 格式：仅支持未压缩的整数 PCM
+嵌入操作需要一个 WAV 载体文件
+从音频文件读取嵌入数据时出错

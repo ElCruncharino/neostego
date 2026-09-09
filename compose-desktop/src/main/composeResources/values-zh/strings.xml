@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App shell / navigation (Shell.kt, Main.kt) -->
+    <string name="app_name">NeoStego</string>
+    <string name="app_title_with_destination">NeoStego — %1$s</string>
+    <string name="destination_hide">隐藏数据</string>
+    <string name="destination_extract">提取数据</string>
+    <string name="destination_generate_signature">生成签名</string>
+    <string name="destination_embed_watermark">嵌入水印</string>
+    <string name="destination_verify_watermark">验证水印</string>
+    <string name="destination_settings">设置</string>
+    <string name="section_data_hiding">数据隐藏</string>
+    <string name="section_digital_watermarking">数字水印</string>
+
+    <!-- Shared components (Components.kt) -->
+    <string name="file_pick_drop_hint">松开鼠标以使用该文件</string>
+    <string name="file_pick_choose">选择</string>
+    <string name="file_pick_change">更改</string>
+    <string name="file_pick_choose_content_description">选择%1$s</string>
+    <string name="file_pick_change_content_description">更改%1$s</string>
+    <string name="password_field_default_label">密码（可选）</string>
+    <string name="password_field_show">显示</string>
+    <string name="password_field_hide">隐藏</string>
+    <string name="action_button_working">处理中…</string>
+    <string name="action_button_working_progress">处理中… %1$d%%</string>
+    <string name="action_button_state_working">处理中</string>
+    <string name="action_button_state_ready">就绪</string>
+    <string name="result_card_done">完成</string>
+    <string name="result_card_failed">失败</string>
+
+    <!-- Advanced options panel (AdvancedOptionsPanel.kt) -->
+    <string name="advanced_options_header">高级选项</string>
+    <string name="advanced_options_collapse_content_description">收起高级选项</string>
+    <string name="advanced_options_expand_content_description">展开高级选项</string>
+    <string name="option_lsb_max_bits_label">每个颜色通道的最大位数</string>
+    <string name="option_lsb_max_bits_explanation">要覆写每个颜色通道的多少个最低有效位。数值越高，可隐藏的数据越多，但对图像的破坏也越明显，更容易被检测到。默认值为 3。</string>
+    <string name="option_adaptive_cmd_label">聚集变化（CMD）</string>
+    <string name="option_adaptive_cmd_explanation">将 +/-1 的像素变化聚集在一起，使其相互增强，从而抵御统计隐写分析。默认开启。</string>
+    <string name="option_adaptive_mu_label">聚集强度（mu）</string>
+    <string name="option_adaptive_mu_explanation">变化聚集的强度。数值越高，聚集程度越集中。默认值为 3.0。</string>
+    <string name="option_jpeg_quality_label">JPEG 质量</string>
+    <string name="option_jpeg_quality_explanation">输出 JPEG 的质量（50-100）。数值越高，图像质量和容量越好，但文件也越大。默认值为 90。</string>
+
+    <!-- Algorithm selector (AlgorithmSelector.kt) -->
+    <string name="algorithm_label">算法</string>
+    <string name="algorithm_none_selected">未选择</string>
+    <string name="algorithm_content_description">算法：%1$s</string>
+
+    <!-- Shared across Hide / Extract / Watermark screens -->
+    <string name="section_source">来源</string>
+    <string name="section_cover_mode">载体模式</string>
+    <string name="section_encryption">加密</string>
+    <string name="section_key">密钥</string>
+    <string name="section_theme">主题</string>
+    <string name="section_language">语言</string>
+    <string name="section_about">关于</string>
+    <string name="encryption_none">无</string>
+    <string name="password_required_label">密码（加密时必填）</string>
+    <string name="password_confirm_label">确认密码</string>
+    <string name="cover_file_label">载体文件</string>
+    <string name="output_file_label">输出文件</string>
+    <string name="signature_file_label">签名文件</string>
+    <string name="saved_as_hint">保存为：%1$s</string>
+    <string name="allowed_extensions_hint">允许的格式：%1$s</string>
+    <string name="selection_summary">已选择 %1$d 个：%2$s</string>
+
+    <!-- Hide data screen (HideScreen.kt) -->
+    <string name="hide_screen_intro">将秘密数据隐藏在一个不起眼的载体文件中。</string>
+    <string name="hide_message_file_label">消息文件</string>
+    <string name="hide_message_file_hint">在此选择或拖拽要隐藏的秘密文件</string>
+    <string name="mode_single_cover">单个载体</string>
+    <string name="mode_random_image">随机图片</string>
+    <string name="mode_batch">批量</string>
+    <string name="mode_split">拆分</string>
+    <string name="mode_hint_fell_back">该算法不基于图像，因此只能使用单个载体。</string>
+    <string name="mode_hint_single">将消息隐藏在一个载体文件中。</string>
+    <string name="mode_hint_random">生成一张随机噪点图像作为载体——无需提供载体文件。</string>
+    <string name="mode_hint_batch">将同一条消息分别隐藏到每个所选的载体中。</string>
+    <string name="mode_hint_split">将一条消息拆分到多个载体中。提取时需要用到所有生成的部分。</string>
+    <string name="hide_cover_file_hint_generic">在此选择或拖拽要隐藏数据的载体文件</string>
+    <string name="hide_cover_file_hint_exts">在此选择或拖拽一个载体（%1$s）</string>
+    <string name="hide_output_stego_label">输出隐写文件</string>
+    <string name="hide_output_stego_hint_generic">选择结果的保存位置</string>
+    <string name="hide_output_random_hint_generic">选择生成图像的保存位置</string>
+    <string name="hide_output_folder_label">输出文件夹</string>
+    <string name="hide_output_folder_hint">选择隐写文件的保存位置</string>
+    <string name="multi_cover_files_label">载体文件</string>
+    <string name="multi_cover_choose_hint">请选择两个或更多载体</string>
+    <string name="multi_cover_choose">选择载体</string>
+    <string name="multi_cover_change">更改载体</string>
+    <string name="action_hide_data">隐藏数据</string>
+    <string name="action_generate_cover_and_hide">生成载体并隐藏</string>
+    <string name="action_hide_in_each_cover">在每个载体中隐藏</string>
+    <string name="action_hide_in_n_covers">在 %1$d 个载体中隐藏</string>
+    <string name="action_split_across_covers">拆分到多个载体</string>
+    <string name="action_split_across_n_covers">拆分到 %1$d 个载体</string>
+    <string name="error_passwords_do_not_match">两次输入的密码不一致。</string>
+    <string name="result_wrote_stego_file">隐写文件已写入 %1$s</string>
+    <string name="result_wrote_n_stego_files">已将 %1$d 个隐写文件写入 %2$s</string>
+    <string name="result_split_into_n_parts">已拆分为 %1$d 个部分，保存于 %2$s——提取时请保留所有部分</string>
+    <string name="capacity_label">容量：约 %1$s</string>
+    <string name="capacity_too_small">消息对于该载体来说太大</string>
+    <string name="capacity_message_of_available">消息大小为 %1$s，可用容量约 %2$s。</string>
+
+    <!-- Extract data screen (ExtractScreen.kt) -->
+    <string name="extract_screen_intro">从隐写文件中恢复隐藏的消息。</string>
+    <string name="extract_mode_single_file">单个文件</string>
+    <string name="extract_mode_reassemble_split">重组拆分文件</string>
+    <string name="extract_hint_reassemble">选择拆分载荷的所有部分以重组原始消息。</string>
+    <string name="extract_hint_single">从单个隐写文件中恢复消息。</string>
+    <string name="extract_stego_file_label">隐写文件</string>
+    <string name="extract_stego_file_hint">在此选择或拖拽含有隐藏数据的文件</string>
+    <string name="extract_output_folder_hint">选择提取消息的保存位置</string>
+    <string name="action_extract_data">提取数据</string>
+    <string name="action_reassemble_and_extract">重组并提取</string>
+    <string name="action_reassemble_n_parts">重组 %1$d 个部分</string>
+    <string name="result_extracted_message_to">消息已提取到 %1$s</string>
+    <string name="split_parts_label">拆分部分</string>
+    <string name="split_parts_choose_hint">请选择拆分的所有部分</string>
+    <string name="split_parts_choose">选择部分</string>
+    <string name="split_parts_change">更改部分</string>
+
+    <!-- Settings screen (SettingsScreen.kt) -->
+    <string name="theme_system">跟随系统</string>
+    <string name="theme_light">浅色</string>
+    <string name="theme_dark">深色</string>
+    <string name="about_app_name_version">NeoStego %1$s</string>
+    <string name="about_tagline">将数据隐藏在图片和音频中，并为文件添加水印。</string>
+    <string name="about_fork_credit">改进自 Samir Vaidya 的 OpenStego 分支，由 Nick Haghiri 维护。</string>
+    <string name="about_license">基于 GNU 通用公共许可证第 2 版（GPLv2）授权。</string>
+    <string name="about_accessibility_note">在 Linux 上使用屏幕阅读器？经典（Swing）界面和命令行界面均完全支持无障碍访问。</string>
+
+    <!-- Watermark screens (WatermarkScreens.kt) -->
+    <string name="watermark_generate_intro">根据一个密钥创建水印签名文件。</string>
+    <string name="signature_file_save_hint">选择 .sig 文件的保存位置</string>
+    <string name="action_generate_signature">生成签名</string>
+    <string name="result_saved_signature_to">签名已保存到 %1$s</string>
+    <string name="watermark_embed_intro">将签名以不可见水印的形式嵌入载体文件。</string>
+    <string name="signature_file_embed_hint">要嵌入的 .sig 文件</string>
+    <string name="cover_file_watermark_hint_generic">要添加水印的文件</string>
+    <string name="output_watermarked_hint_generic">选择水印文件的保存位置</string>
+    <string name="action_embed_watermark">嵌入水印</string>
+    <string name="result_wrote_watermarked_file_to">水印文件已写入 %1$s</string>
+    <string name="watermark_verify_intro">检查某个文件中是否包含指定的水印签名。</string>
+    <string name="watermarked_file_label">水印文件</string>
+    <string name="watermarked_file_check_hint_generic">要检查的文件</string>
+    <string name="signature_file_original_hint">原始 .sig 文件</string>
+    <string name="action_verify_watermark">验证水印</string>
+    <string name="verdict_correlation">相关度：%1$d%%</string>
+    <string name="verdict_watermark_present">检测到水印</string>
+    <string name="verdict_weak_match">弱匹配 / 部分匹配</string>
+    <string name="verdict_watermark_absent">未检测到水印</string>
+    <string name="verdict_failed_title">失败</string>
+    <string name="verdict_verification_failed">验证失败</string>
+</resources>

@@ -7,13 +7,13 @@
 
 package com.openstego.desktop;
 
+import com.openstego.desktop.plugin.lsb.MultiPartSplitManifest;
 import com.openstego.desktop.util.CommonUtil;
+import com.openstego.desktop.util.CompressionCodec;
 import com.openstego.desktop.util.LabelUtil;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /**
  * This is the main API class for OpenStego. It exposes the data-hiding and watermarking operations
@@ -99,15 +99,12 @@ public class OpenStego {
         }
 
         try {
-            // Compress data, if requested
             if (this.config.isUseCompression()) {
-                try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                        GZIPOutputStream zos = new GZIPOutputStream(bos)) {
-                    zos.write(msg);
-                    zos.finish();
-                    zos.flush();
-                    msg = bos.toByteArray();
-                }
+                CompressionCodec.Result compressed = CompressionCodec.compress(msg);
+                msg = compressed.data;
+                this.config.setCompressionMethod(compressed.method);
+            } else {
+                this.config.setCompressionMethod(CompressionCodec.METHOD_NONE);
             }
 
             // Encrypt data, if requested
@@ -244,6 +241,25 @@ public class OpenStego {
             output.add(this.plugin.extractMsgFileName(stegoData, stegoFileName));
             msg = this.plugin.extractData(stegoData, stegoFileName, null);
 
+            // A lone part of a multi-cover split looks like this: its manifest was embedded as
+            // ordinary (uncompressed/unencrypted) payload, so without this check it would silently
+            // fall through to the decrypt/decompress logic below and come out corrupted instead of
+            // producing a clear error.
+            MultiPartSplitManifest splitManifest = null;
+            try {
+                splitManifest = MultiPartSplitManifest.parse(msg);
+            } catch (OpenStegoException notAManifest) {
+                // Not a split part; fall through to ordinary extraction below.
+            }
+            if (splitManifest != null) {
+                throw new OpenStegoException(
+                        null,
+                        OpenStego.NAMESPACE,
+                        OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE,
+                        splitManifest.getTotalParts(),
+                        1);
+            }
+
             // Decrypt data, if required
             if (this.config.isUseEncryption()) {
                 OpenStegoCrypto crypto =
@@ -253,12 +269,7 @@ public class OpenStego {
 
             // Decompress data, if required
             if (this.config.isUseCompression()) {
-                try (ByteArrayInputStream bis = new ByteArrayInputStream(msg);
-                        GZIPInputStream zis = new GZIPInputStream(bis)) {
-                    msg = CommonUtil.streamToBytes(zis);
-                } catch (IOException ioEx) {
-                    throw new OpenStegoException(ioEx, OpenStego.NAMESPACE, OpenStegoErrors.CORRUPT_DATA);
-                }
+                msg = CompressionCodec.decompress(msg, this.config.getCompressionMethod());
             }
 
             // Add message as second element of output list

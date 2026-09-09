@@ -44,6 +44,10 @@ public class OpenStegoFrame extends JFrame {
     private JRadioButtonMenuItem themeSystemMenuItem;
     private JRadioButtonMenuItem themeLightMenuItem;
     private JRadioButtonMenuItem themeDarkMenuItem;
+    private JRadioButtonMenuItem languageSystemMenuItem;
+    private JRadioButtonMenuItem languageEnMenuItem;
+    private JRadioButtonMenuItem languageZhMenuItem;
+    private JRadioButtonMenuItem languageJaMenuItem;
     private JMenu helpMenu;
     private JMenuItem helpAboutMenuItem;
 
@@ -144,6 +148,20 @@ public class OpenStegoFrame extends JFrame {
             themeMenu.add(getThemeDarkMenuItem());
 
             this.viewMenu.add(themeMenu);
+
+            JMenu languageMenu = new JMenu(labelUtil.getString("gui.menu.view.language"));
+            ButtonGroup languageGroup = new ButtonGroup();
+            languageGroup.add(getLanguageSystemMenuItem());
+            languageGroup.add(getLanguageEnMenuItem());
+            languageGroup.add(getLanguageZhMenuItem());
+            languageGroup.add(getLanguageJaMenuItem());
+            languageMenu.add(getLanguageSystemMenuItem());
+            languageMenu.addSeparator();
+            languageMenu.add(getLanguageEnMenuItem());
+            languageMenu.add(getLanguageZhMenuItem());
+            languageMenu.add(getLanguageJaMenuItem());
+
+            this.viewMenu.add(languageMenu);
         }
         return this.viewMenu;
     }
@@ -188,6 +206,74 @@ public class OpenStegoFrame extends JFrame {
             this.themeDarkMenuItem.addActionListener(e -> UITheme.switchTo(UITheme.DARK));
         }
         return this.themeDarkMenuItem;
+    }
+
+    /**
+     * Getter method for languageSystemMenuItem
+     *
+     * @return languageSystemMenuItem
+     */
+    public JRadioButtonMenuItem getLanguageSystemMenuItem() {
+        if (this.languageSystemMenuItem == null) {
+            this.languageSystemMenuItem = new JRadioButtonMenuItem(labelUtil.getString("gui.menu.view.theme.system"));
+            this.languageSystemMenuItem.setSelected(UILocale.SYSTEM.equals(UILocale.current()));
+            this.languageSystemMenuItem.addActionListener(e -> switchLanguage(UILocale.SYSTEM));
+        }
+        return this.languageSystemMenuItem;
+    }
+
+    /**
+     * Getter method for languageEnMenuItem
+     *
+     * @return languageEnMenuItem
+     */
+    public JRadioButtonMenuItem getLanguageEnMenuItem() {
+        if (this.languageEnMenuItem == null) {
+            this.languageEnMenuItem = new JRadioButtonMenuItem("English");
+            this.languageEnMenuItem.setSelected(UILocale.EN.equals(UILocale.current()));
+            this.languageEnMenuItem.addActionListener(e -> switchLanguage(UILocale.EN));
+        }
+        return this.languageEnMenuItem;
+    }
+
+    /**
+     * Getter method for languageZhMenuItem
+     *
+     * @return languageZhMenuItem
+     */
+    public JRadioButtonMenuItem getLanguageZhMenuItem() {
+        if (this.languageZhMenuItem == null) {
+            this.languageZhMenuItem = new JRadioButtonMenuItem("中文");
+            this.languageZhMenuItem.setSelected(UILocale.ZH.equals(UILocale.current()));
+            this.languageZhMenuItem.addActionListener(e -> switchLanguage(UILocale.ZH));
+        }
+        return this.languageZhMenuItem;
+    }
+
+    /**
+     * Getter method for languageJaMenuItem
+     *
+     * @return languageJaMenuItem
+     */
+    public JRadioButtonMenuItem getLanguageJaMenuItem() {
+        if (this.languageJaMenuItem == null) {
+            this.languageJaMenuItem = new JRadioButtonMenuItem("日本語");
+            this.languageJaMenuItem.setSelected(UILocale.JA.equals(UILocale.current()));
+            this.languageJaMenuItem.addActionListener(e -> switchLanguage(UILocale.JA));
+        }
+        return this.languageJaMenuItem;
+    }
+
+    /**
+     * Persists the selected language mode and tells the user a restart is needed for it to take
+     * effect.
+     *
+     * @param mode Language mode ({@link UILocale#SYSTEM}, {@link UILocale#EN}, {@link UILocale#ZH}
+     *     or {@link UILocale#JA})
+     */
+    private void switchLanguage(String mode) {
+        UILocale.switchTo(mode);
+        JOptionPane.showMessageDialog(this, labelUtil.getString("gui.language.restartRequired"));
     }
 
     /**

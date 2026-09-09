@@ -1,26 +1,27 @@
 #!/bin/sh
 #
-# Pre-push guardrail: run the Kotlin formatting check before pushing, since a ktlint
+# Pre-push guardrail: run the full formatting check before pushing, since a spotless
 # violation slipping to master has broken CI before (see the "unbreak master CI" fixups).
 #
-# Scope is Kotlin only on purpose: the Java/palantir spotless step needs JDK 16+ module
-# exports (--add-exports for jdk.compiler's javac.* packages) that a stale project-local
-# .gradle/ cache can silently poison after switching JDKs, producing a confusing
-# NoSuchMethodError instead of a real diff. If that happens, `./gradlew --stop && rm -rf
-# .gradle` clears it. Given that fragility, Java formatting stays enforced in CI only; this
-# hook catches the failure mode that actually recurs locally (Kotlin).
+# Java/palantir-java-format used to be excluded here: it needs javac internals that only
+# exist on the exact JDK it was built against, so it crashed with a confusing
+# NoSuchMethodError whenever the JVM launching Gradle wasn't JDK 21 - which happened
+# whenever a dev machine's default `java` was some other version, since nothing pinned
+# Gradle's own JVM. gradle/gradle-daemon-jvm.properties now pins that (run
+# `./gradlew updateDaemonJvm --jvm-version=21` if it's ever missing/wrong), so Gradle always
+# launches under JDK 21 regardless of JAVA_HOME/PATH, and both languages are checked here.
 #
 # Enable once per clone:   git config core.hooksPath .githooks
 # Bypass for one push:     git push --no-verify
 
-echo "pre-push: checking Kotlin formatting (spotlessKotlinCheck)…"
+echo "pre-push: checking formatting (spotlessCheck)…"
 
-if ! ./gradlew --quiet spotlessKotlinCheck; then
+if ! ./gradlew --quiet spotlessCheck; then
     echo >&2
-    echo "✗ Kotlin formatting check failed." >&2
-    echo "  Fix with:  ./gradlew spotlessKotlinApply   then re-commit and push." >&2
+    echo "✗ Formatting check failed." >&2
+    echo "  Fix with:  ./gradlew spotlessApply   then re-commit and push." >&2
     echo "  (Bypass with 'git push --no-verify' if you really must.)" >&2
     exit 1
 fi
 
-echo "pre-push: Kotlin formatting OK."
+echo "pre-push: formatting OK."

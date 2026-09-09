@@ -9,6 +9,9 @@
 build/
 /local.properties
 
+# CMake/NDK native build intermediates
+.cxx/
+
 # Kotlin compiler daemon scratch / error logs
 .kotlin/
 

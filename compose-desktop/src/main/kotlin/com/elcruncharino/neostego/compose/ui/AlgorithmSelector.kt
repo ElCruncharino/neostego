@@ -46,6 +46,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.AlgoInfo
+import openstego.compose_desktop.generated.resources.Res
+import openstego.compose_desktop.generated.resources.algorithm_content_description
+import openstego.compose_desktop.generated.resources.algorithm_label
+import openstego.compose_desktop.generated.resources.algorithm_none_selected
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AlgorithmSelector(algorithms: List<AlgoInfo>, selected: AlgoInfo?, onSelect: (AlgoInfo) -> Unit) {
@@ -55,7 +60,9 @@ fun AlgorithmSelector(algorithms: List<AlgoInfo>, selected: AlgoInfo?, onSelect:
     val shape = RoundedCornerShape(8.dp)
     val scheme = MaterialTheme.colorScheme
 
-    SectionLabel("Algorithm")
+    val noneSelected = stringResource(Res.string.algorithm_none_selected)
+    val algorithmContentDescription = stringResource(Res.string.algorithm_content_description, selected?.name ?: noneSelected)
+    SectionLabel(stringResource(Res.string.algorithm_label))
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -80,7 +87,7 @@ fun AlgorithmSelector(algorithms: List<AlgoInfo>, selected: AlgoInfo?, onSelect:
             }
             .semantics {
                 role = Role.DropdownList
-                contentDescription = "Algorithm: ${selected?.name ?: "none selected"}"
+                contentDescription = algorithmContentDescription
             }
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,

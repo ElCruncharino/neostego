@@ -6,6 +6,7 @@
 package com.elcruncharino.neostego.ui.screens
 
 import android.os.Build
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,22 +23,35 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.os.LocaleListCompat
+import com.elcruncharino.neostego.R
 import com.elcruncharino.neostego.data.ThemeMode
 import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.SegmentedButtonGroup
+
+/** Language tags offered by the in-app language switcher, in display order (System first). */
+private val LANGUAGE_TAGS = listOf(null, "en", "zh", "ja")
 
 /** Preset seed colours offered in the palette picker. */
 private val SEED_PRESETS = listOf(
@@ -57,17 +71,21 @@ fun SettingsScreen(appState: AppState) {
 
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            "Personalize the look. Choices are saved on this device.",
+            stringResource(R.string.settings_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("Theme", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.label_theme), fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.height(12.dp))
                 SegmentedButtonGroup(
-                    options = listOf("System", "Light", "Dark"),
+                    options = listOf(
+                        stringResource(R.string.theme_system),
+                        stringResource(R.string.theme_light),
+                        stringResource(R.string.theme_dark),
+                    ),
                     selectedIndex = when (prefs.themeMode) {
                         ThemeMode.SYSTEM -> 0
                         ThemeMode.LIGHT -> 1
@@ -87,6 +105,49 @@ fun SettingsScreen(appState: AppState) {
             }
         }
 
+        Card(shape = RoundedCornerShape(24.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                Text(stringResource(R.string.label_language), fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(12.dp))
+                var appLocaleTag by remember {
+                    mutableStateOf(AppCompatDelegate.getApplicationLocales().toLanguageTags().takeIf { it.isNotEmpty() })
+                }
+                var expanded by remember { mutableStateOf(false) }
+                // A dropdown rather than a segmented row: this list only grows as more languages
+                // are translated, and a row of segments doesn't scale past a handful of options.
+                val labels = listOf(stringResource(R.string.theme_system), "English", "中文", "日本語")
+                val shape = RoundedCornerShape(8.dp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(shape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, shape)
+                        .clickable { expanded = true }
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(labels[LANGUAGE_TAGS.indexOf(appLocaleTag).coerceAtLeast(0)], modifier = Modifier.weight(1f))
+                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                        labels.forEachIndexed { index, label ->
+                            DropdownMenuItem(text = { Text(label) }, onClick = {
+                                expanded = false
+                                val tag = LANGUAGE_TAGS[index]
+                                appLocaleTag = tag
+                                // MainActivity is an AppCompatActivity, so this recreates it
+                                // automatically to apply the change; a plain ComponentActivity
+                                // would silently no-op here instead.
+                                AppCompatDelegate.setApplicationLocales(
+                                    if (tag == null) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag),
+                                )
+                            })
+                        }
+                    }
+                }
+            }
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             Card(shape = RoundedCornerShape(24.dp)) {
                 Row(
@@ -95,9 +156,9 @@ fun SettingsScreen(appState: AppState) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Dynamic colour", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.label_dynamic_color), fontWeight = FontWeight.SemiBold)
                         Text(
-                            "Recolour from your wallpaper. Turn off to use a fixed colour below.",
+                            stringResource(R.string.hint_dynamic_color),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -109,9 +170,9 @@ fun SettingsScreen(appState: AppState) {
 
         Card(shape = RoundedCornerShape(24.dp)) {
             Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                Text("Accent colour", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.label_accent_color), fontWeight = FontWeight.SemiBold)
                 Text(
-                    "Pick a fixed accent colour for the app.",
+                    stringResource(R.string.hint_accent_color),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -121,7 +182,7 @@ fun SettingsScreen(appState: AppState) {
                     SeedSwatch(
                         color = MaterialTheme.colorScheme.surfaceVariant,
                         selected = prefs.seedColorArgb == null,
-                        label = "Default",
+                        label = stringResource(R.string.label_default_color),
                         onClick = { prefs.updateSeedColor(null) },
                     )
                     SEED_PRESETS.forEach { argb ->

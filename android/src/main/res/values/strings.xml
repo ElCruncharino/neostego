@@ -9,4 +9,169 @@
     <string name="shortcut_hide_long">Hide a file</string>
     <string name="shortcut_reveal_short">Reveal</string>
     <string name="shortcut_reveal_long">Reveal a file</string>
+
+    <!-- Top bar / bottom nav (StegoScaffold) -->
+    <string name="cd_more_options">More</string>
+    <string name="menu_about">About</string>
+    <string name="nav_hide">Hide</string>
+    <string name="nav_reveal">Reveal</string>
+    <string name="nav_mark">Mark</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- About dialog -->
+    <string name="about_title">NeoStego</string>
+    <string name="about_title_versioned">NeoStego %1$s</string>
+    <string name="about_description">Hide files inside images or audio, and embed/verify robust watermarks. All processing happens on-device.</string>
+    <string name="about_license">Based on OpenStego by Samir Vaidya. Licensed under the GNU General Public License v2.</string>
+    <string name="btn_close">Close</string>
+
+    <!-- Shared toasts / errors (Hide, Reveal, Watermark screens) -->
+    <string name="toast_saved_file">Saved %1$s</string>
+    <string name="error_saving">Error saving: %1$s</string>
+    <string name="error_sharing">Unable to share: %1$s</string>
+    <string name="share_chooser_title">Share</string>
+
+    <!-- Hide screen -->
+    <string name="hide_screen_subtitle">Hide a file inside a cover</string>
+    <string name="error_need_two_covers">Choose at least two cover images to split across</string>
+    <string name="error_choose_file_to_hide">Choose a file to hide first</string>
+    <string name="toast_saved_stego_images">Saved %1$d stego images</string>
+    <string name="error_failed_to_hide">Failed to hide data</string>
+    <string name="error_choose_cover">Choose a cover %1$s first</string>
+    <string name="cover_kind_audio_file">audio file</string>
+    <string name="cover_kind_image">image</string>
+    <string name="label_cover_images_split">Cover images (split)</string>
+    <string name="split_images_selected">%1$d images selected</string>
+    <string name="hint_split_covers">Pick two or more images; the file is spread across them</string>
+    <string name="label_cover_audio_wav">Cover audio (WAV)</string>
+    <string name="label_cover_image_jpeg">Cover image (JPEG)</string>
+    <string name="label_cover_image">Cover image</string>
+    <string name="hint_cover_wav">An uncompressed PCM WAV file</string>
+    <string name="hint_cover_jpeg">An existing JPEG to hide the data in</string>
+    <string name="hint_cover_image">The image the data will be hidden in</string>
+    <string name="capacity_estimate">Can hide up to about %1$s in this image</string>
+    <string name="label_file_to_hide">File to hide</string>
+    <string name="hint_file_to_hide">Any file (document, photo, etc.)</string>
+    <string name="hide_method_title">Hiding method</string>
+    <string name="algo_si_uniward_title">SI-UNIWARD (JPEG)</string>
+    <string name="algo_si_uniward_subtitle">Side-informed JPEG steganography. Saves a JPEG and is the strongest choice at low embedding rates against modern detectors.</string>
+    <string name="algo_j_uniward_title">J-UNIWARD (JPEG cover)</string>
+    <string name="algo_j_uniward_subtitle">Hides directly in an existing JPEG. Faster and works without the original uncompressed image, but less stealthy than SI-UNIWARD.</string>
+    <string name="algo_f5_title">F5 (JPEG cover)</string>
+    <string name="algo_f5_subtitle">Fast, classic JPEG steganography using matrix encoding. Good for small payloads in an existing JPEG.</string>
+    <string name="algo_adaptive_title">Adaptive (PNG)</string>
+    <string name="algo_adaptive_subtitle">HILL + STC: hides changes in textured areas to resist both statistical and AI steganalysis. Lossless PNG, lower capacity.</string>
+    <string name="algo_lsb_matching_title">LSB matching (PNG)</string>
+    <string name="algo_lsb_matching_subtitle">Higher capacity and faster; resists classical steganalysis. Lossless PNG.</string>
+    <string name="algo_audio_wav_title">Audio (WAV)</string>
+    <string name="algo_audio_wav_subtitle">Hides data in the samples of an uncompressed PCM WAV file. Output is a WAV; pick an audio cover above.</string>
+    <string name="label_jpeg_quality">JPEG quality: %1$d</string>
+    <string name="hint_jpeg_quality">Higher quality keeps the image crisper but enlarges the file; 90 is a good default.</string>
+    <string name="btn_advanced_expanded">Advanced ▴</string>
+    <string name="btn_advanced_collapsed">Advanced ▾</string>
+    <string name="label_cluster_changes">Cluster changes (CMD)</string>
+    <string name="hint_cluster_changes">Synchronizes neighbouring edits for slightly better resistance. Leave on unless reproducing legacy output.</string>
+    <string name="label_clustering_strength">Clustering strength (mu): %1$s</string>
+    <string name="label_bits_per_channel">Bits per channel: %1$d</string>
+    <string name="hint_bits_per_channel">More bits store more data but are easier to detect; 3 balances the two.</string>
+    <string name="label_compress_payload">Compress payload</string>
+    <string name="hint_compress_payload">GZIP the data before hiding. Usually shrinks it; turn off for already-compressed files.</string>
+    <string name="label_use_aes256">Use AES-256</string>
+    <string name="hint_use_aes256">Stronger key size than the default AES-128. Only applies when a password is set.</string>
+    <string name="label_split_across_covers">Split across covers</string>
+    <string name="hint_split_across_covers">Spread one file across several images (pick 2+ above). Each image holds one part; keep all of them to reveal.</string>
+    <string name="label_store_filename">Store original file name</string>
+    <string name="hint_store_filename">The name is saved unencrypted. Leave off to keep it private; the file is revealed with a generic name.</string>
+    <string name="note_jpeg_share">Share the saved JPEG as-is. Do not open and re-save it — re-compressing the JPEG destroys the hidden data.</string>
+    <string name="note_wav_share">Keep the saved WAV as-is to share. Converting it to MP3/AAC or any lossy audio format destroys the hidden data.</string>
+    <string name="note_png_share">Keep the saved PNG as-is to share. Re-saving or sending it as JPEG (or any other lossy format) destroys the hidden data.</string>
+    <string name="btn_hide">Hide</string>
+
+    <!-- Reveal screen -->
+    <string name="reveal_screen_subtitle">Reveal a hidden file from a cover</string>
+    <string name="error_choose_stego_file">Choose a stego file first</string>
+    <string name="error_failed_to_reveal">Failed to reveal data</string>
+    <string name="error_need_two_stego_files">Choose at least two stego images to reassemble</string>
+    <string name="label_stego_file">Stego file</string>
+    <string name="hint_stego_file">An image or WAV that has data hidden in it</string>
+    <string name="label_stego_files_split">Stego images (split)</string>
+    <string name="hint_stego_files_split">Pick every image the file was split across; order doesn\'t matter</string>
+    <string name="label_reassemble_split">Reassemble from multiple images</string>
+    <string name="hint_reassemble_split">Turn on if this file was hidden across several images (pick them below), not just one</string>
+    <string name="btn_reveal">Reveal</string>
+
+    <!-- Watermark screen -->
+    <string name="error_enter_password_signature">Enter a password to key the signature</string>
+    <string name="error_failed_generate_signature">Failed to generate signature</string>
+    <string name="error_choose_image_watermark">Choose an image to watermark</string>
+    <string name="error_choose_signature_file">Choose the signature file</string>
+    <string name="error_image_too_large_watermark">This image is too large to watermark on this device. Try a smaller image.</string>
+    <string name="error_failed_embed_watermark">Failed to embed watermark</string>
+    <string name="error_choose_image_check">Choose the image to check</string>
+    <string name="error_image_too_large_check">This image is too large to check on this device. Try a smaller image.</string>
+    <string name="error_failed_verify_watermark">Failed to verify watermark</string>
+    <string name="watermark_mode_generate">Generate</string>
+    <string name="watermark_mode_embed">Embed</string>
+    <string name="watermark_mode_verify">Verify</string>
+    <string name="watermark_desc_generate">Create a password-keyed signature file to watermark with</string>
+    <string name="watermark_desc_embed">Embed a signature into an image as a robust watermark</string>
+    <string name="watermark_desc_verify">Check whether an image carries a watermark</string>
+    <string name="label_algorithm">Algorithm</string>
+    <string name="algo_dwt_svd_title">DWT-SVD (recommended)</string>
+    <string name="algo_dwt_svd_subtitle">Modern blind, multi-bit watermark. Survives JPEG re-compression, noise, blur and small crops.</string>
+    <string name="algo_dwt_dugad_title">DWT-Dugad</string>
+    <string name="algo_dwt_dugad_subtitle">Classic wavelet spread-spectrum watermark detected by correlation.</string>
+    <string name="algo_dwt_xie_title">DWT-Xie</string>
+    <string name="algo_dwt_xie_subtitle">Wavelet watermark embedded in the approximation sub-band.</string>
+    <string name="hint_signature_password">The same password always produces the same signature. Save the .sig file - you need it to embed and to verify.</string>
+    <string name="label_image_to_watermark">Image to watermark</string>
+    <string name="hint_image_to_watermark">The image the watermark is embedded into</string>
+    <string name="label_signature_file">Signature file</string>
+    <string name="hint_signature_file_generate">The .sig produced by Generate</string>
+    <string name="label_output_jpeg">Output JPEG</string>
+    <string name="hint_output_jpeg">Robust watermarks survive JPEG, so a smaller JPEG is fine. Off saves a lossless PNG.</string>
+    <string name="label_image_to_check">Image to check</string>
+    <string name="hint_image_to_check">The image you want to test for a watermark</string>
+    <string name="hint_signature_file_verify">The .sig the image should carry</string>
+    <string name="verdict_present">Watermark present</string>
+    <string name="verdict_weak">Weak / uncertain watermark</string>
+    <string name="verdict_absent">No watermark detected</string>
+    <string name="verdict_correlation_detail">Correlation %1$.2f (strong ≥ %2$.2f, weak ≥ %3$.2f)</string>
+
+    <!-- Settings screen -->
+    <string name="settings_subtitle">Personalize the look. Choices are saved on this device.</string>
+    <string name="label_theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="label_language">Language</string>
+    <string name="label_dynamic_color">Dynamic colour</string>
+    <string name="hint_dynamic_color">Recolour from your wallpaper. Turn off to use a fixed colour below.</string>
+    <string name="label_accent_color">Accent colour</string>
+    <string name="hint_accent_color">Pick a fixed accent colour for the app.</string>
+    <string name="label_default_color">Default</string>
+
+    <!-- Shared components -->
+    <string name="btn_choose">Choose</string>
+    <string name="btn_change">Change</string>
+    <string name="cd_choose_item">Choose %1$s</string>
+    <string name="cd_change_item">Change %1$s</string>
+    <string name="output_ready">Ready: %1$s</string>
+    <string name="btn_save">Save</string>
+    <string name="btn_share">Share</string>
+    <string name="label_password_optional">Password (optional)</string>
+    <string name="cd_password_optional">Password, optional</string>
+    <string name="btn_show_password">Show</string>
+    <string name="btn_hide_password">Hide</string>
+    <string name="label_working">Working…</string>
+    <string name="label_working_pct">Working… %1$d%%</string>
+    <string name="label_working_pct_eta">Working… %1$d%% · %2$s</string>
+    <string name="eta_seconds">~%1$ds</string>
+    <string name="eta_minutes_seconds">~%1$dm %2$ds</string>
+    <string name="bytes_mb">%1$.1f MB</string>
+    <string name="bytes_kb">%1$d KB</string>
+    <string name="bytes_raw">%1$d bytes</string>
+    <string name="error_image_too_large_generic">This image is extremely large (about %1$.0f megapixels) and is bigger than the memory available to the app. Try a smaller image.</string>
+    <string name="error_unable_to_read_file">Unable to read the selected file</string>
+    <string name="error_unable_to_write_location">Unable to write to the selected location</string>
 </resources>

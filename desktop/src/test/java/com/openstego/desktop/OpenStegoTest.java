@@ -10,8 +10,7 @@ package com.openstego.desktop;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.openstego.desktop.util.CommonUtil;
-import java.io.ByteArrayInputStream;
+import com.openstego.desktop.util.CompressionCodec;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +20,6 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -120,10 +118,7 @@ public class OpenStegoTest {
         // Decrypt and decompress message and compare with original
         OpenStegoCrypto crypto = new OpenStegoCrypto(config.getPassword(), config.getEncryptionAlgorithm());
         byte[] outputMsg = crypto.decrypt(msgCaptor.getValue());
-        try (ByteArrayInputStream bis = new ByteArrayInputStream(outputMsg);
-                GZIPInputStream zis = new GZIPInputStream(bis)) {
-            outputMsg = CommonUtil.streamToBytes(zis);
-        }
+        outputMsg = CompressionCodec.decompress(outputMsg, config.getCompressionMethod());
         assertArrayEquals(msg, outputMsg);
     }
 
@@ -349,6 +344,8 @@ public class OpenStegoTest {
                 .getPurposes();
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(true);
+        // simulates a pre-CompressionCodec file, which always used plain gzip
+        config.setCompressionMethod(CompressionCodec.METHOD_GZIP_LEGACY);
         config.setUseEncryption(true);
         config.setPassword("test");
 

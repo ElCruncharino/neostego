@@ -7,6 +7,7 @@
 
 package com.openstego.desktop;
 
+import com.openstego.desktop.util.CompressionCodec;
 import java.util.Map;
 
 /**
@@ -61,6 +62,9 @@ public class OpenStegoConfig {
      * Flag to indicate whether compression should be used or not
      */
     private boolean useCompression = true;
+
+    /** Which {@link CompressionCodec} method to write with, or was read from a stego header. */
+    private int compressionMethod = CompressionCodec.METHOD_DEFLATE_DICT;
 
     /**
      * Flag to indicate whether encryption should be used or not
@@ -201,6 +205,14 @@ public class OpenStegoConfig {
      */
     public void setUseEncryption(boolean useEncryption) {
         this.useEncryption = useEncryption;
+    }
+
+    public int getCompressionMethod() {
+        return this.compressionMethod;
+    }
+
+    public void setCompressionMethod(int compressionMethod) {
+        this.compressionMethod = compressionMethod;
     }
 
     /**
