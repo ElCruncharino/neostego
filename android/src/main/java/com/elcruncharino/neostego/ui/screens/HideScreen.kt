@@ -90,7 +90,7 @@ fun HideScreen(appState: AppState) {
     var splitParts by remember { mutableStateOf<List<ByteArray>>(emptyList()) }
     var splitPartIndex by remember { mutableStateOf(-1) }
 
-    val splitEligible = s.algorithm == StegoEngine.Algorithm.ADAPTIVE || s.algorithm == StegoEngine.Algorithm.MATCHING
+    val splitEligible = s.algorithm in StegoEngine.SPLIT_ELIGIBLE_ALGORITHMS
     if (!splitEligible && s.splitMode) s.splitMode = false
 
     val options =
