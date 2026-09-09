@@ -253,7 +253,11 @@ public class OpenStego {
             }
             if (splitManifest != null) {
                 throw new OpenStegoException(
-                        null, OpenStego.NAMESPACE, OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, splitManifest.getTotalParts(), 1);
+                        null,
+                        OpenStego.NAMESPACE,
+                        OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE,
+                        splitManifest.getTotalParts(),
+                        1);
             }
 
             // Decrypt data, if required
