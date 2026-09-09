@@ -6,13 +6,19 @@
 package com.elcruncharino.neostego.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -23,6 +29,7 @@ import com.elcruncharino.neostego.ui.components.FilePickCard
 import com.elcruncharino.neostego.ui.components.OutputResultCard
 import com.elcruncharino.neostego.ui.components.PrimaryActionButton
 import com.elcruncharino.neostego.ui.components.SecurePasswordField
+import com.elcruncharino.neostego.ui.components.ToggleRow
 import com.elcruncharino.neostego.ui.util.OutputResult
 import com.elcruncharino.neostego.ui.util.displayName
 import com.elcruncharino.neostego.ui.util.mimeForName
@@ -46,6 +53,7 @@ fun RevealScreen(appState: AppState) {
     val errorSharingTemplate = stringResource(R.string.error_sharing)
     val errorChooseStegoFile = stringResource(R.string.error_choose_stego_file)
     val errorFailedToReveal = stringResource(R.string.error_failed_to_reveal)
+    val errorNeedTwoStegoFiles = stringResource(R.string.error_need_two_stego_files)
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
@@ -55,6 +63,12 @@ fun RevealScreen(appState: AppState) {
     }
 
     val openStegoDoc = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { s.stegoUri = it ?: s.stegoUri }
+    val pickSplitStegoFiles = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+        if (uris.isNotEmpty()) {
+            s.splitStegoUris.clear()
+            s.splitStegoUris.addAll(uris)
+        }
+    }
 
     val saveOutput = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
         val r = s.result
@@ -84,7 +98,42 @@ fun RevealScreen(appState: AppState) {
         }
     }
 
+    fun runRevealSplit() {
+        val uris = s.splitStegoUris.toList()
+        if (uris.size < 2) {
+            toast(errorNeedTwoStegoFiles)
+            return
+        }
+        val pw = com.elcruncharino.neostego.ui.components.readPasswordChars(s.passwordView)
+        s.busy = true
+        s.progress = null // reassembly runs across images; show an indeterminate bar
+        s.startedAtMs = System.currentTimeMillis()
+        scope.launch {
+            try {
+                val extracted = withContext(Dispatchers.IO) {
+                    StegoEngine.extractSplit(
+                        uris.map { readBytes(context, it) },
+                        uris.map { displayName(context, it) },
+                        pw,
+                    )
+                }
+                val name = extracted.fileName.ifBlank { "revealed.dat" }
+                setResult(OutputResult(name, mimeForName(name), extracted.data))
+            } catch (e: Exception) {
+                snackbar.showSnackbar(e.message ?: errorFailedToReveal)
+            } finally {
+                pw?.fill(' ')
+                s.busy = false
+                s.progress = null
+            }
+        }
+    }
+
     fun runReveal() {
+        if (s.splitMode) {
+            runRevealSplit()
+            return
+        }
         val stego = s.stegoUri
         if (stego == null) {
             toast(errorChooseStegoFile)
@@ -127,12 +176,36 @@ fun RevealScreen(appState: AppState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        FilePickCard(
-            label = stringResource(R.string.label_stego_file),
-            chosen = s.stegoUri?.let { displayName(context, it) },
-            hint = stringResource(R.string.hint_stego_file),
-            onPick = { openStegoDoc.launch(arrayOf("image/*", "audio/*")) },
-        )
+        if (s.splitMode) {
+            FilePickCard(
+                label = stringResource(R.string.label_stego_files_split),
+                chosen = if (s.splitStegoUris.isEmpty()) {
+                    null
+                } else {
+                    stringResource(R.string.split_images_selected, s.splitStegoUris.size)
+                },
+                hint = stringResource(R.string.hint_stego_files_split),
+                onPick = { pickSplitStegoFiles.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            )
+        } else {
+            FilePickCard(
+                label = stringResource(R.string.label_stego_file),
+                chosen = s.stegoUri?.let { displayName(context, it) },
+                hint = stringResource(R.string.hint_stego_file),
+                onPick = { openStegoDoc.launch(arrayOf("image/*", "audio/*")) },
+            )
+        }
+
+        Card(shape = RoundedCornerShape(24.dp)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                ToggleRow(
+                    title = stringResource(R.string.label_reassemble_split),
+                    subtitle = stringResource(R.string.hint_reassemble_split),
+                    checked = s.splitMode,
+                    onCheckedChange = { s.splitMode = it },
+                )
+            }
+        }
 
         SecurePasswordField(
             show = s.showPassword,
