@@ -6,5 +6,11 @@ pluginManagement {
     }
 }
 
+plugins {
+    // Lets Gradle auto-provision a missing JDK (e.g. the 21 pinned in gradle/gradle-daemon-jvm.properties
+    // and in the core/desktop toolchains) instead of failing when a dev machine only has a different one.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'openstego'
 include 'core', 'desktop', 'android', 'compose-desktop'
