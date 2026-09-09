@@ -8,6 +8,7 @@ package com.elcruncharino.neostego
 import com.openstego.desktop.OpenStego
 import com.openstego.desktop.OpenStegoConfig
 import com.openstego.desktop.OpenStegoCrypto
+import com.openstego.desktop.OpenStegoException
 import com.openstego.desktop.OpenStegoPlugin
 import com.openstego.desktop.ProgressListener
 import com.openstego.desktop.WatermarkingPlugin
@@ -37,6 +38,9 @@ object StegoEngine {
 
     /** Embedding algorithm the user can choose for hiding. */
     enum class Algorithm { ADAPTIVE, MATCHING, SI_UNIWARD, PLAIN_UNIWARD, F5, WAV, ROBUST }
+
+    /** Algorithms that support splitting a payload across multiple cover images. */
+    val SPLIT_ELIGIBLE_ALGORITHMS = listOf(Algorithm.ADAPTIVE, Algorithm.MATCHING)
 
     /** Robust watermarking algorithm the user can choose. (DWT-Kim is omitted: its detector is an
      *  upstream stub that never verifies, so it is not exposed.) */
@@ -330,27 +334,44 @@ object StegoEngine {
     /**
      * Reassembles a payload split across [stegoImages] (in any order) back into the original file,
      * decrypting with [password] if needed. Returns the original file name and bytes.
+     *
+     * The algorithm isn't recorded in the parts, so - mirroring the desktop GUI's reassembly and
+     * [extract]'s single-file auto-detection - every split-eligible algorithm (ADAPTIVE, MATCHING) is
+     * tried in turn until one parses the parts' manifests. A failure that gets as far as the core split
+     * logic (namespace [OpenStego.NAMESPACE] - a corrupt/incomplete/mismatched manifest, or a bad
+     * password/decompression on an otherwise-valid one) means this candidate's per-image header did
+     * decode correctly, so it is almost certainly the right algorithm: that error is definitive and is
+     * surfaced immediately rather than being masked by the next candidate's unrelated header-format
+     * mismatch.
      */
     fun extractSplit(
-        algorithm: Algorithm,
         stegoImages: List<ByteArray>,
         stegoNames: List<String>,
         password: CharArray?,
     ): Extracted {
-        val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
-        plugin.resetConfig()
-        val config = plugin.config
-        val pw = password?.copyOf()
-        if (pw != null && pw.isNotEmpty()) {
-            config.password = pw
+        var last: OpenStegoException? = null
+        for (algorithm in SPLIT_ELIGIBLE_ALGORITHMS) {
+            val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
+            plugin.resetConfig()
+            val config = plugin.config
+            val pw = password?.copyOf()
+            if (pw != null && pw.isNotEmpty()) {
+                config.password = pw
+            }
+            try {
+                val out = MultiCoverPayloadSplitter.extractSplit(stegoImages, stegoNames, config, plugin)
+                val name = out[0] as? String ?: "extracted.dat"
+                val data = out[1] as ByteArray
+                return Extracted(name, data)
+            } catch (e: OpenStegoException) {
+                if (e.namespace == OpenStego.NAMESPACE) {
+                    throw e // right algorithm matched every part's header - no point trying others
+                }
+                last = e
+            } finally {
+                config.clearPassword()
+            }
         }
-        try {
-            val out = MultiCoverPayloadSplitter.extractSplit(stegoImages, stegoNames, config, plugin)
-            val name = out[0] as? String ?: "extracted.dat"
-            val data = out[1] as ByteArray
-            return Extracted(name, data)
-        } finally {
-            config.clearPassword()
-        }
+        throw last!!
     }
 }

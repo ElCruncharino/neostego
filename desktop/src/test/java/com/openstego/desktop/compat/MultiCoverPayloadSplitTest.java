@@ -237,6 +237,30 @@ public class MultiCoverPayloadSplitTest {
     }
 
     @Test
+    public void testSingleImageOfSplitFailsClearly() throws Exception {
+        // Regression for issue #46: extracting just one image of a multi-cover split through the
+        // ordinary (non-split) extraction path must report a clear "incomplete split" error instead of
+        // silently returning a corrupted result.
+        DHImagePluginTemplate<OpenStegoConfig> plugin = lsbPlugin();
+        OpenStegoConfig config = plugin.getConfig();
+        config.setUseCompression(false);
+        config.setUseEncryption(false);
+
+        byte[] payload = randomPayload(6000, 10);
+        List<byte[]> stego = MultiCoverPayloadSplitter.embedSplit(
+                payload, MSG_FILE_NAME, covers(3, 8000), names(3, "cover"), names(3, "stego"), config, plugin);
+
+        plugin.resetConfig();
+        OpenStegoException ex = assertThrows(
+                OpenStegoException.class,
+                () -> new OpenStego(plugin, plugin.getConfig()).extractData(stego.get(0), "stego0.png"));
+        assertEquals(OpenStegoErrors.SPLIT_MANIFEST_INCOMPLETE, ex.getErrorCode());
+        assertTrue(
+                ex.getMessage() != null && ex.getMessage().contains("3"),
+                "the error should name the expected part count");
+    }
+
+    @Test
     public void testSingleCoverPathStillWorks() throws Exception {
         // Control: a normal single-cover embed/extract is unaffected by the split feature.
         DHImagePluginTemplate<OpenStegoConfig> plugin = lsbPlugin();
