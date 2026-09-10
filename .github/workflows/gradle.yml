@@ -6,8 +6,32 @@ name: Java CI with Gradle
 on:
   push:
     branches: [ master ]
+    paths:
+      - 'core/**'
+      - 'desktop/**'
+      - 'android/**'
+      - 'compose-desktop/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/gradle.yml'
   pull_request:
     branches: [ master ]
+    paths:
+      - 'core/**'
+      - 'desktop/**'
+      - 'android/**'
+      - 'compose-desktop/**'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - '.github/workflows/gradle.yml'
 
 jobs:
   build:
