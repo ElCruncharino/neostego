@@ -11,6 +11,40 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-09-10
+
+A localization and hardening release. No change to the on-disk steganography
+format for existing data (compressed payloads gain a new, backward-compatible
+method).
+
+### Added
+- **Chinese and Japanese localization** — the desktop (Swing and Compose) and
+  Android UIs are now fully translated into Simplified Chinese and Japanese,
+  with an in-app language switcher (System / English / Chinese / Japanese).
+
+### Changed
+- **Smaller compressed payloads** — message compression now uses zlib DEFLATE
+  primed with a preset dictionary built from the project's own localized
+  strings (6-byte overhead vs. GZIP's 18, plus a head start on typical text
+  payloads) instead of GZIP. Files compressed with the old method still
+  extract correctly; only new embeds use the new one.
+
+### Fixed
+- **Multi-image reveal of a split file no longer silently corrupts** —
+  extracting only one image of a file spread across several covers used to
+  return corrupted output with no error. It now reports a clear "incomplete
+  split" error, and Android's reveal screen gained a multi-select mode to
+  reassemble all the parts, mirroring the existing desktop flow.
+- **CLI crash on flag-only plugin options** — some plugin command-line flags
+  crashed with a `ClassCastException` instead of being accepted.
+
+### Security
+- **Hardened parsing of untrusted stego file headers** — bounds PBKDF2
+  iteration count/key size, fixes a filename/encryption-algorithm header
+  overflow, and validates channel-bit count, data length, and adaptive-plugin
+  capacity before trusting them, so a malformed or malicious stego file can
+  no longer crash the extractor.
+
 ## [1.1.2] — 2026-06-27
 
 A usability fix for extraction error messages. No change to the on-disk
