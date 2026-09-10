@@ -54,6 +54,7 @@ Installers **bundle their own Java runtime** — there's nothing else to install
 - 🖥️ **Native desktop UX** — FlatLaf light/dark themes, native OS file dialogs, drag-and-drop, password reveal.
 - 📱 **Android app** — a Kotlin / Jetpack Compose client sharing the same core engine.
 - 🧩 **Full CLI** — scriptable `embed` / `extract` / watermarking commands.
+- 🌐 **Multilingual** — English, Simplified Chinese, and Japanese UI, with an in-app language switcher.
 
 > [!NOTE]
 > Steganography hides data; it isn't magic invisibility. NeoStego raises the bar against detection
@@ -120,13 +121,13 @@ Issues and pull requests are welcome. The project is split into `core` (platform
 algorithms, crypto, plugin SPI), `desktop` (Swing GUI + CLI), and `android` (Compose app). Run
 `./gradlew test` before submitting.
 
-Optionally enable the local pre-push hook so a Kotlin formatting slip can't reach CI:
+Optionally enable the local pre-push hook so a formatting slip can't reach CI:
 
 ```sh
 git config core.hooksPath .githooks
 ```
 
-It runs `spotlessKotlinCheck` on push (`./gradlew spotlessKotlinApply` fixes any findings).
+It runs `spotlessCheck` on push (`./gradlew spotlessApply` fixes any findings).
 
 ## License
 
