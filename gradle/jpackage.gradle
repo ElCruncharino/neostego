@@ -54,6 +54,9 @@ def jpAboutUrl         = project.homepageUrl.toString()
 def jpLicenseFile      = rootProject.file('LICENSE').absolutePath
 def jpDebMaintainer    = project.authorMail.toString()
 def jpIconFile         = jpackageIconFile
+def jpAppName          = jpackageAppName
+def jpMainJar          = jpackageMainJar
+def jpMainClass        = jpackageMainClass
 def jpWinUpgradeUuid   = 'b4fc0612-03d7-498f-8331-8d8cc780f728'
 def jpLinuxResourceDir = file('artifacts/jpackage/linux').absolutePath
 // Java2D's default X11 pipeline re-blits the whole window on every resize tick, which makes
@@ -63,14 +66,14 @@ def jpackageRuntimeImage = jpackageSupportRuntimeImage ? System.getenv('JPACKAGE
 
 def commonJpackageArgs = {
     def a = [
-            '--name'        , jpackageAppName,
+            '--name'        , jpAppName,
             '--app-version' , jpackageVersion,
             '--vendor'      , jpVendor,
             '--copyright'   , jpCopyright,
             '--about-url'   , jpAboutUrl,
             '--input'       , jpackageInputDir.get().asFile.absolutePath,
-            '--main-jar'    , jpackageMainJar,
-            '--main-class'  , jpackageMainClass,
+            '--main-jar'    , jpMainJar,
+            '--main-class'  , jpMainClass,
             '--license-file', jpLicenseFile,
             '--dest'        , jpackageOutDir.get().asFile.absolutePath
     ]
@@ -92,7 +95,7 @@ tasks.register('jpackageMsi', Exec) {
                 '--type', 'msi',
                 '--icon', jpIconFile,
                 // Without --win-menu-group jpackage files the Start Menu shortcut under "Unknown".
-                '--win-menu', '--win-menu-group', jpackageAppName,
+                '--win-menu', '--win-menu-group', jpAppName,
                 '--win-shortcut', '--win-per-user-install',
                 // Stable UpgradeCode so future versions upgrade in place (jpackage otherwise
                 // generates a random one per build, which would break upgrades and winget tracking).
@@ -109,7 +112,7 @@ tasks.register('jpackageDmg', Exec) {
     doFirst { jpackageOutDir.get().asFile.mkdirs() }
     executable jpackageBin()
     argumentProviders.add({
-        commonJpackageArgs() + ['--type', 'dmg', '--mac-package-name', jpackageAppName]
+        commonJpackageArgs() + ['--type', 'dmg', '--mac-package-name', jpAppName]
     } as CommandLineArgumentProvider)
 }
 
