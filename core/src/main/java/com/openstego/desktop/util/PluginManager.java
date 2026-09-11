@@ -43,16 +43,10 @@ public class PluginManager {
         OpenStegoPlugin<?> plugin;
 
         // Load internal plugins
-        try (InputStream is = PluginManager.class.getResourceAsStream("/OpenStegoPlugins.internal");
-                InputStream isExt = PluginManager.class.getResourceAsStream("/OpenStegoPlugins.external")) {
+        try (InputStream is = PluginManager.class.getResourceAsStream("/OpenStegoPlugins.internal")) {
 
             if (is != null) {
                 pluginList.addAll(StringUtil.getStringLines(new String(CommonUtil.streamToBytes(is))));
-            }
-
-            // Load external plugins if available
-            if (isExt != null) {
-                pluginList.addAll(StringUtil.getStringLines(new String(CommonUtil.streamToBytes(isExt))));
             }
 
             for (String pluginClass : pluginList) {
@@ -84,7 +78,7 @@ public class PluginManager {
         List<OpenStegoPlugin<?>> dhPlugins = new ArrayList<>();
 
         for (OpenStegoPlugin<?> plugin : plugins) {
-            if (plugin.getPurposes().contains(OpenStegoPlugin.Purpose.DATA_HIDING)) {
+            if (plugin.getPurpose() == OpenStegoPlugin.Purpose.DATA_HIDING) {
                 dhPlugins.add(plugin);
             }
         }
@@ -100,7 +94,7 @@ public class PluginManager {
         List<OpenStegoPlugin<?>> dhPlugins = new ArrayList<>();
 
         for (OpenStegoPlugin<?> plugin : plugins) {
-            if (plugin.getPurposes().contains(OpenStegoPlugin.Purpose.WATERMARKING)) {
+            if (plugin.getPurpose() == OpenStegoPlugin.Purpose.WATERMARKING) {
                 dhPlugins.add(plugin);
             }
         }
