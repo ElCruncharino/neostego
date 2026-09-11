@@ -10,6 +10,7 @@ package com.openstego.desktop.plugin.lsb;
 import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.util.CompressionCodec;
+import com.openstego.desktop.util.LabelUtil;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -19,6 +20,17 @@ import java.util.Arrays;
  * First, the header data gets written inside the image, and then the actual data is written.
  */
 public class LSBDataHeader {
+    // This class throws OpenStegoException under LSBPlugin.NAMESPACE ("LSB") on a header mismatch,
+    // but is also used directly by plugins that never construct an LSBPlugin/RandomLSBPlugin instance
+    // (e.g. AdaptiveImagePlugin, which reuses this header format) - only LSBPlugin's own constructor
+    // registered that namespace, so those callers could throw with the namespace's labels never
+    // registered, crashing message construction instead of reporting the header error. A real static
+    // initializer guarantees this runs whenever this class is actually used, regardless of which
+    // plugin got there first.
+    static {
+        LabelUtil.addNamespace(LSBPlugin.NAMESPACE, "i18n.LSBPluginLabels");
+        LSBErrors.init();
+    }
     /**
      * Magic string at the start of the header to identify OpenStego embedded data
      */

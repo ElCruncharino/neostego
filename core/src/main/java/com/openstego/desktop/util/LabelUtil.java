@@ -75,9 +75,16 @@ public class LabelUtil {
      * @return Display value for the label
      */
     public String getString(String key) {
+        // A null key means the caller (typically OpenStegoException, looking up an error code that
+        // was never registered for this namespace) had nothing to ask for; a null/missing bundle means
+        // this namespace's labels were never registered (e.g. a caller error-path that never triggered
+        // its owning class's init). Either way, fall back to a printable placeholder instead of
+        // crashing - MessageFormat.format would NPE on a null pattern, and bundle.getString(null)
+        // would NPE on a null key.
+        if (key == null) {
+            return "?" + this.namespace + "?";
+        }
         ResourceBundle bundle = map.get(this.namespace);
-        // Falls back to the raw key rather than crashing if a namespace's labels were never
-        // registered (e.g. a caller error-path that never triggered its owning class's init).
         return bundle == null ? key : bundle.getString(key);
     }
 
