@@ -4,44 +4,22 @@
  */
 package com.elcruncharino.neostego.compose.ui.screens
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.appVersion
 import com.elcruncharino.neostego.compose.theme.ThemeMode
+import com.elcruncharino.neostego.compose.ui.KeyboardDropdown
 import com.elcruncharino.neostego.compose.ui.SectionLabel
 import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
 import com.openstego.desktop.ui.UILocale
@@ -84,47 +62,12 @@ fun SettingsScreen(
         SectionLabel(stringResource(Res.string.section_language))
         // A dropdown rather than a segmented row: this list only grows as more languages are
         // translated, and a row of segments doesn't scale past a handful of options.
-        var languageMenuOpen by remember { mutableStateOf(false) }
-        val languageInteraction = remember { MutableInteractionSource() }
-        val languageFocused by languageInteraction.collectIsFocusedAsState()
-        val languageShape = RoundedCornerShape(8.dp)
-        val scheme = MaterialTheme.colorScheme
         val languageLabels = listOf(stringResource(Res.string.theme_system), "English", "中文", "日本語")
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(languageShape)
-                .background(scheme.surfaceVariant.copy(alpha = 0.4f))
-                .border(
-                    width = if (languageFocused) 2.dp else 1.dp,
-                    color = if (languageFocused) scheme.primary else scheme.outline,
-                    shape = languageShape,
-                )
-                .clickable(interactionSource = languageInteraction, indication = null) { languageMenuOpen = !languageMenuOpen }
-                .onPreviewKeyEvent { ev ->
-                    if (ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    when (ev.key) {
-                        Key.Enter, Key.NumPadEnter, Key.Spacebar, Key.DirectionDown -> {
-                            languageMenuOpen = true
-                            true
-                        }
-                        else -> false
-                    }
-                }
-                .padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(languageLabels[LANGUAGE_MODES.indexOf(languageMode).coerceAtLeast(0)], modifier = Modifier.weight(1f), color = scheme.onSurface)
-            Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = scheme.onSurfaceVariant)
-            DropdownMenu(expanded = languageMenuOpen, onDismissRequest = { languageMenuOpen = false }) {
-                languageLabels.forEachIndexed { index, label ->
-                    DropdownMenuItem(text = { Text(label) }, onClick = {
-                        onLanguageChange(LANGUAGE_MODES[index])
-                        languageMenuOpen = false
-                    })
-                }
-            }
-        }
+        KeyboardDropdown(
+            displayText = languageLabels[LANGUAGE_MODES.indexOf(languageMode).coerceAtLeast(0)],
+            options = languageLabels,
+            onSelect = { index -> onLanguageChange(LANGUAGE_MODES[index]) },
+        )
 
         SectionLabel(stringResource(Res.string.section_about))
         Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {

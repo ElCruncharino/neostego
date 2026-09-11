@@ -9,7 +9,10 @@ package com.elcruncharino.neostego.compose.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -19,9 +22,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,16 +50,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.awtTransferable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.elcruncharino.neostego.compose.engine.pickFiles
 import openstego.compose_desktop.generated.resources.Res
 import openstego.compose_desktop.generated.resources.action_button_state_ready
 import openstego.compose_desktop.generated.resources.action_button_state_working
@@ -67,6 +84,7 @@ import openstego.compose_desktop.generated.resources.password_field_hide
 import openstego.compose_desktop.generated.resources.password_field_show
 import openstego.compose_desktop.generated.resources.result_card_done
 import openstego.compose_desktop.generated.resources.result_card_failed
+import openstego.compose_desktop.generated.resources.selection_summary
 import org.jetbrains.compose.resources.stringResource
 import java.awt.datatransfer.DataFlavor
 import java.io.File
@@ -297,6 +315,102 @@ fun ResultCard(result: Result<String>, successMessage: (String) -> String) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = content,
             )
+        }
+    }
+}
+
+/**
+ * Keyboard-navigable combobox (open with Enter/Space/Down, arrow through the options, Enter to
+ * choose, Esc to close) showing [displayText] with [options] in its dropdown. Built from a focusable
+ * anchor + DropdownMenu rather than ExposedDropdownMenu, which isn't keyboard-operable.
+ */
+@Composable
+fun KeyboardDropdown(
+    displayText: String,
+    options: List<String>,
+    onSelect: (Int) -> Unit,
+    contentDescription: String? = null,
+) {
+    var open by remember { mutableStateOf(false) }
+    val interaction = remember { MutableInteractionSource() }
+    val focused by interaction.collectIsFocusedAsState()
+    val shape = RoundedCornerShape(8.dp)
+    val scheme = MaterialTheme.colorScheme
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(scheme.surfaceVariant.copy(alpha = 0.4f))
+            .border(
+                width = if (focused) 2.dp else 1.dp,
+                color = if (focused) scheme.primary else scheme.outline,
+                shape = shape,
+            )
+            .clickable(interactionSource = interaction, indication = null) { open = !open }
+            // Keyboard: open the menu with Enter/Space/Down (the anchor is focusable via clickable).
+            .onPreviewKeyEvent { ev ->
+                if (ev.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (ev.key) {
+                    Key.Enter, Key.NumPadEnter, Key.Spacebar, Key.DirectionDown -> {
+                        open = true
+                        true
+                    }
+                    else -> false
+                }
+            }
+            .semantics {
+                role = Role.DropdownList
+                if (contentDescription != null) this.contentDescription = contentDescription
+            }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(displayText, modifier = Modifier.weight(1f), color = scheme.onSurface)
+        Icon(Icons.Filled.ArrowDropDown, contentDescription = null, tint = scheme.onSurfaceVariant)
+        // The menu anchors here; when open it takes focus, so arrows/Enter/Esc work on the items.
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            options.forEachIndexed { index, label ->
+                DropdownMenuItem(text = { Text(label) }, onClick = {
+                    onSelect(index)
+                    open = false
+                })
+            }
+        }
+    }
+}
+
+/**
+ * Card for picking a variable number of files at once (multiple covers for batch/split embedding,
+ * or the parts of a split reveal): a label, a summary of the current selection (or [emptyHint] when
+ * none is chosen yet), and a button that opens a multi-select file picker restricted to [extensions].
+ */
+@Composable
+fun MultiFilePickCard(
+    label: String,
+    emptyHint: String,
+    chooseLabel: String,
+    changeLabel: String,
+    filterLabel: String,
+    files: List<String>,
+    onChange: (List<String>) -> Unit,
+    extensions: List<String> = emptyList(),
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(label, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (files.isEmpty()) {
+                    emptyHint
+                } else {
+                    stringResource(Res.string.selection_summary, files.size, files.joinToString(", ") { it.substringAfterLast('/') })
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = {
+                val picked = pickFiles(extensions = extensions, filterLabel = filterLabel)
+                if (picked.isNotEmpty()) onChange(picked)
+            }) { Text(if (files.isEmpty()) chooseLabel else changeLabel) }
         }
     }
 }
