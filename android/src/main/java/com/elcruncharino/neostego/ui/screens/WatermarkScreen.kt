@@ -300,7 +300,9 @@ fun WatermarkScreen(appState: AppState) {
                             Slider(
                                 value = s.jpegQuality.toFloat(),
                                 onValueChange = { s.jpegQuality = it.toInt() },
-                                valueRange = 50f..100f,
+                                // 1-100, matching Swing's EmbedWatermarkPanel slider - unlike SI-UNIWARD
+                                // data hiding, watermarking has no algorithmic floor on usable quality.
+                                valueRange = 1f..100f,
                             )
                         }
                     }
