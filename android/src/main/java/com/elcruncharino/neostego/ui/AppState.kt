@@ -32,6 +32,7 @@ class HideState {
     var messageUri by mutableStateOf<Uri?>(null)
     var showPassword by mutableStateOf(false)
     var passwordView by mutableStateOf<EditText?>(null)
+    var confirmPasswordView by mutableStateOf<EditText?>(null)
     var algorithm by mutableStateOf(StegoEngine.Algorithm.ADAPTIVE)
     var embedFileName by mutableStateOf(false)
     var jpegQuality by mutableStateOf(90)

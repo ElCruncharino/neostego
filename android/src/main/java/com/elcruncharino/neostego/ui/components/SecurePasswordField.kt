@@ -57,11 +57,13 @@ fun SecurePasswordField(
     onToggleShow: () -> Unit,
     onViewCreated: (EditText) -> Unit,
     required: Boolean = false,
+    label: String? = null,
+    description: String? = null,
 ) {
-    val passwordLabel = stringResource(
+    val passwordLabel = label ?: stringResource(
         if (required) R.string.label_password_required else R.string.label_password_optional,
     )
-    val passwordDescription = stringResource(
+    val passwordDescription = description ?: stringResource(
         if (required) R.string.cd_password_required else R.string.cd_password_optional,
     )
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()

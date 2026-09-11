@@ -78,12 +78,27 @@ fun HideScreen(appState: AppState) {
     val coverKindAudioFile = stringResource(R.string.cover_kind_audio_file)
     val coverKindImage = stringResource(R.string.cover_kind_image)
     val errorChooseCoverTemplate = stringResource(R.string.error_choose_cover)
+    val errorPasswordsDoNotMatch = stringResource(R.string.error_passwords_do_not_match)
+    val confirmPasswordLabel = stringResource(R.string.label_password_confirm)
+    val confirmPasswordDescription = stringResource(R.string.cd_password_confirm)
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
     fun setResult(r: OutputResult?) {
         s.result?.bytes?.fill(0)
         s.result = r
+    }
+
+    // A typo'd password would silently embed with the wrong key and be unrecoverable, so this is
+    // checked before every hide (matching Swing and compose-desktop, which both enforce it too).
+    fun passwordsMatch(): Boolean {
+        val pw = readPasswordChars(s.passwordView)
+        val confirm = readPasswordChars(s.confirmPasswordView)
+        val ok = pw == null || pw.contentEquals(confirm)
+        pw?.fill(' ')
+        confirm?.fill(' ')
+        if (!ok) toast(errorPasswordsDoNotMatch)
+        return ok
     }
 
     // Split output is written part-by-part through a chain of save dialogs; these track that chain.
@@ -192,6 +207,7 @@ fun HideScreen(appState: AppState) {
             toast(errorChooseFileToHide)
             return
         }
+        if (!passwordsMatch()) return
         val pw = readPasswordChars(s.passwordView)
         s.busy = true
         s.progress = null // split runs across covers; show an indeterminate bar
@@ -243,6 +259,7 @@ fun HideScreen(appState: AppState) {
                 return
             }
         }
+        if (!passwordsMatch()) return
         val pw = readPasswordChars(s.passwordView)
         s.busy = true
         s.progress = null
@@ -334,6 +351,13 @@ fun HideScreen(appState: AppState) {
             show = s.showPassword,
             onToggleShow = { s.showPassword = !s.showPassword },
             onViewCreated = { s.passwordView = it },
+        )
+        SecurePasswordField(
+            show = s.showPassword,
+            onToggleShow = { s.showPassword = !s.showPassword },
+            onViewCreated = { s.confirmPasswordView = it },
+            label = confirmPasswordLabel,
+            description = confirmPasswordDescription,
         )
 
         Card(shape = RoundedCornerShape(24.dp)) {
