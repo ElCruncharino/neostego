@@ -10,8 +10,8 @@ import com.openstego.desktop.OpenStegoConfig;
 import com.openstego.desktop.OpenStegoErrors;
 import com.openstego.desktop.OpenStegoException;
 import com.openstego.desktop.OpenStegoPlugin;
-import com.openstego.desktop.ProgressListener;
 import java.util.List;
+import java.util.function.DoubleConsumer;
 
 /**
  * Algorithm-agnostic extraction shared by every front-end (desktop GUI, Android, CLI). A stego file
@@ -56,7 +56,7 @@ public final class AutoExtractor {
             String stegoName,
             char[] password,
             List<OpenStegoPlugin<?>> candidates,
-            ProgressListener listener)
+            DoubleConsumer listener)
             throws OpenStegoException {
         OpenStegoException last = null;
         for (OpenStegoPlugin<?> plugin : candidates) {
