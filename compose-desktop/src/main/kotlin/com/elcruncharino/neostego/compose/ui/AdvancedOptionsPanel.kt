@@ -107,7 +107,9 @@ fun AdvancedOptionsPanel(kind: OptionsKind, options: AdvancedOptions, onChange: 
                             if (options.cmd) {
                                 SliderOption(
                                     stringResource(Res.string.option_adaptive_mu_label),
-                                    formatMu(options.cmdMu),
+                                    // cmdMu is always rounded to the nearest 0.5 (see onChange below),
+                                    // so Double's own toString already prints "3.0"/"3.5" correctly.
+                                    options.cmdMu.toString(),
                                     options.cmdMu.toFloat(),
                                     1f..9f,
                                     15,
@@ -132,10 +134,6 @@ fun AdvancedOptionsPanel(kind: OptionsKind, options: AdvancedOptions, onChange: 
         }
     }
 }
-
-// cmdMu is always rounded to the nearest 0.5 (see onChange below), so Double's own toString
-// already prints "3.0"/"3.5" correctly - no need to special-case whole numbers.
-private fun formatMu(v: Double): String = v.toString()
 
 @Composable
 private fun SliderOption(
