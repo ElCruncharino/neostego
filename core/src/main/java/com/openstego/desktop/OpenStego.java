@@ -111,7 +111,7 @@ public class OpenStego {
      */
     public byte[] embedData(byte[] msg, String msgFileName, byte[] cover, String coverFileName, String stegoFileName)
             throws OpenStegoException {
-        if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.DATA_HIDING)) {
+        if (this.plugin.getPurpose() != OpenStegoPlugin.Purpose.DATA_HIDING) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_DH);
         }
 
@@ -190,7 +190,7 @@ public class OpenStego {
      */
     public byte[] embedMark(byte[] sig, String sigFileName, byte[] cover, String coverFileName, String stegoFileName)
             throws OpenStegoException {
-        if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.WATERMARKING)) {
+        if (this.plugin.getPurpose() != OpenStegoPlugin.Purpose.WATERMARKING) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_WM);
         }
 
@@ -246,7 +246,7 @@ public class OpenStego {
      * @throws OpenStegoException Processing issues
      */
     public List<?> extractData(byte[] stegoData, String stegoFileName) throws OpenStegoException {
-        if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.DATA_HIDING)) {
+        if (this.plugin.getPurpose() != OpenStegoPlugin.Purpose.DATA_HIDING) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_DH);
         }
 
@@ -321,7 +321,7 @@ public class OpenStego {
      * @throws OpenStegoException Processing issues
      */
     public double checkMark(byte[] stegoData, String stegoFileName, byte[] origSigData) throws OpenStegoException {
-        if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.WATERMARKING)) {
+        if (this.plugin.getPurpose() != OpenStegoPlugin.Purpose.WATERMARKING) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_WM);
         }
 
@@ -351,7 +351,7 @@ public class OpenStego {
      * @throws OpenStegoException Processing issues
      */
     public byte[] generateSignature() throws OpenStegoException {
-        if (!this.plugin.getPurposes().contains(OpenStegoPlugin.Purpose.WATERMARKING)) {
+        if (this.plugin.getPurpose() != OpenStegoPlugin.Purpose.WATERMARKING) {
             throw new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.PLUGIN_DOES_NOT_SUPPORT_WM);
         }
 
