@@ -9,11 +9,7 @@ package com.elcruncharino.neostego.compose.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,14 +17,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.elcruncharino.neostego.compose.engine.extract
 import com.elcruncharino.neostego.compose.engine.extractSplitFiles
 import com.elcruncharino.neostego.compose.engine.pickDirectory
 import com.elcruncharino.neostego.compose.engine.pickFile
-import com.elcruncharino.neostego.compose.engine.pickFiles
 import com.elcruncharino.neostego.compose.ui.FilePickCard
+import com.elcruncharino.neostego.compose.ui.MultiFilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
 import com.elcruncharino.neostego.compose.ui.ResultCard
 import com.elcruncharino.neostego.compose.ui.SectionLabel
@@ -49,7 +44,6 @@ import openstego.compose_desktop.generated.resources.extract_stego_file_label
 import openstego.compose_desktop.generated.resources.hide_output_folder_label
 import openstego.compose_desktop.generated.resources.result_extracted_message_to
 import openstego.compose_desktop.generated.resources.section_source
-import openstego.compose_desktop.generated.resources.selection_summary
 import openstego.compose_desktop.generated.resources.split_parts_change
 import openstego.compose_desktop.generated.resources.split_parts_choose
 import openstego.compose_desktop.generated.resources.split_parts_choose_hint
@@ -92,7 +86,15 @@ fun ExtractScreen() {
         )
 
         if (reassemble) {
-            SplitPartsCard(stegoParts) { stegoParts = it }
+            MultiFilePickCard(
+                label = stringResource(Res.string.split_parts_label),
+                emptyHint = stringResource(Res.string.split_parts_choose_hint),
+                chooseLabel = stringResource(Res.string.split_parts_choose),
+                changeLabel = stringResource(Res.string.split_parts_change),
+                filterLabel = "Stego parts",
+                files = stegoParts,
+                onChange = { stegoParts = it },
+            )
         } else {
             FilePickCard(
                 stringResource(Res.string.extract_stego_file_label),
@@ -133,30 +135,5 @@ fun ExtractScreen() {
         })
 
         result?.let { ResultCard(it) { path -> extractedMessageToTemplate.format(path) } }
-    }
-}
-
-/** Multi-select input for the parts of a split payload. */
-@Composable
-private fun SplitPartsCard(parts: List<String>, onChange: (List<String>) -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(Res.string.split_parts_label), fontWeight = FontWeight.SemiBold)
-            Text(
-                if (parts.isEmpty()) {
-                    stringResource(Res.string.split_parts_choose_hint)
-                } else {
-                    stringResource(Res.string.selection_summary, parts.size, parts.joinToString(", ") { it.substringAfterLast('/') })
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            val chooseLabel = stringResource(Res.string.split_parts_choose)
-            val changeLabel = stringResource(Res.string.split_parts_change)
-            OutlinedButton(onClick = {
-                val picked = pickFiles(filterLabel = "Stego parts")
-                if (picked.isNotEmpty()) onChange(picked)
-            }) { Text(if (parts.isEmpty()) chooseLabel else changeLabel) }
-        }
     }
 }
