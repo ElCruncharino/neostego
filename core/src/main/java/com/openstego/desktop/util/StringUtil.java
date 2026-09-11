@@ -8,15 +8,11 @@
 package com.openstego.desktop.util;
 
 import com.openstego.desktop.OpenStegoException;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.List;
@@ -73,30 +69,16 @@ public class StringUtil {
     }
 
     /**
-     * Method to tokenize a string by line breaks
+     * Method to tokenize a string by line breaks, trimming each line and dropping blank/comment
+     * ("#"-prefixed) ones
      *
      * @param input Input string
      * @return List of strings tokenized by line breaks
-     * @throws OpenStegoException Processing issues
      */
-    public static List<String> getStringLines(String input) throws OpenStegoException {
-        String str;
-        List<String> stringList = new ArrayList<>();
-        BufferedReader reader;
-
-        try {
-            reader = new BufferedReader(new StringReader(input));
-            while ((str = reader.readLine()) != null) {
-                str = str.trim();
-                if (str.equals("") || str.startsWith("#")) {
-                    continue;
-                }
-                stringList.add(str.trim());
-            }
-        } catch (IOException ioEx) {
-            throw new OpenStegoException(ioEx);
-        }
-
-        return stringList;
+    public static List<String> getStringLines(String input) {
+        return input.lines()
+                .map(String::trim)
+                .filter(line -> !line.isEmpty() && !line.startsWith("#"))
+                .toList();
     }
 }
