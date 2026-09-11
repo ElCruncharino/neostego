@@ -161,6 +161,8 @@
     <string name="btn_share">分享</string>
     <string name="label_password_optional">密码(可选)</string>
     <string name="cd_password_optional">密码,可选</string>
+    <string name="label_password_required">密码</string>
+    <string name="cd_password_required">密码,必填</string>
     <string name="btn_show_password">显示</string>
     <string name="btn_hide_password">隐藏</string>
     <string name="label_working">处理中…</string>

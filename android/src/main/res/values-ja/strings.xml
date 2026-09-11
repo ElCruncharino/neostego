@@ -161,6 +161,8 @@
     <string name="btn_share">共有</string>
     <string name="label_password_optional">パスワード(任意)</string>
     <string name="cd_password_optional">パスワード、任意</string>
+    <string name="label_password_required">パスワード</string>
+    <string name="cd_password_required">パスワード、必須</string>
     <string name="btn_show_password">表示</string>
     <string name="btn_hide_password">非表示</string>
     <string name="label_working">処理中…</string>
