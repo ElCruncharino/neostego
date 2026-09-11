@@ -18,7 +18,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,7 +45,7 @@ import com.elcruncharino.neostego.compose.ui.AlgorithmSelector
 import com.elcruncharino.neostego.compose.ui.FilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
 import com.elcruncharino.neostego.compose.ui.ResultCard
-import com.elcruncharino.neostego.compose.ui.SectionLabel
+import com.elcruncharino.neostego.compose.ui.SecurePasswordField
 import openstego.compose_desktop.generated.resources.Res
 import openstego.compose_desktop.generated.resources.action_embed_watermark
 import openstego.compose_desktop.generated.resources.action_generate_signature
@@ -84,6 +83,7 @@ private val SIG = listOf("sig")
 fun GenerateSignatureScreen(algorithms: List<AlgoInfo>) {
     var algorithm by remember { mutableStateOf(algorithms.firstOrNull()) }
     var key by remember { mutableStateOf("") }
+    var showKey by remember { mutableStateOf(false) }
     var sigFile by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<Result<String>?>(null) }
@@ -94,14 +94,15 @@ fun GenerateSignatureScreen(algorithms: List<AlgoInfo>) {
         ScreenIntro(stringResource(Res.string.watermark_generate_intro))
         AlgorithmSelector(algorithms, algorithm) { algorithm = it }
 
+        // The key seeds the watermark, exactly like a password does for embed/verify (which already
+        // mask their input) - masking it here too, matching Android's SecurePasswordField usage.
         val keyLabel = stringResource(Res.string.section_key)
-        SectionLabel(keyLabel)
-        OutlinedTextField(
+        SecurePasswordField(
             value = key,
             onValueChange = { key = it },
-            label = { Text(keyLabel) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
+            show = showKey,
+            onToggleShow = { showKey = !showKey },
+            label = keyLabel,
         )
 
         FilePickCard(stringResource(Res.string.signature_file_label), sigFile, stringResource(Res.string.signature_file_save_hint)) {
