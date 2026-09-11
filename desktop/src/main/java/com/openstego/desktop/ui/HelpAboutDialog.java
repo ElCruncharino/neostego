@@ -89,7 +89,7 @@ public class HelpAboutDialog extends JDialog {
      */
     public JButton getOkButton() {
         if (this.okButton == null) {
-            this.okButton = new JButton("OK");
+            this.okButton = new JButton(labelUtil.getString("gui.button.help.ok"));
             this.okButton.addActionListener(e -> setVisible(false));
         }
         return this.okButton;
@@ -101,7 +101,7 @@ public class HelpAboutDialog extends JDialog {
      * @param parent Parent frame for the dialog box
      */
     public HelpAboutDialog(Frame parent) {
-        super(parent, "About " + labelUtil.getString("appName"), true);
+        super(parent, labelUtil.getString("gui.label.help.dialogTitle", labelUtil.getString("appName")), true);
 
         getContentPane().setLayout(new GridBagLayout());
 
