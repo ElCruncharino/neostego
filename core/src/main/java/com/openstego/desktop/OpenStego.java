@@ -37,18 +37,35 @@ public class OpenStego {
      */
     private final OpenStegoPlugin<?> plugin;
 
+    private static volatile boolean initialized = false;
+
     static {
-        LabelUtil.addNamespace(NAMESPACE, "i18n.OpenStegoLabels");
-        OpenStegoErrors.init();
+        init();
     }
 
     /**
-     * Ensures the core label namespace and error codes are registered. Triggering this class's static
-     * initializer guarantees the "OpenStego" labels are available even for code paths that do not
-     * otherwise instantiate {@link OpenStego} (e.g. the {@code algorithms} command or the GUI).
+     * Ensures the core label namespace and error codes are registered. Some callers (e.g.
+     * {@link com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter}) invoke this instead of
+     * instantiating {@link OpenStego} to guarantee the "OpenStego" labels are available even on a code
+     * path that never otherwise references this class. That guarantee must not depend on JVM class-init
+     * being an observable side effect of the call: a release build's optimizer (R8) is free to treat a
+     * call to a genuinely empty method as dead code and drop it, since eliminating a call to an empty
+     * method is normally a safe transformation - it just isn't safe here, where the whole point of the
+     * call is triggering class initialization. Doing the real, idempotent work directly in the method
+     * body sidesteps that: the call can no longer be optimized away as a no-op.
      */
     public static void init() {
-        // No-op; the work happens in the static initializer above when this class is loaded
+        if (initialized) {
+            return;
+        }
+        synchronized (OpenStego.class) {
+            if (initialized) {
+                return;
+            }
+            LabelUtil.addNamespace(NAMESPACE, "i18n.OpenStegoLabels");
+            OpenStegoErrors.init();
+            initialized = true;
+        }
     }
 
     /**
