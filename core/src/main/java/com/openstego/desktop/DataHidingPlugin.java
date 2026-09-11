@@ -6,9 +6,6 @@
 
 package com.openstego.desktop;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Abstract class for stego plugins for OpenStego purpose of which is data hiding. It implements few methods which are
  * specific for data hiding, and provides dummy implementation for the methods which are specific to watermarking
@@ -20,15 +17,13 @@ public abstract class DataHidingPlugin<C extends OpenStegoConfig> extends OpenSt
     // ------------- Metadata Methods -------------
 
     /**
-     * Gives the purpose(s) of the plugin. This implementation returns only one value - Data Hiding
+     * Gives the purpose of the plugin. This implementation is always Data Hiding
      *
-     * @return Purpose(s) of the plugin
+     * @return Purpose of the plugin
      */
     @Override
-    public final List<Purpose> getPurposes() {
-        List<Purpose> purposes = new ArrayList<>();
-        purposes.add(Purpose.DATA_HIDING);
-        return purposes;
+    public final Purpose getPurpose() {
+        return Purpose.DATA_HIDING;
     }
 
     // ------------- Core Stego Methods -------------

@@ -18,7 +18,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 import org.junit.jupiter.api.Test;
@@ -72,9 +71,7 @@ public class OpenStegoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -94,9 +91,7 @@ public class OpenStegoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(true);
@@ -130,11 +125,9 @@ public class OpenStegoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(
-                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING),
-                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING, OpenStegoPlugin.Purpose.DATA_HIDING)
                 .when(mockPlugin)
-                .getPurposes();
+                .getPurpose();
 
         doThrow(
                         new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
@@ -175,9 +168,7 @@ public class OpenStegoTest {
         Path coverFilePath = createTempFile("cover", ".in", "cover data");
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -219,9 +210,7 @@ public class OpenStegoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING).when(mockPlugin).getPurpose();
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
         os.embedMark(sig, sigFileName, cover, coverFileName, stegoFileName);
@@ -238,11 +227,9 @@ public class OpenStegoTest {
         String coverFileName = "cover.in";
         String stegoFileName = "stego.out";
 
-        doReturn(
-                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING),
-                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING, OpenStegoPlugin.Purpose.WATERMARKING)
                 .when(mockPlugin)
-                .getPurposes();
+                .getPurpose();
 
         doThrow(
                         new OpenStegoException(null, OpenStego.NAMESPACE, OpenStegoErrors.INVALID_CRYPT_ALGO),
@@ -283,9 +270,7 @@ public class OpenStegoTest {
         Path coverFilePath = createTempFile("cover", ".in", "cover data");
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING).when(mockPlugin).getPurpose();
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
         os.embedMark(sigFilePath.toFile(), coverFilePath.toFile(), stegoFileName);
@@ -320,9 +305,7 @@ public class OpenStegoTest {
         byte[] stegoData = "stego data".getBytes(StandardCharsets.UTF_8);
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -339,9 +322,7 @@ public class OpenStegoTest {
         byte[] stegoData = "stego data".getBytes(StandardCharsets.UTF_8);
         String stegoFileName = "stego.out";
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(true);
         // simulates a pre-CompressionCodec file, which always used plain gzip
@@ -382,11 +363,9 @@ public class OpenStegoTest {
         byte[] stegoData = "stego data".getBytes(StandardCharsets.UTF_8);
         String stegoFileName = "stego.out";
 
-        doReturn(
-                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING),
-                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING, OpenStegoPlugin.Purpose.DATA_HIDING)
                 .when(mockPlugin)
-                .getPurposes();
+                .getPurpose();
 
         doReturn("corrupt data".getBytes(StandardCharsets.UTF_8))
                 .doThrow(
@@ -434,9 +413,7 @@ public class OpenStegoTest {
     public void testExtractDataFile() throws OpenStegoException, IOException {
         Path stegoFilePath = createTempFile("stego", ".out", "stego data");
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setUseCompression(false);
@@ -458,9 +435,7 @@ public class OpenStegoTest {
         String stegoFileName = "stego.out";
         byte[] sigData = "signature".getBytes(StandardCharsets.UTF_8);
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING).when(mockPlugin).getPurpose();
         doReturn(0.5, Double.NaN).when(mockPlugin).checkMark(any(byte[].class), anyString(), any(byte[].class));
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
@@ -481,9 +456,7 @@ public class OpenStegoTest {
         String stegoFileName = "stego.out";
         byte[] sigData = "signature".getBytes(StandardCharsets.UTF_8);
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING).when(mockPlugin).getPurpose();
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
 
         // Case - plugin does not support watermarking
@@ -500,9 +473,7 @@ public class OpenStegoTest {
         Path stegoFilePath = createTempFile("stego", ".out", "stego data");
         Path sigFilePath = createTempFile("general", ".sig", "sig data");
 
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING).when(mockPlugin).getPurpose();
 
         OpenStego os = new OpenStego(mockPlugin, new OpenStegoConfig());
         os.checkMark(stegoFilePath.toFile(), sigFilePath.toFile());
@@ -517,9 +488,7 @@ public class OpenStegoTest {
 
     @Test
     public void testCGenerateSignature() throws OpenStegoException {
-        doReturn(Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
-                .when(mockPlugin)
-                .getPurposes();
+        doReturn(OpenStegoPlugin.Purpose.WATERMARKING).when(mockPlugin).getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         config.setPassword("test");
@@ -532,11 +501,9 @@ public class OpenStegoTest {
 
     @Test
     public void testCGenerateSignature_exception() throws OpenStegoException {
-        doReturn(
-                        Collections.singletonList(OpenStegoPlugin.Purpose.DATA_HIDING),
-                        Collections.singletonList(OpenStegoPlugin.Purpose.WATERMARKING))
+        doReturn(OpenStegoPlugin.Purpose.DATA_HIDING, OpenStegoPlugin.Purpose.WATERMARKING)
                 .when(mockPlugin)
-                .getPurposes();
+                .getPurpose();
 
         OpenStegoConfig config = new OpenStegoConfig();
         OpenStego os = new OpenStego(mockPlugin, config);

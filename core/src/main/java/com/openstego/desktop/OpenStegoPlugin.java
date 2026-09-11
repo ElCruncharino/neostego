@@ -79,11 +79,11 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
     public abstract String getName();
 
     /**
-     * Gives the purpose(s) of the plugin
+     * Gives the purpose of the plugin
      *
-     * @return Purpose(s) of the plugin
+     * @return Purpose of the plugin
      */
-    public abstract List<Purpose> getPurposes();
+    public abstract Purpose getPurpose();
 
     /**
      * Gives a short description of the plugin
@@ -93,29 +93,14 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
     public abstract String getDescription();
 
     /**
-     * Gives the display label for purpose(s) of the plugin
+     * Gives the display label for the purpose of the plugin
      *
-     * @return Display lable for purpose(s) of the plugin
+     * @return Display label for the purpose of the plugin
      */
     public final String getPurposesLabel() {
-        StringBuilder sbf = new StringBuilder();
         LabelUtil labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE);
-        List<Purpose> purposes = getPurposes();
-
-        if (purposes == null || purposes.size() == 0) {
-            return "";
-        }
-
-        sbf.append("(").append(labelUtil.getString("cmd.label.purpose.caption")).append(" ");
-        for (int i = 0; i < purposes.size(); i++) {
-            if (i > 0) {
-                sbf.append(", ");
-            }
-            sbf.append(labelUtil.getString("cmd.label.purpose." + purposes.get(i)));
-        }
-        sbf.append(")");
-
-        return sbf.toString();
+        return "(" + labelUtil.getString("cmd.label.purpose.caption") + " "
+                + labelUtil.getString("cmd.label.purpose." + getPurpose()) + ")";
     }
 
     // ------------- Core Stego Methods -------------

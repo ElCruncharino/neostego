@@ -6,9 +6,6 @@
 
 package com.openstego.desktop;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Abstract class for stego plugins for OpenStego purpose of which is watermarking. It implements few methods which are
  * specific for watermarking, and provides dummy implementation for the methods which are specific to data hiding
@@ -20,15 +17,13 @@ public abstract class WatermarkingPlugin<C extends OpenStegoConfig> extends Open
     // ------------- Metadata Methods -------------
 
     /**
-     * Gives the purpose(s) of the plugin. This implementation returns only one value - Watermarking
+     * Gives the purpose of the plugin. This implementation is always Watermarking
      *
-     * @return Purpose(s) of the plugin
+     * @return Purpose of the plugin
      */
     @Override
-    public final List<Purpose> getPurposes() {
-        List<Purpose> purposes = new ArrayList<>();
-        purposes.add(Purpose.WATERMARKING);
-        return purposes;
+    public final Purpose getPurpose() {
+        return Purpose.WATERMARKING;
     }
 
     // ------------- Core Stego Methods -------------
