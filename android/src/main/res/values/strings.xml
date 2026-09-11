@@ -42,8 +42,10 @@
     <string name="cover_kind_audio_file">audio file</string>
     <string name="cover_kind_image">image</string>
     <string name="label_cover_images_split">Cover images (split)</string>
+    <string name="label_cover_images_split_jpeg">Cover images (split, JPEG)</string>
     <string name="split_images_selected">%1$d images selected</string>
     <string name="hint_split_covers">Pick two or more images; the file is spread across them</string>
+    <string name="hint_split_covers_jpeg">Pick two or more existing JPEGs; the file is spread across them</string>
     <string name="label_cover_audio_wav">Cover audio (WAV)</string>
     <string name="label_cover_image_jpeg">Cover image (JPEG)</string>
     <string name="label_cover_image">Cover image</string>

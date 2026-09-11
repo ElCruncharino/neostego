@@ -42,8 +42,10 @@
     <string name="cover_kind_audio_file">音声ファイル</string>
     <string name="cover_kind_image">画像</string>
     <string name="label_cover_images_split">カバー画像(分割)</string>
+    <string name="label_cover_images_split_jpeg">カバー画像(分割、JPEG)</string>
     <string name="split_images_selected">%1$d 枚の画像を選択済み</string>
     <string name="hint_split_covers">2枚以上の画像を選ぶと、ファイルがそれらに分散して隠されます</string>
+    <string name="hint_split_covers_jpeg">既存の JPEG を2枚以上選ぶと、ファイルがそれらに分散して隠されます</string>
     <string name="label_cover_audio_wav">カバー音声(WAV)</string>
     <string name="label_cover_image_jpeg">カバー画像(JPEG)</string>
     <string name="label_cover_image">カバー画像</string>

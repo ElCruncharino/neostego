@@ -38,8 +38,11 @@ object StegoEngine {
     /** Embedding algorithm the user can choose for hiding. */
     enum class Algorithm { ADAPTIVE, MATCHING, SI_UNIWARD, PLAIN_UNIWARD, F5, WAV }
 
-    /** Algorithms that support splitting a payload across multiple cover images. */
-    val SPLIT_ELIGIBLE_ALGORITHMS = listOf(Algorithm.ADAPTIVE, Algorithm.MATCHING)
+    /** Algorithms that support splitting a payload across multiple cover images: every image
+     *  algorithm (desktop's split feature has never restricted this - see [outputName] for how each
+     *  one's output extension is picked). */
+    val SPLIT_ELIGIBLE_ALGORITHMS =
+        listOf(Algorithm.ADAPTIVE, Algorithm.MATCHING, Algorithm.SI_UNIWARD, Algorithm.PLAIN_UNIWARD, Algorithm.F5)
 
     /** Robust watermarking algorithm the user can choose. (DWT-Kim is omitted: its detector is an
      *  upstream stub that never verifies, so it is not exposed.) */
@@ -314,8 +317,10 @@ object StegoEngine {
             config.password = pw
         }
         applyCryptoOptions(config, options, hasPassword)
-        // Internal stego names only drive the output codec format; each algorithm here is lossless PNG.
-        val stegoNames = coverNames.indices.map { "stego_part${it + 1}.png" }
+        // Internal stego names only drive the output codec format - lossless PNG for the spatial
+        // algorithms, JPEG for the JPEG-domain ones (see outputName).
+        val stegoExt = outputName(algorithm).substringAfterLast('.')
+        val stegoNames = coverNames.indices.map { "stego_part${it + 1}.$stegoExt" }
         try {
             return MultiCoverPayloadSplitter.embedSplit(message, msgName, covers, coverNames, stegoNames, config, plugin)
         } finally {

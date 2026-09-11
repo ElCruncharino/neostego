@@ -42,8 +42,10 @@
     <string name="cover_kind_audio_file">音频文件</string>
     <string name="cover_kind_image">图片</string>
     <string name="label_cover_images_split">载体图片(分割)</string>
+    <string name="label_cover_images_split_jpeg">载体图片(分割,JPEG)</string>
     <string name="split_images_selected">已选择 %1$d 张图片</string>
     <string name="hint_split_covers">选择两张或以上图片,文件将分散隐藏在这些图片中</string>
+    <string name="hint_split_covers_jpeg">选择两张或以上现有的 JPEG 图片,文件将分散隐藏在这些图片中</string>
     <string name="label_cover_audio_wav">载体音频(WAV)</string>
     <string name="label_cover_image_jpeg">载体图片(JPEG)</string>
     <string name="label_cover_image">载体图片</string>
