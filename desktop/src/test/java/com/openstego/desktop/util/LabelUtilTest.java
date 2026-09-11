@@ -46,4 +46,18 @@ public class LabelUtilTest {
         OpenStego.init();
         assertNotNull(LabelUtil.getInstance(OpenStego.NAMESPACE).getString("err.noValidPlugin"));
     }
+
+    /**
+     * A second, related crash reported on the same flow: {@link com.openstego.desktop.OpenStegoException}
+     * looks up its message key via {@code errMsgKeyMap.get(namespace + errorCode)}, which is {@code null}
+     * for an error code that was never registered for that namespace (e.g. "LSB" errors thrown by
+     * {@link com.openstego.desktop.plugin.lsb.LSBDataHeader} on behalf of a plugin, like Adaptive, that
+     * never triggers {@code LSBPlugin}'s own registration). The old fallback in {@link #getString(String)}
+     * returned that null key as-is, which then crashed {@code MessageFormat.format(null, params)} with an
+     * NPE on {@code pattern.length()} instead of ever reporting the original error.
+     */
+    @Test
+    public void getStringWithNullKeyDoesNotCrashMessageFormat() {
+        assertNotNull(LabelUtil.getInstance(OpenStego.NAMESPACE).getString(null, "param"));
+    }
 }
