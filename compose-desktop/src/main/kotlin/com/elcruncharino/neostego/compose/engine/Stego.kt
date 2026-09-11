@@ -154,11 +154,13 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
                 file = File(file.parentFile, file.name + "." + extensions.first())
             }
             if (save && file.exists()) {
+                val labelUtil = com.openstego.desktop.util.LabelUtil.getInstance(OpenStego.NAMESPACE)
                 val overwrite = JOptionPane.showConfirmDialog(
                     null,
-                    "File ${file.name} already exists. Overwrite?",
-                    "Overwrite?",
+                    labelUtil.getString("gui.msg.warn.fileExists", file.name),
+                    labelUtil.getString("gui.msg.title.warn"),
                     JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE,
                 )
                 if (overwrite != JOptionPane.YES_OPTION) {
                     chooser.selectedFile = file
