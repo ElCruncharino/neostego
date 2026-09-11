@@ -11,6 +11,19 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.2.3] — 2026-09-11
+
+### Fixed
+- **Split-image reveal could still crash with a wrong password** — a related
+  but distinct gap from 1.2.1's fix: `LSBDataHeader` throws its errors under
+  the "LSB" label namespace, but only the `LSBPlugin` family ever registered
+  it, so a header mismatch while only the Adaptive plugin had been used
+  (exactly what split-reveal does, since it tries Adaptive first) hit an
+  unregistered error code and crashed building the error message instead of
+  reporting it. Fixed at both the registration gap and by hardening the
+  message-building code so a missing registration can no longer crash the
+  app regardless of cause.
+
 ## [1.2.2] — 2026-09-10
 
 ### Fixed
