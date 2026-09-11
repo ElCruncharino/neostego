@@ -291,6 +291,16 @@ fun HideScreen(appState: AppState) {
         val isWav = s.algorithm == StegoEngine.Algorithm.WAV
         val needsJpegCover = s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD ||
             s.algorithm == StegoEngine.Algorithm.F5
+        // The photo picker's media type is fixed at launch time only (unlike CreateDocument's MIME
+        // type, which is fixed at launcher creation), so this can vary per algorithm freely: F5 and
+        // PLAIN_UNIWARD embed into an already-compressed JPEG (a PNG cover for them is just wrong, not
+        // merely undesirable), so only offer JPEGs; everything else keeps the existing broad filter,
+        // since PNG/BMP/WEBP are all valid precovers for the spatial and SI-UNIWARD algorithms.
+        val coverMediaType = if (needsJpegCover) {
+            ActivityResultContracts.PickVisualMedia.SingleMimeType("image/jpeg")
+        } else {
+            ActivityResultContracts.PickVisualMedia.ImageOnly
+        }
         if (s.splitMode) {
             FilePickCard(
                 label = if (needsJpegCover) {
@@ -304,7 +314,7 @@ fun HideScreen(appState: AppState) {
                 } else {
                     stringResource(R.string.hint_split_covers)
                 },
-                onPick = { pickCovers.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                onPick = { pickCovers.launch(PickVisualMediaRequest(coverMediaType)) },
             )
         } else {
             FilePickCard(
@@ -325,7 +335,7 @@ fun HideScreen(appState: AppState) {
                     if (isWav) {
                         openCoverAudio.launch(arrayOf("audio/x-wav", "audio/wav", "audio/*"))
                     } else {
-                        pickCover.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        pickCover.launch(PickVisualMediaRequest(coverMediaType))
                     }
                 },
             )
