@@ -104,6 +104,15 @@ fun RevealScreen(appState: AppState) {
             toast(errorNeedTwoStegoFiles)
             return
         }
+        // Each part is decoded (and released) one at a time inside extractSplit, so the risk mirrors
+        // single-image reveal's - just per-part instead of once. Same check as runReveal, applied to
+        // every part before starting rather than finding out mid-reassembly.
+        for (uri in uris) {
+            oversizeWarning(context, uri)?.let {
+                toast(it)
+                return
+            }
+        }
         val pw = com.elcruncharino.neostego.ui.components.readPasswordChars(s.passwordView)
         s.busy = true
         s.progress = null // reassembly runs across images; show an indeterminate bar
@@ -119,6 +128,10 @@ fun RevealScreen(appState: AppState) {
                 }
                 val name = extracted.fileName.ifBlank { "revealed.dat" }
                 setResult(OutputResult(name, mimeForName(name), extracted.data))
+            } catch (e: OutOfMemoryError) {
+                // Belt-and-suspenders: the pre-check above catches the common case, but several
+                // moderately-sized parts can still add up under a lower per-device heap cap.
+                snackbar.showSnackbar(errorFailedToReveal)
             } catch (e: Exception) {
                 snackbar.showSnackbar(e.message ?: errorFailedToReveal)
             } finally {
