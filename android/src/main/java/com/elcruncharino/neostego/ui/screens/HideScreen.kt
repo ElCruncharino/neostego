@@ -327,9 +327,9 @@ fun HideScreen(appState: AppState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        val isWav = s.algorithm == StegoEngine.Algorithm.WAV
-        val needsJpegCover = s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD ||
-            s.algorithm == StegoEngine.Algorithm.F5
+        val coverKind = coverKindFor(s.algorithm)
+        val isWav = coverKind == CoverKind.AUDIO
+        val needsJpegCover = coverKind == CoverKind.JPEG_IMAGE
         // The photo picker's media type is fixed at launch time only (unlike CreateDocument's MIME
         // type, which is fixed at launcher creation), so this can vary per algorithm freely: F5 and
         // PLAIN_UNIWARD embed into an already-compressed JPEG (a PNG cover for them is just wrong, not
