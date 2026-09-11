@@ -32,10 +32,10 @@ import com.elcruncharino.neostego.compose.engine.embedSplitCovers
 import com.elcruncharino.neostego.compose.engine.fileSizeBytes
 import com.elcruncharino.neostego.compose.engine.pickDirectory
 import com.elcruncharino.neostego.compose.engine.pickFile
-import com.elcruncharino.neostego.compose.engine.pickFiles
 import com.elcruncharino.neostego.compose.ui.AdvancedOptionsPanel
 import com.elcruncharino.neostego.compose.ui.AlgorithmSelector
 import com.elcruncharino.neostego.compose.ui.FilePickCard
+import com.elcruncharino.neostego.compose.ui.MultiFilePickCard
 import com.elcruncharino.neostego.compose.ui.PrimaryActionButton
 import com.elcruncharino.neostego.compose.ui.ResultCard
 import com.elcruncharino.neostego.compose.ui.SectionLabel
@@ -86,7 +86,6 @@ import openstego.compose_desktop.generated.resources.result_wrote_stego_file
 import openstego.compose_desktop.generated.resources.saved_as_hint
 import openstego.compose_desktop.generated.resources.section_cover_mode
 import openstego.compose_desktop.generated.resources.section_encryption
-import openstego.compose_desktop.generated.resources.selection_summary
 import org.jetbrains.compose.resources.stringResource
 
 // Cover modes, in selector order. Image-only modes are disabled when the algorithm isn't image-based.
@@ -215,7 +214,16 @@ fun HideScreen(algorithms: List<AlgoInfo>) {
                 }
             }
             Mode.BATCH, Mode.SPLIT -> {
-                MultiCoverCard(coverFiles, coverExts) { coverFiles = it }
+                MultiFilePickCard(
+                    label = stringResource(Res.string.multi_cover_files_label),
+                    emptyHint = stringResource(Res.string.multi_cover_choose_hint),
+                    chooseLabel = stringResource(Res.string.multi_cover_choose),
+                    changeLabel = stringResource(Res.string.multi_cover_change),
+                    filterLabel = "Cover files",
+                    files = coverFiles,
+                    onChange = { coverFiles = it },
+                    extensions = coverExts,
+                )
                 FilePickCard(stringResource(Res.string.hide_output_folder_label), outputDir, stringResource(Res.string.hide_output_folder_hint)) {
                     pickDirectory()?.let { outputDir = it }
                 }
@@ -304,31 +312,6 @@ private fun ModeHint(mode: Mode, isImageAlgo: Boolean, fellBack: Boolean) {
         else -> stringResource(Res.string.mode_hint_split)
     }
     Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-/** Multi-select cover input for batch/split: a Choose button, the count, and the chosen file names. */
-@Composable
-private fun MultiCoverCard(covers: List<String>, coverExts: List<String>, onChange: (List<String>) -> Unit) {
-    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(Res.string.multi_cover_files_label), fontWeight = FontWeight.SemiBold)
-            Text(
-                if (covers.isEmpty()) {
-                    stringResource(Res.string.multi_cover_choose_hint)
-                } else {
-                    stringResource(Res.string.selection_summary, covers.size, covers.joinToString(", ") { it.substringAfterLast('/') })
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            val chooseLabel = stringResource(Res.string.multi_cover_choose)
-            val changeLabel = stringResource(Res.string.multi_cover_change)
-            androidx.compose.material3.OutlinedButton(onClick = {
-                val picked = pickFiles(extensions = coverExts, filterLabel = "Cover files")
-                if (picked.isNotEmpty()) onChange(picked)
-            }) { Text(if (covers.isEmpty()) chooseLabel else changeLabel) }
-        }
-    }
 }
 
 @Composable
