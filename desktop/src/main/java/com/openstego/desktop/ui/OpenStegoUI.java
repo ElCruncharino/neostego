@@ -727,9 +727,17 @@ public class OpenStegoUI extends OpenStegoFrame {
                 dhPlugin.resetConfig();
                 config = dhPlugin.getConfig();
                 config.setUseCompression(true);
-                config.setUseEncryption(true);
-                config.setEncryptionAlgorithm(cryptAlgo);
-                config.setPassword(password);
+                // Encrypting with a blank password isn't "no password", it's AES-GCM keyed on an
+                // empty string: a weak, predictable key that reads as encrypted but protects nothing,
+                // and disagrees with the CLI (defaults useEncryption to false) and both Compose UIs
+                // (encryption follows whether a password was actually typed). Only opt in when the
+                // field is non-empty, matching them.
+                boolean hasPassword = password != null && password.length > 0;
+                config.setUseEncryption(hasPassword);
+                if (hasPassword) {
+                    config.setEncryptionAlgorithm(cryptAlgo);
+                    config.setPassword(password);
+                }
                 if (getEmbedPanel().getPluginOptionPanel() != null) {
                     getEmbedPanel().getPluginOptionPanel().setConfigFromGUI(config);
                 }
@@ -913,6 +921,12 @@ public class OpenStegoUI extends OpenStegoFrame {
                     java.util.Arrays.fill(password, '\0');
                 }
                 outputFileName = (String) stegoOutput.get(0);
+                // No filename was embedded (or it was stripped for privacy) - fall back rather than
+                // writing to "outputFolder/" itself and failing with a confusing "Is a directory" error.
+                // Matches the CLI's own fallback (OpenStegoCmd) for the same case.
+                if (outputFileName == null || outputFileName.isEmpty()) {
+                    outputFileName = "untitled";
+                }
                 file = new File(outputFolder + File.separator + outputFileName);
                 if (file.exists()) {
                     if (JOptionPane.showConfirmDialog(
