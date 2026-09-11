@@ -17,6 +17,7 @@ import com.openstego.desktop.util.CommonUtil
 import com.openstego.desktop.util.PluginManager
 import java.io.File
 import javax.swing.JFileChooser
+import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 
 /**
@@ -133,6 +134,8 @@ private fun runNativePicker(tool: String, save: Boolean, extensions: List<String
  * Returns the chosen path, or null if cancelled.
  */
 fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel: String = "Files"): String? {
+    // The native pickers (kdialog/zenity) already enforce the extension and confirm overwrites
+    // themselves; only the JFileChooser fallback below needs to do it explicitly.
     nativeDialogTool?.let { return runNativePicker(it, save, extensions, filterLabel) }
     var result: String? = null
     val task = Runnable {
@@ -143,8 +146,28 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
                 *extensions.toTypedArray(),
             )
         }
-        val outcome = if (save) chooser.showSaveDialog(null) else chooser.showOpenDialog(null)
-        if (outcome == JFileChooser.APPROVE_OPTION) result = chooser.selectedFile.absolutePath
+        while (true) {
+            val outcome = if (save) chooser.showSaveDialog(null) else chooser.showOpenDialog(null)
+            if (outcome != JFileChooser.APPROVE_OPTION) break
+            var file = chooser.selectedFile
+            if (save && extensions.isNotEmpty() && extensions.none { file.extension.equals(it, ignoreCase = true) }) {
+                file = File(file.parentFile, file.name + "." + extensions.first())
+            }
+            if (save && file.exists()) {
+                val overwrite = JOptionPane.showConfirmDialog(
+                    null,
+                    "File ${file.name} already exists. Overwrite?",
+                    "Overwrite?",
+                    JOptionPane.YES_NO_OPTION,
+                )
+                if (overwrite != JOptionPane.YES_OPTION) {
+                    chooser.selectedFile = file
+                    continue
+                }
+            }
+            result = file.absolutePath
+            break
+        }
     }
     if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
     return result
