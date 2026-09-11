@@ -14,6 +14,7 @@ import com.openstego.desktop.plugin.lsb.MultiCoverPayloadSplitter
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
 import com.openstego.desktop.util.AutoExtractor
 import com.openstego.desktop.util.CommonUtil
+import com.openstego.desktop.util.LabelUtil
 import com.openstego.desktop.util.PluginManager
 import java.io.File
 import javax.swing.JFileChooser
@@ -154,7 +155,7 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
                 file = File(file.parentFile, file.name + "." + extensions.first())
             }
             if (save && file.exists()) {
-                val labelUtil = com.openstego.desktop.util.LabelUtil.getInstance(OpenStego.NAMESPACE)
+                val labelUtil = LabelUtil.getInstance(OpenStego.NAMESPACE)
                 val overwrite = JOptionPane.showConfirmDialog(
                     null,
                     labelUtil.getString("gui.msg.warn.fileExists", file.name),
