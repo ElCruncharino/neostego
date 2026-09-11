@@ -23,6 +23,7 @@
     <string name="about_title_versioned">NeoStego %1$s</string>
     <string name="about_description">在图片或音频中隐藏文件,并嵌入/验证强健的水印。所有处理均在设备本地完成。</string>
     <string name="about_license">基于 Samir Vaidya 开发的 OpenStego。遵循 GNU 通用公共许可证第 2 版授权。</string>
+    <string name="about_acknowledgement">数字水印功能基于 Peter Meerwald 提供的代码(Digital Image Watermarking in the Wavelet Transfer Domain,萨尔茨堡大学,2001 年)。</string>
     <string name="btn_close">关闭</string>
 
     <!-- Shared toasts / errors (Hide, Reveal, Watermark screens) -->
@@ -163,6 +164,9 @@
     <string name="cd_password_optional">密码,可选</string>
     <string name="label_password_required">密码</string>
     <string name="cd_password_required">密码,必填</string>
+    <string name="label_password_confirm">确认密码</string>
+    <string name="cd_password_confirm">确认密码</string>
+    <string name="error_passwords_do_not_match">两次输入的密码不一致</string>
     <string name="btn_show_password">显示</string>
     <string name="btn_hide_password">隐藏</string>
     <string name="label_working">处理中…</string>
