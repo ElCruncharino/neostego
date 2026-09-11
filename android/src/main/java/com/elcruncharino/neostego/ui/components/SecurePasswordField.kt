@@ -56,9 +56,14 @@ fun SecurePasswordField(
     show: Boolean,
     onToggleShow: () -> Unit,
     onViewCreated: (EditText) -> Unit,
+    required: Boolean = false,
 ) {
-    val passwordOptionalLabel = stringResource(R.string.label_password_optional)
-    val passwordOptionalDescription = stringResource(R.string.cd_password_optional)
+    val passwordLabel = stringResource(
+        if (required) R.string.label_password_required else R.string.label_password_optional,
+    )
+    val passwordDescription = stringResource(
+        if (required) R.string.cd_password_required else R.string.cd_password_optional,
+    )
     val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
     val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
     val accentColor = MaterialTheme.colorScheme.primary.toArgb()
@@ -68,7 +73,7 @@ fun SecurePasswordField(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(passwordOptionalLabel, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text(passwordLabel, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 TextButton(onClick = onToggleShow) {
                     Text(if (show) stringResource(R.string.btn_hide_password) else stringResource(R.string.btn_show_password))
                 }
@@ -76,17 +81,17 @@ fun SecurePasswordField(
             AndroidView(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .semantics { contentDescription = passwordOptionalDescription },
+                    .semantics { contentDescription = passwordDescription },
                 factory = { ctx ->
                     EditText(ctx).apply {
                         setSingleLine(true)
                         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
                         imeOptions = imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
                         transformationMethod = PasswordTransformationMethod.getInstance()
-                        // Label the native field for TalkBack; the visual "Password (optional)"
-                        // header above is a separate composable and is not otherwise associated.
-                        hint = passwordOptionalLabel
-                        contentDescription = passwordOptionalDescription
+                        // Label the native field for TalkBack; the visual header above is a separate
+                        // composable and is not otherwise associated.
+                        hint = passwordLabel
+                        contentDescription = passwordDescription
                         onViewCreated(this)
                     }
                 },

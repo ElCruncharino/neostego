@@ -265,6 +265,7 @@ fun WatermarkScreen(appState: AppState) {
                     show = s.showPassword,
                     onToggleShow = { s.showPassword = !s.showPassword },
                     onViewCreated = { s.passwordView = it },
+                    required = true,
                 )
                 Text(
                     stringResource(R.string.hint_signature_password),
