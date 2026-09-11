@@ -8,6 +8,7 @@ package com.openstego.desktop;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Custom exception class to store multiple errors
@@ -15,13 +16,9 @@ import java.util.List;
 public class OpenStegoBulkException extends Exception {
 
     /**
-     * List of keys for the exception
+     * Errors added to this bulk exception, keyed by e.g. filename, in the order they were added
      */
-    private final List<String> keys = new ArrayList<>();
-    /**
-     * List of exceptions
-     */
-    private final List<OpenStegoException> exceptions = new ArrayList<>();
+    private final List<Map.Entry<String, OpenStegoException>> entries = new ArrayList<>();
 
     /**
      * Add an exception to this bulk list
@@ -30,29 +27,21 @@ public class OpenStegoBulkException extends Exception {
      * @param e   Exception to be added
      */
     public void add(String key, OpenStegoException e) {
-        keys.add(key);
-        exceptions.add(e);
+        entries.add(Map.entry(key, e));
     }
 
     /**
-     * Return the current list of keys
+     * Return the current list of errors
      */
-    public List<String> getKeys() {
-        return keys;
-    }
-
-    /**
-     * Return the current list of exceptions
-     */
-    public List<OpenStegoException> getExceptions() {
-        return exceptions;
+    public List<Map.Entry<String, OpenStegoException>> getEntries() {
+        return entries;
     }
 
     /**
      * Throw this exception if list is not empty
      */
     public void throwIfRequired() throws OpenStegoBulkException {
-        if (!exceptions.isEmpty()) {
+        if (!entries.isEmpty()) {
             throw this;
         }
     }
