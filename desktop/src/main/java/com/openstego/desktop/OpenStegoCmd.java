@@ -179,13 +179,14 @@ public class OpenStegoCmd {
             exitCode = (osEx.getErrorCode() == OpenStegoErrors.MISSING_REQUIRED_OPTION) ? 2 : 1;
         } catch (OpenStegoBulkException bulkEx) {
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < bulkEx.getExceptions().size(); i++) {
+            int i = 0;
+            for (Map.Entry<String, OpenStegoException> entry : bulkEx.getEntries()) {
                 sb.append("  ")
-                        .append(i + 1)
+                        .append(++i)
                         .append(". ")
-                        .append(bulkEx.getKeys().get(i))
+                        .append(entry.getKey())
                         .append(": ")
-                        .append(bulkEx.getExceptions().get(i).getMessage())
+                        .append(entry.getValue().getMessage())
                         .append("\n");
             }
             System.err.println();
@@ -289,7 +290,7 @@ public class OpenStegoCmd {
         // Plugin-specific options
         if (plugin != null) {
             for (PluginCmdLineOption pluginOption : plugin.getPluginCmdLineOptions()) {
-                addOption(spec, pluginOption.isTakesArg(), pluginOption.getName(), pluginOption.getAltName());
+                addOption(spec, pluginOption.takesArg(), pluginOption.name(), pluginOption.altName());
             }
         }
 
@@ -358,11 +359,11 @@ public class OpenStegoCmd {
         // alone is the signal, so record a sentinel instead of reading a value that doesn't exist.
         Map<String, String> pluginValues = new HashMap<>();
         for (PluginCmdLineOption pluginOption : plugin.getPluginCmdLineOptions()) {
-            if (parseResult.hasMatchedOption(pluginOption.getName())) {
-                String value = pluginOption.isTakesArg()
-                        ? parseResult.matchedOptionValue(pluginOption.getName(), (String) null)
+            if (parseResult.hasMatchedOption(pluginOption.name())) {
+                String value = pluginOption.takesArg()
+                        ? parseResult.matchedOptionValue(pluginOption.name(), (String) null)
                         : "true";
-                pluginValues.put(pluginOption.getName(), value);
+                pluginValues.put(pluginOption.name(), value);
             }
         }
         plugin.addPluginConfigValues(map, pluginValues);
