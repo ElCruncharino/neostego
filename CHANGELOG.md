@@ -11,6 +11,20 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-09-10
+
+A crash-fix release for Android. No change to the on-disk steganography format.
+
+### Fixed
+- **Split-image reveal with a wrong password crashed instead of showing an
+  error** — on Android's release build, the specific code path used by
+  "reassemble from multiple images" reveal never registered the localized
+  error-message labels, because that registration relied on invoking an
+  intentionally empty method to trigger class loading, and the optimizer
+  correctly treats a call to a truly empty method as removable dead code.
+  Regular single-image reveal was unaffected. Building the wrong-password
+  message now works regardless of that optimization.
+
 ## [1.2.0] — 2026-09-10
 
 A localization and hardening release. No change to the on-disk steganography
