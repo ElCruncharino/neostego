@@ -100,12 +100,16 @@ private fun commandExists(cmd: String): Boolean = try {
 // recent files, search) rather than Swing's dated chooser. Resolved once.
 private val nativeDialogTool: String? by lazy { listOf("kdialog", "zenity").firstOrNull(::commandExists) }
 
-private fun runNativePicker(tool: String, save: Boolean, extensions: List<String>, label: String): String? {
+private fun runNativePicker(tool: String, save: Boolean, multiple: Boolean, extensions: List<String>, label: String): List<String> {
     val home = System.getProperty("user.home")
     val glob = extensions.joinToString(" ") { "*.$it" }
     val cmd = when (tool) {
         "kdialog" -> buildList {
             add("kdialog")
+            if (multiple) {
+                add("--multiple")
+                add("--separate-output") // one path per line
+            }
             add(if (save) "--getsavefilename" else "--getopenfilename")
             add(home)
             if (extensions.isNotEmpty()) add("$glob|$label")
@@ -117,16 +121,29 @@ private fun runNativePicker(tool: String, save: Boolean, extensions: List<String
                 add("--save")
                 add("--confirm-overwrite")
             }
+            if (multiple) {
+                add("--multiple")
+                add("--separator=\n") // newline-separate so paths with spaces survive
+            }
             if (extensions.isNotEmpty()) add("--file-filter=$label | $glob")
         }
     }
     return try {
         val proc = ProcessBuilder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-        val out = proc.inputStream.bufferedReader().readText().trim()
-        if (proc.waitFor() == 0 && out.isNotEmpty()) out else null // exit!=0 => user cancelled
+        val out = proc.inputStream.bufferedReader().readText()
+        if (proc.waitFor() == 0) out.split('\n').map { it.trim() }.filter { it.isNotEmpty() } else emptyList() // exit!=0 => user cancelled
     } catch (e: Exception) {
-        null
+        emptyList()
     }
+}
+
+/** Runs [block] on Swing's EDT (synchronously if already on it) and returns its result. */
+private fun <T> onEdt(block: () -> T): T {
+    var result: T? = null
+    val task = Runnable { result = block() }
+    if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
+    @Suppress("UNCHECKED_CAST")
+    return result as T
 }
 
 /**
@@ -137,9 +154,8 @@ private fun runNativePicker(tool: String, save: Boolean, extensions: List<String
 fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel: String = "Files"): String? {
     // The native pickers (kdialog/zenity) already enforce the extension and confirm overwrites
     // themselves; only the JFileChooser fallback below needs to do it explicitly.
-    nativeDialogTool?.let { return runNativePicker(it, save, extensions, filterLabel) }
-    var result: String? = null
-    val task = Runnable {
+    nativeDialogTool?.let { return runNativePicker(it, save, multiple = false, extensions, filterLabel).firstOrNull() }
+    return onEdt {
         val chooser = JFileChooser()
         if (extensions.isNotEmpty()) {
             chooser.fileFilter = javax.swing.filechooser.FileNameExtensionFilter(
@@ -147,6 +163,7 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
                 *extensions.toTypedArray(),
             )
         }
+        var picked: String? = null
         while (true) {
             val outcome = if (save) chooser.showSaveDialog(null) else chooser.showOpenDialog(null)
             if (outcome != JFileChooser.APPROVE_OPTION) break
@@ -168,12 +185,11 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
                     continue
                 }
             }
-            result = file.absolutePath
+            picked = file.absolutePath
             break
         }
+        picked
     }
-    if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
-    return result
 }
 
 /**
@@ -182,36 +198,8 @@ fun pickFile(save: Boolean, extensions: List<String> = emptyList(), filterLabel:
  * the multiple covers for batch and split embedding.
  */
 fun pickFiles(extensions: List<String> = emptyList(), filterLabel: String = "Files"): List<String> {
-    nativeDialogTool?.let { tool ->
-        val home = System.getProperty("user.home")
-        val glob = extensions.joinToString(" ") { "*.$it" }
-        val cmd = when (tool) {
-            "kdialog" -> buildList {
-                add("kdialog")
-                add("--multiple")
-                add("--separate-output") // one path per line
-                add("--getopenfilename")
-                add(home)
-                if (extensions.isNotEmpty()) add("$glob|$filterLabel")
-            }
-            else -> buildList {
-                add("zenity")
-                add("--file-selection")
-                add("--multiple")
-                add("--separator=\n") // newline-separate so paths with spaces survive
-                if (extensions.isNotEmpty()) add("--file-filter=$filterLabel | $glob")
-            }
-        }
-        return try {
-            val proc = ProcessBuilder(cmd).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-            val out = proc.inputStream.bufferedReader().readText()
-            if (proc.waitFor() == 0) out.split('\n').map { it.trim() }.filter { it.isNotEmpty() } else emptyList()
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
-    var result = emptyList<String>()
-    val task = Runnable {
+    nativeDialogTool?.let { return runNativePicker(it, save = false, multiple = true, extensions, filterLabel) }
+    return onEdt {
         val chooser = JFileChooser().apply {
             isMultiSelectionEnabled = true
             if (extensions.isNotEmpty()) {
@@ -222,11 +210,11 @@ fun pickFiles(extensions: List<String> = emptyList(), filterLabel: String = "Fil
             }
         }
         if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
-            result = chooser.selectedFiles.map { it.absolutePath }
+            chooser.selectedFiles.map { it.absolutePath }
+        } else {
+            emptyList()
         }
     }
-    if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
-    return result
 }
 
 data class EmbedRequest(
@@ -455,13 +443,10 @@ fun pickDirectory(): String? {
             null
         }
     }
-    var result: String? = null
-    val task = Runnable {
+    return onEdt {
         val chooser = JFileChooser().apply { fileSelectionMode = JFileChooser.DIRECTORIES_ONLY }
-        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) result = chooser.selectedFile.absolutePath
+        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile.absolutePath else null
     }
-    if (SwingUtilities.isEventDispatchThread()) task.run() else SwingUtilities.invokeAndWait(task)
-    return result
 }
 
 /**
