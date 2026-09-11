@@ -29,6 +29,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -1659,9 +1660,9 @@ public class OpenStegoUI extends OpenStegoFrame {
      * @return Output message component
      */
     private Object getBulkMessage(OpenStegoBulkException ex) {
-        int len = ex.getExceptions().size();
-        if (len == 1) {
-            return ex.getExceptions().get(0);
+        List<Map.Entry<String, OpenStegoException>> entries = ex.getEntries();
+        if (entries.size() == 1) {
+            return entries.get(0).getValue();
         }
 
         // Derive the gridline colour from the look-and-feel so the table reads correctly under both
@@ -1681,11 +1682,11 @@ public class OpenStegoUI extends OpenStegoFrame {
                 .append("</th><th>")
                 .append(labelUtil.getString("gui.msg.err.header.error"))
                 .append("</th></tr>");
-        for (int i = 0; i < ex.getKeys().size(); i++) {
+        for (Map.Entry<String, OpenStegoException> entry : entries) {
             sb.append("<tr><td>")
-                    .append(ex.getKeys().get(i))
+                    .append(entry.getKey())
                     .append("</td><td>")
-                    .append(ex.getExceptions().get(i).getMessage())
+                    .append(entry.getValue().getMessage())
                     .append("</td></tr>");
         }
         sb.append("</table></body></html>");
