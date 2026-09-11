@@ -11,6 +11,15 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.2.2] — 2026-09-10
+
+### Fixed
+- **Watermark signature password field wrongly labeled "optional"** — the
+  Generate tab of the Watermark screen requires a password (the app already
+  rejects an empty one before generating), but the field was labeled the same
+  "Password (optional)" used on the Hide/Reveal screens, where a password
+  genuinely is optional. It now reads "Password" on that screen.
+
 ## [1.2.1] — 2026-09-10
 
 A crash-fix release for Android. No change to the on-disk steganography format.
