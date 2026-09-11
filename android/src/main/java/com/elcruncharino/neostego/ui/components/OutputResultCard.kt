@@ -8,6 +8,7 @@ package com.elcruncharino.neostego.ui.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,16 +44,16 @@ fun OutputResultCard(name: String, onSave: () -> Unit, onShare: () -> Unit) {
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer,
             )
-            androidx.compose.foundation.layout.Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(onClick = onSave, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Filled.Save, contentDescription = null)
-                    androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+                    Spacer(Modifier.size(8.dp))
                     Text(stringResource(R.string.btn_save))
                 }
                 OutlinedButton(onClick = onShare, modifier = Modifier.weight(1f)) {
                     Icon(Icons.Filled.Share, contentDescription = null)
-                    androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+                    Spacer(Modifier.size(8.dp))
                     Text(stringResource(R.string.btn_share))
                 }
             }
