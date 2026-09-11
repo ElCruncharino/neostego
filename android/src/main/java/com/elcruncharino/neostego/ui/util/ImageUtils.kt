@@ -8,6 +8,7 @@ package com.elcruncharino.neostego.ui.util
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.text.format.Formatter
 import com.elcruncharino.neostego.R
 
 /** Reads just the dimensions of an image without decoding its pixels. Returns 0 if unknown. */
@@ -23,12 +24,8 @@ internal fun imageDimensions(context: Context, uri: Uri): Pair<Int, Int>? {
     return if (opts.outWidth > 0 && opts.outHeight > 0) opts.outWidth to opts.outHeight else null
 }
 
-/** Formats a byte count as a short human-readable string (e.g. "12 KB", "3.4 MB"). */
-internal fun humanBytes(context: Context, bytes: Int): String = when {
-    bytes >= 1_000_000 -> context.getString(R.string.bytes_mb, bytes / 1_000_000.0)
-    bytes >= 1_000 -> context.getString(R.string.bytes_kb, bytes / 1_000)
-    else -> context.getString(R.string.bytes_raw, bytes)
-}
+/** Formats a byte count as a short, already-localized human-readable string (e.g. "12 KB", "3.4 MB"). */
+internal fun humanBytes(context: Context, bytes: Int): String = Formatter.formatShortFileSize(context, bytes.toLong())
 
 /**
  * Returns a warning only when an image genuinely cannot fit in the app's heap, otherwise null.

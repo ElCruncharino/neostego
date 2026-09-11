@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import com.elcruncharino.neostego.R
 import java.io.File
@@ -34,12 +35,9 @@ internal fun displayName(context: Context, uri: Uri): String {
 }
 
 /** MIME type inferred from a file name's extension; used to tag shared/saved output. */
-internal fun mimeForName(name: String): String = when (name.substringAfterLast('.', "").lowercase()) {
-    "png" -> "image/png"
-    "jpg", "jpeg" -> "image/jpeg"
-    "wav" -> "audio/x-wav"
-    else -> "application/octet-stream"
-}
+internal fun mimeForName(name: String): String =
+    MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substringAfterLast('.', "").lowercase())
+        ?: "application/octet-stream"
 
 /**
  * Writes [bytes] to a private cache file and returns an ACTION_SEND intent that shares it via the

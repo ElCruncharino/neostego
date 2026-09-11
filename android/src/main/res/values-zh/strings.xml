@@ -176,9 +176,6 @@
     <string name="label_working_pct_eta">处理中… %1$d%% · %2$s</string>
     <string name="eta_seconds">约 %1$d 秒</string>
     <string name="eta_minutes_seconds">约 %1$d 分 %2$d 秒</string>
-    <string name="bytes_mb">%1$.1f MB</string>
-    <string name="bytes_kb">%1$d KB</string>
-    <string name="bytes_raw">%1$d 字节</string>
     <string name="error_image_too_large_generic">此图片过大(约 %1$.0f 百万像素),超出了应用可用的内存。请尝试使用较小的图片。</string>
     <string name="error_unable_to_read_file">无法读取所选文件</string>
     <string name="error_unable_to_write_location">无法写入所选位置</string>
