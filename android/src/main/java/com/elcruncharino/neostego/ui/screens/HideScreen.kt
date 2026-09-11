@@ -148,8 +148,11 @@ fun HideScreen(appState: AppState) {
         }
     }
 
-    // --- Split output: one stego PNG per cover, written through a sequence of save dialogs. ---
-    val saveSplitPart = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("image/png")) { uri ->
+    // --- Split output: one stego image per cover (PNG or JPEG, per algorithm), written through a
+    // sequence of save dialogs. "*/*" (matching saveOutput above) sidesteps CreateDocument's MIME type
+    // being fixed at launcher-creation time, since the actual extension is driven by the filename passed
+    // to launch() below, not this contract argument.
+    val saveSplitPart = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
         val parts = splitParts
         val idx = splitPartIndex
         if (uri != null && idx in parts.indices) {
@@ -172,7 +175,10 @@ fun HideScreen(appState: AppState) {
         val parts = splitParts
         val idx = splitPartIndex
         when {
-            parts.isNotEmpty() && idx in parts.indices -> saveSplitPart.launch("stego_part${idx + 1}.png")
+            parts.isNotEmpty() && idx in parts.indices -> {
+                val ext = StegoEngine.outputName(s.algorithm).substringAfterLast('.')
+                saveSplitPart.launch("stego_part${idx + 1}.$ext")
+            }
             parts.isNotEmpty() && idx >= parts.size -> {
                 val count = parts.size
                 splitParts = emptyList()
@@ -287,9 +293,17 @@ fun HideScreen(appState: AppState) {
             s.algorithm == StegoEngine.Algorithm.F5
         if (s.splitMode) {
             FilePickCard(
-                label = stringResource(R.string.label_cover_images_split),
+                label = if (needsJpegCover) {
+                    stringResource(R.string.label_cover_images_split_jpeg)
+                } else {
+                    stringResource(R.string.label_cover_images_split)
+                },
                 chosen = if (s.splitCovers.isEmpty()) null else stringResource(R.string.split_images_selected, s.splitCovers.size),
-                hint = stringResource(R.string.hint_split_covers),
+                hint = if (needsJpegCover) {
+                    stringResource(R.string.hint_split_covers_jpeg)
+                } else {
+                    stringResource(R.string.hint_split_covers)
+                },
                 onPick = { pickCovers.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
             )
         } else {
