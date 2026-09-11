@@ -176,9 +176,6 @@
     <string name="label_working_pct_eta">処理中… %1$d%% ・ %2$s</string>
     <string name="eta_seconds">残り約%1$d秒</string>
     <string name="eta_minutes_seconds">残り約%1$d分%2$d秒</string>
-    <string name="bytes_mb">%1$.1f MB</string>
-    <string name="bytes_kb">%1$d KB</string>
-    <string name="bytes_raw">%1$d バイト</string>
     <string name="error_image_too_large_generic">この画像は非常に大きく(約 %1$.0f メガピクセル)、アプリが利用できるメモリを超えています。より小さな画像でお試しください。</string>
     <string name="error_unable_to_read_file">選択したファイルを読み込めません</string>
     <string name="error_unable_to_write_location">選択した保存先に書き込めません</string>

@@ -176,9 +176,6 @@
     <string name="label_working_pct_eta">Working… %1$d%% · %2$s</string>
     <string name="eta_seconds">~%1$ds</string>
     <string name="eta_minutes_seconds">~%1$dm %2$ds</string>
-    <string name="bytes_mb">%1$.1f MB</string>
-    <string name="bytes_kb">%1$d KB</string>
-    <string name="bytes_raw">%1$d bytes</string>
     <string name="error_image_too_large_generic">This image is extremely large (about %1$.0f megapixels) and is bigger than the memory available to the app. Try a smaller image.</string>
     <string name="error_unable_to_read_file">Unable to read the selected file</string>
     <string name="error_unable_to_write_location">Unable to write to the selected location</string>
