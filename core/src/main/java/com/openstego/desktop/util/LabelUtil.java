@@ -43,15 +43,7 @@ public class LabelUtil {
      * @return Instance of LabelUtil
      */
     public static LabelUtil getInstance(String namespace) {
-        LabelUtil util;
-
-        util = namespaceMap.get(namespace);
-        if (util == null) {
-            util = new LabelUtil(namespace);
-            namespaceMap.put(namespace, util);
-        }
-
-        return util;
+        return namespaceMap.computeIfAbsent(namespace, LabelUtil::new);
     }
 
     /**
