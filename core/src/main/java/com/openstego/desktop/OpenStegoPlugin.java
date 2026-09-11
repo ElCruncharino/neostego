@@ -11,6 +11,7 @@ import com.openstego.desktop.util.LabelUtil;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.DoubleConsumer;
 
 /**
  * Abstract class for stego plugins for OpenStego. Abstract methods need to be implemented to add support for more
@@ -40,10 +41,11 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
     protected C config = null;
 
     /**
-     * Optional listener notified of completion progress during long-running operations. May be
-     * {@code null} (the default), in which case no progress is reported.
+     * Optional listener notified of completion progress (a fraction in {@code [0.0, 1.0]}) during
+     * long-running operations. May be {@code null} (the default), in which case no progress is
+     * reported.
      */
-    protected ProgressListener progressListener = null;
+    protected DoubleConsumer progressListener = null;
 
     /**
      * Registers a listener to receive completion progress during embedding / extraction /
@@ -51,21 +53,21 @@ public abstract class OpenStegoPlugin<C extends OpenStegoConfig> {
      *
      * @param listener progress listener, or {@code null}
      */
-    public void setProgressListener(ProgressListener listener) {
+    public void setProgressListener(DoubleConsumer listener) {
         this.progressListener = listener;
     }
 
     /**
-     * Reports a completion fraction to the registered {@link ProgressListener}, if any. The fraction
-     * is clamped to {@code [0.0, 1.0]}. Safe to call when no listener is set (no-op).
+     * Reports a completion fraction to the registered progress listener, if any. The fraction is
+     * clamped to {@code [0.0, 1.0]}. Safe to call when no listener is set (no-op).
      *
      * @param fraction completion ratio (will be clamped to {@code [0.0, 1.0]})
      */
     protected void reportProgress(double fraction) {
-        ProgressListener listener = this.progressListener;
+        DoubleConsumer listener = this.progressListener;
         if (listener != null) {
             double f = fraction < 0.0 ? 0.0 : (fraction > 1.0 ? 1.0 : fraction);
-            listener.onProgress(f);
+            listener.accept(f);
         }
     }
 

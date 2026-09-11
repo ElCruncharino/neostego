@@ -10,7 +10,6 @@ import com.openstego.desktop.OpenStegoConfig
 import com.openstego.desktop.OpenStegoCrypto
 import com.openstego.desktop.OpenStegoException
 import com.openstego.desktop.OpenStegoPlugin
-import com.openstego.desktop.ProgressListener
 import com.openstego.desktop.WatermarkingPlugin
 import com.openstego.desktop.image.ImageCodecRegistry
 import com.openstego.desktop.plugin.adaptive.AdaptiveConfig
@@ -29,6 +28,7 @@ import com.openstego.desktop.plugin.randlsb.RandomLSBPlugin
 import com.openstego.desktop.plugin.template.image.DHImagePluginTemplate
 import com.openstego.desktop.plugin.wavlsb.WavLSBPlugin
 import com.openstego.desktop.util.AutoExtractor
+import java.util.function.DoubleConsumer
 
 /**
  * Thin Kotlin wrapper over the core [OpenStego] API for embedding and extracting data.
@@ -194,8 +194,8 @@ object StegoEngine {
                 F5Plugin(),
                 WavLSBPlugin(),
             )
-        val listener: ProgressListener? =
-            onProgress?.let { cb -> ProgressListener { f -> cb(f.toFloat()) } }
+        val listener: DoubleConsumer? =
+            onProgress?.let { cb -> DoubleConsumer { f -> cb(f.toFloat()) } }
         val out = AutoExtractor.extract(stegoData, stegoName, password, candidates, listener)
         val name = out[0] as? String ?: "extracted.dat"
         val data = out[1] as ByteArray

@@ -14,6 +14,7 @@ import com.openstego.desktop.util.LabelUtil;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleConsumer;
 
 /**
  * This is the main API class for OpenStego. It exposes the data-hiding and watermarking operations
@@ -94,7 +95,7 @@ public class OpenStego {
      *
      * @param listener progress listener, or {@code null}
      */
-    public void setProgressListener(ProgressListener listener) {
+    public void setProgressListener(DoubleConsumer listener) {
         this.plugin.setProgressListener(listener);
     }
 
