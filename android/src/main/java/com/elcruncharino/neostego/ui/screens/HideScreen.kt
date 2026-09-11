@@ -58,6 +58,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** What kind of cover file an algorithm needs - used to drop a now-invalid cover on algorithm switch. */
+private enum class CoverKind { AUDIO, JPEG_IMAGE, IMAGE }
+
+private fun coverKindFor(algorithm: StegoEngine.Algorithm): CoverKind = when (algorithm) {
+    StegoEngine.Algorithm.WAV -> CoverKind.AUDIO
+    StegoEngine.Algorithm.PLAIN_UNIWARD, StegoEngine.Algorithm.F5 -> CoverKind.JPEG_IMAGE
+    else -> CoverKind.IMAGE
+}
+
 @Composable
 fun HideScreen(appState: AppState) {
     val context = LocalContext.current
@@ -94,11 +103,24 @@ fun HideScreen(appState: AppState) {
     fun passwordsMatch(): Boolean {
         val pw = readPasswordChars(s.passwordView)
         val confirm = readPasswordChars(s.confirmPasswordView)
-        val ok = pw == null || pw.contentEquals(confirm)
+        // Unconditional, matching Swing's Arrays.equals(password, confPassword): a blank primary
+        // field only counts as a match against an equally-blank confirm field, so stray/mistyped
+        // text left in confirm still blocks (rather than being silently ignored).
+        val ok = (pw ?: CharArray(0)).contentEquals(confirm ?: CharArray(0))
         pw?.fill(' ')
         confirm?.fill(' ')
         if (!ok) toast(errorPasswordsDoNotMatch)
         return ok
+    }
+
+    // A cover picked for one algorithm can be the wrong file type for another (a PNG for F5, say),
+    // so drop it on switch rather than letting a stale, invalid cover reach Hide.
+    fun selectAlgorithm(algorithm: StegoEngine.Algorithm) {
+        if (coverKindFor(algorithm) != coverKindFor(s.algorithm)) {
+            s.coverUri = null
+            s.splitCovers.clear()
+        }
+        s.algorithm = algorithm
     }
 
     // Split output is written part-by-part through a chain of save dialogs; these track that chain.
@@ -392,37 +414,37 @@ fun HideScreen(appState: AppState) {
                     selected = s.algorithm == StegoEngine.Algorithm.SI_UNIWARD,
                     title = stringResource(R.string.algo_si_uniward_title),
                     subtitle = stringResource(R.string.algo_si_uniward_subtitle),
-                    onClick = { s.algorithm = StegoEngine.Algorithm.SI_UNIWARD },
+                    onClick = { selectAlgorithm(StegoEngine.Algorithm.SI_UNIWARD) },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD,
                     title = stringResource(R.string.algo_j_uniward_title),
                     subtitle = stringResource(R.string.algo_j_uniward_subtitle),
-                    onClick = { s.algorithm = StegoEngine.Algorithm.PLAIN_UNIWARD },
+                    onClick = { selectAlgorithm(StegoEngine.Algorithm.PLAIN_UNIWARD) },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.F5,
                     title = stringResource(R.string.algo_f5_title),
                     subtitle = stringResource(R.string.algo_f5_subtitle),
-                    onClick = { s.algorithm = StegoEngine.Algorithm.F5 },
+                    onClick = { selectAlgorithm(StegoEngine.Algorithm.F5) },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.ADAPTIVE,
                     title = stringResource(R.string.algo_adaptive_title),
                     subtitle = stringResource(R.string.algo_adaptive_subtitle),
-                    onClick = { s.algorithm = StegoEngine.Algorithm.ADAPTIVE },
+                    onClick = { selectAlgorithm(StegoEngine.Algorithm.ADAPTIVE) },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.MATCHING,
                     title = stringResource(R.string.algo_lsb_matching_title),
                     subtitle = stringResource(R.string.algo_lsb_matching_subtitle),
-                    onClick = { s.algorithm = StegoEngine.Algorithm.MATCHING },
+                    onClick = { selectAlgorithm(StegoEngine.Algorithm.MATCHING) },
                 )
                 AlgorithmOption(
                     selected = s.algorithm == StegoEngine.Algorithm.WAV,
                     title = stringResource(R.string.algo_audio_wav_title),
                     subtitle = stringResource(R.string.algo_audio_wav_subtitle),
-                    onClick = { s.algorithm = StegoEngine.Algorithm.WAV },
+                    onClick = { selectAlgorithm(StegoEngine.Algorithm.WAV) },
                 )
 
                 if (s.algorithm == StegoEngine.Algorithm.SI_UNIWARD) {
