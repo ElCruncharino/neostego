@@ -110,6 +110,10 @@ private fun launchComposeUi() {
     // Apply the saved language before plugins/resources load: Compose's resource system and the
     // core plugin labels both derive their language from the JVM default locale at load time.
     UILocale.install(loadLanguageMode())
+    // Registers the "OpenStego" label namespace (gui.msg.warn.fileExists et al., used by the
+    // save-overwrite dialog) - unlike runCli() above, nothing on this path used to touch OpenStego
+    // until a Hide/Watermark/Extract actually ran, so an early overwrite prompt showed raw label keys.
+    OpenStego.init()
     PluginManager.loadPlugins()
     val dhAlgorithms = dataHidingAlgorithms()
     val wmAlgorithms = watermarkingAlgorithms()
