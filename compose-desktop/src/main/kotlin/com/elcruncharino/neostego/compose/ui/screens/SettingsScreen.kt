@@ -47,6 +47,7 @@ import com.elcruncharino.neostego.compose.ui.SegmentedButtonGroup
 import com.openstego.desktop.ui.UILocale
 import openstego.compose_desktop.generated.resources.Res
 import openstego.compose_desktop.generated.resources.about_accessibility_note
+import openstego.compose_desktop.generated.resources.about_acknowledgement
 import openstego.compose_desktop.generated.resources.about_app_name_version
 import openstego.compose_desktop.generated.resources.about_fork_credit
 import openstego.compose_desktop.generated.resources.about_license
@@ -133,6 +134,7 @@ fun SettingsScreen(
                 Text(stringResource(Res.string.about_tagline), style = MaterialTheme.typography.bodyMedium, color = muted)
                 Text(stringResource(Res.string.about_fork_credit), style = MaterialTheme.typography.bodySmall, color = muted)
                 Text(stringResource(Res.string.about_license), style = MaterialTheme.typography.bodySmall, color = muted)
+                Text(stringResource(Res.string.about_acknowledgement), style = MaterialTheme.typography.bodySmall, color = muted)
                 TextButton(onClick = { openUrl(HOMEPAGE) }) { Text(HOMEPAGE) }
                 Text(
                     stringResource(Res.string.about_accessibility_note),
