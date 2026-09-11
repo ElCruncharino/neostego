@@ -75,7 +75,10 @@ public class LabelUtil {
      * @return Display value for the label
      */
     public String getString(String key) {
-        return (map.get(this.namespace)).getString(key);
+        ResourceBundle bundle = map.get(this.namespace);
+        // Falls back to the raw key rather than crashing if a namespace's labels were never
+        // registered (e.g. a caller error-path that never triggered its owning class's init).
+        return bundle == null ? key : bundle.getString(key);
     }
 
     /**
