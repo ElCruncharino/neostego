@@ -333,13 +333,13 @@ object StegoEngine {
      * decrypting with [password] if needed. Returns the original file name and bytes.
      *
      * The algorithm isn't recorded in the parts, so - mirroring the desktop GUI's reassembly and
-     * [extract]'s single-file auto-detection - every split-eligible algorithm (ADAPTIVE, MATCHING) is
-     * tried in turn until one parses the parts' manifests. A failure that gets as far as the core split
-     * logic (namespace [OpenStego.NAMESPACE] - a corrupt/incomplete/mismatched manifest, or a bad
-     * password/decompression on an otherwise-valid one) means this candidate's per-image header did
-     * decode correctly, so it is almost certainly the right algorithm: that error is definitive and is
-     * surfaced immediately rather than being masked by the next candidate's unrelated header-format
-     * mismatch.
+     * [extract]'s single-file auto-detection - every distinct split-eligible plugin (ADAPTIVE, MATCHING,
+     * JpegUniward, F5) is tried in turn until one parses the parts' manifests. A failure that gets as far
+     * as the core split logic (namespace [OpenStego.NAMESPACE] - a corrupt/incomplete/mismatched
+     * manifest, or a bad password/decompression on an otherwise-valid one) means this candidate's
+     * per-image header did decode correctly, so it is almost certainly the right algorithm: that error is
+     * definitive and is surfaced immediately rather than being masked by the next candidate's unrelated
+     * header-format mismatch.
      */
     fun extractSplit(
         stegoImages: List<ByteArray>,
@@ -347,7 +347,9 @@ object StegoEngine {
         password: CharArray?,
     ): Extracted {
         var last: OpenStegoException? = null
-        for (algorithm in SPLIT_ELIGIBLE_ALGORITHMS) {
+        // PLAIN_UNIWARD skipped: it shares JpegUniwardPlugin with SI_UNIWARD, and plainMode only
+        // affects embedding, not extraction, so trying both would just repeat the same JPEG decode.
+        for (algorithm in SPLIT_ELIGIBLE_ALGORITHMS.filterNot { it == Algorithm.PLAIN_UNIWARD }) {
             val plugin = newPlugin(algorithm) as DHImagePluginTemplate<*>
             plugin.resetConfig()
             val config = plugin.config
