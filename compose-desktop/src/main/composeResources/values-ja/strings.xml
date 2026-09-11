@@ -128,6 +128,7 @@
     <string name="about_tagline">画像や音声にデータを隠し、ファイルに電子透かしを付けます。</string>
     <string name="about_fork_credit">Samir Vaidya 氏による OpenStego のフォークを近代化したものです。Nick Haghiri がメンテナンスしています。</string>
     <string name="about_license">GNU General Public License v2 のもとでライセンスされています。</string>
+    <string name="about_acknowledgement">デジタル電子透かし機能は Peter Meerwald 氏によるコードを基にしています(Digital Image Watermarking in the Wavelet Transfer Domain, ザルツブルク大学, 2001年)。</string>
     <string name="about_accessibility_note">Linux でスクリーンリーダーをご利用ですか？クラシック（Swing）UI とコマンドラインインターフェースは完全にアクセシビリティに対応しています。</string>
 
     <!-- Watermark screens (WatermarkScreens.kt) -->

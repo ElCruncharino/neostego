@@ -128,6 +128,7 @@
     <string name="about_tagline">Hide data inside images and audio, and watermark your files.</string>
     <string name="about_fork_credit">A modernized fork of OpenStego by Samir Vaidya. Maintained by Nick Haghiri.</string>
     <string name="about_license">Licensed under the GNU General Public License v2.</string>
+    <string name="about_acknowledgement">Digital watermarking is based on code by Peter Meerwald (Digital Image Watermarking in the Wavelet Transfer Domain, University of Salzburg, 2001).</string>
     <string name="about_accessibility_note">Using a screen reader on Linux? The classic (Swing) UI and the command-line interface are fully accessible.</string>
 
     <!-- Watermark screens (WatermarkScreens.kt) -->
