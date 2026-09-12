@@ -11,17 +11,24 @@ import android.net.Uri
 import android.text.format.Formatter
 import com.elcruncharino.neostego.R
 
+/** An image's pixel dimensions and detected format, read without decoding its pixels. */
+internal data class ImageInfo(val width: Int, val height: Int, val isJpeg: Boolean)
+
 /** Reads just the dimensions of an image without decoding its pixels. Returns 0 if unknown. */
 internal fun imagePixelCount(context: Context, uri: Uri): Long {
-    val (w, h) = imageDimensions(context, uri) ?: return 0L
-    return w.toLong() * h.toLong()
+    val info = imageInfo(context, uri) ?: return 0L
+    return info.width.toLong() * info.height.toLong()
 }
 
-/** Reads an image's pixel dimensions without decoding its pixels. Returns null if unknown. */
-internal fun imageDimensions(context: Context, uri: Uri): Pair<Int, Int>? {
+/**
+ * Reads an image's pixel dimensions and real format (by content, not by file extension) without
+ * decoding its pixels. Returns null if the file isn't a decodable image at all.
+ */
+internal fun imageInfo(context: Context, uri: Uri): ImageInfo? {
     val opts = BitmapFactory.Options().apply { inJustDecodeBounds = true }
     context.contentResolver.openInputStream(uri)?.use { BitmapFactory.decodeStream(it, null, opts) }
-    return if (opts.outWidth > 0 && opts.outHeight > 0) opts.outWidth to opts.outHeight else null
+    if (opts.outWidth <= 0 || opts.outHeight <= 0) return null
+    return ImageInfo(opts.outWidth, opts.outHeight, opts.outMimeType == "image/jpeg")
 }
 
 /** Formats a byte count as a short, already-localized human-readable string (e.g. "12 KB", "3.4 MB"). */

@@ -38,9 +38,7 @@
     <string name="error_choose_file_to_hide">まず隠すファイルを選んでください</string>
     <string name="toast_saved_stego_images">%1$d 枚のステゴ画像を保存しました</string>
     <string name="error_failed_to_hide">データの隠蔽に失敗しました</string>
-    <string name="error_choose_cover">まずカバー%1$sを選んでください</string>
-    <string name="cover_kind_audio_file">音声ファイル</string>
-    <string name="cover_kind_image">画像</string>
+    <string name="error_choose_cover_file">まずカバーファイルを選んでください</string>
     <string name="label_cover_images_split">カバー画像(分割)</string>
     <string name="label_cover_images_split_jpeg">カバー画像(分割、JPEG)</string>
     <string name="split_images_selected">%1$d 枚の画像を選択済み</string>
@@ -52,6 +50,8 @@
     <string name="hint_cover_wav">非圧縮の PCM WAV ファイル</string>
     <string name="hint_cover_jpeg">データを隠す既存の JPEG ファイル</string>
     <string name="hint_cover_image">データを隠す対象の画像</string>
+    <string name="label_cover_file">カバーファイル</string>
+    <string name="hint_cover_file">画像または WAV 音声ファイルを選んでください。以下の隠し方は選んだファイルに応じて変わります。</string>
     <string name="capacity_estimate">この画像には約 %1$s まで隠せます</string>
     <string name="label_file_to_hide">隠すファイル</string>
     <string name="hint_file_to_hide">任意のファイル(文書、写真など)</string>
@@ -68,6 +68,7 @@
     <string name="algo_lsb_matching_subtitle">容量が大きく高速で、従来型のステガノ解析に耐えます。出力は可逆圧縮の PNG です。</string>
     <string name="algo_audio_wav_title">音声(WAV)</string>
     <string name="algo_audio_wav_subtitle">非圧縮 PCM WAV ファイルのサンプルにデータを隠します。出力は WAV です。上でカバー音声を選んでください。</string>
+    <string name="hint_algo_too_small">隠すファイルには容量が足りません</string>
     <string name="label_jpeg_quality">JPEG 品質: %1$d</string>
     <string name="hint_jpeg_quality">品質を上げるほど画像は鮮明になりますが、ファイルも大きくなります。90 が良い初期値です。</string>
     <string name="btn_advanced_expanded">詳細設定 ▴</string>
@@ -78,7 +79,7 @@
     <string name="label_bits_per_channel">チャンネルあたりのビット数: %1$d</string>
     <string name="hint_bits_per_channel">ビット数が多いほど多くのデータを保存できますが検出されやすくなります。3 が良いバランスです。</string>
     <string name="label_compress_payload">ペイロードを圧縮</string>
-    <string name="hint_compress_payload">隠す前にデータを GZIP 圧縮します。通常はサイズが小さくなります。すでに圧縮済みのファイルではオフにしてください。</string>
+    <string name="hint_compress_payload">隠す前にデータを圧縮します。通常はサイズが小さくなります。すでに圧縮済みのファイルではオフにしてください。</string>
     <string name="label_use_aes256">AES-256 を使用</string>
     <string name="hint_use_aes256">デフォルトの AES-128 より強力な鍵長です。パスワードを設定している場合のみ有効です。</string>
     <string name="label_split_across_covers">複数のカバーに分割</string>

@@ -34,7 +34,7 @@ class HideState {
     var passwordView by mutableStateOf<EditText?>(null)
     var confirmPasswordView by mutableStateOf<EditText?>(null)
     var algorithm by mutableStateOf(StegoEngine.Algorithm.ADAPTIVE)
-    var embedFileName by mutableStateOf(false)
+    var embedFileName by mutableStateOf(true)
     var jpegQuality by mutableStateOf(90)
     var adaptiveCmd by mutableStateOf(true)
     var adaptiveCmdMu by mutableStateOf(3.0)
@@ -49,8 +49,13 @@ class HideState {
     // Determinate progress for the "Working..." bar: null = indeterminate; startedAtMs anchors the ETA.
     var progress by mutableStateOf<Float?>(null)
     var startedAtMs by mutableStateOf(0L)
-    var capacity by mutableStateOf<Int?>(null)
     var result by mutableStateOf<OutputResult?>(null)
+
+    // Cover-driven algorithm filtering (single-cover mode only; split mode keeps the older
+    // algorithm-first flow). Null coverIsJpeg means no cover picked yet, or the cover is audio.
+    var coverIsJpeg by mutableStateOf<Boolean?>(null)
+    var messageSize by mutableStateOf<Long?>(null)
+    var capacityByAlgorithm by mutableStateOf<Map<StegoEngine.Algorithm, Int>>(emptyMap())
 }
 
 /** Reveal-screen input and produced output. */
