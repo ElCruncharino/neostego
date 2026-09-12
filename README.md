@@ -51,6 +51,7 @@ Installers **bundle their own Java runtime** — there's nothing else to install
 - 💧 **Robust watermarking** — `DWTSVD` embeds a real multi-bit payload, recovered **blindly**, that survives JPEG recompression, noise, blur, resampling, brightness changes, and small crops.
 - 🎵 **Audio support** — hide data in uncompressed WAV (PCM) files.
 - 🎨 **More formats** — read PNG/BMP/WebP covers, preserve embedded ICC color profiles, choose JPEG quality for watermarking.
+- 🧵 **Split across covers** — spread one payload across multiple cover images when a single one isn't big enough, reassembled automatically on reveal.
 - 🖥️ **Native desktop UX** — FlatLaf light/dark themes, native OS file dialogs, drag-and-drop, password reveal.
 - 📱 **Android app** — a Kotlin / Jetpack Compose client sharing the same core engine.
 - 🧩 **Full CLI** — scriptable `embed` / `extract` / watermarking commands.

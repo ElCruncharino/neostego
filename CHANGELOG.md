@@ -11,6 +11,46 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-09-12
+
+Android/desktop feature parity and a redesigned Hide flow on Android.
+
+### Added
+- **Android split-across-images now supports every image algorithm** —
+  previously limited to Adaptive and LSB matching; SI-UNIWARD, J-UNIWARD, and
+  F5 can now split a payload across multiple covers too, matching desktop.
+- **Android's Hide screen is cover-first** — pick a cover image or WAV file
+  first, and the app detects its real format and only offers hiding methods
+  it actually supports (checking file content, not the extension). Methods
+  without enough capacity for the file being hidden gray out with an
+  explanation instead of failing after the fact.
+- **Password confirmation on Android's Hide screen** — matches Swing and
+  compose-desktop's existing re-entry check; both fields share one box and a
+  single Show/Hide toggle, and confirmation is skipped once the password is
+  shown in plaintext.
+
+### Changed
+- **"Store original file name" now defaults on** on Android, matching the
+  CLI and desktop UIs.
+- **"Compress payload"'s description no longer mentions GZIP** (compression
+  has used dictionary-primed DEFLATE since 1.2.0).
+
+### Fixed
+- **Swing's Hide silently encrypted with a blank password** instead of
+  leaving the file unencrypted, disagreeing with the CLI and both Compose
+  UIs.
+- **Swing's Reveal crashed on an empty embedded filename** instead of
+  falling back to a generic name.
+- **Android's split-image reveal had no oversize/out-of-memory guard**,
+  unlike single-image reveal.
+- **compose-desktop's watermark signature key field was unmasked plaintext.**
+- **compose-desktop's save dialog didn't confirm overwrites or enforce the
+  file extension** in its non-native (Windows/macOS) fallback picker, and
+  could show untranslated text in that prompt on first use.
+- Swing's About dialog title and OK button weren't localized; both Compose
+  About screens were missing the Meerwald watermarking acknowledgement;
+  Android's watermark JPEG-quality slider didn't match desktop's 1-100 range.
+
 ## [1.2.3] — 2026-09-11
 
 ### Fixed
