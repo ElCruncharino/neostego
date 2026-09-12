@@ -38,9 +38,7 @@
     <string name="error_choose_file_to_hide">Choose a file to hide first</string>
     <string name="toast_saved_stego_images">Saved %1$d stego images</string>
     <string name="error_failed_to_hide">Failed to hide data</string>
-    <string name="error_choose_cover">Choose a cover %1$s first</string>
-    <string name="cover_kind_audio_file">audio file</string>
-    <string name="cover_kind_image">image</string>
+    <string name="error_choose_cover_file">Choose a cover file first</string>
     <string name="label_cover_images_split">Cover images (split)</string>
     <string name="label_cover_images_split_jpeg">Cover images (split, JPEG)</string>
     <string name="split_images_selected">%1$d images selected</string>
@@ -52,6 +50,8 @@
     <string name="hint_cover_wav">An uncompressed PCM WAV file</string>
     <string name="hint_cover_jpeg">An existing JPEG to hide the data in</string>
     <string name="hint_cover_image">The image the data will be hidden in</string>
+    <string name="label_cover_file">Cover file</string>
+    <string name="hint_cover_file">Pick an image or WAV audio file. The hiding methods below will match what you choose.</string>
     <string name="capacity_estimate">Can hide up to about %1$s in this image</string>
     <string name="label_file_to_hide">File to hide</string>
     <string name="hint_file_to_hide">Any file (document, photo, etc.)</string>
@@ -68,6 +68,7 @@
     <string name="algo_lsb_matching_subtitle">Higher capacity and faster; resists classical steganalysis. Lossless PNG.</string>
     <string name="algo_audio_wav_title">Audio (WAV)</string>
     <string name="algo_audio_wav_subtitle">Hides data in the samples of an uncompressed PCM WAV file. Output is a WAV; pick an audio cover above.</string>
+    <string name="hint_algo_too_small">Too small for the file you\'re hiding</string>
     <string name="label_jpeg_quality">JPEG quality: %1$d</string>
     <string name="hint_jpeg_quality">Higher quality keeps the image crisper but enlarges the file; 90 is a good default.</string>
     <string name="btn_advanced_expanded">Advanced ▴</string>
@@ -78,7 +79,7 @@
     <string name="label_bits_per_channel">Bits per channel: %1$d</string>
     <string name="hint_bits_per_channel">More bits store more data but are easier to detect; 3 balances the two.</string>
     <string name="label_compress_payload">Compress payload</string>
-    <string name="hint_compress_payload">GZIP the data before hiding. Usually shrinks it; turn off for already-compressed files.</string>
+    <string name="hint_compress_payload">Compress the data before hiding. Usually shrinks it; turn off for already-compressed files.</string>
     <string name="label_use_aes256">Use AES-256</string>
     <string name="hint_use_aes256">Stronger key size than the default AES-128. Only applies when a password is set.</string>
     <string name="label_split_across_covers">Split across covers</string>

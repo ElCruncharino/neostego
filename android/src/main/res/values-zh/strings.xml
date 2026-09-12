@@ -38,9 +38,7 @@
     <string name="error_choose_file_to_hide">请先选择要隐藏的文件</string>
     <string name="toast_saved_stego_images">已保存 %1$d 张隐写图片</string>
     <string name="error_failed_to_hide">隐藏数据失败</string>
-    <string name="error_choose_cover">请先选择载体%1$s</string>
-    <string name="cover_kind_audio_file">音频文件</string>
-    <string name="cover_kind_image">图片</string>
+    <string name="error_choose_cover_file">请先选择载体文件</string>
     <string name="label_cover_images_split">载体图片(分割)</string>
     <string name="label_cover_images_split_jpeg">载体图片(分割,JPEG)</string>
     <string name="split_images_selected">已选择 %1$d 张图片</string>
@@ -52,6 +50,8 @@
     <string name="hint_cover_wav">未压缩的 PCM WAV 文件</string>
     <string name="hint_cover_jpeg">用于隐藏数据的现有 JPEG 图片</string>
     <string name="hint_cover_image">数据将被隐藏到的图片</string>
+    <string name="label_cover_file">载体文件</string>
+    <string name="hint_cover_file">选择一张图片或 WAV 音频文件。下方可用的隐藏方式会根据所选文件变化。</string>
     <string name="capacity_estimate">此图片最多可隐藏约 %1$s</string>
     <string name="label_file_to_hide">要隐藏的文件</string>
     <string name="hint_file_to_hide">任意文件(文档、照片等)</string>
@@ -68,6 +68,7 @@
     <string name="algo_lsb_matching_subtitle">容量更大、速度更快,可抵御传统隐写分析。输出为无损 PNG。</string>
     <string name="algo_audio_wav_title">音频(WAV)</string>
     <string name="algo_audio_wav_subtitle">将数据隐藏在未压缩 PCM WAV 文件的采样中。输出为 WAV;请在上方选择音频载体。</string>
+    <string name="hint_algo_too_small">容量不足以隐藏所选文件</string>
     <string name="label_jpeg_quality">JPEG 质量:%1$d</string>
     <string name="hint_jpeg_quality">质量越高图片越清晰,但文件也越大;90 是不错的默认值。</string>
     <string name="btn_advanced_expanded">高级选项 ▴</string>
@@ -78,7 +79,7 @@
     <string name="label_bits_per_channel">每通道比特数:%1$d</string>
     <string name="hint_bits_per_channel">比特数越多可存储的数据越多,但也更易被检测;3 是较好的平衡点。</string>
     <string name="label_compress_payload">压缩数据</string>
-    <string name="hint_compress_payload">隐藏前对数据进行 GZIP 压缩。通常能减小体积;若文件已经压缩过,请关闭此选项。</string>
+    <string name="hint_compress_payload">隐藏前对数据进行压缩。通常能减小体积;若文件已经压缩过,请关闭此选项。</string>
     <string name="label_use_aes256">使用 AES-256</string>
     <string name="hint_use_aes256">密钥长度强于默认的 AES-128。仅在设置了密码时生效。</string>
     <string name="label_split_across_covers">分散到多个载体</string>

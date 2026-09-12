@@ -57,7 +57,7 @@ object StegoEngine {
         val adaptiveCmd: Boolean = true,
         val adaptiveCmdMu: Double = 3.0,
         val lsbBitsPerChannel: Int = 3,
-        /** Whether to GZIP-compress the payload before embedding (desktop parity: user-toggleable). */
+        /** Whether to compress the payload before embedding (desktop parity: user-toggleable). */
         val useCompression: Boolean = true,
         /** Use AES-256 instead of the default AES-128 when a password is supplied. */
         val encryptionAes256: Boolean = false,
@@ -72,6 +72,23 @@ object StegoEngine {
 
     /** True if [algorithm] embeds into images (so capacity/cover pickers are image-based). */
     fun isImageAlgorithm(algorithm: Algorithm): Boolean = algorithm != Algorithm.WAV
+
+    // F5/PLAIN_UNIWARD embed directly into the cover's existing compressed JPEG bytes, so they need
+    // the cover to actually be a JPEG; the other image algorithms just decode it to pixels, so any
+    // decodable format works as their precover.
+    private val JPEG_ONLY_ALGORITHMS = setOf(Algorithm.PLAIN_UNIWARD, Algorithm.F5)
+    private val IMAGE_ALGORITHMS_IN_ORDER =
+        listOf(Algorithm.SI_UNIWARD, Algorithm.PLAIN_UNIWARD, Algorithm.F5, Algorithm.ADAPTIVE, Algorithm.MATCHING)
+
+    /**
+     * Which algorithms a cover of the given detected format supports, in display order.
+     * [isJpegCover] is null for a non-image (audio) cover, in which case only WAV applies.
+     */
+    fun algorithmsFor(isJpegCover: Boolean?): List<Algorithm> = when (isJpegCover) {
+        null -> listOf(Algorithm.WAV)
+        true -> IMAGE_ALGORITHMS_IN_ORDER
+        false -> IMAGE_ALGORITHMS_IN_ORDER.filterNot { it in JPEG_ONLY_ALGORITHMS }
+    }
 
     private fun newPlugin(algorithm: Algorithm): OpenStegoPlugin<*> = when (algorithm) {
         Algorithm.ADAPTIVE -> AdaptiveImagePlugin()

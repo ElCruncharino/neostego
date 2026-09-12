@@ -34,6 +34,15 @@ internal fun displayName(context: Context, uri: Uri): String {
     return uri.lastPathSegment ?: "file"
 }
 
+/** The file's size in bytes, without reading its contents. Returns null if unknown. */
+internal fun fileSize(context: Context, uri: Uri): Long? {
+    context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val idx = cursor.getColumnIndex(OpenableColumns.SIZE)
+        if (idx >= 0 && cursor.moveToFirst() && !cursor.isNull(idx)) return cursor.getLong(idx)
+    }
+    return null
+}
+
 /** MIME type inferred from a file name's extension; used to tag shared/saved output. */
 internal fun mimeForName(name: String): String =
     MimeTypeMap.getSingleton().getMimeTypeFromExtension(name.substringAfterLast('.', "").lowercase())

@@ -48,8 +48,9 @@ import com.elcruncharino.neostego.ui.components.ToggleRow
 import com.elcruncharino.neostego.ui.components.readPasswordChars
 import com.elcruncharino.neostego.ui.util.OutputResult
 import com.elcruncharino.neostego.ui.util.displayName
+import com.elcruncharino.neostego.ui.util.fileSize
 import com.elcruncharino.neostego.ui.util.humanBytes
-import com.elcruncharino.neostego.ui.util.imageDimensions
+import com.elcruncharino.neostego.ui.util.imageInfo
 import com.elcruncharino.neostego.ui.util.mimeForName
 import com.elcruncharino.neostego.ui.util.oversizeWarning
 import com.elcruncharino.neostego.ui.util.readBytes
@@ -66,6 +67,18 @@ private fun coverKindFor(algorithm: StegoEngine.Algorithm): CoverKind = when (al
     StegoEngine.Algorithm.PLAIN_UNIWARD, StegoEngine.Algorithm.F5 -> CoverKind.JPEG_IMAGE
     else -> CoverKind.IMAGE
 }
+
+/** One hiding-method radio option's static text, keyed by algorithm so the list can be data-driven. */
+private data class AlgoEntry(val algorithm: StegoEngine.Algorithm, val titleRes: Int, val subtitleRes: Int)
+
+private val ALGO_ENTRIES = listOf(
+    AlgoEntry(StegoEngine.Algorithm.SI_UNIWARD, R.string.algo_si_uniward_title, R.string.algo_si_uniward_subtitle),
+    AlgoEntry(StegoEngine.Algorithm.PLAIN_UNIWARD, R.string.algo_j_uniward_title, R.string.algo_j_uniward_subtitle),
+    AlgoEntry(StegoEngine.Algorithm.F5, R.string.algo_f5_title, R.string.algo_f5_subtitle),
+    AlgoEntry(StegoEngine.Algorithm.ADAPTIVE, R.string.algo_adaptive_title, R.string.algo_adaptive_subtitle),
+    AlgoEntry(StegoEngine.Algorithm.MATCHING, R.string.algo_lsb_matching_title, R.string.algo_lsb_matching_subtitle),
+    AlgoEntry(StegoEngine.Algorithm.WAV, R.string.algo_audio_wav_title, R.string.algo_audio_wav_subtitle),
+)
 
 @Composable
 fun HideScreen(appState: AppState) {
@@ -84,9 +97,7 @@ fun HideScreen(appState: AppState) {
     val errorNeedTwoCovers = stringResource(R.string.error_need_two_covers)
     val errorChooseFileToHide = stringResource(R.string.error_choose_file_to_hide)
     val errorFailedToHide = stringResource(R.string.error_failed_to_hide)
-    val coverKindAudioFile = stringResource(R.string.cover_kind_audio_file)
-    val coverKindImage = stringResource(R.string.cover_kind_image)
-    val errorChooseCoverTemplate = stringResource(R.string.error_choose_cover)
+    val errorChooseCoverFile = stringResource(R.string.error_choose_cover_file)
     val errorPasswordsDoNotMatch = stringResource(R.string.error_passwords_do_not_match)
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
@@ -114,11 +125,11 @@ fun HideScreen(appState: AppState) {
         return ok
     }
 
-    // A cover picked for one algorithm can be the wrong file type for another (a PNG for F5, say),
-    // so drop it on switch rather than letting a stale, invalid cover reach Hide.
+    // Split mode's cover picker still filters by the selected algorithm (unlike single-cover mode,
+    // which is now cover-first - see the LaunchedEffect below), so a switch there can invalidate
+    // already-picked covers.
     fun selectAlgorithm(algorithm: StegoEngine.Algorithm) {
-        if (coverKindFor(algorithm) != coverKindFor(s.algorithm)) {
-            s.coverUri = null
+        if (s.splitMode && coverKindFor(algorithm) != coverKindFor(s.algorithm)) {
             s.splitCovers.clear()
         }
         s.algorithm = algorithm
@@ -133,23 +144,45 @@ fun HideScreen(appState: AppState) {
 
     val options = StegoEngine.Options(s.jpegQuality, s.adaptiveCmd, s.adaptiveCmdMu, s.lsbBits, s.useCompression, s.useAes256)
 
-    // Capacity estimate for the chosen cover/algorithm.
-    LaunchedEffect(s.coverUri, s.algorithm, s.lsbBits, s.jpegQuality, s.splitMode) {
+    // Single-cover mode: the cover picked determines which algorithms are even offered (see
+    // StegoEngine.algorithmsFor). Split mode keeps the older algorithm-first flow further below.
+    val eligibleAlgorithms = if (s.splitMode) StegoEngine.SPLIT_ELIGIBLE_ALGORITHMS else StegoEngine.algorithmsFor(s.coverIsJpeg)
+
+    // Detects the cover's real format and computes every eligible algorithm's capacity for it in one
+    // pass, then nudges the current algorithm onto an eligible one if the cover just made it invalid.
+    LaunchedEffect(s.coverUri, s.splitMode, s.lsbBits, s.jpegQuality) {
+        if (s.splitMode) return@LaunchedEffect
         val uri = s.coverUri
-        s.capacity = if (uri == null || !StegoEngine.isImageAlgorithm(s.algorithm) || s.splitMode) {
-            null
+        if (uri == null) {
+            s.coverIsJpeg = null
+            s.capacityByAlgorithm = emptyMap()
+            return@LaunchedEffect
+        }
+        val info = withContext(Dispatchers.IO) { imageInfo(context, uri) }
+        s.coverIsJpeg = info?.isJpeg
+        val eligible = StegoEngine.algorithmsFor(s.coverIsJpeg)
+        if (s.algorithm !in eligible) {
+            s.algorithm = eligible.firstOrNull { it == StegoEngine.Algorithm.ADAPTIVE } ?: eligible.first()
+        }
+        s.capacityByAlgorithm = if (info == null) {
+            emptyMap()
         } else {
             withContext(Dispatchers.IO) {
-                imageDimensions(context, uri)?.let { (w, h) ->
-                    runCatching { StegoEngine.capacityBytes(s.algorithm, w, h, options) }.getOrNull()
-                }
+                eligible.filter { StegoEngine.isImageAlgorithm(it) }
+                    .associateWith { algo -> runCatching { StegoEngine.capacityBytes(algo, info.width, info.height, options) }.getOrDefault(0) }
             }
         }
     }
 
-    // Image pickers: Photo Picker for images, document picker for audio/files.
-    val pickCover = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { s.coverUri = it ?: s.coverUri }
-    val openCoverAudio = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { s.coverUri = it ?: s.coverUri }
+    // Size of the file to hide, used to gray out algorithms this cover can't fit it in.
+    LaunchedEffect(s.messageUri) {
+        val uri = s.messageUri
+        s.messageSize = uri?.let { withContext(Dispatchers.IO) { fileSize(context, it) } }
+    }
+
+    // Single cover: one generic picker for either an image or a WAV file (mirrors Reveal's stego-file
+    // picker), since which kind was picked is now detected afterward instead of chosen upfront.
+    val openCover = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { s.coverUri = it ?: s.coverUri }
     val openMessage = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { s.messageUri = it ?: s.messageUri }
     val pickCovers = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
         if (uris.isNotEmpty()) {
@@ -273,9 +306,8 @@ fun HideScreen(appState: AppState) {
         }
         val cover = s.coverUri
         val message = s.messageUri
-        val coverKind = if (s.algorithm == StegoEngine.Algorithm.WAV) coverKindAudioFile else coverKindImage
         if (cover == null) {
-            toast(String.format(errorChooseCoverTemplate, coverKind))
+            toast(errorChooseCoverFile)
             return
         }
         if (message == null) {
@@ -328,20 +360,21 @@ fun HideScreen(appState: AppState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        val coverKind = coverKindFor(s.algorithm)
-        val isWav = coverKind == CoverKind.AUDIO
-        val needsJpegCover = coverKind == CoverKind.JPEG_IMAGE
-        // The photo picker's media type is fixed at launch time only (unlike CreateDocument's MIME
-        // type, which is fixed at launcher creation), so this can vary per algorithm freely: F5 and
-        // PLAIN_UNIWARD embed into an already-compressed JPEG (a PNG cover for them is just wrong, not
-        // merely undesirable), so only offer JPEGs; everything else keeps the existing broad filter,
-        // since PNG/BMP/WEBP are all valid precovers for the spatial and SI-UNIWARD algorithms.
-        val coverMediaType = if (needsJpegCover) {
-            ActivityResultContracts.PickVisualMedia.SingleMimeType("image/jpeg")
-        } else {
-            ActivityResultContracts.PickVisualMedia.ImageOnly
-        }
         if (s.splitMode) {
+            // Split keeps the older algorithm-first flow: the selected algorithm decides what the
+            // multi-cover picker's media-type filter allows.
+            val coverKind = coverKindFor(s.algorithm)
+            val needsJpegCover = coverKind == CoverKind.JPEG_IMAGE
+            // The photo picker's media type is fixed at launch time only (unlike CreateDocument's MIME
+            // type, which is fixed at launcher creation), so this can vary per algorithm freely: F5 and
+            // PLAIN_UNIWARD embed into an already-compressed JPEG (a PNG cover for them is just wrong, not
+            // merely undesirable), so only offer JPEGs; everything else keeps the existing broad filter,
+            // since PNG/BMP/WEBP are all valid precovers for the spatial and SI-UNIWARD algorithms.
+            val coverMediaType = if (needsJpegCover) {
+                ActivityResultContracts.PickVisualMedia.SingleMimeType("image/jpeg")
+            } else {
+                ActivityResultContracts.PickVisualMedia.ImageOnly
+            }
             FilePickCard(
                 label = if (needsJpegCover) {
                     stringResource(R.string.label_cover_images_split_jpeg)
@@ -357,29 +390,15 @@ fun HideScreen(appState: AppState) {
                 onPick = { pickCovers.launch(PickVisualMediaRequest(coverMediaType)) },
             )
         } else {
+            // Single-cover mode is cover-first: pick the file, then the LaunchedEffect above detects
+            // its real format and the hiding-method list below filters to what it actually supports.
             FilePickCard(
-                label = if (isWav) {
-                    stringResource(R.string.label_cover_audio_wav)
-                } else if (needsJpegCover) {
-                    stringResource(R.string.label_cover_image_jpeg)
-                } else {
-                    stringResource(R.string.label_cover_image)
-                },
+                label = stringResource(R.string.label_cover_file),
                 chosen = s.coverUri?.let { displayName(context, it) },
-                hint = when {
-                    isWav -> stringResource(R.string.hint_cover_wav)
-                    needsJpegCover -> stringResource(R.string.hint_cover_jpeg)
-                    else -> stringResource(R.string.hint_cover_image)
-                },
-                onPick = {
-                    if (isWav) {
-                        openCoverAudio.launch(arrayOf("audio/x-wav", "audio/wav", "audio/*"))
-                    } else {
-                        pickCover.launch(PickVisualMediaRequest(coverMediaType))
-                    }
-                },
+                hint = stringResource(R.string.hint_cover_file),
+                onPick = { openCover.launch(arrayOf("image/*", "audio/*")) },
             )
-            s.capacity?.let {
+            s.capacityByAlgorithm[s.algorithm]?.let {
                 Text(
                     stringResource(R.string.capacity_estimate, humanBytes(context, it)),
                     style = MaterialTheme.typography.bodySmall,
@@ -401,108 +420,89 @@ fun HideScreen(appState: AppState) {
             onConfirmViewCreated = { s.confirmPasswordView = it },
         )
 
-        Card(shape = RoundedCornerShape(24.dp)) {
-            Column(modifier = Modifier.fillMaxWidth().padding(16.dp).selectableGroup()) {
-                Text(stringResource(R.string.hide_method_title), fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(8.dp))
-                AlgorithmOption(
-                    selected = s.algorithm == StegoEngine.Algorithm.SI_UNIWARD,
-                    title = stringResource(R.string.algo_si_uniward_title),
-                    subtitle = stringResource(R.string.algo_si_uniward_subtitle),
-                    onClick = { selectAlgorithm(StegoEngine.Algorithm.SI_UNIWARD) },
-                )
-                AlgorithmOption(
-                    selected = s.algorithm == StegoEngine.Algorithm.PLAIN_UNIWARD,
-                    title = stringResource(R.string.algo_j_uniward_title),
-                    subtitle = stringResource(R.string.algo_j_uniward_subtitle),
-                    onClick = { selectAlgorithm(StegoEngine.Algorithm.PLAIN_UNIWARD) },
-                )
-                AlgorithmOption(
-                    selected = s.algorithm == StegoEngine.Algorithm.F5,
-                    title = stringResource(R.string.algo_f5_title),
-                    subtitle = stringResource(R.string.algo_f5_subtitle),
-                    onClick = { selectAlgorithm(StegoEngine.Algorithm.F5) },
-                )
-                AlgorithmOption(
-                    selected = s.algorithm == StegoEngine.Algorithm.ADAPTIVE,
-                    title = stringResource(R.string.algo_adaptive_title),
-                    subtitle = stringResource(R.string.algo_adaptive_subtitle),
-                    onClick = { selectAlgorithm(StegoEngine.Algorithm.ADAPTIVE) },
-                )
-                AlgorithmOption(
-                    selected = s.algorithm == StegoEngine.Algorithm.MATCHING,
-                    title = stringResource(R.string.algo_lsb_matching_title),
-                    subtitle = stringResource(R.string.algo_lsb_matching_subtitle),
-                    onClick = { selectAlgorithm(StegoEngine.Algorithm.MATCHING) },
-                )
-                AlgorithmOption(
-                    selected = s.algorithm == StegoEngine.Algorithm.WAV,
-                    title = stringResource(R.string.algo_audio_wav_title),
-                    subtitle = stringResource(R.string.algo_audio_wav_subtitle),
-                    onClick = { selectAlgorithm(StegoEngine.Algorithm.WAV) },
-                )
-
-                if (s.algorithm == StegoEngine.Algorithm.SI_UNIWARD) {
-                    Spacer(Modifier.height(12.dp))
-                    Text(stringResource(R.string.label_jpeg_quality, s.jpegQuality), fontWeight = FontWeight.SemiBold)
-                    Slider(
-                        value = s.jpegQuality.toFloat(),
-                        onValueChange = { s.jpegQuality = it.toInt() },
-                        valueRange = 50f..100f,
-                    )
-                    Text(
-                        stringResource(R.string.hint_jpeg_quality),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                if (s.algorithm == StegoEngine.Algorithm.ADAPTIVE || s.algorithm == StegoEngine.Algorithm.MATCHING) {
+        // Single-cover mode: nothing to show until a cover is picked (see hint_cover_file above).
+        if (s.splitMode || s.coverUri != null) {
+            val tooSmallHint = stringResource(R.string.hint_algo_too_small)
+            Card(shape = RoundedCornerShape(24.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(16.dp).selectableGroup()) {
+                    Text(stringResource(R.string.hide_method_title), fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
-                    TextButton(onClick = { s.showAdvanced = !s.showAdvanced }) {
-                        Text(if (s.showAdvanced) stringResource(R.string.btn_advanced_expanded) else stringResource(R.string.btn_advanced_collapsed))
+                    val visibleEntries = if (s.splitMode) ALGO_ENTRIES else ALGO_ENTRIES.filter { it.algorithm in eligibleAlgorithms }
+                    for (entry in visibleEntries) {
+                        // Split mode doesn't know the message size per part, so it never grays out options.
+                        val capacity = s.capacityByAlgorithm[entry.algorithm]
+                        val tooSmall = !s.splitMode && s.messageSize != null && capacity != null && s.messageSize!! > capacity
+                        AlgorithmOption(
+                            selected = s.algorithm == entry.algorithm,
+                            title = stringResource(entry.titleRes),
+                            subtitle = if (tooSmall) tooSmallHint else stringResource(entry.subtitleRes),
+                            enabled = !tooSmall,
+                            onClick = { selectAlgorithm(entry.algorithm) },
+                        )
                     }
-                    if (s.showAdvanced) {
-                        if (s.algorithm == StegoEngine.Algorithm.ADAPTIVE) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(stringResource(R.string.label_cluster_changes), fontWeight = FontWeight.SemiBold)
-                                    Text(
-                                        stringResource(R.string.hint_cluster_changes),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+
+                    if (s.algorithm == StegoEngine.Algorithm.SI_UNIWARD) {
+                        Spacer(Modifier.height(12.dp))
+                        Text(stringResource(R.string.label_jpeg_quality, s.jpegQuality), fontWeight = FontWeight.SemiBold)
+                        Slider(
+                            value = s.jpegQuality.toFloat(),
+                            onValueChange = { s.jpegQuality = it.toInt() },
+                            valueRange = 50f..100f,
+                        )
+                        Text(
+                            stringResource(R.string.hint_jpeg_quality),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+
+                    if (s.algorithm == StegoEngine.Algorithm.ADAPTIVE || s.algorithm == StegoEngine.Algorithm.MATCHING) {
+                        Spacer(Modifier.height(8.dp))
+                        TextButton(onClick = { s.showAdvanced = !s.showAdvanced }) {
+                            Text(if (s.showAdvanced) stringResource(R.string.btn_advanced_expanded) else stringResource(R.string.btn_advanced_collapsed))
+                        }
+                        if (s.showAdvanced) {
+                            if (s.algorithm == StegoEngine.Algorithm.ADAPTIVE) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(stringResource(R.string.label_cluster_changes), fontWeight = FontWeight.SemiBold)
+                                        Text(
+                                            stringResource(R.string.hint_cluster_changes),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    Switch(checked = s.adaptiveCmd, onCheckedChange = { s.adaptiveCmd = it })
+                                }
+                                if (s.adaptiveCmd) {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(stringResource(R.string.label_clustering_strength, "%.1f".format(s.adaptiveCmdMu)))
+                                    Slider(
+                                        value = s.adaptiveCmdMu.toFloat(),
+                                        onValueChange = { s.adaptiveCmdMu = it.toDouble() },
+                                        valueRange = 1f..9f,
+                                        steps = 7,
                                     )
                                 }
-                                Switch(checked = s.adaptiveCmd, onCheckedChange = { s.adaptiveCmd = it })
-                            }
-                            if (s.adaptiveCmd) {
+                            } else { // LSB matching
                                 Spacer(Modifier.height(8.dp))
-                                Text(stringResource(R.string.label_clustering_strength, "%.1f".format(s.adaptiveCmdMu)))
+                                Text(stringResource(R.string.label_bits_per_channel, s.lsbBits))
                                 Slider(
-                                    value = s.adaptiveCmdMu.toFloat(),
-                                    onValueChange = { s.adaptiveCmdMu = it.toDouble() },
-                                    valueRange = 1f..9f,
-                                    steps = 7,
+                                    value = s.lsbBits.toFloat(),
+                                    onValueChange = { s.lsbBits = it.toInt() },
+                                    valueRange = 1f..8f,
+                                    steps = 6,
+                                )
+                                Text(
+                                    stringResource(R.string.hint_bits_per_channel),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
-                        } else { // LSB matching
-                            Spacer(Modifier.height(8.dp))
-                            Text(stringResource(R.string.label_bits_per_channel, s.lsbBits))
-                            Slider(
-                                value = s.lsbBits.toFloat(),
-                                onValueChange = { s.lsbBits = it.toInt() },
-                                valueRange = 1f..8f,
-                                steps = 6,
-                            )
-                            Text(
-                                stringResource(R.string.hint_bits_per_channel),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
                         }
                     }
                 }
