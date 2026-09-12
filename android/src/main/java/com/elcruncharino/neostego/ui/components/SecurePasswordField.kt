@@ -47,6 +47,53 @@ internal fun readPasswordChars(editText: EditText?): CharArray? {
     return chars
 }
 
+/** The native EditText for one password field, shared by [SecurePasswordField] and [PasswordFieldWithConfirm]. */
+@Composable
+private fun PasswordEditText(show: Boolean, label: String, description: String, onViewCreated: (EditText) -> Unit) {
+    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
+    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+    val accentColor = MaterialTheme.colorScheme.primary.toArgb()
+    AndroidView(
+        modifier = Modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = description },
+        factory = { ctx ->
+            EditText(ctx).apply {
+                setSingleLine(true)
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                imeOptions = imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
+                transformationMethod = PasswordTransformationMethod.getInstance()
+                // Label the native field for TalkBack; the visual header above is a separate
+                // composable and is not otherwise associated.
+                hint = label
+                contentDescription = description
+                onViewCreated(this)
+            }
+        },
+        update = { et ->
+            et.setTextColor(textColor)
+            et.setHintTextColor(hintColor)
+            et.highlightColor = accentColor
+            et.transformationMethod = if (show) null else PasswordTransformationMethod.getInstance()
+            et.setSelection(et.text.length)
+        },
+    )
+}
+
+/** Label + Show/Hide toggle row, shared by [SecurePasswordField] and [PasswordFieldWithConfirm]. */
+@Composable
+private fun PasswordHeaderRow(label: String, show: Boolean, onToggleShow: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(label, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+        TextButton(onClick = onToggleShow) {
+            Text(if (show) stringResource(R.string.btn_hide_password) else stringResource(R.string.btn_show_password))
+        }
+    }
+}
+
 /**
  * A password field backed by a native EditText. Unlike a Compose TextField (whose value is a String
  * that cannot be wiped), this lets the password be read out as a char[] and erased after use.
@@ -66,45 +113,38 @@ fun SecurePasswordField(
     val passwordDescription = description ?: stringResource(
         if (required) R.string.cd_password_required else R.string.cd_password_optional,
     )
-    val textColor = MaterialTheme.colorScheme.onSurface.toArgb()
-    val hintColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
-    val accentColor = MaterialTheme.colorScheme.primary.toArgb()
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(passwordLabel, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                TextButton(onClick = onToggleShow) {
-                    Text(if (show) stringResource(R.string.btn_hide_password) else stringResource(R.string.btn_show_password))
-                }
+            PasswordHeaderRow(passwordLabel, show, onToggleShow)
+            PasswordEditText(show, passwordLabel, passwordDescription, onViewCreated)
+        }
+    }
+}
+
+/**
+ * Password entry for Hide, with a confirm field that only exists while the password is masked - once
+ * shown in plaintext, the user can just look at it, so there is nothing left to confirm. Both fields
+ * share one container and one Show/Hide toggle.
+ */
+@Composable
+fun PasswordFieldWithConfirm(
+    show: Boolean,
+    onToggleShow: () -> Unit,
+    onViewCreated: (EditText) -> Unit,
+    onConfirmViewCreated: (EditText) -> Unit,
+) {
+    val passwordLabel = stringResource(R.string.label_password_optional)
+    val passwordDescription = stringResource(R.string.cd_password_optional)
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            PasswordHeaderRow(passwordLabel, show, onToggleShow)
+            PasswordEditText(show, passwordLabel, passwordDescription, onViewCreated)
+            if (!show) {
+                val confirmLabel = stringResource(R.string.label_password_confirm)
+                val confirmDescription = stringResource(R.string.cd_password_confirm)
+                Text(confirmLabel, fontWeight = FontWeight.SemiBold)
+                PasswordEditText(show, confirmLabel, confirmDescription, onConfirmViewCreated)
             }
-            AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .semantics { contentDescription = passwordDescription },
-                factory = { ctx ->
-                    EditText(ctx).apply {
-                        setSingleLine(true)
-                        inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
-                        imeOptions = imeOptions or EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING
-                        transformationMethod = PasswordTransformationMethod.getInstance()
-                        // Label the native field for TalkBack; the visual header above is a separate
-                        // composable and is not otherwise associated.
-                        hint = passwordLabel
-                        contentDescription = passwordDescription
-                        onViewCreated(this)
-                    }
-                },
-                update = { et ->
-                    et.setTextColor(textColor)
-                    et.setHintTextColor(hintColor)
-                    et.highlightColor = accentColor
-                    et.transformationMethod = if (show) null else PasswordTransformationMethod.getInstance()
-                    et.setSelection(et.text.length)
-                },
-            )
         }
     }
 }

@@ -42,8 +42,8 @@ import com.elcruncharino.neostego.ui.AppState
 import com.elcruncharino.neostego.ui.components.AlgorithmOption
 import com.elcruncharino.neostego.ui.components.FilePickCard
 import com.elcruncharino.neostego.ui.components.OutputResultCard
+import com.elcruncharino.neostego.ui.components.PasswordFieldWithConfirm
 import com.elcruncharino.neostego.ui.components.PrimaryActionButton
-import com.elcruncharino.neostego.ui.components.SecurePasswordField
 import com.elcruncharino.neostego.ui.components.ToggleRow
 import com.elcruncharino.neostego.ui.components.readPasswordChars
 import com.elcruncharino.neostego.ui.util.OutputResult
@@ -88,8 +88,6 @@ fun HideScreen(appState: AppState) {
     val coverKindImage = stringResource(R.string.cover_kind_image)
     val errorChooseCoverTemplate = stringResource(R.string.error_choose_cover)
     val errorPasswordsDoNotMatch = stringResource(R.string.error_passwords_do_not_match)
-    val confirmPasswordLabel = stringResource(R.string.label_password_confirm)
-    val confirmPasswordDescription = stringResource(R.string.cd_password_confirm)
 
     fun toast(message: String) = scope.launch { snackbar.showSnackbar(message) }
 
@@ -99,8 +97,11 @@ fun HideScreen(appState: AppState) {
     }
 
     // A typo'd password would silently embed with the wrong key and be unrecoverable, so this is
-    // checked before every hide (matching Swing and compose-desktop, which both enforce it too).
+    // checked before every hide (matching Swing and compose-desktop, which both enforce it too) -
+    // except while the password is shown in plaintext, where there's nothing left to confirm and no
+    // confirm field is even on screen (see PasswordFieldWithConfirm).
     fun passwordsMatch(): Boolean {
+        if (s.showPassword) return true
         val pw = readPasswordChars(s.passwordView)
         val confirm = readPasswordChars(s.confirmPasswordView)
         // Unconditional, matching Swing's Arrays.equals(password, confPassword): a blank primary
@@ -393,17 +394,11 @@ fun HideScreen(appState: AppState) {
             onPick = { openMessage.launch(arrayOf("*/*")) },
         )
 
-        SecurePasswordField(
+        PasswordFieldWithConfirm(
             show = s.showPassword,
             onToggleShow = { s.showPassword = !s.showPassword },
             onViewCreated = { s.passwordView = it },
-        )
-        SecurePasswordField(
-            show = s.showPassword,
-            onToggleShow = { s.showPassword = !s.showPassword },
-            onViewCreated = { s.confirmPasswordView = it },
-            label = confirmPasswordLabel,
-            description = confirmPasswordDescription,
+            onConfirmViewCreated = { s.confirmPasswordView = it },
         )
 
         Card(shape = RoundedCornerShape(24.dp)) {
