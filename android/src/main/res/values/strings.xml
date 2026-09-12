@@ -68,7 +68,7 @@
     <string name="algo_lsb_matching_subtitle">Higher capacity and faster; resists classical steganalysis. Lossless PNG.</string>
     <string name="algo_audio_wav_title">Audio (WAV)</string>
     <string name="algo_audio_wav_subtitle">Hides data in the samples of an uncompressed PCM WAV file. Output is a WAV; pick an audio cover above.</string>
-    <string name="hint_algo_too_small">Too small for the file you\'re hiding</string>
+    <string name="hint_algo_too_small">Your cover image is too small for the file you\'re hiding</string>
     <string name="label_jpeg_quality">JPEG quality: %1$d</string>
     <string name="hint_jpeg_quality">Higher quality keeps the image crisper but enlarges the file; 90 is a good default.</string>
     <string name="btn_advanced_expanded">Advanced ▴</string>

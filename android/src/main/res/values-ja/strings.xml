@@ -68,7 +68,7 @@
     <string name="algo_lsb_matching_subtitle">容量が大きく高速で、従来型のステガノ解析に耐えます。出力は可逆圧縮の PNG です。</string>
     <string name="algo_audio_wav_title">音声(WAV)</string>
     <string name="algo_audio_wav_subtitle">非圧縮 PCM WAV ファイルのサンプルにデータを隠します。出力は WAV です。上でカバー音声を選んでください。</string>
-    <string name="hint_algo_too_small">隠すファイルには容量が足りません</string>
+    <string name="hint_algo_too_small">カバー画像が小さすぎて、隠すファイルが収まりません</string>
     <string name="label_jpeg_quality">JPEG 品質: %1$d</string>
     <string name="hint_jpeg_quality">品質を上げるほど画像は鮮明になりますが、ファイルも大きくなります。90 が良い初期値です。</string>
     <string name="btn_advanced_expanded">詳細設定 ▴</string>

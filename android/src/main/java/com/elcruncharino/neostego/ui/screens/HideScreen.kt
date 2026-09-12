@@ -158,19 +158,21 @@ fun HideScreen(appState: AppState) {
             s.capacityByAlgorithm = emptyMap()
             return@LaunchedEffect
         }
-        val info = withContext(Dispatchers.IO) { imageInfo(context, uri) }
-        s.coverIsJpeg = info?.isJpeg
+        withContext(Dispatchers.IO) {
+            val info = imageInfo(context, uri)
+            s.coverIsJpeg = info?.isJpeg
+            // algorithmsFor(non-null isJpeg) only ever returns image algorithms, so no further
+            // filtering is needed before computing each one's capacity for this cover.
+            s.capacityByAlgorithm = if (info == null) {
+                emptyMap()
+            } else {
+                StegoEngine.algorithmsFor(info.isJpeg)
+                    .associateWith { algo -> runCatching { StegoEngine.capacityBytes(algo, info.width, info.height, options) }.getOrDefault(0) }
+            }
+        }
         val eligible = StegoEngine.algorithmsFor(s.coverIsJpeg)
         if (s.algorithm !in eligible) {
             s.algorithm = eligible.firstOrNull { it == StegoEngine.Algorithm.ADAPTIVE } ?: eligible.first()
-        }
-        s.capacityByAlgorithm = if (info == null) {
-            emptyMap()
-        } else {
-            withContext(Dispatchers.IO) {
-                eligible.filter { StegoEngine.isImageAlgorithm(it) }
-                    .associateWith { algo -> runCatching { StegoEngine.capacityBytes(algo, info.width, info.height, options) }.getOrDefault(0) }
-            }
         }
     }
 

@@ -68,7 +68,7 @@
     <string name="algo_lsb_matching_subtitle">容量更大、速度更快,可抵御传统隐写分析。输出为无损 PNG。</string>
     <string name="algo_audio_wav_title">音频(WAV)</string>
     <string name="algo_audio_wav_subtitle">将数据隐藏在未压缩 PCM WAV 文件的采样中。输出为 WAV;请在上方选择音频载体。</string>
-    <string name="hint_algo_too_small">容量不足以隐藏所选文件</string>
+    <string name="hint_algo_too_small">载体图片太小,无法隐藏所选文件</string>
     <string name="label_jpeg_quality">JPEG 质量:%1$d</string>
     <string name="hint_jpeg_quality">质量越高图片越清晰,但文件也越大;90 是不错的默认值。</string>
     <string name="btn_advanced_expanded">高级选项 ▴</string>
