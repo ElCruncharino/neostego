@@ -29,8 +29,11 @@ import java.util.zip.GZIPOutputStream;
  * (upstream issue #67). This lifts the per-image LSB capacity ceiling: a file that does not fit in
  * one cover can be spread over a series of pictures.
  * <p>
- * The whole payload is compressed and encrypted <em>once</em> (reusing the same GZIP +
- * {@link OpenStegoCrypto} logic as {@link OpenStego}), then divided into chunks. Each chunk is
+ * The whole payload is compressed and encrypted <em>once</em> (GZIP here, plus the same
+ * {@link OpenStegoCrypto} logic as {@link OpenStego} - note that single-cover embedding now
+ * compresses via {@link com.openstego.desktop.util.CompressionCodec}'s dictionary-primed DEFLATE
+ * instead, so split output is not byte-for-byte identical to a single-cover embed of the same
+ * payload, though both decompress correctly), then divided into chunks. Each chunk is
  * prefixed with a {@link MultiPartSplitManifest} and embedded into one cover via the ordinary LSB
  * plugin with the plugin's own compression/encryption switched off (the data is already processed).
  * Because nothing about the on-image {@link LSBDataHeader} format changes, existing single-image
