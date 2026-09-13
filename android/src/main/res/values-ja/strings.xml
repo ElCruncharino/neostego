@@ -44,12 +44,6 @@
     <string name="split_images_selected">%1$d 枚の画像を選択済み</string>
     <string name="hint_split_covers">2枚以上の画像を選ぶと、ファイルがそれらに分散して隠されます</string>
     <string name="hint_split_covers_jpeg">既存の JPEG を2枚以上選ぶと、ファイルがそれらに分散して隠されます</string>
-    <string name="label_cover_audio_wav">カバー音声(WAV)</string>
-    <string name="label_cover_image_jpeg">カバー画像(JPEG)</string>
-    <string name="label_cover_image">カバー画像</string>
-    <string name="hint_cover_wav">非圧縮の PCM WAV ファイル</string>
-    <string name="hint_cover_jpeg">データを隠す既存の JPEG ファイル</string>
-    <string name="hint_cover_image">データを隠す対象の画像</string>
     <string name="label_cover_file">カバーファイル</string>
     <string name="hint_cover_file">画像または WAV 音声ファイルを選んでください。以下の隠し方は選んだファイルに応じて変わります。</string>
     <string name="capacity_estimate">この画像には約 %1$s まで隠せます</string>
