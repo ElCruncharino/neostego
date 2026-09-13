@@ -44,12 +44,6 @@
     <string name="split_images_selected">%1$d images selected</string>
     <string name="hint_split_covers">Pick two or more images; the file is spread across them</string>
     <string name="hint_split_covers_jpeg">Pick two or more existing JPEGs; the file is spread across them</string>
-    <string name="label_cover_audio_wav">Cover audio (WAV)</string>
-    <string name="label_cover_image_jpeg">Cover image (JPEG)</string>
-    <string name="label_cover_image">Cover image</string>
-    <string name="hint_cover_wav">An uncompressed PCM WAV file</string>
-    <string name="hint_cover_jpeg">An existing JPEG to hide the data in</string>
-    <string name="hint_cover_image">The image the data will be hidden in</string>
     <string name="label_cover_file">Cover file</string>
     <string name="hint_cover_file">Pick an image or WAV audio file. The hiding methods below will match what you choose.</string>
     <string name="capacity_estimate">Can hide up to about %1$s in this image</string>
