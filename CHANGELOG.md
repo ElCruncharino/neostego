@@ -11,6 +11,15 @@ compatible with upstream OpenStego (enforced by regression tests).
 
 ## [Unreleased]
 
+## [1.3.1] — 2026-09-14
+
+### Fixed
+- **Improved Chinese translation grammar and terminology** — adopted a
+  community-contributed rewrite (#51) simplifying jargon, refining
+  "watermark" vs. "watermark signature" terminology, and using more natural
+  phrasing throughout. Also removed 6 dead string resources left over from
+  the 1.3.0 Hide-screen redesign.
+
 ## [1.3.0] — 2026-09-12
 
 Android/desktop feature parity and a redesigned Hide flow on Android.
