@@ -180,6 +180,12 @@ jobs:
     # inconsistency vs the prior version and stalls the PR — the recurring failure since 1.0.5.
     runs-on: windows-latest
     steps:
+      - name: Sync the winget-pkgs fork with upstream
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: gh repo sync ElCruncharino/winget-pkgs --source microsoft/winget-pkgs
+
       - name: Submit NeoStego to winget-pkgs (wingetcreate)
         shell: pwsh
         env:
