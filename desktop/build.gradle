@@ -32,7 +32,7 @@ repositories {
 
 dependencies {
     implementation project(':core')
-    implementation 'com.formdev:flatlaf:3.7.2'
+    implementation 'com.formdev:flatlaf:3.8'
     implementation 'com.formdev:flatlaf-extras:3.7.2'
     implementation 'info.picocli:picocli:4.7.7'
     // WebP cover support (upstream issue #63): TwelveMonkeys registers a WebP ImageReader via ServiceLoader,
